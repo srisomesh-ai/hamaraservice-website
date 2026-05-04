@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Register as Provider – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  :root {
+    --red: #E8251A; --red-dark: #b81810; --red-light: #fdecea;
+    --orange: #FF6B00; --orange-light: #fff0e6;
+    --green: #1ea84b; --green-light: #e6f9ed;
+    --yellow: #FFCC00; --yellow-light: #fffbe6;
+    --bg: #FFF8F7; --white: #fff;
+    --text: #1c1010; --muted: #7a4f4f; --border: #f2d5d3;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(232,37,26,0.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); font-size: 17px; }
+
+  /* HEADER */
+  header {
+    position: sticky; top: 0; z-index: 200;
+    background: var(--white); border-top: 4px solid var(--red);
+    box-shadow: 0 2px 12px rgba(232,37,26,0.12);
+    padding: 0 28px; height: 68px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family:'Baloo 2',sans-serif; font-size:26px; font-weight:800; color:var(--red); text-decoration:none; display:flex; align-items:center; gap:10px; }
+  .logo-icon { width:38px; height:38px; background:var(--red); border-radius:9px; display:flex; align-items:center; justify-content:center; color:white; font-size:18px; }
+  .back-btn { padding:10px 20px; background:var(--red-light); color:var(--red); border:2px solid var(--red); border-radius:10px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:800; cursor:pointer; text-decoration:none; transition:all .2s; }
+  .back-btn:hover { background:var(--red); color:white; }
+
+  /* HERO BANNER */
+  .hero-banner {
+    background: linear-gradient(135deg, var(--red) 0%, var(--orange) 100%);
+    padding: 40px 28px; text-align:center; color:white;
+  }
+  .hero-banner h1 { font-family:'Baloo 2',sans-serif; font-size:clamp(28px,5vw,44px); font-weight:800; margin-bottom:8px; }
+  .hero-banner p { font-size:18px; opacity:.9; font-weight:600; }
+  .stats-row { display:flex; justify-content:center; gap:32px; margin-top:24px; flex-wrap:wrap; }
+  .stat { background:rgba(255,255,255,0.15); border-radius:12px; padding:14px 24px; text-align:center; }
+  .stat-num { font-size:26px; font-weight:900; }
+  .stat-label { font-size:13px; opacity:.85; font-weight:700; }
+
+  /* FORM CONTAINER */
+  .form-container { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* STEP INDICATOR */
+  .steps-bar { display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:36px; }
+  .step-dot {
+    width:38px; height:38px; border-radius:50%;
+    background:var(--border); color:var(--muted);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:900; flex-shrink:0;
+    transition:all .3s;
+  }
+  .step-dot.active { background:var(--red); color:white; box-shadow:0 2px 12px rgba(232,37,26,0.35); }
+  .step-dot.done { background:var(--green); color:white; }
+  .step-line { flex:1; height:3px; background:var(--border); max-width:60px; transition:background .3s; }
+  .step-line.done { background:var(--green); }
+  .step-label { font-size:12px; font-weight:800; color:var(--muted); text-align:center; margin-top:6px; }
+
+  /* CARDS */
+  .form-card {
+    background:var(--white); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:32px;
+    margin-bottom:24px; border:2px solid var(--border);
+    display:none;
+  }
+  .form-card.active { display:block; animation:slideIn .3s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .card-title { font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800; color:var(--text); margin-bottom:6px; display:flex; align-items:center; gap:10px; }
+  .card-sub { font-size:15px; color:var(--muted); font-weight:600; margin-bottom:24px; }
+
+  /* FORM FIELDS */
+  .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .field-grid.one { grid-template-columns:1fr; }
+  @media(max-width:600px){ .field-grid { grid-template-columns:1fr; } }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field label { font-size:14px; font-weight:800; color:var(--text); }
+  .field input, .field select, .field textarea {
+    padding:14px 16px;
+    font-family:'Nunito',sans-serif; font-size:16px; font-weight:600;
+    border:2px solid var(--border); border-radius:12px;
+    outline:none; color:var(--text); background:var(--bg);
+    transition:border .2s, box-shadow .2s;
+    width:100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color:var(--red); box-shadow:0 0 0 4px rgba(232,37,26,0.10);
+  }
+  .field textarea { resize:vertical; min-height:90px; }
+  .field-hint { font-size:12px; color:var(--muted); font-weight:600; }
+
+  /* SERVICES GRID */
+  .services-picker { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .svc-chip {
+    border:2px solid var(--border); border-radius:12px;
+    padding:14px 10px; text-align:center; cursor:pointer;
+    transition:all .2s; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .svc-chip:hover { border-color:var(--red); background:var(--red-light); }
+  .svc-chip.selected { border-color:var(--red); background:var(--red-light); box-shadow:0 0 0 3px rgba(232,37,26,0.15); }
+  .svc-chip .chip-icon { font-size:28px; }
+  .svc-chip .chip-name { font-size:13px; font-weight:800; color:var(--text); line-height:1.2; }
+  .svc-chip.selected .chip-name { color:var(--red); }
+  .svc-chip .chip-check { font-size:16px; display:none; }
+  .svc-chip.selected .chip-check { display:block; }
+
+  /* MAP */
+  #providerMap { width:100%; height:320px; border-radius:14px; overflow:hidden; border:2px solid var(--border); }
+  .map-controls { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .map-search-input {
+    flex:1; padding:12px 16px;
+    font-family:'Nunito',sans-serif; font-size:15px; font-weight:600;
+    border:2px solid var(--border); border-radius:12px;
+    outline:none; background:var(--bg); color:var(--text);
+    transition:border .2s;
+  }
+  .map-search-input:focus { border-color:var(--red); }
+  .map-btn {
+    padding:12px 18px; border:none; border-radius:12px;
+    font-family:'Nunito',sans-serif; font-size:14px; font-weight:800;
+    cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .map-btn.red { background:var(--red); color:white; }
+  .map-btn.red:hover { background:var(--red-dark); }
+  .map-btn.grey { background:var(--bg); color:var(--muted); border:2px solid var(--border); }
+  .map-btn.grey:hover { border-color:var(--red); color:var(--red); }
+
+  /* RADIUS SLIDER */
+  .radius-display {
+    background:linear-gradient(135deg,var(--red),var(--orange));
+    color:white; border-radius:14px; padding:20px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:16px; flex-wrap:wrap; gap:12px;
+  }
+  .radius-num { font-family:'Baloo 2',sans-serif; font-size:42px; font-weight:800; line-height:1; }
+  .radius-unit { font-size:16px; font-weight:700; opacity:.9; }
+  .radius-desc { font-size:14px; opacity:.85; font-weight:600; }
+  input[type=range] {
+    width:100%; height:8px; border-radius:4px;
+    -webkit-appearance:none; appearance:none;
+    background:linear-gradient(to right, var(--red) 0%, var(--red) 50%, var(--border) 50%);
+    outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:28px; height:28px;
+    border-radius:50%; background:var(--red);
+    border:3px solid white; box-shadow:0 2px 8px rgba(232,37,26,0.4);
+    cursor:pointer;
+  }
+  .radius-marks { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:700; margin-top:6px; }
+
+  /* ADDRESS BOX */
+  .addr-box {
+    background:var(--yellow-light); border:2px solid #ffe58a;
+    border-radius:12px; padding:14px 18px;
+    font-size:14px; font-weight:700; color:#7a5a00;
+    margin-top:12px; display:flex; gap:10px; align-items:flex-start;
+    min-height:48px;
+  }
+
+  /* PRICING */
+  .pricing-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+  .price-card {
+    border:2px solid var(--border); border-radius:12px;
+    padding:16px; text-align:center;
+    background:var(--bg); transition:all .2s;
+  }
+  .price-card .pc-service { font-size:13px; font-weight:800; color:var(--muted); margin-bottom:8px; }
+  .price-card .pc-icon { font-size:24px; margin-bottom:8px; }
+  .price-input-wrap { position:relative; }
+  .price-input-wrap span { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:800; color:var(--red); font-size:16px; }
+  .price-input {
+    width:100%; padding:10px 10px 10px 28px;
+    font-family:'Nunito',sans-serif; font-size:16px; font-weight:800;
+    border:2px solid var(--border); border-radius:10px;
+    outline:none; color:var(--text); background:white;
+    transition:border .2s;
+  }
+  .price-input:focus { border-color:var(--red); }
+
+  /* SUMMARY */
+  .summary-card { background:var(--green-light); border:2px solid var(--green); border-radius:var(--radius); padding:28px; }
+  .summary-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1.5px solid rgba(30,168,75,0.15); font-size:15px; }
+  .summary-row:last-child { border-bottom:none; }
+  .summary-label { color:var(--muted); font-weight:700; }
+  .summary-value { font-weight:800; color:var(--text); text-align:right; max-width:60%; }
+  .summary-value.green { color:var(--green); }
+
+  /* BUTTONS */
+  .btn-row { display:flex; gap:12px; margin-top:28px; justify-content:flex-end; }
+  .btn-primary {
+    padding:16px 36px; background:var(--red); color:white;
+    border:none; border-radius:12px;
+    font-family:'Nunito',sans-serif; font-size:18px; font-weight:900;
+    cursor:pointer; transition:all .2s;
+    box-shadow:0 4px 16px rgba(232,37,26,0.3);
+    display:flex; align-items:center; gap:8px;
+  }
+  .btn-primary:hover { background:var(--red-dark); transform:translateY(-2px); }
+  .btn-primary.green { background:var(--green); box-shadow:0 4px 16px rgba(30,168,75,0.3); }
+  .btn-primary.green:hover { background:#178a3c; }
+  .btn-secondary {
+    padding:16px 28px; background:var(--bg); color:var(--muted);
+    border:2px solid var(--border); border-radius:12px;
+    font-family:'Nunito',sans-serif; font-size:17px; font-weight:800;
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-secondary:hover { border-color:var(--red); color:var(--red); }
+
+  /* SUCCESS */
+  .success-screen { text-align:center; padding:40px 20px; }
+  .success-icon { font-size:80px; margin-bottom:20px; animation:pop .5s ease; }
+  @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  .success-title { font-family:'Baloo 2',sans-serif; font-size:32px; font-weight:800; color:var(--green); margin-bottom:10px; }
+  .success-sub { font-size:18px; color:var(--muted); font-weight:600; margin-bottom:32px; }
+  .provider-id-box { background:var(--green-light); border:2px solid var(--green); border-radius:14px; padding:20px; margin-bottom:28px; }
+  .provider-id { font-family:'Baloo 2',sans-serif; font-size:28px; font-weight:900; color:var(--green); letter-spacing:2px; }
+  .provider-id-label { font-size:14px; color:var(--muted); font-weight:700; margin-bottom:6px; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:var(--text); color:white; padding:12px 24px; border-radius:12px; font-size:15px; font-weight:700; z-index:9999; display:none; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">🏠</div>
+    Hamara Service
+  </a>
+  <a class="back-btn" href="index.html">← Back to Home</a>
+</header>
+
+<div class="hero-banner">
+  <h1>👷 Register as a Service Provider</h1>
+  <p>Set your location, service radius & start earning today</p>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">₹800–2500</div><div class="stat-label">Daily Earnings</div></div>
+    <div class="stat"><div class="stat-num">60 sec</div><div class="stat-label">Accept Bookings</div></div>
+    <div class="stat"><div class="stat-num">Free</div><div class="stat-label">Registration</div></div>
+  </div>
+</div>
+
+<div class="form-container">
+
+  <!-- STEP INDICATOR -->
+  <div style="margin-bottom:8px">
+    <div class="steps-bar">
+      <div class="step-dot active" id="dot1">1</div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2">2</div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3">3</div>
+      <div class="step-line" id="line3"></div>
+      <div class="step-dot" id="dot4">4</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;max-width:320px;margin:6px auto 0;padding:0 4px">
+      <span class="step-label">Personal</span>
+      <span class="step-label">Services</span>
+      <span class="step-label">Location</span>
+      <span class="step-label">Confirm</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: PERSONAL INFO -->
+  <div class="form-card active" id="step1">
+    <div class="card-title">👤 Personal Information</div>
+    <div class="card-sub">Tell us about yourself — customers will see this on your profile</div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Full Name *</label>
+        <input type="text" id="p_name" placeholder="e.g. Renu Sharma" />
+      </div>
+      <div class="field">
+        <label>Mobile Number *</label>
+        <input type="tel" id="p_phone" placeholder="e.g. 9876543210" maxlength="10"/>
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="p_email" placeholder="your@email.com" />
+      </div>
+      <div class="field">
+        <label>Experience (Years) *</label>
+        <select id="p_exp">
+          <option value="">Select experience</option>
+          <option>Less than 1 year</option>
+          <option>1–2 years</option>
+          <option>3–5 years</option>
+          <option>5–10 years</option>
+          <option>10+ years</option>
+        </select>
+      </div>
+      <div class="field one">
+        <label>Short Bio (tell customers about yourself)</label>
+        <textarea id="p_bio" placeholder="e.g. I am a professional house maid with 5 years experience. I am punctual, honest and hard working."></textarea>
+      </div>
+      <div class="field">
+        <label>ID Proof Type</label>
+        <select id="p_id_type">
+          <option value="">Select ID</option>
+          <option>Aadhaar Card</option>
+          <option>PAN Card</option>
+          <option>Voter ID</option>
+          <option>Driving Licence</option>
+          <option>Passport</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ID Number</label>
+        <input type="text" id="p_id_num" placeholder="Enter ID number" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="goStep(2)">Next: Choose Services →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: SERVICES & PRICING -->
+  <div class="form-card" id="step2">
+    <div class="card-title">🛠️ Select Your Services</div>
+    <div class="card-sub">Choose all services you offer — you can set price for each</div>
+    <div class="services-picker" id="servicesPicker"></div>
+
+    <div style="margin-top:28px" id="pricingSection" style="display:none">
+      <div class="card-title" style="font-size:18px;margin-bottom:6px">💰 Set Your Prices</div>
+      <div class="card-sub">Set your price per visit/session for each selected service</div>
+      <div class="pricing-grid" id="pricingGrid"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn-primary" onclick="goStep(3)">Next: Set Location →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: LOCATION & RADIUS -->
+  <div class="form-card" id="step3">
+    <div class="card-title">📍 Your Location & Service Radius</div>
+    <div class="card-sub">Pin your exact location and set how far you can travel to serve customers</div>
+
+    <!-- Map search -->
+    <div class="map-controls">
+      <input class="map-search-input" id="provMapSearch" type="text" placeholder="Search your area, street, or city…" onkeydown="if(event.key==='Enter')searchProviderLocation()" />
+      <button class="map-btn red" onclick="searchProviderLocation()">🔍 Search</button>
+      <button class="map-btn grey" onclick="useMyGPS()">🎯 Use GPS</button>
+    </div>
+
+    <!-- Real Map -->
+    <div id="providerMap"></div>
+
+    <!-- Address display -->
+    <div class="addr-box" id="provAddrBox">
+      <span>📍</span><span id="provAddrText">Tap the map or search to set your location</span>
+    </div>
+
+    <!-- Radius -->
+    <div style="margin-top:24px">
+      <div class="card-title" style="font-size:18px;margin-bottom:12px">🔵 Service Radius</div>
+      <div class="card-sub" style="margin-bottom:16px">How far can you travel to serve a customer?</div>
+      <div class="radius-display">
+        <div>
+          <div class="radius-num" id="radiusNum">5</div>
+          <div class="radius-unit">kilometres</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:28px">🗺️</div>
+          <div class="radius-desc" id="radiusDesc">~15 min travel time</div>
+        </div>
+      </div>
+      <input type="range" id="radiusSlider" min="1" max="50" value="5" oninput="updateRadius(this.value)"/>
+      <div class="radius-marks">
+        <span>1 km</span><span>10 km</span><span>20 km</span><span>30 km</span><span>50 km</span>
+      </div>
+    </div>
+
+    <!-- Manual lat/lng entry -->
+    <div style="margin-top:20px; background:var(--bg); border-radius:12px; padding:16px; border:2px solid var(--border);">
+      <div style="font-size:14px;font-weight:800;color:var(--muted);margin-bottom:12px;">📌 Or Enter Coordinates Manually</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Latitude</label>
+          <input type="number" id="manualLat" placeholder="e.g. 17.3850" step="0.0001" oninput="applyManualCoords()"/>
+        </div>
+        <div class="field">
+          <label>Longitude</label>
+          <input type="number" id="manualLng" placeholder="e.g. 78.4867" step="0.0001" oninput="applyManualCoords()"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goStep(2)">← Back</button>
+      <button class="btn-primary" onclick="goStep(4)">Next: Confirm →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: CONFIRM -->
+  <div class="form-card" id="step4">
+    <div class="card-title">✅ Confirm Your Registration</div>
+    <div class="card-sub">Review your details before submitting</div>
+    <div class="summary-card" id="summaryCard"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goStep(3)">← Back</button>
+      <button class="btn-primary green" onclick="submitRegistration()">🚀 Register Now!</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="form-card" id="stepSuccess">
+    <div class="success-screen">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">You're Registered!</div>
+      <div class="success-sub">Your provider profile is live. Customers near you can now find and book you!</div>
+      <div class="provider-id-box">
+        <div class="provider-id-label">Your Provider ID</div>
+        <div class="provider-id" id="providerIdDisplay">HS-PRO-XXXX</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:8px;font-weight:600">Share this ID with customers for direct bookings</div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="user-booking.html" class="btn-primary" style="text-decoration:none">
+          🧪 Test as a Customer
+        </a>
+        <a href="index.html" class="btn-secondary" style="text-decoration:none;padding:16px 28px;display:flex;align-items:center;">
+          🏠 Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ── Services ──
+const SERVICES = [
+  {icon:'🧹',name:'House Maid',defaultPrice:499},
+  {icon:'❄️',name:'AC Cleaning',defaultPrice:799},
+  {icon:'🚗',name:'Car Wash',defaultPrice:299},
+  {icon:'🛵',name:'Bike Wash',defaultPrice:199},
+  {icon:'🩺',name:'Doctor Visit',defaultPrice:1499},
+  {icon:'🧪',name:'Lab Test',defaultPrice:999},
+  {icon:'🚘',name:'Driver on Demand',defaultPrice:699},
+  {icon:'💇',name:'Hair Salon at Home',defaultPrice:599},
+  {icon:'👶',name:'Day Care',defaultPrice:1299},
+  {icon:'👨‍🍳',name:'Cooking Person',defaultPrice:799},
+  {icon:'⚡',name:'Electrician',defaultPrice:499},
+  {icon:'🔧',name:'Plumber',defaultPrice:499},
+  {icon:'🪚',name:'Carpenter',defaultPrice:699},
+  {icon:'🐛',name:'Pest Control',defaultPrice:1299},
+  {icon:'🖌️',name:'Home Painting',defaultPrice:2499},
+];
+
+let selectedServices = new Set();
+let provMap = null, provMarker = null, provCircle = null;
+let provLatLng = null, provAddress = '';
+let currentRadius = 5;
+
+// ── Render services ──
+const picker = document.getElementById('servicesPicker');
+SERVICES.forEach((s, i) => {
+  const chip = document.createElement('div');
+  chip.className = 'svc-chip';
+  chip.id = `chip_${i}`;
+  chip.innerHTML = `<div class="chip-icon">${s.icon}</div><div class="chip-name">${s.name}</div><div class="chip-check">✅</div>`;
+  chip.onclick = () => toggleService(i, chip);
+  picker.appendChild(chip);
+});
+
+function toggleService(i, chip) {
+  if (selectedServices.has(i)) {
+    selectedServices.delete(i);
+    chip.classList.remove('selected');
+  } else {
+    selectedServices.add(i);
+    chip.classList.add('selected');
+  }
+  renderPricing();
+}
+
+function renderPricing() {
+  const grid = document.getElementById('pricingGrid');
+  grid.innerHTML = '';
+  selectedServices.forEach(i => {
+    const s = SERVICES[i];
+    const card = document.createElement('div');
+    card.className = 'price-card';
+    card.innerHTML = `
+      <div class="pc-icon">${s.icon}</div>
+      <div class="pc-service">${s.name}</div>
+      <div class="price-input-wrap">
+        <span>₹</span>
+        <input class="price-input" type="number" id="price_${i}" value="${s.defaultPrice}" min="50" max="99999" placeholder="${s.defaultPrice}"/>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:700">per visit</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── Step navigation ──
+function goStep(n) {
+  // Validate
+  if (n === 2) {
+    if (!document.getElementById('p_name').value.trim()) { showToast('⚠️ Please enter your name'); return; }
+    if (!document.getElementById('p_phone').value.trim() || document.getElementById('p_phone').value.length < 10) { showToast('⚠️ Enter a valid 10-digit mobile number'); return; }
+    if (!document.getElementById('p_exp').value) { showToast('⚠️ Please select your experience'); return; }
+  }
+  if (n === 3) {
+    if (selectedServices.size === 0) { showToast('⚠️ Please select at least one service'); return; }
+  }
+  if (n === 4) {
+    if (!provLatLng) { showToast('⚠️ Please set your location on the map'); return; }
+    buildSummary();
+  }
+
+  // Hide all
+  document.querySelectorAll('.form-card').forEach(c => c.classList.remove('active'));
+  document.getElementById(n === 5 ? 'stepSuccess' : `step${n}`).classList.add('active');
+
+  // Update dots
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById(`dot${i}`);
+    dot.classList.remove('active','done');
+    if (i < n) dot.classList.add('done'), dot.textContent = '✓';
+    else if (i === n) dot.classList.add('active'), dot.textContent = i;
+    else dot.textContent = i;
+    if (i < 4) {
+      const line = document.getElementById(`line${i}`);
+      line.classList.toggle('done', i < n);
+    }
+  }
+
+  // Init map on step 3
+  if (n === 3 && !provMap) setTimeout(initProviderMap, 150);
+  else if (n === 3 && provMap) provMap.invalidateSize();
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── Provider Map ──
+function initProviderMap() {
+  provMap = L.map('providerMap', {zoomControl:true}).setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap', maxZoom:19
+  }).addTo(provMap);
+
+  provMap.on('click', e => placeProviderPin(e.latlng.lat, e.latlng.lng));
+
+  // Try GPS
+  useMyGPS(true);
+}
+
+function placeProviderPin(lat, lng) {
+  provLatLng = {lat, lng};
+
+  // Update manual inputs
+  document.getElementById('manualLat').value = lat.toFixed(6);
+  document.getElementById('manualLng').value = lng.toFixed(6);
+
+  if (provMarker) {
+    provMarker.setLatLng([lat,lng]);
+  } else {
+    provMarker = L.marker([lat,lng], {
+      draggable: true,
+      icon: L.divIcon({
+        html:`<div style="font-size:38px;margin-top:-38px;margin-left:-14px;filter:drop-shadow(0 4px 8px rgba(232,37,26,0.5))">📍</div>`,
+        className:'', iconSize:[28,38], iconAnchor:[14,38]
+      })
+    }).addTo(provMap);
+    provMarker.on('dragend', e => {
+      const ll = e.target.getLatLng();
+      placeProviderPin(ll.lat, ll.lng);
+    });
+  }
+
+  // Draw radius circle
+  if (provCircle) provMap.removeLayer(provCircle);
+  provCircle = L.circle([lat,lng], {
+    radius: currentRadius * 1000,
+    color: '#E8251A', fillColor:'#E8251A',
+    fillOpacity: 0.08, weight: 2, dashArray:'6,4'
+  }).addTo(provMap);
+
+  reverseGeocodeProvider(lat, lng);
+}
+
+function updateRadius(val) {
+  currentRadius = parseInt(val);
+  document.getElementById('radiusNum').textContent = val;
+
+  const times = {1:'~3 min',3:'~9 min',5:'~15 min',10:'~25 min',15:'~35 min',20:'~45 min',30:'~1 hr',50:'~1.5 hr'};
+  const closest = Object.keys(times).reduce((a,b) => Math.abs(b-val)<Math.abs(a-val)?b:a);
+  document.getElementById('radiusDesc').textContent = times[closest] + ' travel time';
+
+  // Update slider gradient
+  const pct = ((val-1)/(50-1)*100).toFixed(1);
+  document.getElementById('radiusSlider').style.background =
+    `linear-gradient(to right, var(--red) 0%, var(--red) ${pct}%, var(--border) ${pct}%)`;
+
+  if (provLatLng) {
+    if (provCircle) provMap.removeLayer(provCircle);
+    provCircle = L.circle([provLatLng.lat, provLatLng.lng], {
+      radius: currentRadius * 1000,
+      color:'#E8251A', fillColor:'#E8251A',
+      fillOpacity:0.08, weight:2, dashArray:'6,4'
+    }).addTo(provMap);
+  }
+}
+
+function useMyGPS(silent) {
+  if (!navigator.geolocation) { if (!silent) showToast('❌ GPS not supported'); return; }
+  if (!silent) showToast('🎯 Getting your location…');
+  navigator.geolocation.getCurrentPosition(pos => {
+    const {latitude:lat, longitude:lng} = pos.coords;
+    provMap.setView([lat,lng], 15);
+    placeProviderPin(lat, lng);
+    if (!silent) showToast('✅ Location set!');
+  }, err => {
+    if (!silent) showToast('❌ Could not get GPS. Try searching or tap the map.');
+  }, {timeout:10000});
+}
+
+function searchProviderLocation() {
+  const q = document.getElementById('provMapSearch').value.trim();
+  if (!q) { showToast('⚠️ Enter a location to search'); return; }
+  showToast('🔍 Searching…');
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, {
+    headers:{'Accept-Language':'en'}
+  })
+  .then(r=>r.json())
+  .then(results => {
+    if (!results.length) { showToast('❌ Location not found'); return; }
+    const {lat,lon} = results[0];
+    provMap.setView([+lat,+lon], 15);
+    placeProviderPin(+lat, +lon);
+    showToast('📍 Location found!');
+  })
+  .catch(()=>showToast('❌ Search failed'));
+}
+
+function applyManualCoords() {
+  const lat = parseFloat(document.getElementById('manualLat').value);
+  const lng = parseFloat(document.getElementById('manualLng').value);
+  if (!isNaN(lat) && !isNaN(lng) && lat>=-90 && lat<=90 && lng>=-180 && lng<=180) {
+    if (provMap) { provMap.setView([lat,lng],14); placeProviderPin(lat,lng); }
+  }
+}
+
+let geocodeTimer2;
+function reverseGeocodeProvider(lat, lng) {
+  document.getElementById('provAddrText').textContent = 'Fetching address…';
+  clearTimeout(geocodeTimer2);
+  geocodeTimer2 = setTimeout(() => {
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+      headers:{'Accept-Language':'en'}
+    })
+    .then(r=>r.json())
+    .then(data => {
+      const a = data.address||{};
+      const parts = [a.road||a.suburb, a.suburb||a.neighbourhood, a.city||a.town||a.county, a.state, a.postcode].filter(Boolean);
+      provAddress = parts.join(', ') || data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      document.getElementById('provAddrText').textContent = provAddress;
+    })
+    .catch(()=>{
+      provAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      document.getElementById('provAddrText').textContent = provAddress;
+    });
+  }, 600);
+}
+
+// ── Build Summary ──
+function buildSummary() {
+  const svcList = [...selectedServices].map(i => {
+    const price = document.getElementById(`price_${i}`)?.value || SERVICES[i].defaultPrice;
+    return `${SERVICES[i].icon} ${SERVICES[i].name} (₹${price})`;
+  }).join(', ');
+
+  document.getElementById('summaryCard').innerHTML = `
+    <div class="summary-row"><span class="summary-label">👤 Name</span><span class="summary-value">${document.getElementById('p_name').value}</span></div>
+    <div class="summary-row"><span class="summary-label">📱 Mobile</span><span class="summary-value">${document.getElementById('p_phone').value}</span></div>
+    <div class="summary-row"><span class="summary-label">📧 Email</span><span class="summary-value">${document.getElementById('p_email').value||'—'}</span></div>
+    <div class="summary-row"><span class="summary-label">⭐ Experience</span><span class="summary-value">${document.getElementById('p_exp').value}</span></div>
+    <div class="summary-row"><span class="summary-label">🛠️ Services</span><span class="summary-value">${svcList}</span></div>
+    <div class="summary-row"><span class="summary-label">📍 Location</span><span class="summary-value">${provAddress}</span></div>
+    <div class="summary-row"><span class="summary-label">🔵 Service Radius</span><span class="summary-value green">${currentRadius} km</span></div>
+  `;
+}
+
+// ── Submit ──
+function submitRegistration() {
+  const id = 'HS-PRO-' + Math.random().toString(36).substr(2,6).toUpperCase();
+
+  const services = [...selectedServices].map(i => ({
+    name: SERVICES[i].name,
+    icon: SERVICES[i].icon,
+    price: parseInt(document.getElementById(`price_${i}`)?.value) || SERVICES[i].defaultPrice
+  }));
+
+  const provider = {
+    id, name: document.getElementById('p_name').value,
+    phone: document.getElementById('p_phone').value,
+    email: document.getElementById('p_email').value,
+    experience: document.getElementById('p_exp').value,
+    bio: document.getElementById('p_bio').value,
+    idType: document.getElementById('p_id_type').value,
+    idNum: document.getElementById('p_id_num').value,
+    services,
+    lat: provLatLng.lat, lng: provLatLng.lng,
+    address: provAddress,
+    radius: currentRadius,
+    rating: 4.8, reviews: 0,
+    registeredAt: new Date().toISOString(),
+    available: true
+  };
+
+  // Save to localStorage
+  const existing = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  existing.push(provider);
+  localStorage.setItem('hs_providers', JSON.stringify(existing));
+
+  document.getElementById('providerIdDisplay').textContent = id;
+
+  // Show success
+  document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('stepSuccess').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.style.display='none', 3000);
+}
+</script>
+</body>
+</html>

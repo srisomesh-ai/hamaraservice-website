@@ -689,7 +689,7 @@
   <nav>
     <a class="nav-link" href="#">Login</a>
     <a class="nav-link" href="#">Register</a>
-    <a class="nav-btn" href="#">Become a Provider</a>
+    <a class="nav-btn" href="provider-register.html">Become a Provider</a>
   </nav>
 </header>
 
@@ -726,7 +726,7 @@
       </button>
     </div>
     <!-- CTA -->
-    <button class="cta-btn" onclick="findProvider()">
+    <button class="cta-btn" onclick="goToBooking()">
       🔎 &nbsp; Find Nearest Provider
     </button>
   </div>
@@ -806,7 +806,7 @@
         <div class="pv-big">👷</div>
         <div class="pv-title">Start Earning Today</div>
         <div class="pv-sub">Free registration · No monthly fees · Daily payouts</div>
-        <button class="green-btn" onclick="showToast('🎉 Redirecting to Provider Registration…')">
+        <button class="green-btn" onclick="window.location.href='provider-register.html'">
           ✅ &nbsp; Register as Provider
         </button>
       </div>
@@ -1042,13 +1042,12 @@
   const mm = String(now.getMinutes()).padStart(2,'0');
   document.getElementById('timePicker').value = `${hh}:${mm}`;
 
+  function goToBooking() {
+    window.location.href = 'user-booking.html';
+  }
+
   function findProvider() {
-    if (!selectedLatLng) {
-      showToast('📍 Please select your location first!');
-      openMapModal();
-      return;
-    }
-    startBookingFlow();
+    window.location.href = 'user-booking.html';
   }
 
   // ── Booking Flow ──

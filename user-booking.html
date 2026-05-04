@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Book a Service – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  :root {
+    --red:#E8251A; --red-dark:#b81810; --red-light:#fdecea;
+    --orange:#FF6B00; --orange-light:#fff0e6;
+    --green:#1ea84b; --green-light:#e6f9ed;
+    --yellow:#FFCC00; --yellow-light:#fffbe6;
+    --bg:#FFF8F7; --white:#fff;
+    --text:#1c1010; --muted:#7a4f4f; --border:#f2d5d3;
+    --radius:16px; --shadow:0 4px 24px rgba(232,37,26,0.10);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:17px;}
+
+  header{position:sticky;top:0;z-index:200;background:var(--white);border-top:4px solid var(--red);box-shadow:0 2px 12px rgba(232,37,26,0.12);padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--red);text-decoration:none;display:flex;align-items:center;gap:10px;}
+  .logo-icon{width:38px;height:38px;background:var(--red);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;}
+  .header-links{display:flex;gap:10px;}
+  .hlink{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none;transition:all .2s;}
+  .hlink.outline{border:2px solid var(--border);color:var(--muted);}
+  .hlink.outline:hover{border-color:var(--red);color:var(--red);}
+  .hlink.filled{background:var(--red);color:white;box-shadow:0 2px 10px rgba(232,37,26,0.25);}
+  .hlink.filled:hover{background:var(--red-dark);}
+
+  /* BOOKING LAYOUT */
+  .booking-layout{display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 68px);}
+  @media(max-width:800px){.booking-layout{grid-template-columns:1fr;}}
+
+  /* LEFT PANEL */
+  .left-panel{background:var(--white);border-right:2px solid var(--border);padding:24px;overflow-y:auto;max-height:calc(100vh - 68px);position:sticky;top:68px;}
+  @media(max-width:800px){.left-panel{position:static;max-height:none;border-right:none;border-bottom:2px solid var(--border);}}
+
+  .panel-title{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;}
+  .panel-sub{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:20px;}
+
+  /* SERVICE SELECT */
+  .svc-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+  .svc-btn{border:2px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+  .svc-btn:hover{border-color:var(--red);background:var(--red-light);}
+  .svc-btn.active{border-color:var(--red);background:var(--red-light);box-shadow:0 0 0 3px rgba(232,37,26,0.12);}
+  .svc-btn .si{font-size:22px;display:block;margin-bottom:4px;}
+  .svc-btn .sn{font-size:12px;font-weight:800;color:var(--text);line-height:1.2;}
+  .svc-btn.active .sn{color:var(--red);}
+
+  /* INPUTS */
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+  .field label{font-size:13px;font-weight:800;color:var(--text);}
+  .field input,.field select{padding:12px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;color:var(--text);background:var(--bg);transition:border .2s;width:100%;}
+  .field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 4px rgba(232,37,26,0.08);}
+
+  /* LOCATION */
+  .loc-row{display:flex;gap:8px;margin-bottom:8px;}
+  .loc-input{flex:1;padding:12px 14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;color:var(--text);background:var(--bg);transition:border .2s;}
+  .loc-input:focus{border-color:var(--red);}
+  .loc-gps-btn{padding:12px 14px;background:var(--red-light);border:2px solid var(--red);border-radius:11px;cursor:pointer;font-size:18px;transition:all .2s;white-space:nowrap;}
+  .loc-gps-btn:hover{background:var(--red);color:white;}
+  #userMap{width:100%;height:200px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;}
+  .addr-pill{background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:#7a5a00;margin-bottom:16px;min-height:38px;}
+
+  .search-btn{width:100%;padding:16px;background:var(--red);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(232,37,26,0.3);display:flex;align-items:center;justify-content:center;gap:8px;}
+  .search-btn:hover{background:var(--red-dark);transform:translateY(-2px);}
+
+  /* RIGHT PANEL */
+  .right-panel{padding:24px;overflow-y:auto;}
+
+  .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .results-title{font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
+  .results-badge{background:var(--red-light);color:var(--red);font-size:13px;font-weight:800;padding:6px 14px;border-radius:20px;}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+  .empty-icon{font-size:64px;margin-bottom:16px;}
+  .empty-title{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text);}
+  .empty-sub{font-size:15px;font-weight:600;line-height:1.6;}
+
+  /* PROVIDER CARDS */
+  .providers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .prov-card{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .22s;cursor:pointer;}
+  .prov-card:hover{border-color:var(--red);box-shadow:0 8px 32px rgba(232,37,26,0.15);transform:translateY(-3px);}
+  .prov-card-header{background:linear-gradient(135deg,var(--red),var(--orange));padding:16px 18px;display:flex;align-items:center;gap:12px;}
+  .prov-avatar{width:52px;height:52px;background:rgba(255,255,255,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;}
+  .prov-name{font-size:17px;font-weight:800;color:white;}
+  .prov-rating{font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;margin-top:2px;}
+  .prov-body{padding:16px 18px;}
+  .prov-distance{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);font-size:13px;font-weight:800;padding:5px 12px;border-radius:20px;margin-bottom:10px;}
+  .prov-services{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .svc-tag{background:var(--red-light);color:var(--red);font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;}
+  .prov-price{font-size:20px;font-weight:900;color:var(--text);margin-bottom:4px;}
+  .prov-price span{font-size:13px;color:var(--muted);font-weight:600;}
+  .prov-addr{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.4;}
+  .prov-radius-bar{background:var(--bg);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;}
+  .book-now-btn{width:100%;padding:13px;background:var(--red);color:white;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .book-now-btn:hover{background:var(--red-dark);}
+
+  /* BOOKING MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(10,5,5,0.65);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:0;max-width:480px;width:92%;box-shadow:0 20px 80px rgba(0,0,0,0.25);animation:slideUp .3s ease;overflow:hidden;}
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-top{background:linear-gradient(135deg,var(--red),var(--orange));padding:24px;color:white;text-align:center;}
+  .modal-top .m-icon{font-size:52px;margin-bottom:8px;}
+  .modal-top .m-title{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;}
+  .modal-top .m-sub{font-size:14px;opacity:.9;font-weight:600;margin-top:4px;}
+  .modal-body{padding:24px;}
+  .modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1.5px solid var(--border);font-size:15px;}
+  .modal-row:last-of-type{border-bottom:none;}
+  .modal-label{color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px;}
+  .modal-value{font-weight:800;color:var(--text);}
+  .modal-value.green{color:var(--green);}
+  .modal-value.red{color:var(--red);}
+  .modal-btns{display:flex;gap:10px;margin-top:20px;}
+  .modal-confirm{flex:1;padding:14px;background:var(--green);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;}
+  .modal-confirm:hover{background:#178a3c;}
+  .modal-cancel{padding:14px 20px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;}
+  .modal-cancel:hover{border-color:var(--red);color:var(--red);}
+
+  /* COUNTDOWN MODAL */
+  .countdown-box{text-align:center;padding:28px 24px;}
+  .cd-icon{font-size:56px;margin-bottom:12px;}
+  .cd-title{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:6px;}
+  .cd-sub{font-size:15px;color:var(--muted);font-weight:600;margin-bottom:24px;}
+  .spinner{width:52px;height:52px;border:5px solid var(--red-light);border-top-color:var(--red);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 20px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ring-wrap{width:110px;height:110px;position:relative;margin:0 auto 20px;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-wrap circle{fill:none;stroke:var(--border);stroke-width:8;}
+  .ring-wrap circle.prog{stroke:var(--green);stroke-dasharray:283;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear;}
+  .ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-size:34px;font-weight:800;color:var(--green);}
+  .pulse{display:inline-block;width:10px;height:10px;background:var(--green);border-radius:50%;animation:pulse 1s ease-in-out infinite;margin-right:6px;}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:.5}}
+
+  /* CONFIRMED */
+  .confirmed-box{text-align:center;padding:28px 24px;}
+  .conf-icon{font-size:64px;margin-bottom:12px;animation:pop .4s ease;}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .conf-title{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--green);margin-bottom:8px;}
+  .conf-sub{font-size:16px;color:var(--muted);font-weight:600;margin-bottom:20px;}
+  .conf-card{background:var(--green-light);border:2px solid var(--green);border-radius:14px;padding:18px;margin-bottom:20px;text-align:left;}
+  .conf-row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;}
+  .conf-label{color:var(--muted);font-weight:700;}
+  .conf-val{font-weight:800;color:var(--text);}
+  .close-btn{padding:14px 32px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;}
+  .close-btn:hover{border-color:var(--red);color:var(--red);}
+
+  /* NO PROVIDERS BANNER */
+  .no-prov-banner{background:var(--yellow-light);border:2px solid var(--yellow);border-radius:14px;padding:20px;text-align:center;margin-bottom:20px;}
+  .no-prov-banner p{font-size:15px;font-weight:700;color:#7a5a00;}
+  .register-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 24px;background:var(--red);color:white;border-radius:10px;text-decoration:none;font-size:15px;font-weight:800;transition:all .2s;}
+  .register-link:hover{background:var(--red-dark);}
+
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--text);color:white;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;z-index:9999;display:none;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">🏠</div>
+    Hamara Service
+  </a>
+  <div class="header-links">
+    <a class="hlink outline" href="index.html">🏠 Home</a>
+    <a class="hlink filled" href="provider-register.html">👷 Be a Provider</a>
+  </div>
+</header>
+
+<div class="booking-layout">
+
+  <!-- LEFT: SEARCH PANEL -->
+  <div class="left-panel">
+    <div class="panel-title">🔍 Find a Provider</div>
+    <div class="panel-sub">Select service, set your location, find nearby providers</div>
+
+    <!-- SERVICE SELECT -->
+    <div class="field">
+      <label>What service do you need? *</label>
+    </div>
+    <div class="svc-select-grid" id="svcSelectGrid"></div>
+
+    <!-- DATE & TIME -->
+    <div class="field">
+      <label>📅 Date *</label>
+      <input type="date" id="bookDate"/>
+    </div>
+    <div class="field">
+      <label>🕐 Time *</label>
+      <input type="time" id="bookTime"/>
+    </div>
+
+    <!-- USER NAME -->
+    <div class="field">
+      <label>👤 Your Name *</label>
+      <input type="text" id="userName" placeholder="Enter your name"/>
+    </div>
+    <div class="field">
+      <label>📱 Mobile *</label>
+      <input type="tel" id="userPhone" placeholder="10-digit mobile" maxlength="10"/>
+    </div>
+
+    <!-- LOCATION -->
+    <div class="field">
+      <label>📍 Your Location *</label>
+    </div>
+    <div class="loc-row">
+      <input class="loc-input" id="locSearch" type="text" placeholder="Search area or street…" onkeydown="if(event.key==='Enter')searchUserLocation()"/>
+      <button class="loc-gps-btn" onclick="getUserGPS()" title="Use my GPS">🎯</button>
+    </div>
+    <div id="userMap"></div>
+    <div class="addr-pill" id="userAddrPill">Tap map or use GPS to set location</div>
+
+    <button class="search-btn" onclick="findProviders()">
+      🔍 Find Nearest Providers
+    </button>
+  </div>
+
+  <!-- RIGHT: RESULTS -->
+  <div class="right-panel" id="rightPanel">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🗺️</div>
+      <div class="empty-title">Find Service Providers Near You</div>
+      <div class="empty-sub">Select a service and set your location on the left, then click <strong>"Find Nearest Providers"</strong> to see available providers in your area.</div>
+      <div style="margin-top:24px;padding:16px;background:var(--orange-light);border-radius:12px;border:2px solid #ffb366;">
+        <div style="font-size:14px;font-weight:800;color:#8a4000;margin-bottom:6px;">🧪 Testing this for the first time?</div>
+        <div style="font-size:13px;font-weight:600;color:#7a4f4f;margin-bottom:12px;">Register yourself as a provider first, then come back here to book!</div>
+        <a href="provider-register.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:var(--orange);color:white;border-radius:10px;text-decoration:none;font-size:14px;font-weight:800;">👷 Register as Provider</a>
+      </div>
+    </div>
+    <div id="resultsArea" style="display:none">
+      <div class="results-header">
+        <div class="results-title" id="resultsTitle">Providers Found</div>
+        <div class="results-badge" id="resultsBadge">0 nearby</div>
+      </div>
+      <div id="noBanner" class="no-prov-banner" style="display:none">
+        <p>😔 No providers found within range for this service.<br/>Try a different service or expand your search area.</p>
+        <a class="register-link" href="provider-register.html">👷 Be the First Provider Here!</a>
+      </div>
+      <div class="providers-grid" id="providersGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING CONFIRM MODAL -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal">
+    <div id="modalConfirm">
+      <div class="modal-top">
+        <div class="m-icon" id="mIcon">🧹</div>
+        <div class="m-title" id="mTitle">Confirm Booking</div>
+        <div class="m-sub" id="mSub">Review your booking details</div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row"><span class="modal-label">👤 Provider</span><span class="modal-value" id="mProvider">—</span></div>
+        <div class="modal-row"><span class="modal-label">🛠️ Service</span><span class="modal-value" id="mService">—</span></div>
+        <div class="modal-row"><span class="modal-label">📍 Distance</span><span class="modal-value green" id="mDist">—</span></div>
+        <div class="modal-row"><span class="modal-label">⏱️ ETA</span><span class="modal-value" id="mEta">—</span></div>
+        <div class="modal-row"><span class="modal-label">💰 Price</span><span class="modal-value red" id="mPrice">—</span></div>
+        <div class="modal-row"><span class="modal-label">📅 Date & Time</span><span class="modal-value" id="mDateTime">—</span></div>
+        <div class="modal-btns">
+          <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+          <button class="modal-confirm" onclick="confirmBooking()">✅ Confirm & Book</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2: SEARCHING -->
+    <div id="modalSearching" style="display:none">
+      <div class="countdown-box">
+        <div class="cd-icon">🔍</div>
+        <div class="cd-title">Finding Provider…</div>
+        <div class="cd-sub">Connecting you to the nearest available provider</div>
+        <div class="spinner"></div>
+        <div style="font-size:14px;font-weight:700;color:var(--muted)" id="searchStatus">Scanning providers in your area…</div>
+      </div>
+    </div>
+
+    <!-- PHASE 3: COUNTDOWN -->
+    <div id="modalCountdown" style="display:none">
+      <div class="countdown-box">
+        <div class="cd-icon">🎯</div>
+        <div class="cd-title">Provider Found!</div>
+        <div class="cd-sub"><span class="pulse"></span>Waiting for acceptance…</div>
+        <div class="ring-wrap">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="45"/>
+            <circle cx="55" cy="55" r="45" class="prog" id="progCircle"/>
+          </svg>
+          <div class="ring-num" id="ringNum">60</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--muted)" id="providerWaiting">—</div>
+      </div>
+    </div>
+
+    <!-- PHASE 4: CONFIRMED -->
+    <div id="modalConfirmed" style="display:none">
+      <div class="confirmed-box">
+        <div class="conf-icon">✅</div>
+        <div class="conf-title">Booking Confirmed!</div>
+        <div class="conf-sub" id="confSub">Your provider is on the way!</div>
+        <div class="conf-card" id="confCard"></div>
+        <button class="close-btn" onclick="closeModal()">🏠 Back to Home</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ── Services list ──
+const SERVICES = [
+  {icon:'🧹',name:'House Maid'},{icon:'❄️',name:'AC Cleaning'},
+  {icon:'🚗',name:'Car Wash'},{icon:'🛵',name:'Bike Wash'},
+  {icon:'🩺',name:'Doctor Visit'},{icon:'🧪',name:'Lab Test'},
+  {icon:'🚘',name:'Driver on Demand'},{icon:'💇',name:'Hair Salon at Home'},
+  {icon:'👶',name:'Day Care'},{icon:'👨‍🍳',name:'Cooking Person'},
+  {icon:'⚡',name:'Electrician'},{icon:'🔧',name:'Plumber'},
+  {icon:'🪚',name:'Carpenter'},{icon:'🐛',name:'Pest Control'},
+  {icon:'🖌️',name:'Home Painting'},
+];
+
+let selectedSvc = null;
+let userMap = null, userMarker = null;
+let userLatLng = null, userAddress = '';
+let bookingProvider = null;
+let cdTimer = null;
+
+// ── Render service selector ──
+const svcGrid = document.getElementById('svcSelectGrid');
+SERVICES.forEach((s,i) => {
+  const btn = document.createElement('div');
+  btn.className = 'svc-btn';
+  btn.id = `sb_${i}`;
+  btn.innerHTML = `<span class="si">${s.icon}</span><span class="sn">${s.name}</span>`;
+  btn.onclick = () => selectSvc(i);
+  svcGrid.appendChild(btn);
+});
+
+function selectSvc(i) {
+  document.querySelectorAll('.svc-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`sb_${i}`).classList.add('active');
+  selectedSvc = i;
+}
+
+// ── Default date/time ──
+const now = new Date();
+document.getElementById('bookDate').value = now.toISOString().split('T')[0];
+document.getElementById('bookTime').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+
+// ── User Map ──
+function initUserMap() {
+  if (userMap) return;
+  userMap = L.map('userMap',{zoomControl:false}).setView([20.5937,78.9629],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(userMap);
+  userMap.on('click',e=>placeUserPin(e.latlng.lat,e.latlng.lng));
+  getUserGPS(true);
+}
+window.addEventListener('load', initUserMap);
+
+function placeUserPin(lat,lng) {
+  userLatLng={lat,lng};
+  document.getElementById('manualCoords') && (document.getElementById('manualCoords').textContent=`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  if (userMarker) userMarker.setLatLng([lat,lng]);
+  else {
+    userMarker = L.marker([lat,lng],{
+      icon:L.divIcon({html:`<div style="font-size:32px;margin-top:-32px;margin-left:-12px;filter:drop-shadow(0 3px 6px rgba(232,37,26,0.5))">📍</div>`,className:'',iconSize:[24,32],iconAnchor:[12,32]})
+    }).addTo(userMap);
+  }
+  reverseGeocodeUser(lat,lng);
+}
+
+function getUserGPS(silent) {
+  if (!navigator.geolocation){if(!silent)showToast('❌ GPS not supported');return;}
+  if (!silent) showToast('🎯 Getting location…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:lat,longitude:lng}=pos.coords;
+    if(!userMap) initUserMap();
+    userMap.setView([lat,lng],15);
+    placeUserPin(lat,lng);
+    if(!silent) showToast('✅ Location set!');
+  },()=>{if(!silent)showToast('❌ Could not get GPS');},{timeout:10000});
+}
+
+function searchUserLocation() {
+  const q = document.getElementById('locSearch').value.trim();
+  if(!q){showToast('⚠️ Enter a location');return;}
+  showToast('🔍 Searching…');
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
+  .then(r=>r.json()).then(res=>{
+    if(!res.length){showToast('❌ Not found');return;}
+    const{lat,lon}=res[0];
+    if(!userMap) initUserMap();
+    userMap.setView([+lat,+lon],15);
+    placeUserPin(+lat,+lon);
+  }).catch(()=>showToast('❌ Search failed'));
+}
+
+let gcTimer;
+function reverseGeocodeUser(lat,lng){
+  document.getElementById('userAddrPill').textContent='Fetching address…';
+  clearTimeout(gcTimer);
+  gcTimer=setTimeout(()=>{
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(d=>{
+      const a=d.address||{};
+      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
+      userAddress=parts.join(', ')||d.display_name||`${lat.toFixed(5)},${lng.toFixed(5)}`;
+      document.getElementById('userAddrPill').textContent='📍 '+userAddress;
+    }).catch(()=>{userAddress=`${lat.toFixed(5)},${lng.toFixed(5)}`;document.getElementById('userAddrPill').textContent='📍 '+userAddress;});
+  },600);
+}
+
+// ── Haversine Distance ──
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ── Find Providers ──
+function findProviders() {
+  if (selectedSvc===null){showToast('⚠️ Please select a service');return;}
+  if (!userLatLng){showToast('⚠️ Please set your location');return;}
+  if (!document.getElementById('userName').value.trim()){showToast('⚠️ Please enter your name');return;}
+  if (!document.getElementById('userPhone').value.trim()||document.getElementById('userPhone').value.length<10){showToast('⚠️ Enter valid mobile number');return;}
+
+  const svcName = SERVICES[selectedSvc].name;
+  const providers = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+
+  // Filter: provider offers this service AND user is within provider's radius
+  const matching = providers
+    .filter(p => p.available && p.services.some(s=>s.name===svcName))
+    .map(p => {
+      const dist = haversine(userLatLng.lat, userLatLng.lng, p.lat, p.lng);
+      return {...p, dist};
+    })
+    .filter(p => p.dist <= p.radius)
+    .sort((a,b) => a.dist-b.dist);
+
+  // Show results
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  document.getElementById('resultsTitle').textContent=`Providers for "${svcName}"`;
+  document.getElementById('resultsBadge').textContent=`${matching.length} nearby`;
+
+  const grid=document.getElementById('providersGrid');
+  grid.innerHTML='';
+
+  if(!matching.length){
+    document.getElementById('noBanner').style.display='block';
+    return;
+  }
+  document.getElementById('noBanner').style.display='none';
+
+  matching.forEach(p=>{
+    const svcObj = p.services.find(s=>s.name===svcName);
+    const price = svcObj?.price||499;
+    const distTxt = p.dist<1 ? `${(p.dist*1000).toFixed(0)} m away` : `${p.dist.toFixed(1)} km away`;
+    const eta = Math.round(p.dist*3+5); // rough estimate
+
+    const card=document.createElement('div');
+    card.className='prov-card';
+    card.innerHTML=`
+      <div class="prov-card-header">
+        <div class="prov-avatar">👷</div>
+        <div>
+          <div class="prov-name">${p.name}</div>
+          <div class="prov-rating">⭐ ${p.rating} · ${p.experience}</div>
+        </div>
+      </div>
+      <div class="prov-body">
+        <div class="prov-distance">📍 ${distTxt}</div>
+        <div class="prov-services">
+          ${p.services.map(s=>`<span class="svc-tag">${s.icon} ${s.name}</span>`).join('')}
+        </div>
+        <div class="prov-price">₹${price} <span>per visit</span></div>
+        <div class="prov-addr">📍 ${p.address||'Location set'}</div>
+        <div class="prov-radius-bar">
+          <span>🔵 Serves up to ${p.radius} km</span>
+          <span>⏱️ ETA ~${eta} min</span>
+        </div>
+        <button class="book-now-btn" onclick="openBookModal(${JSON.stringify(p).replace(/"/g,'&quot;')}, ${price}, '${distTxt}', ${eta})">
+          ✅ Book Now
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('rightPanel').scrollIntoView({behavior:'smooth'});
+}
+
+// ── Book Modal ──
+function openBookModal(provider, price, distTxt, eta) {
+  bookingProvider = provider;
+  const svcName = SERVICES[selectedSvc].name;
+  const svcIcon = SERVICES[selectedSvc].icon;
+  const date = document.getElementById('bookDate').value;
+  const time = document.getElementById('bookTime').value;
+
+  document.getElementById('mIcon').textContent = svcIcon;
+  document.getElementById('mTitle').textContent = 'Confirm Booking';
+  document.getElementById('mSub').textContent = `${svcIcon} ${svcName}`;
+  document.getElementById('mProvider').textContent = provider.name;
+  document.getElementById('mService').textContent = `${svcIcon} ${svcName}`;
+  document.getElementById('mDist').textContent = distTxt;
+  document.getElementById('mEta').textContent = `~${eta} minutes`;
+  document.getElementById('mPrice').textContent = `₹${price}`;
+  document.getElementById('mDateTime').textContent = `${date} at ${time}`;
+
+  showPhase('modalConfirm');
+  document.getElementById('bookModal').classList.add('show');
+}
+
+function showPhase(id) {
+  ['modalConfirm','modalSearching','modalCountdown','modalConfirmed'].forEach(p=>{
+    document.getElementById(p).style.display = p===id ? 'block' : 'none';
+  });
+}
+
+function confirmBooking() {
+  showPhase('modalSearching');
+  let step=0;
+  const statuses=['Scanning providers in your area…','Checking availability…','Contacting nearest provider…','Provider is responding…'];
+  const si=setInterval(()=>{
+    if(step<statuses.length) document.getElementById('searchStatus').textContent=statuses[step++];
+    else clearInterval(si);
+  },700);
+  setTimeout(()=>{clearInterval(si);startCountdown();},3000);
+}
+
+function startCountdown() {
+  showPhase('modalCountdown');
+  document.getElementById('providerWaiting').innerHTML=`🧑 ${bookingProvider.name} · ⭐ ${bookingProvider.rating}`;
+  let secs=60;
+  const num=document.getElementById('ringNum');
+  const circle=document.getElementById('progCircle');
+  circle.style.strokeDashoffset=0;
+  num.textContent=secs;
+
+  clearInterval(cdTimer);
+  cdTimer=setInterval(()=>{
+    secs--;
+    num.textContent=secs;
+    circle.style.strokeDashoffset=283*(1-secs/60);
+    if(secs<=10){circle.style.stroke='#FFCC00';num.style.color='#b38a00';}
+    if(secs<=0){clearInterval(cdTimer);showConfirmed();}
+  },1000);
+
+  // Auto-accept after 5 seconds for demo
+  setTimeout(()=>{clearInterval(cdTimer);showConfirmed();},5000);
+}
+
+function showConfirmed() {
+  const svcName=SERVICES[selectedSvc].name;
+  const svcIcon=SERVICES[selectedSvc].icon;
+  const svcObj=bookingProvider.services.find(s=>s.name===svcName);
+  const price=svcObj?.price||499;
+  const bookingId='HS-'+Math.random().toString(36).substr(2,8).toUpperCase();
+
+  document.getElementById('confSub').textContent=`${bookingProvider.name} has accepted your booking!`;
+  document.getElementById('confCard').innerHTML=`
+    <div class="conf-row"><span class="conf-label">📋 Booking ID</span><span class="conf-val">${bookingId}</span></div>
+    <div class="conf-row"><span class="conf-label">🛠️ Service</span><span class="conf-val">${svcIcon} ${svcName}</span></div>
+    <div class="conf-row"><span class="conf-label">👷 Provider</span><span class="conf-val">${bookingProvider.name}</span></div>
+    <div class="conf-row"><span class="conf-label">📱 Contact</span><span class="conf-val">${bookingProvider.phone}</span></div>
+    <div class="conf-row"><span class="conf-label">💰 Amount</span><span class="conf-val">₹${price}</span></div>
+    <div class="conf-row"><span class="conf-label">📅 Scheduled</span><span class="conf-val">${document.getElementById('bookDate').value} ${document.getElementById('bookTime').value}</span></div>
+    <div class="conf-row"><span class="conf-label">👤 Customer</span><span class="conf-val">${document.getElementById('userName').value}</span></div>
+  `;
+  showPhase('modalConfirmed');
+}
+
+function closeModal() {
+  clearInterval(cdTimer);
+  document.getElementById('bookModal').classList.remove('show');
+  // Reset ring
+  document.getElementById('progCircle').style.stroke='var(--green)';
+  document.getElementById('ringNum').style.color='var(--green)';
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);
+}
+</script>
+</body>
+</html>
