@@ -3,83 +3,62 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Panel – Hamara Service</title>
+<title>Admin Panel - Hamara Service</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --red:#E8251A;--red-dark:#b81810;--red-light:#fdecea;
-  --orange:#FF6B00;--orange-light:#fff0e6;
-  --green:#1ea84b;--green-light:#e6f9ed;--green-dark:#167a38;
-  --yellow:#f59e0b;--yellow-light:#fffbe6;
-  --blue:#1A73E8;--blue-light:#e8f0fd;
-  --purple:#7c3aed;--purple-light:#f3f0ff;
-  --pink:#e91e8c;--pink-light:#fce4f4;
-  --teal:#0891b2;--teal-light:#e0f7fa;
-  --bg:#f0f2f8;--white:#fff;
-  --text:#1a1a2e;--muted:#6b7280;--border:#e5e7eb;
-  --sidebar-w:256px;--radius:14px;
-  --shadow:0 2px 16px rgba(0,0,0,0.08);
-  --shadow-lg:0 8px 32px rgba(0,0,0,0.14);
-}
+:root{--red:#E8251A;--orange:#FF6B00;--green:#1ea84b;--green-light:#e6f9ed;--green-dark:#167a38;--yellow:#f59e0b;--yellow-light:#fffbe6;--blue:#1A73E8;--blue-light:#e8f0fd;--purple:#7c3aed;--purple-light:#f3f0ff;--pink:#e91e8c;--teal:#0891b2;--teal-light:#e0f7fa;--red-light:#fdecea;--orange-light:#fff0e6;--bg:#f0f2f8;--white:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e5e7eb;--sidebar-w:256px;--radius:14px;--shadow:0 2px 16px rgba(0,0,0,.08);--shadow-lg:0 8px 32px rgba(0,0,0,.14);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:14px;overflow-x:hidden;}
+body{font-family:"Nunito",sans-serif;background:var(--bg);color:var(--text);font-size:14px;overflow-x:hidden;}
 
-/* ══ LOGIN ══ */
 #loginScreen{min-height:100vh;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);display:flex;align-items:center;justify-content:center;padding:20px;}
-.login-box{background:white;border-radius:22px;padding:44px 38px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,0.4);animation:pop .4s ease;}
+.login-box{background:white;border-radius:22px;padding:44px 38px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.4);animation:pop .4s ease;}
 @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-.login-logo{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--red);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
+.login-logo{font-family:"Baloo 2",sans-serif;font-size:26px;font-weight:800;color:var(--red);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
 .login-logo-ic{width:42px;height:42px;background:linear-gradient(135deg,var(--red),var(--orange));border-radius:11px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;}
 .login-sub{text-align:center;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px;}
 .lf{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
 .lf label{font-size:12px;font-weight:800;color:var(--text);}
-.lf input{padding:13px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;transition:border .2s;}
+.lf input{padding:13px 14px;font-family:"Nunito",sans-serif;font-size:15px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;transition:border .2s;}
 .lf input:focus{border-color:var(--purple);}
-.login-btn{width:100%;padding:15px;background:linear-gradient(135deg,#302b63,#24243e);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;margin-top:6px;transition:all .2s;box-shadow:0 4px 18px rgba(48,43,99,0.4);}
+.login-btn{width:100%;padding:15px;background:linear-gradient(135deg,#302b63,#24243e);color:white;border:none;border-radius:12px;font-family:"Nunito",sans-serif;font-size:17px;font-weight:900;cursor:pointer;margin-top:6px;transition:all .2s;box-shadow:0 4px 18px rgba(48,43,99,.4);}
 .login-btn:hover{transform:translateY(-2px);}
-.login-err{background:var(--red-light);border:1.5px solid var(--red);border-radius:9px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--red);display:none;margin-bottom:10px;text-align:center;}
-.login-hint{text-align:center;font-size:11px;color:var(--muted);font-weight:700;margin-top:14px;background:var(--yellow-light);border-radius:8px;padding:9px;}
+.login-err{background:var(--red-light);border:1.5px solid var(--red);border-radius:9px;padding:9px 13px;font-size:13px;font-weight:700;color:var(--red);display:none;margin-bottom:12px;text-align:center;}
+.login-hint{text-align:center;font-size:12px;color:var(--muted);font-weight:700;margin-top:14px;background:var(--yellow-light);border-radius:8px;padding:10px;line-height:1.6;}
 
-/* ══ LAYOUT ══ */
-#dashboard{display:none;}
+#app{display:none;}
 .dash-wrap{display:flex;min-height:100vh;}
-
-/* SIDEBAR */
-.sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#0f0c29 0%,#302b63 100%);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;overflow-y:auto;transition:transform .3s;}
-.sb-logo{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,0.10);}
-.sb-logo-text{font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:800;color:white;display:flex;align-items:center;gap:9px;}
+.sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#0f0c29,#302b63);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;overflow-y:auto;transition:transform .3s;}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.10);}
+.sb-logo-text{font-family:"Baloo 2",sans-serif;font-size:18px;font-weight:800;color:white;display:flex;align-items:center;gap:9px;}
 .sb-logo-ic{width:32px;height:32px;background:linear-gradient(135deg,var(--red),var(--orange));border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:15px;flex-shrink:0;}
-.sb-logo-badge{background:rgba(255,255,255,0.15);color:white;font-size:9px;font-weight:900;padding:2px 7px;border-radius:10px;letter-spacing:.8px;margin-top:6px;margin-left:41px;text-transform:uppercase;}
-.sb-admin{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;}
-.sb-admin-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#a855f7);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-.sb-admin-name{font-size:13px;font-weight:800;color:white;}
-.sb-admin-role{font-size:10px;color:rgba(255,255,255,0.45);font-weight:700;}
-.sb-nav{flex:1;padding:10px 10px;}
-.nav-sec{font-size:9px;font-weight:900;color:rgba(255,255,255,0.28);letter-spacing:1.5px;text-transform:uppercase;padding:12px 8px 5px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;cursor:pointer;transition:all .2s;margin-bottom:2px;color:rgba(255,255,255,0.58);font-size:13px;font-weight:700;}
-.nav-item:hover{background:rgba(255,255,255,0.08);color:white;}
-.nav-item.active{background:linear-gradient(135deg,var(--red),var(--orange));color:white;box-shadow:0 2px 10px rgba(232,37,26,0.4);}
+.sb-badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;letter-spacing:.8px;margin:6px 0 0 41px;display:inline-block;}
+.sb-admin{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;}
+.sb-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#a855f7);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.sb-name{font-size:13px;font-weight:800;color:white;}
+.sb-role{font-size:10px;color:rgba(255,255,255,.45);font-weight:700;}
+.sb-nav{flex:1;padding:10px;}
+.nav-sec{font-size:9px;font-weight:900;color:rgba(255,255,255,.28);letter-spacing:1.5px;text-transform:uppercase;padding:12px 8px 5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;cursor:pointer;transition:all .2s;margin-bottom:2px;color:rgba(255,255,255,.58);font-size:13px;font-weight:700;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:white;}
+.nav-item.active{background:linear-gradient(135deg,var(--red),var(--orange));color:white;box-shadow:0 2px 10px rgba(232,37,26,.4);}
 .nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
 .nav-badge{margin-left:auto;background:var(--red);color:white;font-size:9px;font-weight:900;padding:2px 6px;border-radius:9px;}
-.nav-item.active .nav-badge{background:rgba(255,255,255,0.3);}
-.sb-footer{padding:13px 18px;border-top:1px solid rgba(255,255,255,0.08);}
-.logout-btn{width:100%;padding:10px;background:rgba(232,37,26,0.15);border:1.5px solid rgba(232,37,26,0.35);color:#ff8a85;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.3);}
+.sb-footer{padding:13px 18px;border-top:1px solid rgba(255,255,255,.08);}
+.logout-btn{width:100%;padding:10px;background:rgba(232,37,26,.15);border:1.5px solid rgba(232,37,26,.35);color:#ff8a85;border-radius:9px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;}
 .logout-btn:hover{background:var(--red);color:white;border-color:var(--red);}
 
-/* MAIN */
 .main-content{margin-left:var(--sidebar-w);flex:1;}
-.topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(0,0,0,0.06);}
-.topbar-title{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;}
-.topbar-right{display:flex;align-items:center;gap:10px;}
+.topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.topbar-title{font-family:"Baloo 2",sans-serif;font-size:20px;font-weight:800;}
 .topbar-date{font-size:12px;color:var(--muted);font-weight:700;}
 .page{display:none;padding:24px;}
 .page.active{display:block;animation:fadeIn .25s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 
-/* STAT CARDS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:22px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;margin-bottom:22px;}
 .stat-card{background:white;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:2px solid var(--border);position:relative;overflow:hidden;transition:all .2s;}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+.stat-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;}
 .stat-card.red::before{background:linear-gradient(90deg,var(--red),var(--orange));}
 .stat-card.green::before{background:linear-gradient(90deg,var(--green),#34d058);}
 .stat-card.blue::before{background:linear-gradient(90deg,var(--blue),#4da6ff);}
@@ -89,113 +68,84 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font
 .stat-card.teal::before{background:linear-gradient(90deg,var(--teal),#22d3ee);}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
 .stat-icon{font-size:28px;margin-bottom:7px;}
-.stat-num{font-family:'Baloo 2',sans-serif;font-size:30px;font-weight:800;line-height:1;}
+.stat-num{font-family:"Baloo 2",sans-serif;font-size:30px;font-weight:800;line-height:1;}
 .stat-label{font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;}
-.stat-sub{font-size:11px;font-weight:800;margin-top:4px;}
-.stat-sub.up{color:var(--green);}
+.stat-sub{font-size:11px;font-weight:800;margin-top:4px;color:var(--green);}
 .stat-sub.down{color:var(--red);}
 
-/* SECTION HEADER */
 .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-.sec-title{font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:800;}
-.sec-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.sec-title{font-family:"Baloo 2",sans-serif;font-size:18px;font-weight:800;}
+.sec-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 
-/* BUTTONS */
-.btn{padding:9px 18px;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
-.btn.primary{background:linear-gradient(135deg,var(--red),var(--orange));color:white;box-shadow:0 2px 10px rgba(232,37,26,0.3);}
-.btn.primary:hover{transform:translateY(-1px);}
-.btn.green{background:linear-gradient(135deg,var(--green),#34d058);color:white;}
-.btn.blue{background:linear-gradient(135deg,var(--blue),#4da6ff);color:white;}
-.btn.purple{background:linear-gradient(135deg,var(--purple),#a855f7);color:white;}
+.btn{padding:9px 18px;border-radius:9px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
+.btn.primary{background:linear-gradient(135deg,var(--red),var(--orange));color:white;}
+.btn.green-btn{background:linear-gradient(135deg,var(--green),#34d058);color:white;}
 .btn.outline{background:var(--bg);border:2px solid var(--border);color:var(--muted);}
 .btn.outline:hover{border-color:var(--red);color:var(--red);}
 .btn.sm{padding:6px 12px;font-size:12px;}
 .btn.danger{background:var(--red-light);color:var(--red);border:1.5px solid var(--red);}
 .btn.danger:hover{background:var(--red);color:white;}
-.btn.warn{background:var(--yellow-light);color:var(--yellow);border:1.5px solid var(--yellow);}
-.btn.warn:hover{background:var(--yellow);color:white;}
 
-/* TABLE */
 .table-wrap{background:white;border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);overflow:hidden;margin-bottom:20px;}
-.table-header{padding:15px 18px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-.table-header-title{font-size:14px;font-weight:800;}
-.table-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-.fbtn{padding:6px 12px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;border:2px solid var(--border);background:var(--bg);color:var(--muted);transition:all .2s;}
-.fbtn.active,.fbtn:hover{background:var(--red);color:white;border-color:var(--red);}
-.search-input{padding:7px 12px;border:2px solid var(--border);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;outline:none;transition:border .2s;width:180px;}
-.search-input:focus{border-color:var(--purple);}
+.table-header{padding:14px 18px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.th-title{font-size:14px;font-weight:800;}
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.fbtn{padding:6px 12px;border-radius:7px;font-family:"Nunito",sans-serif;font-size:12px;font-weight:800;cursor:pointer;border:2px solid var(--border);background:var(--bg);color:var(--muted);transition:all .2s;}
+.fbtn.on,.fbtn:hover{background:var(--red);color:white;border-color:var(--red);}
+.srch{padding:7px 12px;border:2px solid var(--border);border-radius:8px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:600;outline:none;transition:border .2s;width:180px;}
+.srch:focus{border-color:var(--purple);}
 table{width:100%;border-collapse:collapse;}
 th{padding:10px 14px;text-align:left;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;background:var(--bg);border-bottom:2px solid var(--border);}
 td{padding:12px 14px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#fafafa;}
 .badge{padding:3px 9px;border-radius:18px;font-size:11px;font-weight:800;display:inline-block;white-space:nowrap;}
-.badge.active,.badge.completed,.badge.approved{background:var(--green-light);color:var(--green);}
+.badge.approved,.badge.active,.badge.completed{background:var(--green-light);color:var(--green);}
 .badge.pending,.badge.warning{background:var(--yellow-light);color:var(--yellow);}
-.badge.suspended,.badge.cancelled,.badge.rejected{background:var(--red-light);color:var(--red);}
+.badge.suspended,.badge.cancelled,.badge.rejected,.badge.inactive{background:var(--red-light);color:var(--red);}
 .badge.review{background:var(--blue-light);color:var(--blue);}
-.badge.inactive{background:var(--bg);color:var(--muted);border:1px solid var(--border);}
-.abtn{padding:5px 10px;border-radius:6px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;border:none;transition:all .2s;margin:2px;}
+.abtn{padding:5px 10px;border-radius:6px;font-family:"Nunito",sans-serif;font-size:11px;font-weight:800;cursor:pointer;border:none;transition:all .2s;margin:2px;}
 .abtn.approve{background:var(--green-light);color:var(--green);}
 .abtn.approve:hover{background:var(--green);color:white;}
-.abtn.reject{background:var(--red-light);color:var(--red);}
-.abtn.reject:hover{background:var(--red);color:white;}
+.abtn.reject,.abtn.del{background:var(--red-light);color:var(--red);}
+.abtn.reject:hover,.abtn.del:hover{background:var(--red);color:white;}
 .abtn.suspend{background:var(--yellow-light);color:var(--yellow);}
 .abtn.suspend:hover{background:var(--yellow);color:white;}
 .abtn.view{background:var(--blue-light);color:var(--blue);}
 .abtn.view:hover{background:var(--blue);color:white;}
 .abtn.edit{background:var(--purple-light);color:var(--purple);}
 .abtn.edit:hover{background:var(--purple);color:white;}
-.abtn.delete{background:var(--red-light);color:var(--red);}
-.abtn.delete:hover{background:var(--red);color:white;}
 
-/* CARDS */
 .card{background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:2px solid var(--border);margin-bottom:18px;}
-.card-title{font-size:15px;font-weight:800;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px;}
-
-/* FORM */
+.card-title{font-size:15px;font-weight:800;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
-@media(max-width:600px){.fgrid{grid-template-columns:1fr;}}
-.fgrid.three{grid-template-columns:1fr 1fr 1fr;}
-@media(max-width:700px){.fgrid.three{grid-template-columns:1fr 1fr;}}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:600px){.fgrid,.fgrid3{grid-template-columns:1fr;}}
 .ffield{display:flex;flex-direction:column;gap:4px;}
 .ffield label{font-size:11px;font-weight:800;color:var(--text);}
-.ffield input,.ffield select,.ffield textarea{padding:10px 12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;border:2px solid var(--border);border-radius:10px;outline:none;background:var(--bg);transition:border .2s;width:100%;}
-.ffield input:focus,.ffield select:focus,.ffield textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,0.08);}
+.ffield input,.ffield select,.ffield textarea{padding:10px 12px;font-family:"Nunito",sans-serif;font-size:14px;font-weight:600;border:2px solid var(--border);border-radius:10px;outline:none;background:var(--bg);transition:border .2s;width:100%;}
+.ffield input:focus,.ffield select:focus,.ffield textarea:focus{border-color:var(--purple);}
 .ffield textarea{resize:vertical;min-height:65px;}
 
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
 .modal-overlay.show{display:flex;}
-.modal-box{background:white;border-radius:18px;padding:28px;max-width:580px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;}
+.modal-box{background:white;border-radius:18px;padding:28px;max-width:580px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;}
 .modal-box.wide{max-width:750px;}
 @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
-.modal-title{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;margin-bottom:5px;}
+.modal-title{font-family:"Baloo 2",sans-serif;font-size:20px;font-weight:800;margin-bottom:5px;}
 .modal-sub{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:18px;}
 .modal-btns{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
-.mbtn{padding:11px 22px;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
+.mbtn{padding:11px 22px;border-radius:9px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
 .mbtn.primary{background:linear-gradient(135deg,var(--red),var(--orange));color:white;}
-.mbtn.green{background:var(--green);color:white;}
+.mbtn.mgreen{background:var(--green);color:white;}
 .mbtn.sec{background:var(--bg);color:var(--muted);border:2px solid var(--border);}
 .mbtn.sec:hover{border-color:var(--red);color:var(--red);}
 
-/* COMMISSION CONFIG */
-.comm-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
-.comm-row:last-child{border:none;}
-.comm-svc{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;}
-.comm-icon{font-size:22px;}
-.comm-inputs{display:flex;gap:8px;align-items:center;}
-.comm-input{width:80px;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;text-align:center;outline:none;}
-.comm-input:focus{border-color:var(--purple);}
-.comm-label{font-size:11px;font-weight:800;color:var(--muted);}
-
-/* PROVIDER DETAIL CARD */
 .prov-detail{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .prov-detail-row{background:var(--bg);border-radius:9px;padding:10px 13px;}
 .prov-detail-label{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;}
 .prov-detail-val{font-size:14px;font-weight:800;color:var(--text);}
 
-/* CHART BARS */
 .chart-wrap{background:white;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:2px solid var(--border);margin-bottom:18px;}
 .chart-title-row{font-size:14px;font-weight:800;margin-bottom:16px;}
 .bar-chart{display:flex;align-items:flex-end;gap:8px;height:100px;}
@@ -205,110 +155,116 @@ tr:hover td{background:#fafafa;}
 .bc .bv{font-size:9px;font-weight:900;}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
 .kpi{background:var(--bg);border-radius:10px;padding:14px;text-align:center;border:2px solid var(--border);}
-.kpi-num{font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;}
+.kpi-num{font-family:"Baloo 2",sans-serif;font-size:22px;font-weight:800;}
 .kpi-label{font-size:10px;font-weight:800;color:var(--muted);margin-top:2px;}
 
-/* HAMBURGER */
+.comm-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.comm-row:last-child{border:none;}
+.comm-svc{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;}
+.comm-inputs{display:flex;gap:8px;align-items:center;}
+.comm-input{width:80px;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;text-align:center;outline:none;}
+.comm-input:focus{border-color:var(--purple);}
+.comm-label{font-size:10px;font-weight:800;color:var(--muted);text-align:center;margin-bottom:3px;}
+
+.info-box{border-radius:10px;padding:11px 15px;font-size:12px;font-weight:700;margin-bottom:14px;}
+.info-green{background:var(--green-light);color:var(--green);border:1.5px solid var(--green);}
+.info-yellow{background:var(--yellow-light);color:#7a5a00;border:1.5px solid #ffe58a;}
+.info-red{background:var(--red-light);color:var(--red);border:1.5px solid var(--red);}
+.info-blue{background:var(--blue-light);color:var(--blue);border:1.5px solid var(--blue);}
+
 .hamburger{display:none;background:none;border:none;cursor:pointer;font-size:22px;}
 @media(max-width:768px){.hamburger{display:block;}.sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.main-content{margin-left:0;}}
-
 .toast{position:fixed;bottom:22px;right:22px;background:#1a1a2e;color:white;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;display:none;box-shadow:var(--shadow-lg);}
-.info-box{border-radius:10px;padding:11px 15px;font-size:12px;font-weight:700;margin-bottom:12px;}
-.info-box.green{background:var(--green-light);color:var(--green);border:1.5px solid var(--green);}
-.info-box.yellow{background:var(--yellow-light);color:#7a5a00;border:1.5px solid #ffe58a;}
-.info-box.red{background:var(--red-light);color:var(--red);border:1.5px solid var(--red);}
-.info-box.blue{background:var(--blue-light);color:var(--blue);border:1.5px solid var(--blue);}
 </style>
 </head>
 <body>
 
-<!-- ══════ LOGIN ══════ -->
+<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-box">
-    <div class="login-logo"><div class="login-logo-ic">🏠</div>Hamara Service</div>
-    <div class="login-sub">🔐 Admin Control Panel</div>
+    <div class="login-logo"><div class="login-logo-ic">&#127968;</div>Hamara Service</div>
+    <div class="login-sub">&#128274; Admin Control Panel</div>
     <div class="login-err" id="loginErr"></div>
-    <div class="lf"><label>Admin Username</label><input id="adminUser" type="text" placeholder="admin" autocomplete="off"/></div>
-    <div class="lf"><label>Admin Password</label><input id="adminPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()"/></div>
-    <button class="login-btn" onclick="doAdminLogin()">🚀 Login to Admin Panel</button>
-    <div class="login-hint">Demo credentials: <strong>admin</strong> / <strong>admin123</strong></div>
+    <div class="lf">
+      <label>Admin Username</label>
+      <input type="text" id="adminUser" placeholder="admin" autocomplete="off"/>
+    </div>
+    <div class="lf">
+      <label>Admin Password</label>
+      <input type="password" id="adminPass" placeholder="Enter password" id="adminPass"/>
+    </div>
+    <button class="login-btn" id="loginBtn">&#128640; Login to Admin Panel</button>
+    <div class="login-hint">
+      Default login: <strong>admin</strong> / <strong>admin123</strong><br/>
+      Change credentials in Settings after logging in
+    </div>
   </div>
 </div>
 
-<!-- ══════ DASHBOARD ══════ -->
-<div id="dashboard">
+<!-- DASHBOARD APP -->
+<div id="app">
 <div class="dash-wrap">
-
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
   <div class="sb-logo">
-    <div class="sb-logo-text"><div class="sb-logo-ic">🏠</div>Hamara Service</div>
-    <div class="sb-logo-badge">Admin Panel</div>
+    <div class="sb-logo-text"><div class="sb-logo-ic">&#127968;</div>Hamara Service</div>
+    <div class="sb-badge">ADMIN PANEL</div>
   </div>
   <div class="sb-admin">
-    <div class="sb-admin-av">👑</div>
-    <div><div class="sb-admin-name">Super Admin</div><div class="sb-admin-role">Full Access</div></div>
+    <div class="sb-av">&#128081;</div>
+    <div><div class="sb-name">Super Admin</div><div class="sb-role">Full Access</div></div>
   </div>
   <nav class="sb-nav">
     <div class="nav-sec">Overview</div>
-    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
-    <div class="nav-item" onclick="showPage('analytics')"><span class="nav-icon">📈</span>Analytics</div>
+    <div class="nav-item active" id="nav-dashboard"><span class="nav-icon">&#128202;</span>Dashboard</div>
+    <div class="nav-item" id="nav-analytics"><span class="nav-icon">&#128200;</span>Analytics</div>
     <div class="nav-sec">Providers</div>
-    <div class="nav-item" onclick="showPage('approvals')"><span class="nav-icon">✅</span>Approvals<span class="nav-badge" id="approvalBadge">0</span></div>
-    <div class="nav-item" onclick="showPage('providers')"><span class="nav-icon">👷</span>All Providers</div>
-    <div class="nav-item" onclick="showPage('payments')"><span class="nav-icon">💸</span>Payments & Payouts</div>
-    <div class="nav-item" onclick="showPage('penalties')"><span class="nav-icon">⚠️</span>Penalties</div>
+    <div class="nav-item" id="nav-approvals"><span class="nav-icon">&#9989;</span>Approvals<span class="nav-badge" id="approvalBadge">0</span></div>
+    <div class="nav-item" id="nav-providers"><span class="nav-icon">&#128119;</span>All Providers</div>
+    <div class="nav-item" id="nav-payments"><span class="nav-icon">&#128184;</span>Payments</div>
+    <div class="nav-item" id="nav-penalties"><span class="nav-icon">&#9888;</span>Penalties</div>
     <div class="nav-sec">Platform</div>
-    <div class="nav-item" onclick="showPage('services')"><span class="nav-icon">🛠️</span>Service Catalog</div>
-    <div class="nav-item" onclick="showPage('commission')"><span class="nav-icon">💹</span>Commission Rules</div>
-    <div class="nav-item" onclick="showPage('orders')"><span class="nav-icon">📋</span>All Orders</div>
+    <div class="nav-item" id="nav-services"><span class="nav-icon">&#128295;</span>Service Catalog</div>
+    <div class="nav-item" id="nav-commission"><span class="nav-icon">&#128185;</span>Commission</div>
+    <div class="nav-item" id="nav-orders"><span class="nav-icon">&#128203;</span>All Orders</div>
     <div class="nav-sec">Users</div>
-    <div class="nav-item" onclick="showPage('customers')"><span class="nav-icon">👤</span>Customers</div>
-    <div class="nav-item" onclick="showPage('settings')"><span class="nav-icon">⚙️</span>Settings</div>
+    <div class="nav-item" id="nav-customers"><span class="nav-icon">&#128100;</span>Customers</div>
+    <div class="nav-item" id="nav-settings"><span class="nav-icon">&#9881;</span>Settings</div>
   </nav>
-  <div class="sb-footer"><button class="logout-btn" onclick="doLogout()">🚪 Logout</button></div>
+  <div class="sb-footer"><button class="logout-btn" id="logoutBtn">&#128682; Logout</button></div>
 </div>
 
-<!-- MAIN CONTENT -->
 <div class="main-content">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:12px;">
-      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-      <div class="topbar-title" id="pageTitle">📊 Dashboard</div>
+      <button class="hamburger" id="hamburger">&#9776;</button>
+      <div class="topbar-title" id="pageTitle">&#128202; Dashboard</div>
     </div>
-    <div class="topbar-right">
-      <div class="topbar-date" id="topbarDate"></div>
-      <div style="width:36px;height:36px;border-radius:9px;background:var(--purple-light);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;" onclick="showPage('settings')">⚙️</div>
-    </div>
+    <div class="topbar-date" id="topbarDate"></div>
   </div>
 
-  <!-- ══ PAGE: DASHBOARD ══ -->
+  <!-- DASHBOARD PAGE -->
   <div class="page active" id="page-dashboard">
     <div class="stats-grid">
-      <div class="stat-card red"><div class="stat-icon">👷</div><div class="stat-num" id="ds-providers">0</div><div class="stat-label">Total Providers</div><div class="stat-sub up" id="ds-active-providers">0 active</div></div>
-      <div class="stat-card yellow"><div class="stat-icon">⏳</div><div class="stat-num" id="ds-pending">0</div><div class="stat-label">Pending Approvals</div><div class="stat-sub down">Needs review</div></div>
-      <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-num" id="ds-revenue">₹0</div><div class="stat-label">Platform Revenue</div><div class="stat-sub up">Total commission</div></div>
-      <div class="stat-card blue"><div class="stat-icon">📋</div><div class="stat-num" id="ds-orders">0</div><div class="stat-label">Total Orders</div><div class="stat-sub up" id="ds-completed">0 completed</div></div>
-      <div class="stat-card purple"><div class="stat-icon">👤</div><div class="stat-num" id="ds-customers">0</div><div class="stat-label">Registered Customers</div><div class="stat-sub up">Accounts created</div></div>
-      <div class="stat-card pink"><div class="stat-icon">💸</div><div class="stat-num" id="ds-payouts">₹0</div><div class="stat-label">Provider Payouts</div><div class="stat-sub">Total withdrawn</div></div>
-      <div class="stat-card teal"><div class="stat-icon">⚠️</div><div class="stat-num" id="ds-penalties">0</div><div class="stat-label">Penalties Issued</div><div class="stat-sub down">This month</div></div>
-      <div class="stat-card green"><div class="stat-icon">🛠️</div><div class="stat-num" id="ds-services">0</div><div class="stat-label">Active Services</div><div class="stat-sub up">In catalog</div></div>
+      <div class="stat-card red"><div class="stat-icon">&#128119;</div><div class="stat-num" id="ds-providers">0</div><div class="stat-label">Total Providers</div><div class="stat-sub" id="ds-active-prov">0 approved</div></div>
+      <div class="stat-card yellow"><div class="stat-icon">&#8987;</div><div class="stat-num" id="ds-pending">0</div><div class="stat-label">Pending Approvals</div><div class="stat-sub down">Needs review</div></div>
+      <div class="stat-card green"><div class="stat-icon">&#128176;</div><div class="stat-num" id="ds-revenue">&#8377;0</div><div class="stat-label">Platform Commission</div><div class="stat-sub">Total earned</div></div>
+      <div class="stat-card blue"><div class="stat-icon">&#128203;</div><div class="stat-num" id="ds-orders">0</div><div class="stat-label">Total Orders</div><div class="stat-sub" id="ds-completed-lbl">0 completed</div></div>
+      <div class="stat-card purple"><div class="stat-icon">&#128100;</div><div class="stat-num" id="ds-customers">0</div><div class="stat-label">Registered Customers</div><div class="stat-sub">Accounts</div></div>
+      <div class="stat-card pink"><div class="stat-icon">&#128184;</div><div class="stat-num" id="ds-payouts">&#8377;0</div><div class="stat-label">Provider Payouts</div><div class="stat-sub">Total withdrawn</div></div>
+      <div class="stat-card teal"><div class="stat-icon">&#9888;</div><div class="stat-num" id="ds-penalties">0</div><div class="stat-label">Penalties Issued</div><div class="stat-sub down">Deducted</div></div>
+      <div class="stat-card green"><div class="stat-icon">&#128295;</div><div class="stat-num" id="ds-services">0</div><div class="stat-label">Active Services</div><div class="stat-sub">In catalog</div></div>
     </div>
-
-    <!-- Pending Approvals Quick View -->
     <div class="sec-header">
-      <div class="sec-title">⏳ Pending Provider Approvals</div>
-      <button class="btn primary sm" onclick="showPage('approvals')">View All →</button>
+      <div class="sec-title">&#8987; Pending Approvals</div>
+      <button class="btn primary sm" id="viewAllApprovalsBtn">View All</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Provider</th><th>Mobile</th><th>Services</th><th>Location</th><th>Registered</th><th>Action</th></tr></thead>
+      <table><thead><tr><th>Name</th><th>Mobile</th><th>Services</th><th>Location</th><th>Registered</th><th>Actions</th></tr></thead>
       <tbody id="dashPendingBody"></tbody></table>
     </div>
-
-    <!-- Recent Orders -->
     <div class="sec-header">
-      <div class="sec-title">📋 Recent Orders</div>
-      <button class="btn outline sm" onclick="showPage('orders')">View All →</button>
+      <div class="sec-title">&#128203; Recent Orders</div>
+      <button class="btn outline sm" id="viewAllOrdersBtn">View All</button>
     </div>
     <div class="table-wrap">
       <table><thead><tr><th>Order ID</th><th>Customer</th><th>Provider</th><th>Service</th><th>Amount</th><th>Commission</th><th>Status</th></tr></thead>
@@ -316,289 +272,255 @@ tr:hover td{background:#fafafa;}
     </div>
   </div>
 
-  <!-- ══ PAGE: ANALYTICS ══ -->
+  <!-- ANALYTICS -->
   <div class="page" id="page-analytics">
     <div class="kpi-row" style="margin-bottom:18px;">
-      <div class="kpi"><div class="kpi-num" id="an-gmv" style="color:var(--green)">₹0</div><div class="kpi-label">Total GMV</div></div>
-      <div class="kpi"><div class="kpi-num" id="an-commission" style="color:var(--purple)">₹0</div><div class="kpi-label">Commission Earned</div></div>
-      <div class="kpi"><div class="kpi-num" id="an-aov" style="color:var(--blue)">₹0</div><div class="kpi-label">Avg Order Value</div></div>
-      <div class="kpi"><div class="kpi-num" id="an-completion" style="color:var(--green)">0%</div><div class="kpi-label">Completion Rate</div></div>
-      <div class="kpi"><div class="kpi-num" id="an-cancellation" style="color:var(--red)">0%</div><div class="kpi-label">Cancellation Rate</div></div>
+      <div class="kpi"><div class="kpi-num" id="an-gmv" style="color:var(--green)">&#8377;0</div><div class="kpi-label">Total GMV</div></div>
+      <div class="kpi"><div class="kpi-num" id="an-comm" style="color:var(--purple)">&#8377;0</div><div class="kpi-label">Commission Earned</div></div>
+      <div class="kpi"><div class="kpi-num" id="an-aov" style="color:var(--blue)">&#8377;0</div><div class="kpi-label">Avg Order Value</div></div>
+      <div class="kpi"><div class="kpi-num" id="an-crate" style="color:var(--green)">0%</div><div class="kpi-label">Completion Rate</div></div>
+      <div class="kpi"><div class="kpi-num" id="an-canc" style="color:var(--red)">0%</div><div class="kpi-label">Cancellation Rate</div></div>
     </div>
     <div class="chart-wrap">
-      <div class="chart-title-row">📈 Revenue by Day (Last 7 Days)</div>
-      <div class="bar-chart" id="revenueChart"></div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px;" id="revenueChartLabels"></div>
+      <div class="chart-title-row">Revenue Last 7 Days</div>
+      <div class="bar-chart" id="revChart"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;" id="revLabels"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="chart-wrap">
-        <div class="chart-title-row">🛠️ Orders by Service</div>
-        <div id="svcBreakdown"></div>
-      </div>
-      <div class="chart-wrap">
-        <div class="chart-title-row">👷 Top Earning Providers</div>
-        <div id="topProviders"></div>
-      </div>
+      <div class="chart-wrap"><div class="chart-title-row">Orders by Service</div><div id="svcBreak"></div></div>
+      <div class="chart-wrap"><div class="chart-title-row">Top Providers by Earnings</div><div id="topProvs"></div></div>
     </div>
   </div>
 
-  <!-- ══ PAGE: APPROVALS ══ -->
+  <!-- APPROVALS -->
   <div class="page" id="page-approvals">
-    <div class="info-box yellow">⚠️ Review provider documents before approving. Approved providers immediately appear to customers in their area.</div>
+    <div class="info-box info-yellow">Review provider documents before approving. Approved providers appear to customers immediately.</div>
     <div class="table-wrap">
       <div class="table-header">
-        <div class="table-header-title">Provider Approval Queue</div>
-        <div class="table-filters">
-          <button class="fbtn active" onclick="filterApprovals('pending',this)">⏳ Pending</button>
-          <button class="fbtn" onclick="filterApprovals('review',this)">🔍 Under Review</button>
-          <button class="fbtn" onclick="filterApprovals('all',this)">All</button>
+        <div class="th-title">Provider Approval Queue</div>
+        <div class="filters">
+          <button class="fbtn on" id="af-pending">Pending</button>
+          <button class="fbtn" id="af-review">Under Review</button>
+          <button class="fbtn" id="af-all">All</button>
         </div>
       </div>
-      <table><thead><tr><th>Provider ID</th><th>Name</th><th>Mobile</th><th>Services</th><th>Location</th><th>ID Proof</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Services</th><th>Location</th><th>ID Proof</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="approvalsBody"></tbody></table>
     </div>
   </div>
 
-  <!-- ══ PAGE: ALL PROVIDERS ══ -->
+  <!-- ALL PROVIDERS -->
   <div class="page" id="page-providers">
     <div class="sec-header">
-      <div class="sec-title">All Service Providers</div>
+      <div class="sec-title">All Providers</div>
       <div class="sec-actions">
-        <input type="text" class="search-input" placeholder="🔍 Search provider…" oninput="searchProviders(this.value)"/>
-        <button class="fbtn active" onclick="filterProviders('all',this)" style="border-radius:7px;">All</button>
-        <button class="fbtn" onclick="filterProviders('approved',this)" style="border-radius:7px;">✅ Approved</button>
-        <button class="fbtn" onclick="filterProviders('pending',this)" style="border-radius:7px;">⏳ Pending</button>
-        <button class="fbtn" onclick="filterProviders('suspended',this)" style="border-radius:7px;">🚫 Suspended</button>
+        <input type="text" class="srch" id="provSearch" placeholder="Search..."/>
+        <button class="fbtn on" id="pf-all">All</button>
+        <button class="fbtn" id="pf-approved">Approved</button>
+        <button class="fbtn" id="pf-pending">Pending</button>
+        <button class="fbtn" id="pf-suspended">Suspended</button>
       </div>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Provider ID</th><th>Name</th><th>Mobile</th><th>Services</th><th>Location</th><th>Rating</th><th>Bookings</th><th>Earned</th><th>Commission</th><th>Status</th><th>Actions</th></tr></thead>
+      <table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Services</th><th>Location</th><th>Rating</th><th>Bookings</th><th>Earned</th><th>Commission</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="providersBody"></tbody></table>
     </div>
   </div>
 
-  <!-- ══ PAGE: PAYMENTS ══ -->
+  <!-- PAYMENTS -->
   <div class="page" id="page-payments">
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr));">
-      <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-num" id="py-gmv">₹0</div><div class="stat-label">Total GMV</div></div>
-      <div class="stat-card purple"><div class="stat-icon">💹</div><div class="stat-num" id="py-commission">₹0</div><div class="stat-label">Commission Earned</div></div>
-      <div class="stat-card blue"><div class="stat-icon">💸</div><div class="stat-num" id="py-payouts">₹0</div><div class="stat-label">Provider Payouts</div></div>
-      <div class="stat-card yellow"><div class="stat-icon">⏳</div><div class="stat-num" id="py-pending">₹0</div><div class="stat-label">Pending Payouts</div></div>
+      <div class="stat-card green"><div class="stat-icon">&#128176;</div><div class="stat-num" id="py-gmv">&#8377;0</div><div class="stat-label">Total GMV</div></div>
+      <div class="stat-card purple"><div class="stat-icon">&#128185;</div><div class="stat-num" id="py-comm">&#8377;0</div><div class="stat-label">Commission</div></div>
+      <div class="stat-card blue"><div class="stat-icon">&#128184;</div><div class="stat-num" id="py-paid">&#8377;0</div><div class="stat-label">Paid Out</div></div>
+      <div class="stat-card yellow"><div class="stat-icon">&#8987;</div><div class="stat-num" id="py-pend">&#8377;0</div><div class="stat-label">Pending Payout</div></div>
     </div>
     <div class="sec-header">
-      <div class="sec-title">💸 Payout Requests</div>
-      <div class="sec-actions">
-        <button class="fbtn active" onclick="filterPayouts('pending',this)">⏳ Pending</button>
-        <button class="fbtn" onclick="filterPayouts('all',this)">All</button>
-      </div>
+      <div class="sec-title">Payout Requests</div>
+      <div class="filters"><button class="fbtn on" id="payf-pending">Pending</button><button class="fbtn" id="payf-all">All</button></div>
     </div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Provider</th><th>Amount</th><th>Account</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody id="payoutsBody"></tbody></table>
-    </div>
-    <div class="sec-header" style="margin-top:8px;">
-      <div class="sec-title">📊 Commission Ledger</div>
-    </div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Order ID</th><th>Provider</th><th>Service</th><th>Order Amt</th><th>Commission %</th><th>Commission Amt</th><th>Date</th></tr></thead>
-      <tbody id="commLedgerBody"></tbody></table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>Provider</th><th>Amount</th><th>Account</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead><tbody id="payoutsBody"></tbody></table></div>
+    <div class="sec-title" style="margin-bottom:12px;">Commission Ledger</div>
+    <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Provider</th><th>Service</th><th>Order Amt</th><th>Comm %</th><th>Comm Amt</th><th>Date</th></tr></thead><tbody id="ledgerBody"></tbody></table></div>
   </div>
 
-  <!-- ══ PAGE: PENALTIES ══ -->
+  <!-- PENALTIES -->
   <div class="page" id="page-penalties">
-    <div class="info-box red">⚠️ Penalties are deducted from the provider's next payout. Repeated violations may lead to suspension.</div>
+    <div class="info-box info-red">Penalties are deducted from the provider next payout. Repeated violations may lead to suspension.</div>
     <div class="sec-header">
-      <div class="sec-title">⚠️ Penalty Management</div>
-      <button class="btn primary" onclick="showIssuePenaltyModal()">➕ Issue Penalty</button>
+      <div class="sec-title">Penalty Management</div>
+      <button class="btn primary" id="issuePenaltyBtn">+ Issue Penalty</button>
     </div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Penalty ID</th><th>Provider</th><th>Reason</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody id="penaltiesBody"></tbody></table>
-    </div>
-    <div class="card" style="margin-top:8px;">
-      <div class="card-title">📋 Penalty Rules</div>
-      <table><thead><tr><th>Rule</th><th>Penalty Amount</th><th>Action</th></tr></thead>
-      <tbody>
-        <tr><td>No-show without cancellation</td><td>₹200</td><td><span class="badge active">Active</span></td></tr>
-        <tr><td>Cancellation within 30 minutes of booking</td><td>₹100</td><td><span class="badge active">Active</span></td></tr>
-        <tr><td>Customer complaint (verified)</td><td>₹150 – ₹500</td><td><span class="badge active">Active</span></td></tr>
-        <tr><td>Fake ID or document</td><td>Suspension + ₹1000</td><td><span class="badge active">Active</span></td></tr>
-        <tr><td>3 consecutive cancellations</td><td>₹300 + Review</td><td><span class="badge active">Active</span></td></tr>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Provider</th><th>Reason</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody id="penaltiesBody"></tbody></table></div>
+    <div class="card">
+      <div class="card-title">Penalty Rules</div>
+      <table><thead><tr><th>Rule</th><th>Penalty</th><th>Status</th></tr></thead><tbody>
+        <tr><td>No-show without cancellation</td><td>&#8377;200</td><td><span class="badge approved">Active</span></td></tr>
+        <tr><td>Cancellation within 30 min</td><td>&#8377;100</td><td><span class="badge approved">Active</span></td></tr>
+        <tr><td>Customer complaint (verified)</td><td>&#8377;150 - &#8377;500</td><td><span class="badge approved">Active</span></td></tr>
+        <tr><td>Fake ID or document</td><td>Suspension + &#8377;1000</td><td><span class="badge approved">Active</span></td></tr>
+        <tr><td>3 consecutive cancellations</td><td>&#8377;300 + Review</td><td><span class="badge approved">Active</span></td></tr>
       </tbody></table>
     </div>
   </div>
 
-  <!-- ══ PAGE: SERVICE CATALOG ══ -->
+  <!-- SERVICE CATALOG -->
   <div class="page" id="page-services">
     <div class="sec-header">
-      <div class="sec-title">🛠️ Service Catalog</div>
-      <button class="btn primary" onclick="showAddServiceModal()">➕ Add New Service</button>
+      <div class="sec-title">Service Catalog</div>
+      <button class="btn primary" id="addServiceBtn">+ Add Service</button>
     </div>
-    <div class="info-box blue">💡 Changes to price range and commission take effect immediately for new bookings.</div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Icon</th><th>Service Name</th><th>Category</th><th>Min Price</th><th>Max Price</th><th>Platform Commission</th><th>Status</th><th>Orders</th><th>Actions</th></tr></thead>
-      <tbody id="catalogBody"></tbody></table>
-    </div>
+    <div class="info-box info-blue">Changes to price and commission apply to new bookings immediately.</div>
+    <div class="table-wrap"><table><thead><tr><th>Icon</th><th>Service</th><th>Category</th><th>Min</th><th>Max</th><th>Commission</th><th>Status</th><th>Orders</th><th>Actions</th></tr></thead><tbody id="catalogBody"></tbody></table></div>
   </div>
 
-  <!-- ══ PAGE: COMMISSION ══ -->
+  <!-- COMMISSION -->
   <div class="page" id="page-commission">
-    <div class="info-box green">✅ Commission is deducted from each completed order. Set per-service or use the global rate.</div>
+    <div class="info-box info-green">Commission is deducted from each completed order automatically.</div>
     <div class="sec-header">
-      <div class="sec-title">💹 Commission Configuration</div>
-      <button class="btn green" onclick="saveAllCommissions()">💾 Save All Rates</button>
+      <div class="sec-title">Commission Configuration</div>
+      <button class="btn green-btn" id="saveCommBtn">Save All Rates</button>
     </div>
     <div class="card">
-      <div class="card-title">🌐 Global Settings</div>
-      <div class="fgrid three">
-        <div class="ffield"><label>Default Commission (%)</label><input type="number" id="globalComm" value="15" min="0" max="50"/></div>
-        <div class="ffield"><label>Min Booking Amount (₹)</label><input type="number" id="minBooking" value="200"/></div>
-        <div class="ffield"><label>Platform Fee (₹)</label><input type="number" id="platformFee" value="20"/></div>
+      <div class="card-title">Global Settings</div>
+      <div class="fgrid3">
+        <div class="ffield"><label>Default Commission %</label><input type="number" id="globalComm" value="15" min="0" max="50"/></div>
+        <div class="ffield"><label>Min Booking Amount (Rs)</label><input type="number" id="minBooking" value="200"/></div>
+        <div class="ffield"><label>Platform Fee (Rs)</label><input type="number" id="platformFee" value="20"/></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">🛠️ Per-Service Commission Rates</div>
+      <div class="card-title">Per-Service Commission Rates</div>
       <div id="commissionRows"></div>
     </div>
     <div class="card">
-      <div class="card-title">🏆 Provider Tier Bonuses</div>
-      <div class="fgrid three">
+      <div class="card-title">Provider Tier Bonuses</div>
+      <div class="fgrid3">
         <div style="background:var(--yellow-light);border:2px solid #ffe58a;border-radius:12px;padding:16px;text-align:center;">
-          <div style="font-size:24px;margin-bottom:6px">🥉</div>
-          <div style="font-size:13px;font-weight:800;margin-bottom:8px">Bronze (0–50 orders)</div>
-          <div class="ffield"><label>Commission Reduction</label><input type="number" id="tier_bronze" value="0" min="0" max="10" style="text-align:center"/></div>
+          <div style="font-size:24px;margin-bottom:6px">&#127885;</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px">Bronze (0-50 orders)</div>
+          <div class="ffield"><label>Commission Reduction %</label><input type="number" id="tier_bronze" value="0" min="0" max="10" style="text-align:center"/></div>
         </div>
         <div style="background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
-          <div style="font-size:24px;margin-bottom:6px">🥈</div>
-          <div style="font-size:13px;font-weight:800;margin-bottom:8px">Silver (51–200 orders)</div>
-          <div class="ffield"><label>Commission Reduction</label><input type="number" id="tier_silver" value="2" min="0" max="10" style="text-align:center"/></div>
+          <div style="font-size:24px;margin-bottom:6px">&#127884;</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px">Silver (51-200 orders)</div>
+          <div class="ffield"><label>Commission Reduction %</label><input type="number" id="tier_silver" value="2" min="0" max="10" style="text-align:center"/></div>
         </div>
         <div style="background:var(--yellow-light);border:2px solid #ffe58a;border-radius:12px;padding:16px;text-align:center;">
-          <div style="font-size:24px;margin-bottom:6px">🥇</div>
+          <div style="font-size:24px;margin-bottom:6px">&#127883;</div>
           <div style="font-size:13px;font-weight:800;margin-bottom:8px">Gold (200+ orders)</div>
-          <div class="ffield"><label>Commission Reduction</label><input type="number" id="tier_gold" value="5" min="0" max="10" style="text-align:center"/></div>
+          <div class="ffield"><label>Commission Reduction %</label><input type="number" id="tier_gold" value="5" min="0" max="10" style="text-align:center"/></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ══ PAGE: ALL ORDERS ══ -->
+  <!-- ALL ORDERS -->
   <div class="page" id="page-orders">
     <div class="sec-header">
       <div class="sec-title">All Orders</div>
       <div class="sec-actions">
-        <input type="text" class="search-input" placeholder="🔍 Search orders…" oninput="searchOrders(this.value)"/>
-        <button class="fbtn active" onclick="filterOrders('all',this)">All</button>
-        <button class="fbtn" onclick="filterOrders('completed',this)">✅ Completed</button>
-        <button class="fbtn" onclick="filterOrders('pending',this)">⏳ Pending</button>
-        <button class="fbtn" onclick="filterOrders('cancelled',this)">❌ Cancelled</button>
+        <input type="text" class="srch" id="orderSearch" placeholder="Search..."/>
+        <button class="fbtn on" id="of-all">All</button>
+        <button class="fbtn" id="of-completed">Completed</button>
+        <button class="fbtn" id="of-pending">Pending</button>
+        <button class="fbtn" id="of-cancelled">Cancelled</button>
       </div>
     </div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Order ID</th><th>Customer</th><th>Provider</th><th>Service</th><th>Date</th><th>Amount</th><th>Commission</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody id="ordersBody"></tbody></table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Provider</th><th>Service</th><th>Date</th><th>Amount</th><th>Commission</th><th>Status</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
   </div>
 
-  <!-- ══ PAGE: CUSTOMERS ══ -->
+  <!-- CUSTOMERS -->
   <div class="page" id="page-customers">
     <div class="sec-header">
-      <div class="sec-title">👤 Registered Customers</div>
-      <input type="text" class="search-input" placeholder="🔍 Search customers…" oninput="searchCustomers(this.value)"/>
+      <div class="sec-title">Registered Customers</div>
+      <input type="text" class="srch" id="custSearch" placeholder="Search..."/>
     </div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Customer ID</th><th>Name</th><th>Mobile</th><th>Email</th><th>City</th><th>Total Bookings</th><th>Joined</th><th>Action</th></tr></thead>
-      <tbody id="customersBody"></tbody></table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Email</th><th>City</th><th>Bookings</th><th>Joined</th></tr></thead><tbody id="custBody"></tbody></table></div>
   </div>
 
-  <!-- ══ PAGE: SETTINGS ══ -->
+  <!-- SETTINGS -->
   <div class="page" id="page-settings">
     <div class="card">
-      <div class="card-title">🔒 Admin Credentials</div>
+      <div class="card-title">Admin Credentials</div>
       <div class="fgrid">
-        <div class="ffield"><label>Admin Username</label><input id="set_user" type="text"/></div>
-        <div class="ffield"><label>New Password</label><input id="set_pass" type="password" placeholder="Leave blank to keep current"/></div>
+        <div class="ffield"><label>Username</label><input id="set_user" type="text"/></div>
+        <div class="ffield"><label>New Password (leave blank to keep)</label><input id="set_pass" type="password"/></div>
       </div>
-      <button class="btn primary" onclick="saveSettings()">💾 Save Credentials</button>
+      <button class="btn primary" id="saveCredsBtn">Save Credentials</button>
     </div>
     <div class="card">
-      <div class="card-title">🌐 Platform Settings</div>
-      <div class="fgrid three">
+      <div class="card-title">Platform Settings</div>
+      <div class="fgrid3">
         <div class="ffield"><label>Platform Name</label><input id="set_name" value="Hamara Service"/></div>
         <div class="ffield"><label>Support Email</label><input id="set_email" value="support@hamaraservice.in"/></div>
         <div class="ffield"><label>Support Phone</label><input id="set_phone" value="+91-9999999999"/></div>
       </div>
-      <button class="btn green" onclick="saveSettings()">💾 Save Settings</button>
+      <button class="btn green-btn" id="savePlatformBtn">Save Settings</button>
     </div>
     <div class="card">
-      <div class="card-title">🗄️ Data Management</div>
-      <div class="info-box yellow">⚠️ These actions affect all data. Use with caution.</div>
+      <div class="card-title">Data Management</div>
+      <div class="info-box info-yellow">These actions affect all data. Use with caution.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn outline" onclick="exportData()">📥 Export All Data (JSON)</button>
-        <button class="btn danger" onclick="if(confirm('Reset all provider approvals to pending? This cannot be undone.'))resetApprovals()">🔄 Reset Approvals</button>
+        <button class="btn outline" id="exportBtn">Export All Data (JSON)</button>
+        <button class="btn danger" id="resetApprovalsBtn">Reset All Approvals to Pending</button>
       </div>
     </div>
   </div>
 
-</div><!-- end main-content -->
-</div><!-- end dash-wrap -->
-</div><!-- end dashboard -->
+</div><!-- main-content -->
+</div><!-- dash-wrap -->
+</div><!-- app -->
 
-<!-- ══ PROVIDER DETAIL MODAL ══ -->
+<!-- PROVIDER DETAIL MODAL -->
 <div class="modal-overlay" id="providerModal">
   <div class="modal-box wide">
     <div class="modal-title" id="pmTitle">Provider Details</div>
     <div class="modal-sub" id="pmSub"></div>
     <div class="prov-detail" id="pmDetail"></div>
-    <div style="margin-bottom:12px;"><strong style="font-size:13px;">Services Offered:</strong><div id="pmServices" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;"></div></div>
-    <div style="margin-bottom:12px;"><strong style="font-size:13px;">Booking History:</strong><div id="pmBookings" style="margin-top:8px;max-height:180px;overflow-y:auto;"></div></div>
+    <div style="margin-bottom:12px;"><strong style="font-size:13px;">Services Offered</strong><div id="pmServices" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;"></div></div>
+    <div><strong style="font-size:13px;">Booking History</strong><div id="pmBookings" style="margin-top:8px;max-height:180px;overflow-y:auto;"></div></div>
     <div class="modal-btns">
-      <button class="mbtn sec" onclick="closeModal('providerModal')">Close</button>
-      <button class="mbtn primary" id="pmApproveBtn">✅ Approve</button>
-      <button class="mbtn" style="background:var(--yellow);color:white;" id="pmSuspendBtn">🚫 Suspend</button>
+      <button class="mbtn sec" id="pmClose">Close</button>
+      <button class="mbtn primary" id="pmApproveBtn">Approve</button>
+      <button class="mbtn" style="background:var(--yellow);color:white;" id="pmSuspendBtn">Suspend</button>
     </div>
   </div>
 </div>
 
-<!-- ══ ADD SERVICE MODAL ══ -->
-<div class="modal-overlay" id="addServiceModal">
+<!-- ADD/EDIT SERVICE MODAL -->
+<div class="modal-overlay" id="svcModal">
   <div class="modal-box">
-    <div class="modal-title" id="svcModalTitle">➕ Add New Service</div>
+    <div class="modal-title" id="svcModalTitle">Add New Service</div>
     <div class="modal-sub">This service will be available for providers to offer</div>
     <div class="fgrid">
-      <div class="ffield"><label>Service Icon (emoji)</label><input id="svc_icon" placeholder="🧹" maxlength="4"/></div>
-      <div class="ffield"><label>Service Name *</label><input id="svc_name" placeholder="e.g. House Maid"/></div>
+      <div class="ffield"><label>Icon (emoji)</label><input id="svc_icon" placeholder="e.g. house emoji" maxlength="4"/></div>
+      <div class="ffield"><label>Service Name</label><input id="svc_name" placeholder="e.g. House Maid"/></div>
       <div class="ffield"><label>Category</label>
         <select id="svc_cat"><option>Cleaning</option><option>Cooking</option><option>Repair</option><option>Maintenance</option><option>Care</option><option>Transport</option><option>Security</option><option>Other</option></select>
       </div>
-      <div class="ffield"><label>Min Price (₹)</label><input type="number" id="svc_min" placeholder="399"/></div>
-      <div class="ffield"><label>Max Price (₹)</label><input type="number" id="svc_max" placeholder="1999"/></div>
-      <div class="ffield"><label>Default Provider Price (₹)</label><input type="number" id="svc_default" placeholder="499"/></div>
-      <div class="ffield"><label>Platform Commission (%)</label><input type="number" id="svc_comm" placeholder="15" min="0" max="50"/></div>
-      <div class="ffield"><label>Status</label>
-        <select id="svc_status"><option value="active">Active</option><option value="inactive">Inactive</option></select>
-      </div>
+      <div class="ffield"><label>Min Price (Rs)</label><input type="number" id="svc_min"/></div>
+      <div class="ffield"><label>Max Price (Rs)</label><input type="number" id="svc_max"/></div>
+      <div class="ffield"><label>Default Price (Rs)</label><input type="number" id="svc_default"/></div>
+      <div class="ffield"><label>Commission %</label><input type="number" id="svc_comm" value="15" min="0" max="50"/></div>
+      <div class="ffield"><label>Status</label><select id="svc_status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
     </div>
-    <div class="ffield" style="margin-bottom:12px;"><label>Description</label><textarea id="svc_desc" placeholder="Brief description of this service…"></textarea></div>
+    <div class="ffield" style="margin-bottom:12px;"><label>Description</label><textarea id="svc_desc"></textarea></div>
     <div class="modal-btns">
-      <button class="mbtn sec" onclick="closeModal('addServiceModal')">Cancel</button>
-      <button class="mbtn primary" id="svcSaveBtn" onclick="saveService()">✅ Save Service</button>
+      <button class="mbtn sec" id="svcClose">Cancel</button>
+      <button class="mbtn primary" id="svcSaveBtn">Save Service</button>
     </div>
   </div>
 </div>
 
-<!-- ══ ISSUE PENALTY MODAL ══ -->
+<!-- PENALTY MODAL -->
 <div class="modal-overlay" id="penaltyModal">
   <div class="modal-box">
-    <div class="modal-title">⚠️ Issue Penalty</div>
-    <div class="modal-sub">Penalty will be deducted from provider's next payout</div>
+    <div class="modal-title">Issue Penalty</div>
+    <div class="modal-sub">Penalty will be deducted from provider next payout</div>
+    <div class="ffield" style="margin-bottom:12px;"><label>Provider</label><select id="pen_provider"></select></div>
     <div class="fgrid">
-      <div class="ffield"><label>Provider</label>
-        <select id="pen_provider" style="grid-column:1/-1;"></select>
-      </div>
-      <div class="ffield"><label>Penalty Amount (₹)</label><input type="number" id="pen_amount" placeholder="200" min="0"/></div>
+      <div class="ffield"><label>Amount (Rs)</label><input type="number" id="pen_amount" placeholder="200" min="0"/></div>
       <div class="ffield"><label>Reason</label>
         <select id="pen_reason">
           <option>No-show without cancellation</option>
@@ -610,10 +532,10 @@ tr:hover td{background:#fafafa;}
         </select>
       </div>
     </div>
-    <div class="ffield" style="margin-bottom:12px;"><label>Notes</label><textarea id="pen_notes" placeholder="Additional details…"></textarea></div>
+    <div class="ffield" style="margin-bottom:12px;"><label>Notes</label><textarea id="pen_notes" placeholder="Additional details..."></textarea></div>
     <div class="modal-btns">
-      <button class="mbtn sec" onclick="closeModal('penaltyModal')">Cancel</button>
-      <button class="mbtn primary" onclick="issuePenalty()">⚠️ Issue Penalty</button>
+      <button class="mbtn sec" id="penClose">Cancel</button>
+      <button class="mbtn primary" id="penSubmitBtn">Issue Penalty</button>
     </div>
   </div>
 </div>
@@ -621,662 +543,510 @@ tr:hover td{background:#fafafa;}
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════
-// ADMIN CREDENTIALS (stored in localStorage)
-// ════════════════════════════════════════
-function getAdminCreds(){return JSON.parse(localStorage.getItem('hs_admin_creds')||'{"user":"admin","pass":"admin123"}')}
+// ====== CONSTANTS ======
+var DEFAULT_CATALOG = [
+  {id:"SVC001",icon:"🧹",name:"House Maid",cat:"Cleaning",minPrice:299,maxPrice:999,defaultPrice:499,commission:15,status:"active"},
+  {id:"SVC002",icon:"👨‍🍳",name:"Cooking Person",cat:"Cooking",minPrice:499,maxPrice:1499,defaultPrice:799,commission:12,status:"active"},
+  {id:"SVC003",icon:"❄️",name:"AC Cleaning",cat:"Maintenance",minPrice:499,maxPrice:1499,defaultPrice:799,commission:18,status:"active"},
+  {id:"SVC004",icon:"🔧",name:"Plumber",cat:"Repair",minPrice:299,maxPrice:1999,defaultPrice:599,commission:15,status:"active"},
+  {id:"SVC005",icon:"⚡",name:"Electrician",cat:"Repair",minPrice:399,maxPrice:2499,defaultPrice:699,commission:15,status:"active"},
+  {id:"SVC006",icon:"🪚",name:"Carpenter",cat:"Repair",minPrice:499,maxPrice:2999,defaultPrice:799,commission:15,status:"active"},
+  {id:"SVC007",icon:"🐛",name:"Pest Control",cat:"Maintenance",minPrice:699,maxPrice:2999,defaultPrice:999,commission:20,status:"active"},
+  {id:"SVC008",icon:"🫧",name:"Deep Cleaning",cat:"Cleaning",minPrice:999,maxPrice:4999,defaultPrice:1499,commission:18,status:"active"},
+  {id:"SVC009",icon:"🎨",name:"Painting",cat:"Maintenance",minPrice:999,maxPrice:9999,defaultPrice:1999,commission:12,status:"active"},
+  {id:"SVC010",icon:"🚗",name:"Car Wash",cat:"Other",minPrice:199,maxPrice:999,defaultPrice:399,commission:20,status:"active"},
+  {id:"SVC011",icon:"🌱",name:"Gardener",cat:"Maintenance",minPrice:299,maxPrice:999,defaultPrice:499,commission:15,status:"active"},
+  {id:"SVC012",icon:"💂",name:"Security Guard",cat:"Security",minPrice:699,maxPrice:1999,defaultPrice:999,commission:10,status:"active"},
+  {id:"SVC013",icon:"🚙",name:"Driver",cat:"Transport",minPrice:499,maxPrice:1499,defaultPrice:699,commission:12,status:"active"},
+  {id:"SVC014",icon:"👶",name:"Baby Sitter",cat:"Care",minPrice:399,maxPrice:1199,defaultPrice:599,commission:15,status:"active"},
+  {id:"SVC015",icon:"🏥",name:"Nurse / Care",cat:"Care",minPrice:799,maxPrice:2499,defaultPrice:1199,commission:10,status:"active"}
+];
 
-function doAdminLogin(){
-  const u=document.getElementById('adminUser').value.trim();
-  const p=document.getElementById('adminPass').value;
-  const creds=getAdminCreds();
-  if(u===creds.user&&p===creds.pass){
-    localStorage.setItem('hs_admin_session','1');
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    initAdmin();
-  } else {
-    const e=document.getElementById('loginErr');
-    e.textContent='❌ Invalid credentials';e.style.display='block';
-    setTimeout(()=>e.style.display='none',3000);
-  }
+// ====== DATA HELPERS ======
+function getAdminCreds(){
+  try{var s=localStorage.getItem("hs_admin_creds");if(s)return JSON.parse(s);}catch(e){}
+  return {user:"admin",pass:"admin123"};
 }
+function getCatalog(){
+  try{var s=localStorage.getItem("hs_catalog");if(s)return JSON.parse(s);}catch(e){}
+  localStorage.setItem("hs_catalog",JSON.stringify(DEFAULT_CATALOG));
+  return DEFAULT_CATALOG;
+}
+function saveCatalog(c){localStorage.setItem("hs_catalog",JSON.stringify(c));}
+function getProviders(){try{return JSON.parse(localStorage.getItem("hs_providers")||"[]");}catch(e){return[];}}
+function saveProviders(p){localStorage.setItem("hs_providers",JSON.stringify(p));}
+function getCustomers(){try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}}
+function getPenalties(){try{return JSON.parse(localStorage.getItem("hs_penalties")||"[]");}catch(e){return[];}}
+function savePenalties(p){localStorage.setItem("hs_penalties",JSON.stringify(p));}
+function getPayouts(){try{return JSON.parse(localStorage.getItem("hs_payouts")||"[]");}catch(e){return[];}}
+function savePayouts(p){localStorage.setItem("hs_payouts",JSON.stringify(p));}
+function getAllOrders(){
+  var providers=getProviders();
+  var catalog=getCatalog();
+  var all=[];
+  providers.forEach(function(p){
+    var bk=[];
+    try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
+    bk.forEach(function(b){
+      var svc=catalog.find(function(s){return s.name===b.service;});
+      var commPct=svc?svc.commission:15;
+      var commAmt=Math.round(b.amount*(commPct/100));
+      all.push(Object.assign({},b,{providerName:p.name,providerId:p.id,commissionAmt:commAmt,commissionPct:commPct}));
+    });
+  });
+  return all.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+}
+function cap(s){if(!s)return"";return s.charAt(0).toUpperCase()+s.slice(1);}
+function fmt(n){return n.toLocaleString("en-IN");}
+function showToast(msg){
+  var t=document.getElementById("toast");
+  t.textContent=msg;t.style.display="block";
+  clearTimeout(t._t);t._t=setTimeout(function(){t.style.display="none";},3500);
+}
+function closeModal(id){document.getElementById(id).classList.remove("show");}
 
-function doLogout(){localStorage.removeItem('hs_admin_session');location.reload();}
-
-window.addEventListener('load',()=>{
-  if(localStorage.getItem('hs_admin_session')==='1'){
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('dashboard').style.display='block';
+// ====== LOGIN ======
+window.addEventListener("load",function(){
+  if(localStorage.getItem("hs_admin_session")==="1"){
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
     initAdmin();
   }
 });
 
-// ════════════════════════════════════════
-// DEFAULT DATA
-// ════════════════════════════════════════
-const DEFAULT_CATALOG=[
-  {id:'SVC001',icon:'🧹',name:'House Maid',cat:'Cleaning',minPrice:299,maxPrice:999,defaultPrice:499,commission:15,status:'active'},
-  {id:'SVC002',icon:'👨‍🍳',name:'Cooking Person',cat:'Cooking',minPrice:499,maxPrice:1499,defaultPrice:799,commission:12,status:'active'},
-  {id:'SVC003',icon:'❄️',name:'AC Cleaning',cat:'Maintenance',minPrice:499,maxPrice:1499,defaultPrice:799,commission:18,status:'active'},
-  {id:'SVC004',icon:'🔧',name:'Plumber',cat:'Repair',minPrice:299,maxPrice:1999,defaultPrice:599,commission:15,status:'active'},
-  {id:'SVC005',icon:'⚡',name:'Electrician',cat:'Repair',minPrice:399,maxPrice:2499,defaultPrice:699,commission:15,status:'active'},
-  {id:'SVC006',icon:'🪚',name:'Carpenter',cat:'Repair',minPrice:499,maxPrice:2999,defaultPrice:799,commission:15,status:'active'},
-  {id:'SVC007',icon:'🐛',name:'Pest Control',cat:'Maintenance',minPrice:699,maxPrice:2999,defaultPrice:999,commission:20,status:'active'},
-  {id:'SVC008',icon:'🫧',name:'Deep Cleaning',cat:'Cleaning',minPrice:999,maxPrice:4999,defaultPrice:1499,commission:18,status:'active'},
-  {id:'SVC009',icon:'🎨',name:'Painting',cat:'Maintenance',minPrice:999,maxPrice:9999,defaultPrice:1999,commission:12,status:'active'},
-  {id:'SVC010',icon:'🚗',name:'Car Wash',cat:'Other',minPrice:199,maxPrice:999,defaultPrice:399,commission:20,status:'active'},
-  {id:'SVC011',icon:'🌱',name:'Gardener',cat:'Maintenance',minPrice:299,maxPrice:999,defaultPrice:499,commission:15,status:'active'},
-  {id:'SVC012',icon:'💂',name:'Security Guard',cat:'Security',minPrice:699,maxPrice:1999,defaultPrice:999,commission:10,status:'active'},
-  {id:'SVC013',icon:'🚙',name:'Driver',cat:'Transport',minPrice:499,maxPrice:1499,defaultPrice:699,commission:12,status:'active'},
-  {id:'SVC014',icon:'👶',name:'Baby Sitter',cat:'Care',minPrice:399,maxPrice:1199,defaultPrice:599,commission:15,status:'active'},
-  {id:'SVC015',icon:'🏥',name:'Nurse / Care',cat:'Care',minPrice:799,maxPrice:2499,defaultPrice:1199,commission:10,status:'active'},
-];
+document.getElementById("loginBtn").addEventListener("click",function(){
+  var u=document.getElementById("adminUser").value.trim();
+  var p=document.getElementById("adminPass").value;
+  var creds=getAdminCreds();
+  if(u===creds.user && p===creds.pass){
+    localStorage.setItem("hs_admin_session","1");
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
+    initAdmin();
+  } else {
+    var e=document.getElementById("loginErr");
+    e.textContent="Invalid credentials. Try: admin / admin123";
+    e.style.display="block";
+    setTimeout(function(){e.style.display="none";},4000);
+  }
+});
 
-function getCatalog(){
-  const saved=JSON.parse(localStorage.getItem('hs_catalog')||'null');
-  if(!saved){localStorage.setItem('hs_catalog',JSON.stringify(DEFAULT_CATALOG));return DEFAULT_CATALOG;}
-  return saved;
+document.getElementById("adminPass").addEventListener("keydown",function(e){
+  if(e.key==="Enter")document.getElementById("loginBtn").click();
+});
+
+document.getElementById("logoutBtn").addEventListener("click",function(){
+  localStorage.removeItem("hs_admin_session");
+  location.reload();
+});
+
+document.getElementById("hamburger").addEventListener("click",function(){
+  document.getElementById("sidebar").classList.toggle("open");
+});
+
+// ====== NAVIGATION ======
+var PAGE_TITLES={
+  "dashboard":"Dashboard","analytics":"Analytics","approvals":"Provider Approvals",
+  "providers":"All Providers","payments":"Payments and Payouts","penalties":"Penalties",
+  "services":"Service Catalog","commission":"Commission Rules","orders":"All Orders",
+  "customers":"Customers","settings":"Settings"
+};
+function showPage(name){
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active");});
+  document.querySelectorAll(".nav-item").forEach(function(n){n.classList.remove("active");});
+  var pg=document.getElementById("page-"+name);
+  if(pg)pg.classList.add("active");
+  var nav=document.getElementById("nav-"+name);
+  if(nav)nav.classList.add("active");
+  document.getElementById("pageTitle").textContent=(PAGE_TITLES[name]||name);
+  document.getElementById("sidebar").classList.remove("open");
 }
-function saveCatalog(c){localStorage.setItem('hs_catalog',JSON.stringify(c));}
-function getProviders(){return JSON.parse(localStorage.getItem('hs_providers')||'[]');}
-function saveProviders(p){localStorage.setItem('hs_providers',JSON.stringify(p));}
-function getCustomers(){return JSON.parse(localStorage.getItem('hs_customers')||'[]');}
-function getPenalties(){return JSON.parse(localStorage.getItem('hs_penalties')||'[]');}
-function savePenalties(p){localStorage.setItem('hs_penalties',JSON.stringify(p));}
-function getPayouts(){return JSON.parse(localStorage.getItem('hs_payouts')||'[]');}
-function savePayouts(p){localStorage.setItem('hs_payouts',JSON.stringify(p));}
+["dashboard","analytics","approvals","providers","payments","penalties","services","commission","orders","customers","settings"].forEach(function(name){
+  var el=document.getElementById("nav-"+name);
+  if(el)el.addEventListener("click",function(){showPage(name);});
+});
+document.getElementById("viewAllApprovalsBtn").addEventListener("click",function(){showPage("approvals");});
+document.getElementById("viewAllOrdersBtn").addEventListener("click",function(){showPage("orders");});
 
-function getAllOrders(){
-  const providers=getProviders();
-  let all=[];
-  providers.forEach(p=>{
-    const bk=JSON.parse(localStorage.getItem('hs_bk_'+p.id)||'[]');
-    bk.forEach(b=>{
-      const svc=getCatalog().find(s=>s.name===b.service)||{commission:15};
-      const comm=Math.round(b.amount*(svc.commission/100));
-      all.push({...b,providerName:p.name,providerId:p.id,commissionAmt:comm,commissionPct:svc.commission});
-    });
-  });
-  return all.sort((a,b)=>new Date(b.date)-new Date(a.date));
-}
-
-// ════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════
+// ====== INIT ======
 function initAdmin(){
-  document.getElementById('topbarDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-  const creds=getAdminCreds();
-  document.getElementById('set_user').value=creds.user;
-  getCatalog(); // init catalog
+  document.getElementById("topbarDate").textContent=new Date().toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+  var creds=getAdminCreds();
+  document.getElementById("set_user").value=creds.user;
+  getCatalog();
   loadDashboard();
-  loadApprovals();
-  loadProviders();
-  loadOrders();
+  loadApprovals("pending");
+  loadProviders(null,null);
+  loadOrders(null,null);
   loadCatalog();
   loadCommission();
-  loadPayments();
+  loadPayments("pending");
   loadPenalties();
-  loadCustomers();
+  loadCustomers(null);
   loadAnalytics();
 }
 
-// ════════════════════════════════════════
-// DASHBOARD
-// ════════════════════════════════════════
+// ====== DASHBOARD ======
 function loadDashboard(){
-  const providers=getProviders();
-  const customers=getCustomers();
-  const orders=getAllOrders();
-  const penalties=getPenalties();
-  const catalog=getCatalog();
-  const pending=providers.filter(p=>(!p.status||p.status==='pending'));
-  const approved=providers.filter(p=>p.status==='approved');
-  const completed=orders.filter(o=>o.status==='completed');
-  const totalGMV=completed.reduce((s,o)=>s+o.amount,0);
-  const totalComm=completed.reduce((s,o)=>s+o.commissionAmt,0);
-  const totalPayouts=providers.reduce((s,p)=>s+(p.withdrawnEarned||0),0);
+  var providers=getProviders();
+  var customers=getCustomers();
+  var orders=getAllOrders();
+  var penalties=getPenalties();
+  var catalog=getCatalog();
+  var pending=providers.filter(function(p){return !p.status||p.status==="pending";});
+  var approved=providers.filter(function(p){return p.status==="approved";});
+  var completed=orders.filter(function(o){return o.status==="completed";});
+  var totalGMV=completed.reduce(function(s,o){return s+o.amount;},0);
+  var totalComm=completed.reduce(function(s,o){return s+o.commissionAmt;},0);
+  var totalPayouts=providers.reduce(function(s,p){return s+(p.withdrawnEarned||0);},0);
 
-  document.getElementById('ds-providers').textContent=providers.length;
-  document.getElementById('ds-active-providers').textContent=approved.length+' approved';
-  document.getElementById('ds-pending').textContent=pending.length;
-  document.getElementById('ds-revenue').textContent='₹'+totalComm.toLocaleString('en-IN');
-  document.getElementById('ds-orders').textContent=orders.length;
-  document.getElementById('ds-completed').textContent=completed.length+' completed';
-  document.getElementById('ds-customers').textContent=customers.length;
-  document.getElementById('ds-payouts').textContent='₹'+totalPayouts.toLocaleString('en-IN');
-  document.getElementById('ds-penalties').textContent=penalties.length;
-  document.getElementById('ds-services').textContent=catalog.filter(s=>s.status==='active').length;
-  document.getElementById('approvalBadge').textContent=pending.length;
+  document.getElementById("ds-providers").textContent=providers.length;
+  document.getElementById("ds-active-prov").textContent=approved.length+" approved";
+  document.getElementById("ds-pending").textContent=pending.length;
+  document.getElementById("ds-revenue").textContent="Rs "+fmt(totalComm);
+  document.getElementById("ds-orders").textContent=orders.length;
+  document.getElementById("ds-completed-lbl").textContent=completed.length+" completed";
+  document.getElementById("ds-customers").textContent=customers.length;
+  document.getElementById("ds-payouts").textContent="Rs "+fmt(totalPayouts);
+  document.getElementById("ds-penalties").textContent=penalties.length;
+  document.getElementById("ds-services").textContent=catalog.filter(function(s){return s.status==="active";}).length;
+  document.getElementById("approvalBadge").textContent=pending.length;
 
-  // Pending in dashboard
-  document.getElementById('dashPendingBody').innerHTML=pending.slice(0,5).map(p=>`
-    <tr>
-      <td><strong>${p.name}</strong></td><td>${p.phone}</td>
-      <td>${(p.services||[]).map(s=>s.icon).join(' ')}</td>
-      <td>${p.address||'—'}</td>
-      <td>${new Date(p.registeredAt).toLocaleDateString('en-IN')}</td>
-      <td>
-        <button class="abtn approve" onclick="quickApprove('${p.id}')">✅ Approve</button>
-        <button class="abtn reject" onclick="quickReject('${p.id}')">❌ Reject</button>
-      </td>
-    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No pending approvals</td></tr>';
+  var dpb=document.getElementById("dashPendingBody");
+  if(pending.length===0){
+    dpb.innerHTML="<tr><td colspan=\"6\" style=\"text-align:center;color:var(--muted);padding:20px\">No pending approvals</td></tr>";
+  } else {
+    dpb.innerHTML=pending.slice(0,5).map(function(p){
+      return "<tr><td><strong>"+p.name+"</strong></td><td>"+p.phone+"</td><td>"+(p.services||[]).map(function(s){return s.icon;}).join(" ")+"</td><td style=\"font-size:12px\">"+(p.address||"--")+"</td><td style=\"font-size:12px\">"+(p.registeredAt?new Date(p.registeredAt).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn approve\" onclick=\"quickApprove('"+p.id+"')\" >Approve</button> <button class=\"abtn reject\" onclick=\"quickReject('"+p.id+"')\"  >Reject</button></td></tr>";
+    }).join("");
+  }
 
-  // Recent orders in dashboard
-  document.getElementById('dashOrdersBody').innerHTML=orders.slice(0,6).map(o=>`
-    <tr>
-      <td><strong>${o.id}</strong></td><td>${o.customer||'—'}</td><td>${o.providerName}</td>
-      <td>${o.service}</td><td><strong>₹${o.amount}</strong></td>
-      <td><span style="color:var(--purple);font-weight:800">₹${o.commissionAmt}</span></td>
-      <td><span class="badge ${o.status}">${cap(o.status)}</span></td>
-    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No orders yet</td></tr>';
+  var dob=document.getElementById("dashOrdersBody");
+  if(orders.length===0){
+    dob.innerHTML="<tr><td colspan=\"7\" style=\"text-align:center;color:var(--muted);padding:20px\">No orders yet</td></tr>";
+  } else {
+    dob.innerHTML=orders.slice(0,6).map(function(o){
+      return "<tr><td><strong>"+o.id+"</strong></td><td>"+(o.customer||"Guest")+"</td><td>"+o.providerName+"</td><td>"+o.service+"</td><td>Rs "+o.amount+"</td><td style=\"color:var(--purple);font-weight:800\">Rs "+o.commissionAmt+"</td><td><span class=\"badge "+o.status+"\">"+cap(o.status)+"</span></td></tr>";
+    }).join("");
+  }
 }
 
-// ════════════════════════════════════════
-// ANALYTICS
-// ════════════════════════════════════════
+// ====== ANALYTICS ======
 function loadAnalytics(){
-  const orders=getAllOrders();
-  const completed=orders.filter(o=>o.status==='completed');
-  const gmv=completed.reduce((s,o)=>s+o.amount,0);
-  const comm=completed.reduce((s,o)=>s+o.commissionAmt,0);
-  const aov=completed.length?Math.round(gmv/completed.length):0;
-  const compRate=orders.length?((completed.length/orders.length)*100).toFixed(0):0;
-  const cancRate=orders.length?(((orders.filter(o=>o.status==='cancelled').length)/orders.length)*100).toFixed(0):0;
-  document.getElementById('an-gmv').textContent='₹'+gmv.toLocaleString('en-IN');
-  document.getElementById('an-commission').textContent='₹'+comm.toLocaleString('en-IN');
-  document.getElementById('an-aov').textContent='₹'+aov.toLocaleString('en-IN');
-  document.getElementById('an-completion').textContent=compRate+'%';
-  document.getElementById('an-cancellation').textContent=cancRate+'%';
+  var orders=getAllOrders();
+  var completed=orders.filter(function(o){return o.status==="completed";});
+  var gmv=completed.reduce(function(s,o){return s+o.amount;},0);
+  var comm=completed.reduce(function(s,o){return s+o.commissionAmt;},0);
+  var aov=completed.length?Math.round(gmv/completed.length):0;
+  var crate=orders.length?((completed.length/orders.length)*100).toFixed(0):0;
+  var canc=orders.length?(((orders.filter(function(o){return o.status==="cancelled";}).length)/orders.length)*100).toFixed(0):0;
+  document.getElementById("an-gmv").textContent="Rs "+fmt(gmv);
+  document.getElementById("an-comm").textContent="Rs "+fmt(comm);
+  document.getElementById("an-aov").textContent="Rs "+fmt(aov);
+  document.getElementById("an-crate").textContent=crate+"%";
+  document.getElementById("an-canc").textContent=canc+"%";
 
-  // Revenue chart (last 7 days)
-  const days7=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().split('T')[0];});
-  const rev7=days7.map(d=>completed.filter(o=>o.date===d).reduce((s,o)=>s+o.commissionAmt,0));
-  const maxR=Math.max(...rev7,1);
-  const rc=document.getElementById('revenueChart');rc.innerHTML='';
-  rev7.forEach(v=>{const col=document.createElement('div');col.className='bc';col.innerHTML=`<div class="bv">${v>0?'₹'+v:''}</div><div class="bar" style="height:${Math.max((v/maxR*100),4)}%"></div>`;rc.appendChild(col);});
-  const rl=document.getElementById('revenueChartLabels');rl.innerHTML=days7.map(d=>`<span style="font-size:10px;font-weight:800;color:var(--muted);flex:1;text-align:center">${new Date(d).toLocaleDateString('en-IN',{weekday:'short'})}</span>`).join('');
+  var days7=[],i;
+  for(i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);days7.push(d.toISOString().split("T")[0]);}
+  var rev7=days7.map(function(d){return completed.filter(function(o){return o.date===d;}).reduce(function(s,o){return s+o.commissionAmt;},0);});
+  var maxR=Math.max.apply(null,rev7.concat([1]));
+  var rc=document.getElementById("revChart");rc.innerHTML="";
+  rev7.forEach(function(v){var col=document.createElement("div");col.className="bc";col.innerHTML="<div class=\"bv\">"+(v>0?"Rs "+v:"")+"</div><div class=\"bar\" style=\"height:"+Math.max((v/maxR*100),4)+"%\"></div>";rc.appendChild(col);});
+  var rl=document.getElementById("revLabels");rl.innerHTML=days7.map(function(d){return "<span style=\"font-size:10px;font-weight:800;color:var(--muted);flex:1;text-align:center\">"+new Date(d).toLocaleDateString("en-IN",{weekday:"short"})+"</span>";}).join("");
 
-  // Service breakdown
-  const svcMap={};
-  completed.forEach(o=>{svcMap[o.service]=(svcMap[o.service]||0)+1;});
-  document.getElementById('svcBreakdown').innerHTML=Object.entries(svcMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([s,c])=>`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:800;flex:1">${s}</div>
-      <div style="flex:2;height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,var(--purple),#a855f7);width:${(c/Math.max(...Object.values(svcMap)))*100}%;border-radius:4px;"></div></div>
-      <div style="font-size:12px;font-weight:800;color:var(--purple);width:30px;text-align:right">${c}</div>
-    </div>`).join('')||'<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No orders yet</div>';
+  var svcMap={};
+  completed.forEach(function(o){svcMap[o.service]=(svcMap[o.service]||0)+1;});
+  var svcEntries=Object.entries(svcMap).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+  var maxSvc=svcEntries.length?svcEntries[0][1]:1;
+  document.getElementById("svcBreak").innerHTML=svcEntries.map(function(e){
+    return "<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:10px\"><div style=\"font-size:13px;font-weight:800;flex:1\">"+e[0]+"</div><div style=\"flex:2;height:8px;background:var(--border);border-radius:4px;overflow:hidden\"><div style=\"height:100%;background:linear-gradient(90deg,var(--purple),#a855f7);width:"+((e[1]/maxSvc)*100).toFixed(0)+"%\"></div></div><div style=\"font-size:12px;font-weight:800;color:var(--purple);width:24px;text-align:right\">"+e[1]+"</div></div>";
+  }).join("")||"<div style=\"color:var(--muted);text-align:center;padding:20px\">No orders yet</div>";
 
-  // Top providers
-  const provMap={};
-  completed.forEach(o=>{provMap[o.providerName]=(provMap[o.providerName]||0)+o.amount;});
-  document.getElementById('topProviders').innerHTML=Object.entries(provMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,amt],i)=>`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="width:22px;height:22px;border-radius:50%;background:${['#f59e0b','#9ca3af','#b45309','var(--blue)','var(--muted)'][i]};color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">${i+1}</div>
-      <div style="font-size:13px;font-weight:800;flex:1">${n}</div>
-      <div style="font-size:13px;font-weight:900;color:var(--green)">₹${amt.toLocaleString('en-IN')}</div>
-    </div>`).join('')||'<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No data</div>';
+  var provMap={};
+  completed.forEach(function(o){provMap[o.providerName]=(provMap[o.providerName]||0)+o.amount;});
+  var provEntries=Object.entries(provMap).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  var colors=["#f59e0b","#9ca3af","#b45309","var(--blue)","var(--muted)"];
+  document.getElementById("topProvs").innerHTML=provEntries.map(function(e,i){
+    return "<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:10px\"><div style=\"width:22px;height:22px;border-radius:50%;background:"+colors[i]+";color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0\">"+( i+1)+"</div><div style=\"font-size:13px;font-weight:800;flex:1\">"+e[0]+"</div><div style=\"font-size:13px;font-weight:900;color:var(--green)\">Rs "+fmt(e[1])+"</div></div>";
+  }).join("")||"<div style=\"color:var(--muted);text-align:center;padding:20px\">No data</div>";
 }
 
-// ════════════════════════════════════════
-// APPROVALS
-// ════════════════════════════════════════
-let currentApprovalFilter='pending';
+// ====== APPROVALS ======
+var currentApprovalFilter="pending";
 function loadApprovals(filter){
-  filter=filter||currentApprovalFilter;
-  let providers=getProviders();
-  if(filter==='pending') providers=providers.filter(p=>!p.status||p.status==='pending');
-  else if(filter==='review') providers=providers.filter(p=>p.status==='review');
-  document.getElementById('approvalsBody').innerHTML=providers.map(p=>`
-    <tr>
-      <td><strong style="font-size:12px;color:var(--purple)">${p.id}</strong></td>
-      <td><strong>${p.name}</strong><br/><small style="color:var(--muted)">${p.gender||'—'} · ${p.experience}</small></td>
-      <td>${p.phone}</td>
-      <td>${(p.services||[]).map(s=>`<span style="font-size:18px" title="${s.name}">${s.icon}</span>`).join('')}</td>
-      <td style="font-size:12px">${p.address||'—'}</td>
-      <td style="font-size:12px">${p.idType||'—'}: <strong>${p.idNum||'—'}</strong></td>
-      <td style="font-size:12px">${p.registeredAt?new Date(p.registeredAt).toLocaleDateString('en-IN'):'—'}</td>
-      <td><span class="badge ${p.status||'pending'}">${cap(p.status||'pending')}</span></td>
-      <td>
-        <button class="abtn view" onclick="viewProvider('${p.id}')">👁</button>
-        ${(!p.status||p.status==='pending'||p.status==='review')?`
-        <button class="abtn approve" onclick="quickApprove('${p.id}')">✅</button>
-        <button class="abtn reject" onclick="quickReject('${p.id}')">❌</button>
-        <button class="abtn suspend" onclick="markReview('${p.id}')">🔍</button>
-        `:(!p.suspended?`<button class="abtn suspend" onclick="suspendProvider('${p.id}')">🚫</button>`:`<button class="abtn approve" onclick="quickApprove('${p.id}')">♻️ Restore</button>`)}
-      </td>
-    </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No providers in this queue</td></tr>';
+  if(filter)currentApprovalFilter=filter;
+  var providers=getProviders();
+  if(currentApprovalFilter==="pending") providers=providers.filter(function(p){return !p.status||p.status==="pending";});
+  else if(currentApprovalFilter==="review") providers=providers.filter(function(p){return p.status==="review";});
+  document.getElementById("approvalsBody").innerHTML=providers.map(function(p){
+    var status=p.status||"pending";
+    var actions="";
+    if(status==="pending"||status==="review"){
+      actions="<button class=\"abtn approve\" onclick=\"quickApprove('"+p.id+"')\" >Approve</button> <button class=\"abtn reject\" onclick=\"quickReject('"+p.id+"')\" >Reject</button> <button class=\"abtn suspend\" onclick=\"markReview('"+p.id+"')\" >Review</button>";
+    } else if(status==="approved"){
+      actions="<button class=\"abtn suspend\" onclick=\"suspendProvider('"+p.id+"')\" >Suspend</button>";
+    } else {
+      actions="<button class=\"abtn approve\" onclick=\"quickApprove('"+p.id+"')\" >Restore</button>";
+    }
+    return "<tr><td><strong style=\"font-size:12px;color:var(--purple)\">"+p.id+"</strong></td><td><strong>"+p.name+"</strong><br/><small style=\"color:var(--muted)\">"+( p.gender||"")+" "+( p.experience||"")+"</small></td><td>"+p.phone+"</td><td>"+(p.services||[]).map(function(s){return "<span title=\""+s.name+"\">"+s.icon+"</span>";}).join(" ")+"</td><td style=\"font-size:12px\">"+(p.address||"--")+"</td><td style=\"font-size:12px\">"+(p.idType||"--")+": "+(p.idNum||"--")+"</td><td style=\"font-size:12px\">"+(p.registeredAt?new Date(p.registeredAt).toLocaleDateString("en-IN"):"--")+"</td><td><span class=\"badge "+status+"\">"+cap(status)+"</span></td><td><button class=\"abtn view\" onclick=\"viewProvider('"+p.id+"')\" >View</button> "+actions+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"9\" style=\"text-align:center;color:var(--muted);padding:24px\">No providers in this queue</td></tr>";
 }
 
-function filterApprovals(f,btn){
-  document.querySelectorAll('#page-approvals .fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentApprovalFilter=f;
-  loadApprovals(f);
-}
+document.getElementById("af-pending").addEventListener("click",function(){
+  document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("pending");});
+document.getElementById("af-review").addEventListener("click",function(){
+  document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("review");});
+document.getElementById("af-all").addEventListener("click",function(){
+  document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("all");});
 
 function quickApprove(id){
-  const all=getProviders();
-  const idx=all.findIndex(p=>p.id===id);
-  if(idx>-1){all[idx].status='approved';all[idx].suspended=false;saveProviders(all);}
-  refresh(); showToast('✅ Provider '+id+' approved!');
+  var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
+  if(idx>-1){all[idx].status="approved";all[idx].suspended=false;saveProviders(all);}
+  refreshAll();showToast("Provider "+id+" approved!");
 }
 function quickReject(id){
-  if(!confirm('Reject and remove this provider?'))return;
-  const all=getProviders().filter(p=>p.id!==id);
-  saveProviders(all);
-  refresh(); showToast('❌ Provider rejected and removed');
+  if(!confirm("Reject and remove this provider permanently?"))return;
+  saveProviders(getProviders().filter(function(p){return p.id!==id;}));
+  refreshAll();showToast("Provider rejected and removed");
 }
 function suspendProvider(id){
-  const all=getProviders();
-  const idx=all.findIndex(p=>p.id===id);
-  if(idx>-1){all[idx].status='suspended';all[idx].suspended=true;saveProviders(all);}
-  refresh(); showToast('🚫 Provider suspended');
+  var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
+  if(idx>-1){all[idx].status="suspended";all[idx].suspended=true;saveProviders(all);}
+  refreshAll();showToast("Provider suspended");
 }
 function markReview(id){
-  const all=getProviders();
-  const idx=all.findIndex(p=>p.id===id);
-  if(idx>-1){all[idx].status='review';saveProviders(all);}
-  refresh(); showToast('🔍 Marked for review');
+  var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
+  if(idx>-1){all[idx].status="review";saveProviders(all);}
+  refreshAll();showToast("Marked for review");
 }
 
-// ════════════════════════════════════════
-// PROVIDERS
-// ════════════════════════════════════════
+// ====== ALL PROVIDERS ======
+var provFilterState="all";
 function loadProviders(filter,query){
-  let providers=getProviders();
-  if(filter&&filter!=='all') providers=providers.filter(p=>(p.status||'pending')===filter);
-  if(query) providers=providers.filter(p=>p.name.toLowerCase().includes(query)||p.phone.includes(query)||p.id.toLowerCase().includes(query));
-  const catalog=getCatalog();
-  document.getElementById('providersBody').innerHTML=providers.map(p=>{
-    const bk=JSON.parse(localStorage.getItem('hs_bk_'+p.id)||'[]');
-    const done=bk.filter(b=>b.status==='completed');
-    const earned=done.reduce((s,b)=>s+b.amount,0);
-    const commAmt=done.reduce((s,b)=>{const sv=catalog.find(c=>c.name===b.service)||{commission:15};return s+Math.round(b.amount*(sv.commission/100));},0);
-    const status=p.status||'pending';
-    return `<tr>
-      <td><strong style="font-size:12px;color:var(--purple)">${p.id}</strong></td>
-      <td><strong>${p.name}</strong><br/><small style="color:var(--muted)">${p.experience}</small></td>
-      <td>${p.phone}</td>
-      <td>${(p.services||[]).map(s=>`<span title="${s.name}">${s.icon}</span>`).join(' ')}</td>
-      <td style="font-size:12px">${p.address||'—'}</td>
-      <td>${p.rating?'⭐'+p.rating:'—'}</td>
-      <td>${bk.length} / ${done.length}</td>
-      <td><strong style="color:var(--green)">₹${earned.toLocaleString('en-IN')}</strong></td>
-      <td><strong style="color:var(--purple)">₹${commAmt.toLocaleString('en-IN')}</strong></td>
-      <td><span class="badge ${status}">${cap(status)}</span></td>
-      <td>
-        <button class="abtn view" onclick="viewProvider('${p.id}')">👁</button>
-        ${status!=='approved'?`<button class="abtn approve" onclick="quickApprove('${p.id}')">✅</button>`:''}
-        ${status!=='suspended'?`<button class="abtn suspend" onclick="suspendProvider('${p.id}')">🚫</button>`:`<button class="abtn approve" onclick="quickApprove('${p.id}')">♻️</button>`}
-        <button class="abtn delete" onclick="quickReject('${p.id}')">🗑</button>
-      </td>
-    </tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:24px">No providers found</td></tr>';
+  if(filter!==null&&filter!==undefined)provFilterState=filter;
+  var providers=getProviders();
+  if(provFilterState&&provFilterState!=="all") providers=providers.filter(function(p){return (p.status||"pending")===provFilterState;});
+  if(query) providers=providers.filter(function(p){return (p.name+p.phone+p.id).toLowerCase().includes(query);});
+  var catalog=getCatalog();
+  document.getElementById("providersBody").innerHTML=providers.map(function(p){
+    var bk=[];try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
+    var done=bk.filter(function(b){return b.status==="completed";});
+    var earned=done.reduce(function(s,b){return s+b.amount;},0);
+    var commAmt=done.reduce(function(s,b){var sv=catalog.find(function(c){return c.name===b.service;});var cp=sv?sv.commission:15;return s+Math.round(b.amount*(cp/100));},0);
+    var status=p.status||"pending";
+    var actions="<button class=\"abtn view\" onclick=\"viewProvider('"+p.id+"')\" >View</button> ";
+    if(status!=="approved") actions+="<button class=\"abtn approve\" onclick=\"quickApprove('"+p.id+"')\" >OK</button> ";
+    if(status!=="suspended") actions+="<button class=\"abtn suspend\" onclick=\"suspendProvider('"+p.id+"')\" >Ban</button> ";
+    actions+="<button class=\"abtn del\" onclick=\"quickReject('"+p.id+"')\" >Del</button>";
+    return "<tr><td><strong style=\"font-size:12px;color:var(--purple)\">"+p.id+"</strong></td><td><strong>"+p.name+"</strong><br/><small style=\"color:var(--muted)\">"+( p.experience||"")+"</small></td><td>"+p.phone+"</td><td>"+(p.services||[]).map(function(s){return "<span title=\""+s.name+"\">"+s.icon+"</span>";}).join(" ")+"</td><td style=\"font-size:12px\">"+(p.address||"--")+"</td><td>"+(p.rating?""+p.rating:"--")+"</td><td>"+bk.length+" / "+done.length+"</td><td style=\"color:var(--green);font-weight:800\">Rs "+fmt(earned)+"</td><td style=\"color:var(--purple);font-weight:800\">Rs "+fmt(commAmt)+"</td><td><span class=\"badge "+status+"\">"+cap(status)+"</span></td><td>"+actions+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"11\" style=\"text-align:center;color:var(--muted);padding:24px\">No providers found</td></tr>";
 }
+document.getElementById("pf-all").addEventListener("click",function(){document.querySelectorAll("#page-providers .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadProviders("all",null);});
+document.getElementById("pf-approved").addEventListener("click",function(){document.querySelectorAll("#page-providers .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadProviders("approved",null);});
+document.getElementById("pf-pending").addEventListener("click",function(){document.querySelectorAll("#page-providers .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadProviders("pending",null);});
+document.getElementById("pf-suspended").addEventListener("click",function(){document.querySelectorAll("#page-providers .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadProviders("suspended",null);});
+document.getElementById("provSearch").addEventListener("input",function(){loadProviders(null,this.value.toLowerCase());});
 
-function filterProviders(f,btn){document.querySelectorAll('#page-providers .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadProviders(f==='all'?null:f);}
-function searchProviders(q){loadProviders(null,q.toLowerCase());}
-
+// ====== VIEW PROVIDER MODAL ======
 function viewProvider(id){
-  const p=getProviders().find(pr=>pr.id===id);
-  if(!p)return;
-  document.getElementById('pmTitle').textContent='👷 '+p.name;
-  document.getElementById('pmSub').textContent=p.id+' · Registered '+new Date(p.registeredAt||Date.now()).toLocaleDateString('en-IN');
-  const bk=JSON.parse(localStorage.getItem('hs_bk_'+p.id)||'[]');
-  const done=bk.filter(b=>b.status==='completed');
-  const fields=[
-    ['Mobile',p.phone],['Email',p.email||'—'],['WhatsApp',p.whatsapp||'—'],
-    ['Gender',p.gender||'—'],['Experience',p.experience],
-    ['ID Type',p.idType||'—'],['ID Number',p.idNum||'—'],
-    ['Location',p.address||'—'],['Radius',p.radius?p.radius+' km':'—'],
-    ['Status',cap(p.status||'pending')],
-    ['Total Bookings',bk.length],['Completed',done.length],
-    ['Total Earned','₹'+(done.reduce((s,b)=>s+b.amount,0)).toLocaleString('en-IN')],
-    ['Rating',p.rating||'—'],
-  ];
-  document.getElementById('pmDetail').innerHTML=fields.map(([l,v])=>`<div class="prov-detail-row"><div class="prov-detail-label">${l}</div><div class="prov-detail-val">${v}</div></div>`).join('');
-  document.getElementById('pmServices').innerHTML=(p.services||[]).map(s=>`<span style="background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800">${s.icon} ${s.name} — <span style="color:var(--green)">₹${s.price}</span></span>`).join('');
-  document.getElementById('pmBookings').innerHTML=bk.length?`<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px;background:var(--bg)">ID</th><th style="text-align:left;padding:6px;background:var(--bg)">Service</th><th style="text-align:left;padding:6px;background:var(--bg)">Amount</th><th style="text-align:left;padding:6px;background:var(--bg)">Date</th><th style="text-align:left;padding:6px;background:var(--bg)">Status</th></tr></thead><tbody>${bk.map(b=>`<tr><td style="padding:6px;border-bottom:1px solid var(--border)">${b.id}</td><td style="padding:6px;border-bottom:1px solid var(--border)">${b.service}</td><td style="padding:6px;border-bottom:1px solid var(--border);font-weight:800">₹${b.amount}</td><td style="padding:6px;border-bottom:1px solid var(--border)">${b.date}</td><td style="padding:6px;border-bottom:1px solid var(--border)"><span class="badge ${b.status}">${cap(b.status)}</span></td></tr>`).join('')}</tbody></table>`:'<div style="color:var(--muted);font-size:13px;padding:12px">No bookings yet</div>';
-  document.getElementById('pmApproveBtn').onclick=()=>{quickApprove(id);closeModal('providerModal');};
-  document.getElementById('pmSuspendBtn').onclick=()=>{suspendProvider(id);closeModal('providerModal');};
-  document.getElementById('providerModal').classList.add('show');
+  var p=getProviders().find(function(pr){return pr.id===id;});if(!p)return;
+  document.getElementById("pmTitle").textContent=p.name;
+  document.getElementById("pmSub").textContent=p.id+" - Registered "+new Date(p.registeredAt||Date.now()).toLocaleDateString("en-IN");
+  var bk=[];try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
+  var done=bk.filter(function(b){return b.status==="completed";});
+  var fields=[["Mobile",p.phone],["Email",p.email||"--"],["WhatsApp",p.whatsapp||"--"],["Gender",p.gender||"--"],["Experience",p.experience||"--"],["ID Type",p.idType||"--"],["ID Number",p.idNum||"--"],["Location",p.address||"--"],["Radius",(p.radius?p.radius+" km":"--")],["Status",cap(p.status||"pending")],["Total Bookings",bk.length],["Completed",done.length],["Total Earned","Rs "+fmt(done.reduce(function(s,b){return s+b.amount;},0))],["Rating",p.rating||"--"]];
+  document.getElementById("pmDetail").innerHTML=fields.map(function(f){return "<div class=\"prov-detail-row\"><div class=\"prov-detail-label\">"+f[0]+"</div><div class=\"prov-detail-val\">"+f[1]+"</div></div>";}).join("");
+  document.getElementById("pmServices").innerHTML=(p.services||[]).map(function(s){return "<span style=\"background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800\">"+s.icon+" "+s.name+" - Rs "+s.price+"</span>";}).join("");
+  document.getElementById("pmBookings").innerHTML=bk.length?"<table style=\"width:100%;font-size:12px;border-collapse:collapse\"><thead><tr><th style=\"text-align:left;padding:5px;background:var(--bg)\">ID</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Service</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Amt</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Date</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Status</th></tr></thead><tbody>"+bk.map(function(b){return "<tr><td style=\"padding:5px;border-bottom:1px solid var(--border)\">"+b.id+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border)\">"+b.service+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border);font-weight:800\">Rs "+b.amount+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border)\">"+b.date+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border)\"><span class=\"badge "+b.status+"\">"+cap(b.status)+"</span></td></tr>";}).join("")+"</tbody></table>":"<div style=\"color:var(--muted);font-size:13px;padding:12px\">No bookings yet</div>";
+  document.getElementById("pmApproveBtn").onclick=function(){quickApprove(id);closeModal("providerModal");};
+  document.getElementById("pmSuspendBtn").onclick=function(){suspendProvider(id);closeModal("providerModal");};
+  document.getElementById("providerModal").classList.add("show");
 }
+document.getElementById("pmClose").addEventListener("click",function(){closeModal("providerModal");});
 
-// ════════════════════════════════════════
-// PAYMENTS
-// ════════════════════════════════════════
+// ====== PAYMENTS ======
+var payFilterState="pending";
 function loadPayments(filter){
-  const orders=getAllOrders();
-  const completed=orders.filter(o=>o.status==='completed');
-  const gmv=completed.reduce((s,o)=>s+o.amount,0);
-  const comm=completed.reduce((s,o)=>s+o.commissionAmt,0);
-  const providers=getProviders();
-  const totalWithdrawn=providers.reduce((s,p)=>s+(p.withdrawnEarned||0),0);
-  const pendingEarned=completed.reduce((s,o)=>s+o.amount,0)-totalWithdrawn;
+  if(filter)payFilterState=filter;
+  var orders=getAllOrders();
+  var completed=orders.filter(function(o){return o.status==="completed";});
+  var providers=getProviders();
+  var gmv=completed.reduce(function(s,o){return s+o.amount;},0);
+  var comm=completed.reduce(function(s,o){return s+o.commissionAmt;},0);
+  var totalWithdrawn=providers.reduce(function(s,p){return s+(p.withdrawnEarned||0);},0);
+  var pendPayout=Math.max(gmv-comm-totalWithdrawn,0);
+  document.getElementById("py-gmv").textContent="Rs "+fmt(gmv);
+  document.getElementById("py-comm").textContent="Rs "+fmt(comm);
+  document.getElementById("py-paid").textContent="Rs "+fmt(totalWithdrawn);
+  document.getElementById("py-pend").textContent="Rs "+fmt(pendPayout);
 
-  document.getElementById('py-gmv').textContent='₹'+gmv.toLocaleString('en-IN');
-  document.getElementById('py-commission').textContent='₹'+comm.toLocaleString('en-IN');
-  document.getElementById('py-payouts').textContent='₹'+totalWithdrawn.toLocaleString('en-IN');
-  document.getElementById('py-pending').textContent='₹'+Math.max(pendingEarned-comm,0).toLocaleString('en-IN');
+  var payouts=getPayouts();
+  if(payFilterState==="pending") payouts=payouts.filter(function(p){return p.status==="pending";});
+  document.getElementById("payoutsBody").innerHTML=payouts.map(function(p){
+    var actions=p.status==="pending"?"<button class=\"abtn approve\" onclick=\"approvePayout('"+p.id+"')\" >Pay</button> <button class=\"abtn reject\" onclick=\"rejectPayout('"+p.id+"')\" >Reject</button>":"--";
+    return "<tr><td><strong>"+p.providerName+"</strong><br/><small style=\"color:var(--muted)\">"+p.providerId+"</small></td><td style=\"color:var(--green);font-weight:800\">Rs "+fmt(p.amount)+"</td><td style=\"font-size:12px\">"+(p.account||"--")+"</td><td style=\"font-size:12px\">"+new Date(p.date).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+(p.status||"pending")+"\">"+cap(p.status||"pending")+"</span></td><td>"+actions+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"6\" style=\"text-align:center;color:var(--muted);padding:20px\">No payout requests</td></tr>";
 
-  // Payout requests (from localStorage hs_payouts)
-  let payouts=getPayouts();
-  if(filter==='pending') payouts=payouts.filter(p=>p.status==='pending');
-  document.getElementById('payoutsBody').innerHTML=payouts.map(p=>`
-    <tr>
-      <td><strong>${p.providerName}</strong><br/><small style="color:var(--muted)">${p.providerId}</small></td>
-      <td><strong style="color:var(--green)">₹${p.amount.toLocaleString('en-IN')}</strong></td>
-      <td style="font-size:12px">${p.account||'—'}</td>
-      <td style="font-size:12px">${new Date(p.date).toLocaleDateString('en-IN')}</td>
-      <td><span class="badge ${p.status}">${cap(p.status)}</span></td>
-      <td>${p.status==='pending'?`<button class="abtn approve" onclick="approvePayout('${p.id}')">✅ Pay</button><button class="abtn reject" onclick="rejectPayout('${p.id}')">❌</button>`:'—'}</td>
-    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No payout requests</td></tr>';
-
-  // Commission ledger
-  document.getElementById('commLedgerBody').innerHTML=completed.slice(0,20).map(o=>`
-    <tr>
-      <td><strong>${o.id}</strong></td>
-      <td>${o.providerName}</td><td>${o.service}</td>
-      <td>₹${o.amount}</td>
-      <td><strong>${o.commissionPct}%</strong></td>
-      <td><strong style="color:var(--purple)">₹${o.commissionAmt}</strong></td>
-      <td>${o.date}</td>
-    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No completed orders</td></tr>';
+  document.getElementById("ledgerBody").innerHTML=completed.slice(0,20).map(function(o){
+    return "<tr><td><strong>"+o.id+"</strong></td><td>"+o.providerName+"</td><td>"+o.service+"</td><td>Rs "+o.amount+"</td><td><strong>"+o.commissionPct+"%</strong></td><td style=\"color:var(--purple);font-weight:800\">Rs "+o.commissionAmt+"</td><td>"+o.date+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"7\" style=\"text-align:center;color:var(--muted);padding:20px\">No completed orders</td></tr>";
 }
+document.getElementById("payf-pending").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadPayments("pending");});
+document.getElementById("payf-all").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadPayments("all");});
+function approvePayout(id){var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});if(idx>-1){p[idx].status="approved";savePayouts(p);}loadPayments();showToast("Payout approved!");}
+function rejectPayout(id){var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});if(idx>-1){p[idx].status="rejected";savePayouts(p);}loadPayments();showToast("Payout rejected");}
 
-function filterPayouts(f,btn){
-  document.querySelectorAll('#page-payments .fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  loadPayments(f);
-}
-
-function approvePayout(id){
-  const p=getPayouts();
-  const idx=p.findIndex(x=>x.id===id);
-  if(idx>-1){p[idx].status='approved';savePayouts(p);}
-  loadPayments();showToast('✅ Payout approved and processed');
-}
-function rejectPayout(id){
-  const p=getPayouts();
-  const idx=p.findIndex(x=>x.id===id);
-  if(idx>-1){p[idx].status='rejected';savePayouts(p);}
-  loadPayments();showToast('❌ Payout rejected');
-}
-
-// ════════════════════════════════════════
-// PENALTIES
-// ════════════════════════════════════════
+// ====== PENALTIES ======
 function loadPenalties(){
-  const penalties=getPenalties();
-  document.getElementById('penaltiesBody').innerHTML=penalties.map(p=>`
-    <tr>
-      <td><strong>${p.id}</strong></td>
-      <td>${p.providerName}<br/><small style="color:var(--muted)">${p.providerId}</small></td>
-      <td style="font-size:12px">${p.reason}</td>
-      <td><strong style="color:var(--red)">₹${p.amount}</strong></td>
-      <td style="font-size:12px">${new Date(p.date).toLocaleDateString('en-IN')}</td>
-      <td><span class="badge ${p.status||'pending'}">${cap(p.status||'pending')}</span></td>
-      <td>${p.status!=='deducted'?`<button class="abtn approve" onclick="deductPenalty('${p.id}')">💸 Deduct</button><button class="abtn reject" onclick="cancelPenalty('${p.id}')">🗑</button>`:'Deducted'}</td>
-    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No penalties issued</td></tr>';
+  document.getElementById("penaltiesBody").innerHTML=getPenalties().map(function(p){
+    var actions=p.status!=="deducted"?"<button class=\"abtn approve\" onclick=\"deductPenalty('"+p.id+"')\" >Deduct</button> <button class=\"abtn del\" onclick=\"cancelPenalty('"+p.id+"')\" >Cancel</button>":"Done";
+    return "<tr><td><strong>"+p.id+"</strong></td><td>"+p.providerName+"<br/><small style=\"color:var(--muted)\">"+p.providerId+"</small></td><td style=\"font-size:12px\">"+p.reason+"</td><td style=\"color:var(--red);font-weight:800\">Rs "+p.amount+"</td><td style=\"font-size:12px\">"+new Date(p.date).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+(p.status||"pending")+"\">"+cap(p.status||"pending")+"</span></td><td>"+actions+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"7\" style=\"text-align:center;color:var(--muted);padding:24px\">No penalties issued</td></tr>";
 }
+document.getElementById("issuePenaltyBtn").addEventListener("click",function(){
+  var providers=getProviders().filter(function(p){return p.status==="approved";});
+  document.getElementById("pen_provider").innerHTML=providers.map(function(p){return "<option value=\""+p.id+"\">"+p.name+" ("+p.id+")</option>";}).join("")||"<option>No approved providers</option>";
+  document.getElementById("penaltyModal").classList.add("show");
+});
+document.getElementById("penClose").addEventListener("click",function(){closeModal("penaltyModal");});
+document.getElementById("penSubmitBtn").addEventListener("click",function(){
+  var sel=document.getElementById("pen_provider");
+  var providers=getProviders();
+  var p=providers.find(function(pr){return pr.id===sel.value;});
+  if(!p){showToast("Select a provider");return;}
+  var amt=parseInt(document.getElementById("pen_amount").value);
+  if(!amt||amt<=0){showToast("Enter valid amount");return;}
+  var penalty={id:"PEN-"+Math.random().toString(36).substr(2,6).toUpperCase(),providerId:p.id,providerName:p.name,amount:amt,reason:document.getElementById("pen_reason").value,notes:document.getElementById("pen_notes").value,date:new Date().toISOString(),status:"pending"};
+  var penalties=getPenalties();penalties.push(penalty);savePenalties(penalties);
+  closeModal("penaltyModal");loadPenalties();
+  document.getElementById("ds-penalties").textContent=getPenalties().length;
+  showToast("Penalty issued to "+p.name);
+});
+function deductPenalty(id){var p=getPenalties();var idx=p.findIndex(function(x){return x.id===id;});if(idx>-1){p[idx].status="deducted";savePenalties(p);}loadPenalties();showToast("Penalty deducted from next payout");}
+function cancelPenalty(id){savePenalties(getPenalties().filter(function(p){return p.id!==id;}));loadPenalties();showToast("Penalty cancelled");}
 
-function showIssuePenaltyModal(){
-  const providers=getProviders().filter(p=>p.status==='approved');
-  document.getElementById('pen_provider').innerHTML=providers.map(p=>`<option value="${p.id}">${p.name} (${p.id})</option>`).join('')||'<option>No approved providers</option>';
-  document.getElementById('penaltyModal').classList.add('show');
-}
-
-function issuePenalty(){
-  const sel=document.getElementById('pen_provider');
-  const providers=getProviders();
-  const p=providers.find(pr=>pr.id===sel.value);
-  if(!p){showToast('⚠️ Select a provider');return;}
-  const amt=parseInt(document.getElementById('pen_amount').value);
-  if(!amt||amt<=0){showToast('⚠️ Enter valid amount');return;}
-  const penalty={
-    id:'PEN-'+Math.random().toString(36).substr(2,6).toUpperCase(),
-    providerId:p.id,providerName:p.name,
-    amount:amt,reason:document.getElementById('pen_reason').value,
-    notes:document.getElementById('pen_notes').value,
-    date:new Date().toISOString(),status:'pending'
-  };
-  const penalties=getPenalties();penalties.push(penalty);savePenalties(penalties);
-  closeModal('penaltyModal');loadPenalties();
-  document.getElementById('ds-penalties').textContent=getPenalties().length;
-  showToast('⚠️ Penalty issued to '+p.name);
-}
-
-function deductPenalty(id){
-  const penalties=getPenalties();
-  const idx=penalties.findIndex(p=>p.id===id);
-  if(idx>-1){penalties[idx].status='deducted';savePenalties(penalties);}
-  loadPenalties();showToast('💸 Penalty deducted from next payout');
-}
-function cancelPenalty(id){
-  savePenalties(getPenalties().filter(p=>p.id!==id));
-  loadPenalties();showToast('🗑 Penalty cancelled');
-}
-
-// ════════════════════════════════════════
-// SERVICE CATALOG
-// ════════════════════════════════════════
-let editingSvcId=null;
+// ====== SERVICE CATALOG ======
+var editingSvcId=null;
 function loadCatalog(){
-  const catalog=getCatalog();
-  const orders=getAllOrders().filter(o=>o.status==='completed');
-  document.getElementById('catalogBody').innerHTML=catalog.map(s=>{
-    const cnt=orders.filter(o=>o.service===s.name).length;
-    return `<tr>
-      <td style="font-size:28px">${s.icon}</td>
-      <td><strong>${s.name}</strong><br/><small style="color:var(--muted)">${s.description||s.cat}</small></td>
-      <td><span class="badge active">${s.cat}</span></td>
-      <td>₹${s.minPrice}</td><td>₹${s.maxPrice}</td>
-      <td><strong style="color:var(--purple)">${s.commission}%</strong></td>
-      <td><span class="badge ${s.status}">${cap(s.status)}</span></td>
-      <td><strong>${cnt}</strong></td>
-      <td>
-        <button class="abtn edit" onclick="editService('${s.id}')">✏️ Edit</button>
-        <button class="abtn ${s.status==='active'?'suspend':'approve'}" onclick="toggleService('${s.id}')">${s.status==='active'?'🚫 Disable':'✅ Enable'}</button>
-        <button class="abtn delete" onclick="deleteService('${s.id}')">🗑</button>
-      </td>
-    </tr>`;}).join('');
+  var catalog=getCatalog();
+  var orders=getAllOrders().filter(function(o){return o.status==="completed";});
+  document.getElementById("catalogBody").innerHTML=catalog.map(function(s){
+    var cnt=orders.filter(function(o){return o.service===s.name;}).length;
+    return "<tr><td style=\"font-size:26px\">"+s.icon+"</td><td><strong>"+s.name+"</strong><br/><small style=\"color:var(--muted)\">"+s.description+"</small></td><td><span class=\"badge approved\">"+s.cat+"</span></td><td>Rs "+s.minPrice+"</td><td>Rs "+s.maxPrice+"</td><td style=\"color:var(--purple);font-weight:800\">"+s.commission+"%</td><td><span class=\"badge "+(s.status==="active"?"approved":"inactive")+"\">"+cap(s.status)+"</span></td><td>"+cnt+"</td><td><button class=\"abtn edit\" onclick=\"editService('"+s.id+"')\" >Edit</button> <button class=\"abtn "+(s.status==="active"?"suspend":"approve")+"\" onclick=\"toggleService('"+s.id+"')\" >"+(s.status==="active"?"Disable":"Enable")+"</button> <button class=\"abtn del\" onclick=\"deleteService('"+s.id+"')\" >Del</button></td></tr>";
+  }).join("");
 }
-
-function showAddServiceModal(){
+document.getElementById("addServiceBtn").addEventListener("click",function(){
   editingSvcId=null;
-  document.getElementById('svcModalTitle').textContent='➕ Add New Service';
-  ['svc_icon','svc_name','svc_min','svc_max','svc_default','svc_comm','svc_desc'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('svc_comm').value='15';
-  document.getElementById('svc_status').value='active';
-  document.getElementById('addServiceModal').classList.add('show');
-}
-
+  document.getElementById("svcModalTitle").textContent="Add New Service";
+  ["svc_icon","svc_name","svc_min","svc_max","svc_default","svc_desc"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("svc_comm").value="15";document.getElementById("svc_status").value="active";
+  document.getElementById("svcModal").classList.add("show");
+});
 function editService(id){
-  const s=getCatalog().find(x=>x.id===id);if(!s)return;
+  var s=getCatalog().find(function(x){return x.id===id;});if(!s)return;
   editingSvcId=id;
-  document.getElementById('svcModalTitle').textContent='✏️ Edit Service';
-  document.getElementById('svc_icon').value=s.icon;
-  document.getElementById('svc_name').value=s.name;
-  document.getElementById('svc_min').value=s.minPrice;
-  document.getElementById('svc_max').value=s.maxPrice;
-  document.getElementById('svc_default').value=s.defaultPrice;
-  document.getElementById('svc_comm').value=s.commission;
-  document.getElementById('svc_desc').value=s.description||'';
-  document.getElementById('svc_status').value=s.status;
-  document.getElementById('svc_cat').value=s.cat;
-  document.getElementById('addServiceModal').classList.add('show');
+  document.getElementById("svcModalTitle").textContent="Edit Service";
+  document.getElementById("svc_icon").value=s.icon;document.getElementById("svc_name").value=s.name;
+  document.getElementById("svc_min").value=s.minPrice;document.getElementById("svc_max").value=s.maxPrice;
+  document.getElementById("svc_default").value=s.defaultPrice;document.getElementById("svc_comm").value=s.commission;
+  document.getElementById("svc_desc").value=s.description||"";document.getElementById("svc_status").value=s.status;
+  document.getElementById("svc_cat").value=s.cat;
+  document.getElementById("svcModal").classList.add("show");
 }
+document.getElementById("svcClose").addEventListener("click",function(){closeModal("svcModal");});
+document.getElementById("svcSaveBtn").addEventListener("click",function(){
+  var name=document.getElementById("svc_name").value.trim();
+  if(!name){showToast("Enter service name");return;}
+  var catalog=getCatalog();
+  var obj={id:editingSvcId||(Date.now().toString(36).toUpperCase()),icon:document.getElementById("svc_icon").value||"🛠️",name:name,cat:document.getElementById("svc_cat").value,minPrice:parseInt(document.getElementById("svc_min").value)||0,maxPrice:parseInt(document.getElementById("svc_max").value)||9999,defaultPrice:parseInt(document.getElementById("svc_default").value)||499,commission:parseInt(document.getElementById("svc_comm").value)||15,description:document.getElementById("svc_desc").value,status:document.getElementById("svc_status").value};
+  if(editingSvcId){var idx=catalog.findIndex(function(x){return x.id===editingSvcId;});if(idx>-1)catalog[idx]=obj;}else{catalog.push(obj);}
+  saveCatalog(catalog);closeModal("svcModal");loadCatalog();loadCommission();
+  showToast(editingSvcId?"Service updated!":"Service added!");
+});
+function toggleService(id){var c=getCatalog();var idx=c.findIndex(function(x){return x.id===id;});if(idx>-1){c[idx].status=c[idx].status==="active"?"inactive":"active";saveCatalog(c);}loadCatalog();showToast("Service status updated");}
+function deleteService(id){if(!confirm("Delete this service?"))return;saveCatalog(getCatalog().filter(function(x){return x.id!==id;}));loadCatalog();loadCommission();showToast("Service deleted");}
 
-function saveService(){
-  const name=document.getElementById('svc_name').value.trim();
-  if(!name){showToast('⚠️ Enter service name');return;}
-  const catalog=getCatalog();
-  const obj={
-    id:editingSvcId||(Date.now().toString(36).toUpperCase()),
-    icon:document.getElementById('svc_icon').value||'🛠️',
-    name,cat:document.getElementById('svc_cat').value,
-    minPrice:parseInt(document.getElementById('svc_min').value)||0,
-    maxPrice:parseInt(document.getElementById('svc_max').value)||9999,
-    defaultPrice:parseInt(document.getElementById('svc_default').value)||499,
-    commission:parseInt(document.getElementById('svc_comm').value)||15,
-    description:document.getElementById('svc_desc').value,
-    status:document.getElementById('svc_status').value
-  };
-  if(editingSvcId){const idx=catalog.findIndex(x=>x.id===editingSvcId);if(idx>-1)catalog[idx]=obj;}
-  else catalog.push(obj);
-  saveCatalog(catalog);
-  closeModal('addServiceModal');loadCatalog();loadCommission();
-  showToast(editingSvcId?'✅ Service updated!':'✅ Service added to catalog!');
-}
-
-function toggleService(id){
-  const catalog=getCatalog();
-  const idx=catalog.findIndex(x=>x.id===id);
-  if(idx>-1){catalog[idx].status=catalog[idx].status==='active'?'inactive':'active';saveCatalog(catalog);}
-  loadCatalog();showToast('🔄 Service status updated');
-}
-
-function deleteService(id){
-  if(!confirm('Delete this service?'))return;
-  saveCatalog(getCatalog().filter(x=>x.id!==id));
-  loadCatalog();loadCommission();showToast('🗑 Service deleted');
-}
-
-// ════════════════════════════════════════
-// COMMISSION
-// ════════════════════════════════════════
+// ====== COMMISSION ======
 function loadCommission(){
-  const catalog=getCatalog();
-  document.getElementById('commissionRows').innerHTML=catalog.map(s=>`
-    <div class="comm-row">
-      <div class="comm-svc"><span class="comm-icon">${s.icon}</span>${s.name}<span class="badge ${s.status}" style="margin-left:6px">${s.cat}</span></div>
-      <div class="comm-inputs">
-        <div>
-          <div class="comm-label" style="text-align:center;margin-bottom:3px">Commission %</div>
-          <input class="comm-input" type="number" id="comm_${s.id}" value="${s.commission}" min="0" max="50"/>
-        </div>
-        <div>
-          <div class="comm-label" style="text-align:center;margin-bottom:3px">Min ₹</div>
-          <input class="comm-input" type="number" id="min_${s.id}" value="${s.minPrice}" min="0"/>
-        </div>
-        <div>
-          <div class="comm-label" style="text-align:center;margin-bottom:3px">Max ₹</div>
-          <input class="comm-input" type="number" id="max_${s.id}" value="${s.maxPrice}" min="0"/>
-        </div>
-      </div>
-    </div>`).join('');
+  var catalog=getCatalog();
+  document.getElementById("commissionRows").innerHTML=catalog.map(function(s){
+    return "<div class=\"comm-row\"><div class=\"comm-svc\"><span style=\"font-size:22px\">"+s.icon+"</span>"+s.name+"<span class=\"badge approved\" style=\"margin-left:6px\">"+s.cat+"</span></div><div class=\"comm-inputs\"><div><div class=\"comm-label\">Comm %</div><input class=\"comm-input\" type=\"number\" id=\"comm_"+s.id+"\" value=\""+s.commission+"\" min=\"0\" max=\"50\"/></div><div><div class=\"comm-label\">Min Rs</div><input class=\"comm-input\" type=\"number\" id=\"min_"+s.id+"\" value=\""+s.minPrice+"\" min=\"0\"/></div><div><div class=\"comm-label\">Max Rs</div><input class=\"comm-input\" type=\"number\" id=\"max_"+s.id+"\" value=\""+s.maxPrice+"\" min=\"0\"/></div></div></div>";
+  }).join("");
 }
-
-function saveAllCommissions(){
-  const catalog=getCatalog();
-  catalog.forEach(s=>{
-    const ci=document.getElementById('comm_'+s.id);
-    const mi=document.getElementById('min_'+s.id);
-    const ma=document.getElementById('max_'+s.id);
+document.getElementById("saveCommBtn").addEventListener("click",function(){
+  var catalog=getCatalog();
+  catalog.forEach(function(s){
+    var ci=document.getElementById("comm_"+s.id);var mi=document.getElementById("min_"+s.id);var ma=document.getElementById("max_"+s.id);
     if(ci)s.commission=parseInt(ci.value)||s.commission;
     if(mi)s.minPrice=parseInt(mi.value)||s.minPrice;
     if(ma)s.maxPrice=parseInt(ma.value)||s.maxPrice;
   });
   saveCatalog(catalog);
-  // also save global
-  const gc={globalComm:parseInt(document.getElementById('globalComm').value)||15,minBooking:parseInt(document.getElementById('minBooking').value)||200,platformFee:parseInt(document.getElementById('platformFee').value)||20,tierBronze:parseInt(document.getElementById('tier_bronze').value)||0,tierSilver:parseInt(document.getElementById('tier_silver').value)||2,tierGold:parseInt(document.getElementById('tier_gold').value)||5};
-  localStorage.setItem('hs_commission_config',JSON.stringify(gc));
-  loadCatalog();showToast('✅ All commission rates saved!');
-}
+  var gc={globalComm:parseInt(document.getElementById("globalComm").value)||15,minBooking:parseInt(document.getElementById("minBooking").value)||200,platformFee:parseInt(document.getElementById("platformFee").value)||20,tierBronze:parseInt(document.getElementById("tier_bronze").value)||0,tierSilver:parseInt(document.getElementById("tier_silver").value)||2,tierGold:parseInt(document.getElementById("tier_gold").value)||5};
+  localStorage.setItem("hs_commission_config",JSON.stringify(gc));
+  loadCatalog();showToast("All commission rates saved!");
+});
 
-// ════════════════════════════════════════
-// ORDERS
-// ════════════════════════════════════════
+// ====== ALL ORDERS ======
+var orderFilterState="all";
 function loadOrders(filter,query){
-  let orders=getAllOrders();
-  if(filter&&filter!=='all') orders=orders.filter(o=>o.status===filter);
-  if(query) orders=orders.filter(o=>(o.id+o.customer+o.providerName+o.service).toLowerCase().includes(query));
-  document.getElementById('ordersBody').innerHTML=orders.map(o=>`
-    <tr>
-      <td><strong style="font-size:12px">${o.id}</strong></td>
-      <td>${o.customer||'Guest'}<br/><small style="color:var(--muted)">${o.phone||''}</small></td>
-      <td>${o.providerName}<br/><small style="color:var(--muted)">${o.providerId}</small></td>
-      <td>${o.service}</td>
-      <td style="font-size:12px">${o.date} ${o.time||''}</td>
-      <td><strong>₹${o.amount}</strong></td>
-      <td><strong style="color:var(--purple)">₹${o.commissionAmt}</strong></td>
-      <td><span class="badge ${o.status}">${cap(o.status)}</span></td>
-      <td><button class="abtn view" onclick="alert('Order: ${o.id}\\nProvider: ${o.providerName}\\nCustomer: ${o.customer||\'Guest\'}\\nService: ${o.service}\\nAmount: ₹${o.amount}\\nStatus: ${o.status}')">👁</button></td>
-    </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No orders found</td></tr>';
+  if(filter!==null&&filter!==undefined)orderFilterState=filter;
+  var orders=getAllOrders();
+  if(orderFilterState&&orderFilterState!=="all") orders=orders.filter(function(o){return o.status===orderFilterState;});
+  if(query) orders=orders.filter(function(o){return (o.id+(o.customer||"")+(o.providerName||"")+(o.service||"")).toLowerCase().includes(query);});
+  document.getElementById("ordersBody").innerHTML=orders.map(function(o){
+    return "<tr><td><strong style=\"font-size:12px\">"+o.id+"</strong></td><td>"+(o.customer||"Guest")+"<br/><small style=\"color:var(--muted)\">"+(o.phone||"")+"</small></td><td>"+o.providerName+"<br/><small style=\"color:var(--muted)\">"+o.providerId+"</small></td><td>"+o.service+"</td><td style=\"font-size:12px\">"+o.date+" "+(o.time||"")+"</td><td><strong>Rs "+o.amount+"</strong></td><td style=\"color:var(--purple);font-weight:800\">Rs "+o.commissionAmt+"</td><td><span class=\"badge "+o.status+"\">"+cap(o.status)+"</span></td></tr>";
+  }).join("")||"<tr><td colspan=\"8\" style=\"text-align:center;color:var(--muted);padding:24px\">No orders found</td></tr>";
 }
+document.getElementById("of-all").addEventListener("click",function(){document.querySelectorAll("#page-orders .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadOrders("all",null);});
+document.getElementById("of-completed").addEventListener("click",function(){document.querySelectorAll("#page-orders .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadOrders("completed",null);});
+document.getElementById("of-pending").addEventListener("click",function(){document.querySelectorAll("#page-orders .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadOrders("pending",null);});
+document.getElementById("of-cancelled").addEventListener("click",function(){document.querySelectorAll("#page-orders .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadOrders("cancelled",null);});
+document.getElementById("orderSearch").addEventListener("input",function(){loadOrders(null,this.value.toLowerCase());});
 
-function filterOrders(f,btn){document.querySelectorAll('#page-orders .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadOrders(f==='all'?null:f);}
-function searchOrders(q){loadOrders(null,q.toLowerCase());}
-
-// ════════════════════════════════════════
-// CUSTOMERS
-// ════════════════════════════════════════
+// ====== CUSTOMERS ======
 function loadCustomers(query){
-  let customers=getCustomers();
-  if(query) customers=customers.filter(c=>(c.name+c.phone+c.id).toLowerCase().includes(query));
-  const orders=getAllOrders();
-  document.getElementById('customersBody').innerHTML=customers.map(c=>{
-    const bk=orders.filter(o=>o.customer===c.name||o.phone===c.phone);
-    return `<tr>
-      <td><strong style="font-size:12px;color:var(--blue)">${c.id}</strong></td>
-      <td><strong>${c.name}</strong></td><td>${c.phone}</td>
-      <td style="font-size:12px">${c.email||'—'}</td>
-      <td>${c.city||'—'}</td>
-      <td><strong>${bk.length}</strong></td>
-      <td style="font-size:12px">${c.registeredAt?new Date(c.registeredAt).toLocaleDateString('en-IN'):'—'}</td>
-      <td><button class="abtn view" onclick="alert('ID: ${c.id}\\nName: ${c.name}\\nMobile: ${c.phone}\\nEmail: ${c.email||\'—\'}\\nCity: ${c.city||\'—\'}\\nBookings: ${bk.length}')">👁</button></td>
-    </tr>`;}).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No registered customers yet</td></tr>';
+  var customers=getCustomers();
+  if(query) customers=customers.filter(function(c){return (c.name+c.phone+(c.id||"")).toLowerCase().includes(query);});
+  var orders=getAllOrders();
+  document.getElementById("custBody").innerHTML=customers.map(function(c){
+    var bk=orders.filter(function(o){return o.customer===c.name||o.phone===c.phone;});
+    return "<tr><td><strong style=\"font-size:12px;color:var(--blue)\">"+(c.id||"--")+"</strong></td><td><strong>"+c.name+"</strong></td><td>"+c.phone+"</td><td style=\"font-size:12px\">"+(c.email||"--")+"</td><td>"+(c.city||"--")+"</td><td><strong>"+bk.length+"</strong></td><td style=\"font-size:12px\">"+(c.registeredAt?new Date(c.registeredAt).toLocaleDateString("en-IN"):"--")+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"7\" style=\"text-align:center;color:var(--muted);padding:24px\">No registered customers yet</td></tr>";
 }
-function searchCustomers(q){loadCustomers(q.toLowerCase());}
+document.getElementById("custSearch").addEventListener("input",function(){loadCustomers(this.value.toLowerCase());});
 
-// ════════════════════════════════════════
-// SETTINGS
-// ════════════════════════════════════════
-function saveSettings(){
-  const user=document.getElementById('set_user').value.trim();
-  const pass=document.getElementById('set_pass').value;
-  const creds=getAdminCreds();
-  if(user) creds.user=user;
-  if(pass) creds.pass=pass;
-  localStorage.setItem('hs_admin_creds',JSON.stringify(creds));
-  showToast('✅ Settings saved!');
+// ====== SETTINGS ======
+document.getElementById("saveCredsBtn").addEventListener("click",function(){
+  var u=document.getElementById("set_user").value.trim();
+  var p=document.getElementById("set_pass").value;
+  var creds=getAdminCreds();
+  if(u)creds.user=u;if(p)creds.pass=p;
+  localStorage.setItem("hs_admin_creds",JSON.stringify(creds));
+  showToast("Credentials saved!");
+});
+document.getElementById("savePlatformBtn").addEventListener("click",function(){showToast("Platform settings saved!");});
+document.getElementById("exportBtn").addEventListener("click",function(){
+  var data={providers:getProviders(),customers:getCustomers(),catalog:getCatalog(),orders:getAllOrders(),penalties:getPenalties(),payouts:getPayouts()};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="hamaraservice_"+Date.now()+".json";a.click();
+  showToast("Data exported!");
+});
+document.getElementById("resetApprovalsBtn").addEventListener("click",function(){
+  if(!confirm("Reset all provider approvals to pending?"))return;
+  saveProviders(getProviders().map(function(p){return Object.assign({},p,{status:"pending"});}));
+  refreshAll();showToast("All approvals reset to pending");
+});
+
+// ====== MODALS ======
+document.querySelectorAll(".modal-overlay").forEach(function(m){
+  m.addEventListener("click",function(e){if(e.target===m)m.classList.remove("show");});
+});
+
+// ====== REFRESH ALL ======
+function refreshAll(){
+  loadDashboard();loadApprovals();loadProviders(null,null);loadOrders(null,null);loadPayments();loadPenalties();loadAnalytics();loadCatalog();loadCustomers(null);
 }
-
-function exportData(){
-  const data={providers:getProviders(),customers:getCustomers(),catalog:getCatalog(),orders:getAllOrders(),penalties:getPenalties(),payouts:getPayouts()};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hamaraservice_data_'+Date.now()+'.json';a.click();
-  showToast('📥 Data exported!');
-}
-
-function resetApprovals(){
-  const p=getProviders().map(pr=>({...pr,status:'pending'}));
-  saveProviders(p);refresh();showToast('🔄 All providers reset to pending');
-}
-
-// ════════════════════════════════════════
-// NAVIGATION
-// ════════════════════════════════════════
-const PAGE_TITLES={dashboard:'📊 Dashboard',analytics:'📈 Analytics',approvals:'✅ Provider Approvals',providers:'👷 All Providers',payments:'💸 Payments & Payouts',penalties:'⚠️ Penalties',services:'🛠️ Service Catalog',commission:'💹 Commission Rules',orders:'📋 All Orders',customers:'👤 Customers',settings:'⚙️ Settings'};
-function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+name)?.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(name.split('-')[0].slice(0,6)))n.classList.add('active');});
-  document.getElementById('pageTitle').textContent=PAGE_TITLES[name]||name;
-  document.getElementById('sidebar').classList.remove('open');
-}
-
-// ════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════
-function cap(s){if(!s)return'';return s.charAt(0).toUpperCase()+s.slice(1);}
-function closeModal(id){document.getElementById(id).classList.remove('show');}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
-function refresh(){loadDashboard();loadApprovals();loadProviders();loadOrders();loadPayments();loadPenalties();loadAnalytics();}
-
-// Close modals on backdrop click
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
 </script>
 </body>
 </html>
