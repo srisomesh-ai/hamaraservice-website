@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Provider Portal – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+:root{--red:#E8251A;--red-dark:#b81810;--red-light:#fdecea;--orange:#FF6B00;--green:#1ea84b;--green-light:#e6f9ed;--yellow:#f59e0b;--yellow-light:#fffbe6;--blue:#1A73E8;--blue-light:#e8f0fd;--bg:#FFF8F7;--white:#fff;--text:#1c1010;--muted:#7a6060;--border:#f0ddd9;--radius:16px;--shadow:0 4px 24px rgba(232,37,26,0.10);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+header{position:sticky;top:0;z-index:200;background:white;border-top:4px solid var(--red);box-shadow:0 2px 12px rgba(232,37,26,0.12);padding:0 28px;height:66px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--red);text-decoration:none;display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;background:var(--red);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;}
+.back-btn{padding:9px 18px;background:var(--red-light);color:var(--red);border:2px solid var(--red);border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-decoration:none;transition:all .2s;}
+.back-btn:hover{background:var(--red);color:white;}
+.hero-band{background:linear-gradient(135deg,#1a0a08 0%,var(--red) 55%,var(--orange) 100%);padding:36px 24px;text-align:center;color:white;}
+.hero-band h1{font-family:'Baloo 2',sans-serif;font-size:clamp(26px,5vw,40px);font-weight:800;margin-bottom:6px;}
+.hero-band p{font-size:16px;opacity:.9;font-weight:600;}
+.hero-stats{display:flex;justify-content:center;gap:24px;margin-top:22px;flex-wrap:wrap;}
+.hstat{background:rgba(255,255,255,0.15);border-radius:12px;padding:12px 20px;text-align:center;}
+.hstat-num{font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;}
+.hstat-label{font-size:12px;opacity:.85;font-weight:700;}
+.main{max-width:860px;margin:0 auto;padding:36px 20px 80px;}
+.tab-bar{display:flex;background:white;border-radius:16px;padding:5px;box-shadow:var(--shadow);border:2px solid var(--border);margin-bottom:28px;}
+.tab-btn{flex:1;padding:13px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .25s;background:transparent;color:var(--muted);}
+.tab-btn.active{background:linear-gradient(135deg,var(--red),var(--orange));color:white;box-shadow:0 3px 14px rgba(232,37,26,0.35);}
+.panel{display:none;}
+.panel.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.login-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);padding:40px;max-width:500px;margin:0 auto;}
+.card-title{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;margin-bottom:4px;}
+.card-sub{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:24px;}
+.err-box{background:var(--red-light);border:1.5px solid var(--red);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--red);display:none;margin-bottom:14px;}
+.ffield{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.ffield label{font-size:13px;font-weight:800;color:var(--text);}
+.ffield input,.ffield select,.ffield textarea{padding:13px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;color:var(--text);background:var(--bg);transition:border .2s;width:100%;}
+.ffield input:focus,.ffield select:focus,.ffield textarea:focus{border-color:var(--red);box-shadow:0 0 0 4px rgba(232,37,26,0.08);}
+.ffield textarea{resize:vertical;min-height:75px;}
+.big-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--red),var(--orange));color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(232,37,26,0.3);margin-top:4px;}
+.big-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(232,37,26,0.4);}
+.hint-box{background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:#7a5a00;margin-top:14px;text-align:center;line-height:1.6;}
+.steps-bar{display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+.step-dot{width:36px;height:36px;border-radius:50%;background:var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;transition:all .3s;}
+.step-dot.active{background:var(--red);color:white;box-shadow:0 2px 12px rgba(232,37,26,0.35);}
+.step-dot.done{background:var(--green);color:white;}
+.step-line{flex:1;height:3px;background:var(--border);max-width:60px;transition:background .3s;}
+.step-line.done{background:var(--green);}
+.step-labels{display:flex;justify-content:space-between;max-width:360px;margin:6px auto 24px;padding:0 2px;}
+.step-lbl{font-size:11px;font-weight:800;color:var(--muted);text-align:center;flex:1;}
+.form-card{display:none;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);padding:32px;margin-bottom:20px;}
+.form-card.active{display:block;animation:fadeUp .3s ease;}
+.fc-title{font-family:'Baloo 2',sans-serif;font-size:21px;font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.fc-sub{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:22px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:580px){.fgrid{grid-template-columns:1fr;}}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.svc-chip{border:2px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+.svc-chip.selected{border-color:var(--green);background:var(--green-light);}
+.svc-chip:hover:not(.selected){border-color:var(--red);background:var(--red-light);}
+.svc-icon{font-size:26px;margin-bottom:5px;}
+.svc-name{font-size:12px;font-weight:800;color:var(--text);}
+.svc-price-input{display:none;margin-top:8px;padding:7px 8px;width:100%;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border:2px solid var(--border);border-radius:8px;outline:none;text-align:center;background:white;}
+.svc-chip.selected .svc-price-input{display:block;border-color:var(--green);}
+#regMap{width:100%;height:250px;border-radius:12px;border:2px solid var(--border);margin-bottom:12px;}
+.step-nav{display:flex;gap:12px;justify-content:flex-end;margin-top:8px;}
+.snb{padding:12px 28px;border-radius:11px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
+.snb.back{background:var(--bg);color:var(--muted);border:2px solid var(--border);}
+.snb.back:hover{border-color:var(--red);color:var(--red);}
+.snb.next{background:linear-gradient(135deg,var(--red),var(--orange));color:white;box-shadow:0 3px 14px rgba(232,37,26,0.3);}
+.snb.next:hover{transform:translateY(-2px);}
+.snb.submit{background:linear-gradient(135deg,var(--green),#34d058);color:white;box-shadow:0 3px 14px rgba(30,168,75,0.3);}
+.snb.submit:hover{transform:translateY(-2px);}
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.summary-row:last-child{border:none;}
+.summary-label{color:var(--muted);font-weight:700;flex-shrink:0;margin-right:12px;}
+.summary-value{font-weight:800;color:var(--text);text-align:right;}
+.success-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--green);padding:40px;text-align:center;max-width:540px;margin:0 auto;}
+.success-id{font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800;color:var(--red);background:var(--red-light);border-radius:12px;padding:10px 22px;display:inline-block;margin:12px 0;}
+.success-steps{display:flex;flex-direction:column;gap:8px;text-align:left;margin:20px 0;background:var(--bg);border-radius:12px;padding:18px;}
+.success-step{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--text);}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 2px 6px rgba(232,37,26,0.4);}
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:white;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:700;z-index:9999;display:none;box-shadow:0 8px 28px rgba(0,0,0,0.2);}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html"><div class="logo-icon">🏠</div>Hamara Service</a>
+  <a class="back-btn" href="index.html">← Back to Home</a>
+</header>
+<div class="hero-band">
+  <h1>👷 Provider Portal</h1>
+  <p>Login to your dashboard or register as a new service provider</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">₹800+</div><div class="hstat-label">Avg Daily Earn</div></div>
+    <div class="hstat"><div class="hstat-num">15+</div><div class="hstat-label">Service Types</div></div>
+    <div class="hstat"><div class="hstat-num">24/7</div><div class="hstat-label">Support</div></div>
+  </div>
+</div>
+<div class="main">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">🔑 Already Registered? Login</button>
+    <button class="tab-btn" id="tabReg" onclick="switchTab('register')">📝 New Provider? Register Here</button>
+  </div>
+
+  <!-- LOGIN PANEL -->
+  <div class="panel active" id="panelLogin">
+    <div class="login-card">
+      <div class="card-title">👷 Provider Login</div>
+      <div class="card-sub">Enter your Provider ID and registered mobile number</div>
+      <div class="err-box" id="loginErr"></div>
+      <div class="ffield">
+        <label>Provider ID</label>
+        <input type="text" id="loginId" placeholder="e.g. HS-PRO-ABC123" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div class="ffield">
+        <label>Registered Mobile Number</label>
+        <input type="tel" id="loginPhone" placeholder="10-digit mobile number" maxlength="10" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="big-btn" onclick="doLogin()">🚀 Login to Dashboard</button>
+      <div class="hint-box">
+        💡 Demo login: ID = <strong>DEMO</strong> · Phone = <strong>9999999999</strong><br/>
+        New provider? Click <strong>"New Provider? Register Here"</strong> above
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER WIZARD PANEL -->
+  <div class="panel" id="panelRegister">
+    <div class="steps-bar">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot" id="sd2">2</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot" id="sd3">3</div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-dot" id="sd4">4</div>
+    </div>
+    <div class="step-labels">
+      <span class="step-lbl">Personal</span>
+      <span class="step-lbl">Services</span>
+      <span class="step-lbl">Location</span>
+      <span class="step-lbl">Review</span>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="form-card active" id="step1">
+      <div class="fc-title">👤 Personal Information</div>
+      <div class="fc-sub">Tell us about yourself — customers will see this profile</div>
+      <div class="fgrid">
+        <div class="ffield"><label>Full Name *</label><input id="r_name" type="text" placeholder="Your full name"/></div>
+        <div class="ffield"><label>Mobile Number *</label><input id="r_phone" type="tel" maxlength="10" placeholder="10-digit"/></div>
+        <div class="ffield"><label>Email Address</label><input id="r_email" type="email" placeholder="your@email.com"/></div>
+        <div class="ffield"><label>WhatsApp Number</label><input id="r_whatsapp" type="tel" maxlength="10" placeholder="If different from mobile"/></div>
+        <div class="ffield"><label>Gender</label>
+          <select id="r_gender"><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option></select>
+        </div>
+        <div class="ffield"><label>Experience *</label>
+          <select id="r_exp"><option value="">Select experience</option><option>Less than 1 year</option><option>1-2 years</option><option>3-5 years</option><option>5-10 years</option><option>10+ years</option></select>
+        </div>
+      </div>
+      <div class="ffield"><label>Bio / About You</label><textarea id="r_bio" placeholder="Tell customers about your work, skills, and experience..."></textarea></div>
+      <div class="fgrid">
+        <div class="ffield"><label>ID Proof Type *</label>
+          <select id="r_idtype"><option value="">Select ID type</option><option>Aadhaar Card</option><option>PAN Card</option><option>Voter ID</option><option>Driving License</option><option>Passport</option></select>
+        </div>
+        <div class="ffield"><label>ID Number *</label><input id="r_idnum" type="text" placeholder="ID proof number"/></div>
+      </div>
+      <div class="step-nav"><button class="snb next" onclick="nextStep(1)">Next: Services →</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="form-card" id="step2">
+      <div class="fc-title">🛠️ Select Your Services</div>
+      <div class="fc-sub">Tap services you offer. Set your price for each one.</div>
+      <div class="svc-grid" id="svcGrid"></div>
+      <div style="background:var(--blue-light);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:var(--blue);">
+        💡 You can update prices anytime from your dashboard
+      </div>
+      <div class="step-nav">
+        <button class="snb back" onclick="prevStep(2)">← Back</button>
+        <button class="snb next" onclick="nextStep(2)">Next: Location →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="form-card" id="step3">
+      <div class="fc-title">📍 Your Work Location</div>
+      <div class="fc-sub">Drop a pin on map or search. Set how far you travel.</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <input type="text" id="locSearch" placeholder="Search area, city..." style="flex:1;padding:11px 14px;border:2px solid var(--border);border-radius:11px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;outline:none;" onkeydown="if(event.key==='Enter')searchLoc()"/>
+        <button onclick="searchLoc()" style="padding:11px 16px;background:var(--red);color:white;border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">🔍</button>
+        <button onclick="useGPS()" style="padding:11px 16px;background:var(--red-light);color:var(--red);border:2px solid var(--red);border-radius:11px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">🎯 GPS</button>
+      </div>
+      <div id="regMap"></div>
+      <div id="addrBox" style="background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:#7a5a00;margin-bottom:14px;">
+        📍 Click on the map or use GPS to set your location
+      </div>
+      <div class="ffield">
+        <label>🔵 Service Radius: <span id="radiusLabel" style="color:var(--red);">5 km</span></label>
+        <input type="range" id="radiusSlider" min="1" max="50" value="5" oninput="updateRadius(this.value)" style="background:linear-gradient(to right,var(--red) 0%,var(--red) 8%,var(--border) 8%);"/>
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--muted);margin-top:3px;"><span>1 km</span><span>10 km</span><span>25 km</span><span>50 km</span></div>
+      </div>
+      <div class="step-nav">
+        <button class="snb back" onclick="prevStep(3)">← Back</button>
+        <button class="snb next" onclick="nextStep(3)">Next: Review →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="form-card" id="step4">
+      <div class="fc-title">✅ Review & Submit</div>
+      <div class="fc-sub">Check your details before submitting</div>
+      <div id="summaryBox"></div>
+      <div style="background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:var(--green);margin:14px 0;">
+        ✅ By submitting you agree to Hamara Service provider terms and conditions.
+      </div>
+      <div class="step-nav">
+        <button class="snb back" onclick="prevStep(4)">← Back</button>
+        <button class="snb submit" onclick="submitRegistration()">🎉 Complete Registration</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="form-card" id="stepSuccess">
+      <div class="success-card">
+        <div style="font-size:72px;margin-bottom:12px;">🎉</div>
+        <div style="font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--green);margin-bottom:4px;">Registration Complete!</div>
+        <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:12px;">Your Provider ID is</div>
+        <div class="success-id" id="generatedId">HS-PRO-XXXXXX</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px;">📌 Save this ID — you need it to login next time</div>
+        <div class="success-steps">
+          <div class="success-step">✅ Profile saved to database</div>
+          <div class="success-step">📍 Location and radius configured</div>
+          <div class="success-step">🛠️ Services and prices listed</div>
+          <div class="success-step">🔔 You will receive booking notifications immediately</div>
+        </div>
+        <button class="big-btn" onclick="window.location.href='provider-dashboard.html'">🚀 Go to My Dashboard →</button>
+        <div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--muted);">Login anytime with your Provider ID + Mobile</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const SERVICES=[{name:'House Maid',icon:'🧹',defaultPrice:499},{name:'Cooking Person',icon:'👨‍🍳',defaultPrice:799},{name:'AC Cleaning',icon:'❄️',defaultPrice:799},{name:'Plumber',icon:'🔧',defaultPrice:599},{name:'Electrician',icon:'⚡',defaultPrice:699},{name:'Carpenter',icon:'🪚',defaultPrice:799},{name:'Pest Control',icon:'🐛',defaultPrice:999},{name:'Deep Cleaning',icon:'🫧',defaultPrice:1499},{name:'Painting',icon:'🎨',defaultPrice:1999},{name:'Car Wash',icon:'🚗',defaultPrice:399},{name:'Gardener',icon:'🌱',defaultPrice:499},{name:'Security Guard',icon:'💂',defaultPrice:999},{name:'Driver',icon:'🚙',defaultPrice:699},{name:'Baby Sitter',icon:'👶',defaultPrice:599},{name:'Nurse / Care',icon:'🏥',defaultPrice:1199}];
+
+function switchTab(tab){
+  const isLogin=tab==='login';
+  document.getElementById('panelLogin').classList.toggle('active',isLogin);
+  document.getElementById('panelRegister').classList.toggle('active',!isLogin);
+  document.getElementById('tabLogin').classList.toggle('active',isLogin);
+  document.getElementById('tabReg').classList.toggle('active',!isLogin);
+  if(!isLogin)buildSvcGrid();
+}
+
+function doLogin(){
+  const id=document.getElementById('loginId').value.trim().toUpperCase();
+  const phone=document.getElementById('loginPhone').value.trim();
+  const err=document.getElementById('loginErr');
+  err.style.display='none';
+  if(!id||!phone){showErr('Please enter Provider ID and Mobile number');return;}
+  const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  let found=providers.find(p=>p.id.toUpperCase()===id&&p.phone===phone);
+  if(!found&&id==='HS-PRO-DEMO'&&phone==='9999999999'){found=createDemo(providers);}
+  if(!found){showErr('Provider ID or Phone not found. Please register first.');return;}
+  localStorage.setItem('hs_current_provider',JSON.stringify(found));
+  showToast('✅ Login successful! Redirecting...');
+  setTimeout(()=>window.location.href='provider-dashboard.html',800);
+}
+
+function showErr(msg){const e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
+
+function createDemo(providers){
+  const demo={id:'HS-PRO-DEMO',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
+  const idx=providers.findIndex(p=>p.id==='HS-PRO-DEMO');
+  if(idx===-1)providers.push(demo);else providers[idx]=demo;
+  localStorage.setItem('hs_providers',JSON.stringify(providers));
+  return demo;
+}
+
+let currentStep=1,regMap=null,regMarker=null,regCircle=null,regLat=null,regLng=null,regRadius=5,regAddress='';
+
+function nextStep(from){if(!validateStep(from))return;if(from===3)buildSummary();goToStep(from+1);}
+function prevStep(from){goToStep(from-1);}
+function goToStep(n){
+  document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('step'+n)?.classList.add('active');
+  currentStep=n;
+  for(let i=1;i<=4;i++){
+    const d=document.getElementById('sd'+i);
+    const l=document.getElementById('sl'+i);
+    if(d){d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);}
+    if(l)l.classList.toggle('done',i<n);
+  }
+  if(n===3)setTimeout(initMap,200);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function validateStep(n){
+  if(n===1){
+    if(!document.getElementById('r_name').value.trim()){showToast('⚠️ Enter your full name');return false;}
+    const phone=document.getElementById('r_phone').value.trim();
+    if(!phone||phone.length!==10||!/^\d+$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return false;}
+    if(!document.getElementById('r_exp').value){showToast('⚠️ Select your experience');return false;}
+    if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
+    if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
+    const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+    if(providers.find(p=>p.phone===phone)){showToast('⚠️ Mobile already registered. Please login.');return false;}
+    return true;
+  }
+  if(n===2){if(getSelectedServices().length===0){showToast('⚠️ Select at least one service');return false;}return true;}
+  if(n===3){if(!regLat){showToast('⚠️ Please set your location on the map');return false;}return true;}
+  return true;
+}
+
+function buildSvcGrid(){
+  const grid=document.getElementById('svcGrid');
+  if(grid.children.length>0)return;
+  SERVICES.forEach(s=>{
+    const chip=document.createElement('div');
+    chip.className='svc-chip';chip.dataset.name=s.name;chip.dataset.icon=s.icon;
+    chip.innerHTML=`<div class="svc-icon">${s.icon}</div><div class="svc-name">${s.name}</div><input class="svc-price-input" type="number" placeholder="₹ Price" value="${s.defaultPrice}" min="1" onclick="event.stopPropagation()"/>`;
+    chip.onclick=(e)=>{if(e.target.classList.contains('svc-price-input'))return;chip.classList.toggle('selected');};
+    grid.appendChild(chip);
+  });
+}
+
+function getSelectedServices(){
+  return[...document.querySelectorAll('.svc-chip.selected')].map(c=>({name:c.dataset.name,icon:c.dataset.icon,price:parseInt(c.querySelector('.svc-price-input').value)||499}));
+}
+
+function initMap(){
+  if(regMap){regMap.invalidateSize();return;}
+  regMap=L.map('regMap').setView([17.3850,78.4867],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(regMap);
+  regMap.on('click',e=>{regLat=e.latlng.lat;regLng=e.latlng.lng;placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);});
+}
+
+function placeMarker(lat,lng){
+  if(regMarker)regMap.removeLayer(regMarker);
+  if(regCircle)regMap.removeLayer(regCircle);
+  regMarker=L.marker([lat,lng],{draggable:true,icon:L.divIcon({html:`<div style="font-size:36px;margin-top:-36px;margin-left:-14px;filter:drop-shadow(0 3px 8px rgba(232,37,26,0.5))">📍</div>`,className:'',iconSize:[28,36],iconAnchor:[14,36]})}).addTo(regMap);
+  regMarker.on('dragend',e=>{const ll=e.target.getLatLng();regLat=ll.lat;regLng=ll.lng;drawCircle();reverseGeocode(regLat,regLng);});
+  drawCircle();
+}
+
+function drawCircle(){
+  if(regCircle)regMap.removeLayer(regCircle);
+  if(!regLat)return;
+  regCircle=L.circle([regLat,regLng],{radius:regRadius*1000,color:'#E8251A',fillColor:'#E8251A',fillOpacity:0.08,weight:2,dashArray:'6,4'}).addTo(regMap);
+}
+
+function updateRadius(val){
+  regRadius=parseInt(val);
+  document.getElementById('radiusLabel').textContent=val+' km';
+  const pct=((val-1)/(50-1)*100).toFixed(1);
+  document.getElementById('radiusSlider').style.background=`linear-gradient(to right,var(--red) 0%,var(--red) ${pct}%,var(--border) ${pct}%)`;
+  drawCircle();
+}
+
+function searchLoc(){
+  const q=document.getElementById('locSearch').value.trim();
+  if(!q){showToast('⚠️ Enter a location');return;}
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(res=>{
+      if(!res.length){showToast('❌ Location not found');return;}
+      regLat=+res[0].lat;regLng=+res[0].lon;
+      regMap.setView([regLat,regLng],14);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
+    }).catch(()=>showToast('❌ Search failed'));
+}
+
+function useGPS(){
+  if(!navigator.geolocation){showToast('❌ GPS not available');return;}
+  showToast('🎯 Getting location...');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    regLat=pos.coords.latitude;regLng=pos.coords.longitude;
+    regMap.setView([regLat,regLng],15);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
+    showToast('✅ Location detected!');
+  },()=>showToast('❌ GPS failed. Click on map instead.'));
+}
+
+function reverseGeocode(lat,lng){
+  document.getElementById('addrBox').textContent='⏳ Fetching address...';
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(d=>{
+      const a=d.address||{};
+      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
+      regAddress=parts.join(', ')||d.display_name;
+      document.getElementById('addrBox').textContent='📍 '+regAddress;
+    }).catch(()=>{regAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;document.getElementById('addrBox').textContent='📍 '+regAddress;});
+}
+
+function buildSummary(){
+  const svcs=getSelectedServices();
+  const rows=[
+    ['Name',document.getElementById('r_name').value],
+    ['Mobile',document.getElementById('r_phone').value],
+    ['Email',document.getElementById('r_email').value||'—'],
+    ['Experience',document.getElementById('r_exp').value],
+    ['ID Proof',document.getElementById('r_idtype').value+': '+document.getElementById('r_idnum').value],
+    ['Services',svcs.map(s=>s.icon+' '+s.name+' ₹'+s.price).join(' | ')],
+    ['Location',regAddress||`${regLat?.toFixed(4)}, ${regLng?.toFixed(4)}`],
+    ['Service Radius',regRadius+' km'],
+  ];
+  document.getElementById('summaryBox').innerHTML=rows.map(([l,v])=>`<div class="summary-row"><span class="summary-label">${l}</span><span class="summary-value">${v}</span></div>`).join('');
+}
+
+function submitRegistration(){
+  const id='HS-PRO-'+Math.random().toString(36).substr(2,6).toUpperCase();
+  const provider={
+    id,
+    name:document.getElementById('r_name').value.trim(),
+    phone:document.getElementById('r_phone').value.trim(),
+    email:document.getElementById('r_email').value.trim(),
+    whatsapp:document.getElementById('r_whatsapp').value.trim()||document.getElementById('r_phone').value.trim(),
+    gender:document.getElementById('r_gender').value,
+    experience:document.getElementById('r_exp').value,
+    bio:document.getElementById('r_bio').value.trim(),
+    idType:document.getElementById('r_idtype').value,
+    idNum:document.getElementById('r_idnum').value.trim(),
+    services:getSelectedServices(),
+    lat:regLat,lng:regLng,address:regAddress,
+    radius:regRadius,
+    rating:0,reviews:0,
+    totalBookings:0,completedBookings:0,
+    totalEarned:0,pendingEarned:0,withdrawnEarned:0,
+    available:true,
+    registeredAt:new Date().toISOString()
+  };
+  const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  providers.push(provider);
+  localStorage.setItem('hs_providers',JSON.stringify(providers));
+  localStorage.setItem('hs_current_provider',JSON.stringify(provider));
+  document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('stepSuccess').classList.add('active');
+  document.getElementById('generatedId').textContent=id;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3200);}
+
+// Auto-redirect if already logged in
+const existing=localStorage.getItem('hs_current_provider');
+if(existing){try{JSON.parse(existing);window.location.href='provider-dashboard.html';}catch(e){localStorage.removeItem('hs_current_provider');}}
+</script>
+</body>
+</html>

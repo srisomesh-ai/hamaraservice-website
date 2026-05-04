@@ -687,11 +687,78 @@
     Hamara Service
   </a>
   <nav>
-    <a class="nav-link" href="#">Login</a>
-    <a class="nav-link" href="#">Register</a>
-    <a class="nav-btn" href="provider-register.html">Become a Provider</a>
+    <a class="nav-link" id="navUserBtn" href="#" onclick="openUserAuth('login');return false;">Login</a>
+    <a class="nav-link" href="#" onclick="openUserAuth('register');return false;">Register</a>
+    <a class="nav-btn" href="provider-portal.html">👷 Become a Provider</a>
   </nav>
 </header>
+
+<!-- ─── CUSTOMER AUTH MODAL ─── -->
+<div class="modal-overlay" id="userAuthModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:22px;padding:36px 32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;animation:popIn .3s ease;">
+    <button onclick="closeUserAuth()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:#aaa;">✕</button>
+    <!-- tabs -->
+    <div style="display:flex;background:#f4f6fb;border-radius:12px;padding:4px;margin-bottom:24px;">
+      <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;background:white;color:#E8251A;box-shadow:0 1px 6px rgba(0,0,0,0.10);transition:all .2s;">🔑 Login</button>
+      <button id="tabReg" onclick="switchAuthTab('register')" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;background:transparent;color:#6b7280;transition:all .2s;">✍️ Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="authLogin">
+      <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">Welcome back! 👋</div>
+      <div style="font-size:13px;color:#6b7280;font-weight:600;margin-bottom:20px;">Login to track your bookings</div>
+      <div id="authErr" style="background:#fdecea;border:1.5px solid #E8251A;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;color:#E8251A;display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:800;">Mobile Number</label>
+        <input id="cu_phone" type="tel" maxlength="10" placeholder="10-digit mobile" style="padding:13px 14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;border:2px solid #e5e7eb;border-radius:11px;outline:none;" onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#e5e7eb'"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:18px;">
+        <label style="font-size:13px;font-weight:800;">Your Name (as registered)</label>
+        <input id="cu_name_login" type="text" placeholder="Your full name" style="padding:13px 14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;border:2px solid #e5e7eb;border-radius:11px;outline:none;" onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#e5e7eb'" onkeydown="if(event.key==='Enter')doUserLogin()"/>
+      </div>
+      <button onclick="doUserLogin()" style="width:100%;padding:15px;background:linear-gradient(135deg,#E8251A,#FF6B00);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 4px 16px rgba(232,37,26,0.3);">🚀 Login</button>
+      <div style="text-align:center;font-size:13px;color:#6b7280;font-weight:700;margin-top:14px;">No account? <a href="#" onclick="switchAuthTab('register')" style="color:#E8251A;font-weight:800;">Register free</a> — takes 30 seconds!</div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="authRegister" style="display:none;">
+      <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">Create Account ✨</div>
+      <div style="font-size:13px;color:#6b7280;font-weight:600;margin-bottom:20px;">Optional — track bookings & get offers</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <label style="font-size:13px;font-weight:800;">Full Name</label>
+          <input id="cu_reg_name" type="text" placeholder="Your name" style="padding:12px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid #e5e7eb;border-radius:11px;outline:none;" onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#e5e7eb'"/>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <label style="font-size:13px;font-weight:800;">Mobile</label>
+          <input id="cu_reg_phone" type="tel" maxlength="10" placeholder="10-digit" style="padding:12px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid #e5e7eb;border-radius:11px;outline:none;" onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#e5e7eb'"/>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
+        <label style="font-size:13px;font-weight:800;">Email (optional)</label>
+        <input id="cu_reg_email" type="email" placeholder="your@email.com" style="padding:12px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid #e5e7eb;border-radius:11px;outline:none;" onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#e5e7eb'"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:18px;">
+        <label style="font-size:13px;font-weight:800;">City / Area</label>
+        <input id="cu_reg_city" type="text" placeholder="e.g. Hyderabad" style="padding:12px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid #e5e7eb;border-radius:11px;outline:none;" onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#e5e7eb'"/>
+      </div>
+      <button onclick="doUserRegister()" style="width:100%;padding:15px;background:linear-gradient(135deg,#E8251A,#FF6B00);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 4px 16px rgba(232,37,26,0.3);">✅ Create Account</button>
+      <div style="text-align:center;font-size:12px;color:#6b7280;font-weight:700;margin-top:12px;">Already have an account? <a href="#" onclick="switchAuthTab('login')" style="color:#E8251A;font-weight:800;">Login here</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CUSTOMER PROFILE WIDGET (top-right when logged in) ─── -->
+<div id="userWidget" style="display:none;position:fixed;top:14px;right:160px;z-index:8000;">
+  <div onclick="toggleUserMenu()" style="background:linear-gradient(135deg,#E8251A,#FF6B00);color:white;border-radius:22px;padding:8px 16px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 3px 12px rgba(232,37,26,0.35);">
+    👤 <span id="userWidgetName">User</span> ▾
+  </div>
+  <div id="userMenu" style="display:none;position:absolute;top:44px;right:0;background:white;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.16);border:2px solid #e5e7eb;overflow:hidden;min-width:180px;">
+    <div onclick="window.location.href='user-booking.html'" style="padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer;color:#1a1a2e;border-bottom:1px solid #f0f0f0;">📋 My Bookings</div>
+    <div onclick="showUserProfile()" style="padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer;color:#1a1a2e;border-bottom:1px solid #f0f0f0;">👤 My Profile</div>
+    <div onclick="logoutUser()" style="padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer;color:#E8251A;">🚪 Logout</div>
+  </div>
+</div>
 
 <!-- ─── HERO ─── -->
 <section class="hero">
@@ -806,7 +873,7 @@
         <div class="pv-big">👷</div>
         <div class="pv-title">Start Earning Today</div>
         <div class="pv-sub">Free registration · No monthly fees · Daily payouts</div>
-        <button class="green-btn" onclick="window.location.href='provider-register.html'">
+        <button class="green-btn" onclick="window.location.href='provider-portal.html'">
           ✅ &nbsp; Register as Provider
         </button>
       </div>
@@ -1282,6 +1349,103 @@
     clearTimeout(t._timer);
     t._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
+</script>
+
+<script>
+// ════ CUSTOMER AUTH SYSTEM ════
+function openUserAuth(tab) {
+  document.getElementById('userAuthModal').style.display = 'flex';
+  switchAuthTab(tab || 'login');
+}
+function closeUserAuth() {
+  document.getElementById('userAuthModal').style.display = 'none';
+}
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('authLogin').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('authRegister').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('tabLogin').style.cssText += isLogin
+    ? ';background:white;color:#E8251A;box-shadow:0 1px 6px rgba(0,0,0,0.10);'
+    : ';background:transparent;color:#6b7280;box-shadow:none;';
+  document.getElementById('tabReg').style.cssText += !isLogin
+    ? ';background:white;color:#E8251A;box-shadow:0 1px 6px rgba(0,0,0,0.10);'
+    : ';background:transparent;color:#6b7280;box-shadow:none;';
+}
+function doUserLogin() {
+  const phone = document.getElementById('cu_phone').value.trim();
+  const name  = document.getElementById('cu_name_login').value.trim();
+  if (!phone || phone.length !== 10) { showAuthErr('Enter a valid 10-digit mobile number'); return; }
+  if (!name) { showAuthErr('Enter your registered name'); return; }
+  const users = JSON.parse(localStorage.getItem('hs_customers') || '[]');
+  const found = users.find(u => u.phone === phone && u.name.toLowerCase() === name.toLowerCase());
+  if (!found) { showAuthErr('Account not found. Please register first.'); return; }
+  localStorage.setItem('hs_current_customer', JSON.stringify(found));
+  closeUserAuth();
+  updateUserWidget();
+  showToast('✅ Welcome back, ' + found.name + '!');
+}
+function doUserRegister() {
+  const name  = document.getElementById('cu_reg_name').value.trim();
+  const phone = document.getElementById('cu_reg_phone').value.trim();
+  const email = document.getElementById('cu_reg_email').value.trim();
+  const city  = document.getElementById('cu_reg_city').value.trim();
+  if (!name)  { showToast('⚠️ Enter your name'); return; }
+  if (!phone || phone.length !== 10) { showToast('⚠️ Enter valid 10-digit mobile'); return; }
+  const users = JSON.parse(localStorage.getItem('hs_customers') || '[]');
+  if (users.find(u => u.phone === phone)) { showToast('⚠️ This mobile is already registered. Please login.'); switchAuthTab('login'); return; }
+  const user = {
+    id: 'HS-CU-' + Math.random().toString(36).substr(2,6).toUpperCase(),
+    name, phone, email, city, registeredAt: new Date().toISOString()
+  };
+  users.push(user);
+  localStorage.setItem('hs_customers', JSON.stringify(users));
+  localStorage.setItem('hs_current_customer', JSON.stringify(user));
+  closeUserAuth();
+  updateUserWidget();
+  showToast('🎉 Account created! Welcome, ' + name + '!');
+}
+function showAuthErr(msg) {
+  const el = document.getElementById('authErr');
+  el.textContent = '❌ ' + msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
+}
+function updateUserWidget() {
+  const cu = JSON.parse(localStorage.getItem('hs_current_customer') || 'null');
+  const loginBtn = document.getElementById('navUserBtn');
+  const widget = document.getElementById('userWidget');
+  if (cu) {
+    loginBtn.style.display = 'none';
+    widget.style.display = 'block';
+    document.getElementById('userWidgetName').textContent = cu.name.split(' ')[0];
+  } else {
+    loginBtn.style.display = '';
+    widget.style.display = 'none';
+  }
+}
+function toggleUserMenu() {
+  const m = document.getElementById('userMenu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function logoutUser() {
+  localStorage.removeItem('hs_current_customer');
+  updateUserWidget();
+  showToast('👋 Logged out successfully');
+}
+function showUserProfile() {
+  document.getElementById('userMenu').style.display = 'none';
+  const cu = JSON.parse(localStorage.getItem('hs_current_customer') || 'null');
+  if (!cu) return;
+  const bks = JSON.parse(localStorage.getItem('hs_customer_bookings_' + cu.id) || '[]');
+  alert(`👤 ${cu.name}\n📱 ${cu.phone}\n📧 ${cu.email || '—'}\n🏙 ${cu.city || '—'}\n🆔 ${cu.id}\n📋 Bookings: ${bks.length}`);
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('userMenu');
+  if (menu && !menu.contains(e.target) && !document.getElementById('userWidget').contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+// Init on load
+updateUserWidget();
 </script>
 </body>
 </html>
