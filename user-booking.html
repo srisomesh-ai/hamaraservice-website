@@ -44,8 +44,8 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 
 .main{max-width:600px;margin:0 auto;padding:20px 20px 100px;}
 
-.card{background:var(--white);border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden;}
-.card-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card{background:var(--white);border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:visible;}
+.card-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;border-radius:var(--r2) var(--r2) 0 0;}
 .card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .card-icon.red{background:var(--brand-bg);}
 .card-icon.green{background:var(--green-bg);}
@@ -55,7 +55,7 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 .card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .card-body{padding:16px 18px;}
 
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;position:relative;}
 .field:last-child{margin-bottom:0;}
 .field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
 .field input,.field select{padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .18s,box-shadow .18s;-webkit-appearance:none;}
@@ -63,10 +63,10 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 .field input::placeholder{color:var(--muted);font-weight:400;}
 .field .hint{font-size:11px;color:var(--muted);margin-top:3px;}
 
-.svc-search-wrap{position:relative;}
+.svc-search-wrap{position:relative;z-index:500;}
 .svc-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
 .svc-search-inp{padding-left:42px !important;}
-.svc-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:var(--sh2);z-index:100;max-height:260px;overflow-y:auto;}
+.svc-drop{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--white);border:2px solid var(--brand);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:9999;max-height:280px;overflow-y:auto;}
 .svc-drop-item{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .15s;}
 .svc-drop-item:last-child{border:none;}
 .svc-drop-item:hover,.svc-drop-item:active{background:var(--brand-bg);}
@@ -199,7 +199,7 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 
   <!-- STEP 1 -->
   <div id="step1">
-    <div class="card">
+    <div class="card" style="overflow:visible;">
       <div class="card-head">
         <div class="card-icon red">🔍</div>
         <div><div class="card-title">Select Service</div><div class="card-sub">Type to search — e.g. Plumber, AC repair…</div></div>
@@ -482,15 +482,32 @@ function goStep2(){ document.getElementById('step1').style.display='none'; docum
 // ── Service search ────────────────────────────────────────────
 function svcSearch(q){
   const drop=document.getElementById('svcDrop');
-  if(!q.trim()){drop.style.display='none';return;}
-  const lq=q.toLowerCase();
-  const res=SVCS.filter(s=>s.n.toLowerCase().includes(lq)||s.kw.some(k=>k.includes(lq))).slice(0,8);
-  if(!res.length){drop.style.display='none';return;}
-  drop.innerHTML=res.map(s=>`<div class="svc-drop-item" onclick="pickSvc(${SVCS.indexOf(s)})">
-    <span class="sdi-emoji">${s.e}</span>
-    <div class="sdi-info"><div class="sdi-name">${hl(s.n,q)}</div><div class="sdi-price">${s.p}</div></div>
-    <span class="sdi-arrow">→</span></div>`).join('');
+  if(!q||!q.trim()){drop.style.display='none';return;}
+  const lq=q.toLowerCase().trim();
+  const res=SVCS.filter(function(s){
+    return s.n.toLowerCase().includes(lq) || s.kw.some(function(k){return k.includes(lq);});
+  }).slice(0,8);
+  if(!res.length){
+    // Show "no results" hint
+    drop.innerHTML='<div style="padding:14px 16px;font-size:13px;color:var(--muted);font-weight:600;">No services found for "'+q+'" — try different keywords</div>';
+    drop.style.display='block';
+    return;
+  }
+  drop.innerHTML=res.map(function(s){
+    return '<div class="svc-drop-item" onclick="pickSvc('+SVCS.indexOf(s)+')">'+
+      '<span class="sdi-emoji">'+s.e+'</span>'+
+      '<div class="sdi-info">'+
+        '<div class="sdi-name">'+hl(s.n,q)+'</div>'+
+        '<div class="sdi-price">'+s.p+'</div>'+
+      '</div>'+
+      '<span class="sdi-arrow">→</span>'+
+    '</div>';
+  }).join('');
   drop.style.display='block';
+  // Position the drop correctly relative to the input
+  const inp=document.getElementById('svcInp');
+  const rect=inp.getBoundingClientRect();
+  drop.style.width=rect.width+'px';
 }
 function hl(text,q){
   const i=text.toLowerCase().indexOf(q.toLowerCase());
