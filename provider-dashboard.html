@@ -277,74 +277,54 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 .pay-pending-dot{width:8px;height:8px;border-radius:50%;background:#1A73E8;animation:payPulse 1.5s infinite;}
 
 
-/* ══ TRACKING OVERLAY — UBER STYLE ══ */
-.tracking-overlay{position:fixed;inset:0;z-index:2000;background:#0f1117;display:none;flex-direction:column;}
-.tracking-overlay.show{display:flex;animation:fadeIn .3s ease;}
-.tracking-map-wrap{flex:1;position:relative;min-height:0;}
-#trackingMap{width:100%;height:100%;}
-
-/* Top pill — back + trip info */
-.tracking-top-bar{position:absolute;top:16px;left:16px;right:16px;z-index:10;display:flex;align-items:center;gap:12px;}
-.track-back-btn{width:44px;height:44px;border-radius:50%;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.25);flex-shrink:0;transition:all .2s;}
-.track-back-btn:hover{background:#f0f0f0;transform:scale(1.05);}
-.track-status-pill{background:white;border-radius:100px;padding:10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);flex:1;}
-.track-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.track-status-dot.moving{background:#00b37e;animation:pulse 1.5s infinite;}
-.track-status-dot.waiting{background:#f59e0b;animation:pulse 1.5s infinite;}
-.track-status-text{font-size:14px;font-weight:800;color:#0f1117;}
-.track-status-sub{font-size:12px;color:#8b909e;font-weight:600;}
-.track-eta-badge{background:#0f1117;color:white;border-radius:100px;padding:8px 14px;font-size:13px;font-weight:800;white-space:nowrap;}
-
-/* Custom map markers */
-.marker-provider{width:44px;height:44px;background:linear-gradient(135deg,#E8251A,#FF6B00);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(232,37,26,.5);display:flex;align-items:center;justify-content:center;font-size:22px;}
-.marker-customer{width:44px;height:44px;background:linear-gradient(135deg,#1A73E8,#4da6ff);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(27,79,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;}
-.marker-pulse{position:absolute;width:70px;height:70px;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(232,37,26,.2);animation:markerPulse 2s infinite;}
-@keyframes markerPulse{0%{transform:translate(-50%,-50%) scale(.8);opacity:1}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
-
-/* Bottom drawer — Swiggy/Ola style */
-.tracking-drawer{background:white;border-radius:24px 24px 0 0;padding:0;box-shadow:0 -8px 32px rgba(0,0,0,.18);flex-shrink:0;max-height:52vh;overflow-y:auto;}
+/* ══ REAL TRACKING — FULL SCREEN ══ */
+.tracking-overlay{position:fixed;inset:0;z-index:3000;display:none;flex-direction:column;background:#0f1117;}
+.tracking-overlay.show{display:flex;}
+.trk-map-wrap{flex:1;position:relative;min-height:0;}
+#provMap,#custMap{width:100%;height:100%;}
+.trk-topbar{position:absolute;top:16px;left:16px;right:16px;z-index:50;display:flex;align-items:center;gap:10px;}
+.trk-back{width:44px;height:44px;border-radius:50%;background:white;border:none;cursor:pointer;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.trk-pill{flex:1;background:white;border-radius:100px;padding:10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.trk-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;animation:pulse 1.5s infinite;}
+.trk-dot.green{background:#00b37e;}.trk-dot.blue{background:#1A73E8;}.trk-dot.orange{background:#f59e0b;}
+.trk-pill-title{font-size:14px;font-weight:800;color:#0f1117;}
+.trk-pill-sub{font-size:11px;color:#8b909e;font-weight:600;}
+.trk-eta{background:#0f1117;color:white;border-radius:100px;padding:8px 14px;font-size:13px;font-weight:800;white-space:nowrap;}
+.trk-drawer{background:white;border-radius:24px 24px 0 0;flex-shrink:0;box-shadow:0 -8px 32px rgba(0,0,0,.18);max-height:55vh;overflow-y:auto;}
 .drawer-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:12px auto 0;}
-.drawer-head{padding:16px 22px 14px;border-bottom:1px solid #f0f0f0;}
-.drawer-title{font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800;color:#0f1117;margin-bottom:2px;}
-.drawer-sub{font-size:13px;color:#8b909e;font-weight:600;}
-
-/* Provider card in customer view */
-.prov-track-card{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid #f7f8fc;}
-.prov-track-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#E8251A,#FF6B00);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:2px solid #fdecea;}
-.prov-track-info{flex:1;}
-.prov-track-name{font-size:16px;font-weight:800;color:#0f1117;}
-.prov-track-detail{font-size:13px;color:#8b909e;font-weight:600;margin-top:2px;}
-.prov-track-rating{font-size:13px;font-weight:800;color:#f59e0b;}
-.prov-track-actions{display:flex;gap:8px;}
-.track-action-btn{width:42px;height:42px;border-radius:50%;border:2px solid #e5e7eb;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s;}
-.track-action-btn:hover{border-color:#E8251A;background:#fdecea;}
-
-/* Stats row */
-.track-stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid #f7f8fc;}
-.track-stat{padding:14px 0;text-align:center;border-right:1px solid #f7f8fc;}
-.track-stat:last-child{border-right:none;}
-.track-stat-val{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;color:#0f1117;}
-.track-stat-label{font-size:11px;color:#8b909e;font-weight:700;margin-top:2px;}
-
-/* Steps timeline */
-.track-steps{padding:14px 22px;}
-.track-step{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;}
-.track-step:last-child{margin-bottom:0;}
-.step-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0;}
-.step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:800;}
-.step-dot.done{background:#00b37e;color:white;}
-.step-dot.active{background:#1A73E8;color:white;box-shadow:0 0 0 5px rgba(27,79,255,.15);}
-.step-dot.waiting{background:#f0f0f0;color:#8b909e;}
-.step-line{width:2px;flex:1;background:#f0f0f0;margin:4px 0;min-height:20px;}
-.step-line.done{background:#00b37e;}
-.step-content{flex:1;padding-top:1px;}
-.step-title{font-size:14px;font-weight:800;color:#0f1117;}
-.step-desc{font-size:12px;color:#8b909e;font-weight:600;margin-top:2px;}
-.step-time{font-size:11px;color:#8b909e;font-weight:700;margin-top:3px;}
-
-/* Navigate button in booking table */
-.nav-btn-track{padding:7px 14px;background:linear-gradient(135deg,#1A73E8,#4da6ff);color:white;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
-.nav-btn-track:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(27,79,255,.35);}
+.drw-head{padding:14px 22px 12px;border-bottom:1px solid #f0f0f0;}
+.drw-title{font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800;color:#0f1117;}
+.drw-sub{font-size:12px;color:#8b909e;font-weight:600;margin-top:2px;}
+.drw-person{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid #f7f8fc;}
+.drw-av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:2px solid #f0f0f0;}
+.drw-av.prov{background:linear-gradient(135deg,#E8251A,#FF6B00);}.drw-av.cust{background:linear-gradient(135deg,#1A73E8,#4da6ff);}
+.drw-name{font-size:16px;font-weight:800;color:#0f1117;}
+.drw-detail{font-size:12px;color:#8b909e;font-weight:600;margin-top:2px;}
+.drw-btns{display:flex;gap:8px;}
+.drw-btn{width:40px;height:40px;border-radius:50%;border:2px solid #e5e7eb;background:white;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.drw-btn:hover{border-color:#E8251A;background:#fdecea;}
+.drw-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #f7f8fc;}
+.drw-stat{padding:14px 0;text-align:center;border-right:1px solid #f7f8fc;}
+.drw-stat:last-child{border-right:none;}
+.drw-stat-val{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;color:#0f1117;}
+.drw-stat-lbl{font-size:11px;color:#8b909e;font-weight:700;margin-top:2px;}
+.drw-steps{padding:16px 22px;}
+.drw-step{display:flex;gap:14px;margin-bottom:14px;}
+.drw-step:last-child{margin-bottom:0;}
+.ds-col{display:flex;flex-direction:column;align-items:center;}
+.ds-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;}
+.ds-dot.done{background:#00b37e;color:white;}.ds-dot.active{background:#1A73E8;color:white;box-shadow:0 0 0 5px rgba(27,79,255,.12);}.ds-dot.wait{background:#f0f0f0;color:#9ca3af;}
+.ds-line{width:2px;flex:1;min-height:18px;margin:3px 0;}
+.ds-line.done{background:#00b37e;}.ds-line.wait{background:#f0f0f0;}
+.ds-info{flex:1;padding-top:2px;}
+.ds-title{font-size:14px;font-weight:800;}
+.ds-title.done{color:#00b37e;}.ds-title.active{color:#1A73E8;}.ds-title.wait{color:#9ca3af;}
+.ds-desc{font-size:12px;color:#9ca3af;font-weight:600;margin-top:2px;}
+.gps-banner{padding:10px 22px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f7f8fc;}
+.gps-banner.live{color:#00b37e;background:#e6faf4;}.gps-banner.searching{color:#f59e0b;background:#fffbe6;}.gps-banner.error{color:#E8251A;background:#fdecea;}
+.btn-nav{padding:7px 14px;background:linear-gradient(135deg,#1A73E8,#4da6ff);color:white;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-track-cust{padding:6px 12px;background:var(--green-light);color:var(--green);border:1.5px solid var(--green);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-top:4px;}
+.nav-btn-track{padding:7px 14px;background:linear-gradient(135deg,#1A73E8,#4da6ff);color:white;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
 
 </style>
 </head>
@@ -734,125 +714,86 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 </div>
 
 
-<!-- ══════════════════════════════════════════════════
-     PROVIDER TRACKING VIEW (Provider navigates to customer)
-══════════════════════════════════════════════════ -->
+<!-- ══ PROVIDER TRACKING VIEW (real GPS) ══ -->
 <div class="tracking-overlay" id="providerTrackingView">
-  <div class="tracking-map-wrap">
-    <div id="trackingMap"></div>
-    <!-- Top bar -->
-    <div class="tracking-top-bar">
-      <button class="track-back-btn" onclick="closeTracking()">←</button>
-      <div class="track-status-pill">
-        <div class="track-status-dot moving" id="trackStatusDot"></div>
-        <div>
-          <div class="track-status-text" id="trackStatusText">Navigating to customer</div>
-          <div class="track-status-sub" id="trackStatusSub">Follow route on map</div>
-        </div>
+  <div class="trk-map-wrap">
+    <div id="provMap"></div>
+    <div class="trk-topbar">
+      <button class="trk-back" onclick="stopProviderTracking()">&#8592;</button>
+      <div class="trk-pill">
+        <div class="trk-dot green" id="provTrkDot"></div>
+        <div><div class="trk-pill-title" id="provTrkTitle">Getting GPS location...</div>
+        <div class="trk-pill-sub" id="provTrkSub">Allow location access</div></div>
       </div>
-      <div class="track-eta-badge" id="trackEtaBadge">-- min</div>
+      <div class="trk-eta" id="provTrkEta">-- min</div>
     </div>
   </div>
-
-  <!-- Bottom drawer -->
-  <div class="tracking-drawer">
+  <div class="trk-drawer">
     <div class="drawer-handle"></div>
-    <div class="drawer-head">
-      <div class="drawer-title" id="trackDrawerTitle">En Route to Customer</div>
-      <div class="drawer-sub" id="trackDrawerSub">Customer is waiting</div>
+    <div class="gps-banner searching" id="provGpsBanner">&#128225; Acquiring GPS signal...</div>
+    <div class="drw-head">
+      <div class="drw-title" id="provDrwTitle">Navigating to Customer</div>
+      <div class="drw-sub">Real GPS location active on this device</div>
     </div>
-
-    <!-- Customer info card -->
-    <div class="prov-track-card">
-      <div class="prov-track-av">👤</div>
-      <div class="prov-track-info">
-        <div class="prov-track-name" id="trackCustomerName">—</div>
-        <div class="prov-track-detail" id="trackCustomerDetail">—</div>
-        <div class="prov-track-rating">⭐ Verified Customer</div>
+    <div class="drw-person">
+      <div class="drw-av cust">&#128100;</div>
+      <div style="flex:1">
+        <div class="drw-name" id="provDrwCustName">--</div>
+        <div class="drw-detail" id="provDrwCustDetail">--</div>
       </div>
-      <div class="prov-track-actions">
-        <button class="track-action-btn" title="Call Customer" onclick="showToast('📞 Calling customer…')">📞</button>
-        <button class="track-action-btn" title="Open in Maps" onclick="openExternalNav()">🗺️</button>
+      <div class="drw-btns">
+        <button class="drw-btn" id="provCallBtn" title="Call">&#128222;</button>
+        <button class="drw-btn" onclick="openGoogleMapsNav()" title="Google Maps">&#128506;</button>
       </div>
     </div>
-
-    <!-- Distance / Time / Amount -->
-    <div class="track-stats-row">
-      <div class="track-stat">
-        <div class="track-stat-val" id="trackDistance">—</div>
-        <div class="track-stat-label">Distance</div>
-      </div>
-      <div class="track-stat">
-        <div class="track-stat-val" id="trackETA">—</div>
-        <div class="track-stat-label">ETA</div>
-      </div>
-      <div class="track-stat">
-        <div class="track-stat-val" id="trackAmount">—</div>
-        <div class="track-stat-label">Earnings</div>
-      </div>
+    <div class="drw-stats">
+      <div class="drw-stat"><div class="drw-stat-val" id="provDist">--</div><div class="drw-stat-lbl">Distance</div></div>
+      <div class="drw-stat"><div class="drw-stat-val" id="provEtaVal">--</div><div class="drw-stat-lbl">ETA</div></div>
+      <div class="drw-stat"><div class="drw-stat-val" id="provEarn">--</div><div class="drw-stat-lbl">You earn</div></div>
     </div>
-
-    <!-- Progress steps -->
-    <div class="track-steps" id="trackSteps"></div>
+    <div class="drw-steps" id="provSteps"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════
-     CUSTOMER TRACKING VIEW (Customer watches provider)
-══════════════════════════════════════════════════ -->
+<!-- ══ CUSTOMER TRACKING VIEW (real-time Firebase) ══ -->
 <div class="tracking-overlay" id="customerTrackingView">
-  <div class="tracking-map-wrap">
-    <div id="customerTrackingMap"></div>
-    <div class="tracking-top-bar">
-      <button class="track-back-btn" onclick="closeCustomerTracking()">←</button>
-      <div class="track-status-pill">
-        <div class="track-status-dot moving" id="custTrackDot"></div>
-        <div>
-          <div class="track-status-text" id="custTrackText">Professional on the way</div>
-          <div class="track-status-sub" id="custTrackSub">Live tracking enabled</div>
-        </div>
+  <div class="trk-map-wrap">
+    <div id="custMap"></div>
+    <div class="trk-topbar">
+      <button class="trk-back" onclick="stopCustomerTracking()">&#8592;</button>
+      <div class="trk-pill">
+        <div class="trk-dot blue" id="custTrkDot"></div>
+        <div><div class="trk-pill-title" id="custTrkTitle">Professional on the way</div>
+        <div class="trk-pill-sub" id="custTrkSub">Live GPS tracking</div></div>
       </div>
-      <div class="track-eta-badge" id="custTrackETA">-- min</div>
+      <div class="trk-eta" id="custTrkEta">-- min</div>
     </div>
   </div>
-
-  <div class="tracking-drawer">
+  <div class="trk-drawer">
     <div class="drawer-handle"></div>
-    <div class="drawer-head">
-      <div class="drawer-title">Your Professional is Coming</div>
-      <div class="drawer-sub" id="custDrawerSub">Live location tracking</div>
+    <div class="gps-banner live" id="custGpsBanner">&#128994; Live tracking active</div>
+    <div class="drw-head">
+      <div class="drw-title">Your Professional is Coming</div>
+      <div class="drw-sub" id="custDrwSub">Real-time location updates</div>
     </div>
-
-    <!-- Provider card -->
-    <div class="prov-track-card">
-      <div class="prov-track-av">👷</div>
-      <div class="prov-track-info">
-        <div class="prov-track-name" id="custTrackProvName">—</div>
-        <div class="prov-track-detail" id="custTrackProvDetail">—</div>
-        <div class="prov-track-rating" id="custTrackRating">⭐ — · Verified Professional</div>
+    <div class="drw-person">
+      <div class="drw-av prov">&#128119;</div>
+      <div style="flex:1">
+        <div class="drw-name" id="custDrwProvName">--</div>
+        <div class="drw-detail" id="custDrwProvDetail">--</div>
+        <div style="font-size:12px;color:#f59e0b;font-weight:800;margin-top:3px;" id="custDrwRating">--</div>
       </div>
-      <div class="prov-track-actions">
-        <button class="track-action-btn" onclick="showToast('📞 Calling professional…')">📞</button>
-        <button class="track-action-btn" onclick="showToast('💬 Chat coming soon!')">💬</button>
-      </div>
-    </div>
-
-    <div class="track-stats-row">
-      <div class="track-stat">
-        <div class="track-stat-val" id="custTrackDist">—</div>
-        <div class="track-stat-label">Away</div>
-      </div>
-      <div class="track-stat">
-        <div class="track-stat-val" id="custTrackTime">—</div>
-        <div class="track-stat-label">ETA</div>
-      </div>
-      <div class="track-stat">
-        <div class="track-stat-val" id="custTrackAmt">—</div>
-        <div class="track-stat-label">Service Cost</div>
+      <div class="drw-btns">
+        <button class="drw-btn" id="custCallBtn">&#128222;</button>
+        <button class="drw-btn" onclick="showToast('Chat coming soon!')">&#128172;</button>
       </div>
     </div>
-
-    <div class="track-steps" id="custTrackSteps"></div>
+    <div class="drw-stats">
+      <div class="drw-stat"><div class="drw-stat-val" id="custDist">--</div><div class="drw-stat-lbl">Away</div></div>
+      <div class="drw-stat"><div class="drw-stat-val" id="custEtaVal">--</div><div class="drw-stat-lbl">ETA</div></div>
+      <div class="drw-stat"><div class="drw-stat-val" id="custAmt">--</div><div class="drw-stat-lbl">Service cost</div></div>
+    </div>
+    <div class="drw-steps" id="custSteps"></div>
   </div>
 </div>
 
@@ -975,7 +916,7 @@ function seedDemoData() {
     {id:'HS-BK-001',customer:'Anita Reddy',phone:'9876543210',service:'House Maid',date:'2026-05-01',time:'09:00',amount:499,status:'completed'},
     {id:'HS-BK-002',customer:'Ramesh Kumar',phone:'9123456780',service:'AC Cleaning',date:'2026-05-02',time:'11:00',amount:799,status:'completed'},
     {id:'HS-BK-003',customer:'Priya Sharma',phone:'9988776655',service:'House Maid',date:'2026-05-03',time:'10:00',amount:499,status:'completed'},
-    {id:'HS-BK-004',customer:'Suresh Babu',phone:'9001234567',service:'House Maid',date:'2026-05-04',time:'14:00',amount:499,status:'pending'},
+    {id:'HS-BK-004',customer:'Suresh Babu',phone:'9001234567',service:'House Maid',date:'2026-05-04',time:'14:00',amount:499,status:'pending',customerLat:17.3780,customerLng:78.4980},
     {id:'HS-BK-005',customer:'Lakshmi Devi',phone:'9876001234',service:'Cooking Person',date:'2026-04-28',time:'08:00',amount:799,status:'completed'},
     {id:'HS-BK-006',customer:'Vijay Nair',phone:'9123000456',service:'House Maid',date:'2026-04-25',time:'16:00',amount:499,status:'cancelled'},
   ];
@@ -1061,7 +1002,7 @@ function loadAllBookings(filter = 'all') {
           : b.status === 'paid'
           ? `<span class="badge paid">💰 Paid · Processing</span>`
           : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>
-             ${b.tracking?`<br/><button class="abtn view" onclick="openCustomerTracking('${b.id}')" style="margin-top:3px">📍 Customer View</button>`:''}`}
+             <br/><button class="btn-track-cust" onclick="openCustomerTracking('${b.id}')" style="margin-top:4px">📍 Customer View</button>`}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
@@ -1821,289 +1762,310 @@ function closeModal(id){document.getElementById(id).classList.remove('show');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
 
 // ════════════════════════════════════════════════════════════════
-// TRACKING ENGINE — Ola / Uber / Swiggy style
+// REAL TRACKING ENGINE
+// GPS: navigator.geolocation.watchPosition (device GPS)
+// Routing: OSRM (free, real roads, no API key)
+// Sync: Firebase Realtime Database (free tier)
 // ════════════════════════════════════════════════════════════════
-let trackMap = null, custTrackMap = null;
-let providerMarker = null, customerMarker = null;
-let routeLine = null, custRouteLine = null;
-let provMarkerCust = null, custMarkerCust = null;
-let trackInterval = null;
-let activeTrackBooking = null;
-// Simulated positions (in real app: from GPS)
-let simProvLat, simProvLng, simCustLat, simCustLng;
-let simStep = 0, simTotalSteps = 0;
-let simPath = [];
 
-const PROVIDER_ICON = L.divIcon({
-  html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#E8251A,#FF6B00);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(232,37,26,.5);display:flex;align-items:center;justify-content:center;font-size:22px;">👷</div>`,
-  className:'', iconSize:[44,44], iconAnchor:[22,22]
-});
-const CUSTOMER_ICON = L.divIcon({
-  html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#1A73E8,#4da6ff);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(27,79,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;">🏠</div>`,
-  className:'', iconSize:[44,44], iconAnchor:[22,22]
-});
-const DEST_ICON = L.divIcon({
-  html: `<div style="width:36px;height:36px;background:white;border-radius:50%;border:3px solid #1A73E8;box-shadow:0 3px 12px rgba(27,79,255,.3);display:flex;align-items:center;justify-content:center;font-size:18px;">📍</div>`,
-  className:'', iconSize:[36,36], iconAnchor:[18,18]
-});
+// ── FIREBASE CONFIG ──────────────────────────────────────────────
+// Free Firebase Realtime DB — no server needed, real-time sync
+// TO SET UP YOUR OWN (free):
+//   1. Go to https://console.firebase.google.com
+//   2. Create project → Realtime Database → Start in test mode
+//   3. Replace this URL with your database URL
+const FB = 'https://hamaraservice-track-default-rtdb.firebaseio.com';
 
-function haversineKm(lat1,lng1,lat2,lng2){
-  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+// ── MAP + STATE ──────────────────────────────────────────────────
+var provMap=null, custMap2=null;
+var provSelfMarker=null, provDestMarker=null, provRoutePolyline=null;
+var custProvMarker=null, custHomeMarker=null, custRoutePolyline=null;
+var gpsWatchId=null, custPollTimer=null;
+var activeBookingId=null, activeBookingData=null;
+var myRealLat=null, myRealLng=null;
+
+// ── LEAFLET ICONS ────────────────────────────────────────────────
+function mkIcon(emoji,bg,sz){sz=sz||44;return L.divIcon({html:'<div style="width:'+sz+'px;height:'+sz+'px;background:'+bg+';border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:'+(sz*.5)+'px;">'+emoji+'</div>',className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});}
+function mkDestIcon(emoji){return L.divIcon({html:'<div style="position:relative"><div style="width:48px;height:48px;background:white;border-radius:50%;border:3px solid #1A73E8;box-shadow:0 4px 14px rgba(27,79,255,.35);display:flex;align-items:center;justify-content:center;font-size:22px;">'+emoji+'</div><div style="width:14px;height:14px;background:#1A73E8;border-radius:50%;border:2px solid white;position:absolute;bottom:-4px;right:-2px;"></div></div>',className:'',iconSize:[48,48],iconAnchor:[24,24]});}
+
+// ── MATH ────────────────────────────────────────────────────────
+function calcDist(a,b,c,d){var R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,e=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)*Math.sin(dN/2);return R*2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e));}
+function fmtD(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';}
+function fmtT(km){var m=Math.max(1,Math.round(km*3.5));return m<60?m+' min':(Math.floor(m/60)+'h '+(m%60)+'m');}
+
+// ── OSRM: REAL ROAD ROUTE (free, no key) ────────────────────────
+async function getRoute(fromLat,fromLng,toLat,toLng){
+  try{
+    var url='https://router.project-osrm.org/route/v1/driving/'+fromLng+','+fromLat+';'+toLng+','+toLat+'?overview=full&geometries=geojson';
+    var r=await fetch(url,{signal:AbortSignal.timeout(8000)});
+    var d=await r.json();
+    if(d.code==='Ok'&&d.routes.length){
+      var coords=d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
+      return{coords:coords,dist:d.routes[0].distance/1000,dur:d.routes[0].duration/60};
+    }
+  }catch(e){console.warn('OSRM failed:',e);}
+  // Fallback: straight line
+  return{coords:[[fromLat,fromLng],[toLat,toLng]],dist:calcDist(fromLat,fromLng,toLat,toLng),dur:calcDist(fromLat,fromLng,toLat,toLng)*4};
 }
 
-function interpolate(lat1,lng1,lat2,lng2,t){
-  return {lat:lat1+(lat2-lat1)*t, lng:lng1+(lng2-lng1)*t};
+// ── FIREBASE: PUBLISH PROVIDER LOCATION ─────────────────────────
+async function fbWrite(path,data){
+  try{await fetch(FB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
+  catch(e){}
+}
+async function fbRead(path){
+  try{var r=await fetch(FB+'/'+path+'.json');return await r.json();}
+  catch(e){return null;}
 }
 
-// Build a simulated path between two points (zig-zag for realism)
-function buildSimPath(fromLat,fromLng,toLat,toLng){
-  const steps=30;
-  const path=[];
-  for(let i=0;i<=steps;i++){
-    const t=i/steps;
-    // Add slight random detour for road-like feel
-    const jitter = i>0&&i<steps ? (Math.random()-.5)*.003*(1-Math.abs(t-.5)*2) : 0;
-    const p=interpolate(fromLat,fromLng,toLat,toLng,t);
-    path.push({lat:p.lat+(jitter), lng:p.lng+(jitter*.5)});
-  }
-  return path;
-}
+// ════════════════════════════════════════════════════════════════
+// PROVIDER TRACKING — Opens on provider device
+// Uses real device GPS, publishes to Firebase every 4s
+// ════════════════════════════════════════════════════════════════
+async function openProviderTracking(bookingId){
+  var bk=getBK();
+  var booking=bk.find(function(b){return b.id===bookingId;});
+  if(!booking)return;
+  activeBookingId=bookingId;
+  activeBookingData=booking;
 
-// ─── OPEN PROVIDER TRACKING (provider navigates to customer) ────
-function openProviderTracking(bookingId) {
-  const bk = getBK();
-  const booking = bk.find(b => b.id === bookingId);
-  if (!booking) return;
-  activeTrackBooking = booking;
-
-  // Provider location = provider's registered location
-  const provLat = P.lat || 17.3850;
-  const provLng = P.lng || 78.4867;
-
-  // Customer location — use booking's stored lat/lng, or simulate near provider
-  const custLat = booking.customerLat || (provLat + (Math.random()-.5)*.04);
-  const custLng = booking.customerLng || (provLng + (Math.random()-.5)*.04);
-
-  simProvLat = provLat; simProvLng = provLng;
-  simCustLat = custLat; simCustLng = custLng;
-  simPath = buildSimPath(provLat, provLng, custLat, custLng);
-  simStep = 0; simTotalSteps = simPath.length;
-
-  // Fill drawer
-  document.getElementById('trackCustomerName').textContent = booking.customer || 'Customer';
-  document.getElementById('trackCustomerDetail').textContent = booking.service + ' · ' + booking.date + ' ' + booking.time;
-  document.getElementById('trackAmount').textContent = '₹' + (booking.amount - Math.round(booking.amount*(12/100)));
-
-  // Show overlay
+  document.getElementById('provDrwCustName').textContent=booking.customer||'Customer';
+  document.getElementById('provDrwCustDetail').textContent=booking.service+' · '+booking.date+' '+(booking.time||'');
+  document.getElementById('provEarn').textContent='Rs '+(booking.amount-Math.round(booking.amount*.12)).toLocaleString('en-IN');
+  document.getElementById('provCallBtn').onclick=function(){window.open('tel:'+(booking.phone||''));};
   document.getElementById('providerTrackingView').classList.add('show');
+  setGpsBanner('prov','searching','Acquiring GPS signal...');
+  updateProvSteps('searching');
 
-  // Init map
-  setTimeout(() => {
-    if (!trackMap) {
-      trackMap = L.map('trackingMap', {zoomControl:false}).setView([provLat, provLng], 14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(trackMap);
+  setTimeout(async function(){
+    if(!provMap){
+      provMap=L.map('provMap',{zoomControl:false}).setView([17.385,78.486],15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(provMap);
+      L.control.zoom({position:'bottomright'}).addTo(provMap);
     }
-    trackMap.setView([provLat, provLng], 14);
-    if (providerMarker) trackMap.removeLayer(providerMarker);
-    if (customerMarker) trackMap.removeLayer(customerMarker);
-    if (routeLine) trackMap.removeLayer(routeLine);
-
-    providerMarker = L.marker([provLat,provLng],{icon:PROVIDER_ICON}).addTo(trackMap).bindPopup('<b>You (Provider)</b>');
-    customerMarker = L.marker([custLat,custLng],{icon:CUSTOMER_ICON}).addTo(trackMap).bindPopup('<b>'+booking.customer+'</b><br/>'+booking.service);
-
-    // Draw initial route
-    routeLine = L.polyline([[provLat,provLng],[custLat,custLng]],{color:'#1A73E8',weight:5,opacity:.8,dashArray:'10,5'}).addTo(trackMap);
-    trackMap.fitBounds([[provLat,provLng],[custLat,custLng]],{padding:[60,60]});
-
-    updateTrackingUI();
-    startProviderMovement();
-  }, 200);
+    // Customer destination pin
+    var cLat=booking.customerLat, cLng=booking.customerLng;
+    if(cLat&&cLng){
+      if(provDestMarker)provMap.removeLayer(provDestMarker);
+      provDestMarker=L.marker([cLat,cLng],{icon:mkDestIcon('🏠')}).addTo(provMap).bindPopup('<b>'+(booking.customer||'Customer')+'</b><br/>'+(booking.service||'')+'<br/>Destination');
+      provMap.setView([cLat,cLng],13);
+    }
+    startRealGPS(bookingId,cLat,cLng);
+  },200);
 }
 
-function updateTrackingUI() {
-  const pos = simPath[simStep] || {lat:simProvLat, lng:simProvLng};
-  const dist = haversineKm(pos.lat, pos.lng, simCustLat, simCustLng);
-  const distStr = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+'km';
-  const etaMin = Math.max(1, Math.round(dist*4)); // ~15 km/h average
-  const progress = simStep/simTotalSteps;
-
-  document.getElementById('trackDistance').textContent = distStr;
-  document.getElementById('trackETA').textContent = etaMin + ' min';
-  document.getElementById('trackEtaBadge').textContent = etaMin + ' min';
-
-  const steps = [
-    {label:'Booking Accepted', desc:'You accepted the job', done:true},
-    {label:'Navigating', desc:'En route to '+((activeTrackBooking||{}).customer||'customer'), done:progress>0, active:progress<1},
-    {label:'Arrived', desc:'At customer location', done:progress>=.95},
-    {label:'Job in Progress', desc:'Service underway', done:false},
-    {label:'Complete & Get Paid', desc:'OTP verification', done:false},
-  ];
-  renderSteps('trackSteps', steps);
-
-  if (progress >= .98) {
-    document.getElementById('trackStatusText').textContent = 'Arrived at destination!';
-    document.getElementById('trackStatusSub').textContent = 'Start the service';
-    document.getElementById('trackStatusDot').className = 'track-status-dot waiting';
-    document.getElementById('trackDrawerTitle').textContent = 'You have arrived!';
-    document.getElementById('trackDrawerSub').textContent = 'Customer is expecting you';
+function startRealGPS(bookingId,destLat,destLng){
+  if(!navigator.geolocation){
+    setGpsBanner('prov','error','GPS not supported on this device');
+    showToast('GPS not available — try Google Chrome on Android');
+    return;
   }
+  setGpsBanner('prov','searching','Acquiring GPS...');
+  document.getElementById('provTrkTitle').textContent='Getting your location...';
 
-  // Also store provider position so customer map can read it
-  if (activeTrackBooking) {
-    const bk = getBK();
-    const idx = bk.findIndex(b=>b.id===activeTrackBooking.id);
-    if (idx>-1) {
-      bk[idx].provLiveLatLng = {lat:pos.lat, lng:pos.lng};
-      bk[idx].provETA = etaMin;
-      bk[idx].tracking = true;
-      saveBK(bk);
-    }
-  }
-}
+  if(gpsWatchId!==null){navigator.geolocation.clearWatch(gpsWatchId);}
 
-function startProviderMovement() {
-  clearInterval(trackInterval);
-  trackInterval = setInterval(() => {
-    if (simStep < simTotalSteps - 1) {
-      simStep++;
-      const pos = simPath[simStep];
-      if (providerMarker) providerMarker.setLatLng([pos.lat, pos.lng]);
-      if (routeLine) {
-        trackMap.removeLayer(routeLine);
-        // Remaining route
-        const remaining = simPath.slice(simStep);
-        routeLine = L.polyline(remaining.map(p=>[p.lat,p.lng]),{color:'#1A73E8',weight:5,opacity:.8}).addTo(trackMap);
-        // Completed route (grey)
-        const done = simPath.slice(0, simStep+1);
-        L.polyline(done.map(p=>[p.lat,p.lng]),{color:'#9ca3af',weight:3,opacity:.5}).addTo(trackMap);
+  gpsWatchId=navigator.geolocation.watchPosition(
+    async function(pos){
+      var lat=pos.coords.latitude, lng=pos.coords.longitude, acc=Math.round(pos.coords.accuracy);
+      myRealLat=lat; myRealLng=lng;
+
+      setGpsBanner('prov','live','GPS Live · Accuracy ±'+acc+'m');
+      document.getElementById('provTrkTitle').textContent='Navigating to customer';
+      document.getElementById('provTrkDot').className='trk-dot green';
+
+      // Place / move provider marker
+      if(!provSelfMarker){
+        provSelfMarker=L.marker([lat,lng],{icon:mkIcon('👷','linear-gradient(135deg,#E8251A,#FF6B00)')}).addTo(provMap).bindPopup('<b>You (Provider)</b><br/>Acc: ±'+acc+'m');
+        L.circle([lat,lng],{radius:acc,color:'#1A73E8',fillColor:'#1A73E8',fillOpacity:.08,weight:1,dashArray:'5,3'}).addTo(provMap);
+      } else {
+        provSelfMarker.setLatLng([lat,lng]);
       }
-      trackMap.panTo([pos.lat, pos.lng], {animate:true,duration:.5});
-      updateTrackingUI();
-    } else {
-      clearInterval(trackInterval);
-      showToast('📍 You have arrived at customer location!');
-    }
-  }, 1500); // move every 1.5s for demo (real: GPS updates)
+
+      // Get real road route
+      if(destLat&&destLng){
+        var route=await getRoute(lat,lng,destLat,destLng);
+        if(provRoutePolyline)provMap.removeLayer(provRoutePolyline);
+        provRoutePolyline=L.polyline(route.coords,{color:'#1A73E8',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(provMap);
+        provMap.fitBounds([[lat,lng],[destLat,destLng]],{padding:[80,80],maxZoom:16});
+
+        var d=route.dist;
+        document.getElementById('provDist').textContent=fmtD(d);
+        document.getElementById('provEtaVal').textContent=fmtT(d);
+        document.getElementById('provTrkEta').textContent=fmtT(d);
+        document.getElementById('provTrkSub').textContent=fmtD(d)+' via road · ±'+acc+'m';
+
+        updateProvSteps(d<0.05?'arrived':'navigating');
+        if(d<0.05){
+          document.getElementById('provTrkTitle').textContent='You have arrived!';
+          setGpsBanner('prov','live','You are at the customer location');
+        }
+      } else {
+        provMap.setView([lat,lng],16);
+      }
+
+      // PUBLISH to Firebase — customer map reads this
+      await fbWrite('tracking/'+bookingId+'/provider',{lat:lat,lng:lng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8,service:activeBookingData?(activeBookingData.service||''):''});
+    },
+    function(err){
+      var msgs={1:'Location permission denied — tap Allow in browser',2:'GPS signal unavailable — try moving outside',3:'GPS timeout — retrying...'};
+      setGpsBanner('prov','error',msgs[err.code]||'GPS error');
+      document.getElementById('provTrkTitle').textContent='GPS Error';
+      if(err.code!==1)setTimeout(function(){startRealGPS(bookingId,destLat,destLng);},6000);
+    },
+    {enableHighAccuracy:true,maximumAge:2000,timeout:20000}
+  );
 }
 
-function closeTracking() {
-  clearInterval(trackInterval);
+function stopProviderTracking(){
+  if(gpsWatchId!==null){navigator.geolocation.clearWatch(gpsWatchId);gpsWatchId=null;}
   document.getElementById('providerTrackingView').classList.remove('show');
 }
 
-function openExternalNav() {
-  if (!simCustLat) return;
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${simCustLat},${simCustLng}&travelmode=driving`;
-  window.open(url,'_blank');
+function openGoogleMapsNav(){
+  if(!activeBookingData){return;}
+  var lat=activeBookingData.customerLat,lng=activeBookingData.customerLng;
+  if(!lat){showToast('No customer location — customer did not share GPS');return;}
+  window.open('https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'&travelmode=driving','_blank');
 }
 
-// ─── OPEN CUSTOMER TRACKING (customer watches provider move) ────
-function openCustomerTracking(bookingId) {
-  const bk = getBK();
-  const booking = bk.find(b => b.id === bookingId);
-  if (!booking) return;
+// ════════════════════════════════════════════════════════════════
+// CUSTOMER TRACKING — Opens on customer device
+// Reads provider location from Firebase every 4 seconds
+// Shows real road route from provider to customer
+// ════════════════════════════════════════════════════════════════
+async function openCustomerTracking(bookingId){
+  var bk=getBK();
+  var booking=bk.find(function(b){return b.id===bookingId;});
+  if(!booking)return;
+  activeBookingId=bookingId;
+  activeBookingData=booking;
 
-  const custLat = booking.customerLat || (P.lat + (Math.random()-.5)*.04);
-  const custLng = booking.customerLng || (P.lng + (Math.random()-.5)*.04);
-  const provLat = booking.provLiveLatLng ? booking.provLiveLatLng.lat : P.lat;
-  const provLng = booking.provLiveLatLng ? booking.provLiveLatLng.lng : P.lng;
-
-  // Fill info
-  document.getElementById('custTrackProvName').textContent = P.name;
-  document.getElementById('custTrackProvDetail').textContent = booking.service + ' · Booking #' + booking.id;
-  document.getElementById('custTrackRating').textContent = '⭐ ' + (P.rating||'4.8') + ' · Background Verified';
-  document.getElementById('custTrackAmt').textContent = '₹' + booking.amount;
+  document.getElementById('custDrwProvName').textContent=P.name;
+  document.getElementById('custDrwProvDetail').textContent=(booking.service||'Service')+' · Booking '+bookingId;
+  document.getElementById('custDrwRating').textContent='⭐ '+(P.rating||4.8)+' · Background Verified';
+  document.getElementById('custAmt').textContent='Rs '+(booking.amount||0);
+  document.getElementById('custCallBtn').onclick=function(){window.open('tel:'+(P.phone||''));};
   document.getElementById('customerTrackingView').classList.add('show');
+  updateCustSteps('waiting');
 
-  setTimeout(() => {
-    if (!custTrackMap) {
-      custTrackMap = L.map('customerTrackingMap',{zoomControl:false}).setView([custLat,custLng],14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(custTrackMap);
+  setTimeout(async function(){
+    if(!custMap2){
+      custMap2=L.map('custMap',{zoomControl:false}).setView([17.385,78.486],14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(custMap2);
+      L.control.zoom({position:'bottomright'}).addTo(custMap2);
     }
-    custTrackMap.setView([custLat,custLng],14);
-    if (provMarkerCust) custTrackMap.removeLayer(provMarkerCust);
-    if (custMarkerCust) custTrackMap.removeLayer(custMarkerCust);
-    if (custRouteLine) custTrackMap.removeLayer(custRouteLine);
-
-    provMarkerCust = L.marker([provLat,provLng],{icon:PROVIDER_ICON}).addTo(custTrackMap).bindPopup('<b>'+P.name+'</b><br/>Coming to you!');
-    custMarkerCust = L.marker([custLat,custLng],{icon:CUSTOMER_ICON}).addTo(custTrackMap).bindPopup('<b>Your location</b>');
-    custRouteLine  = L.polyline([[provLat,provLng],[custLat,custLng]],{color:'#E8251A',weight:5,opacity:.8,dashArray:'10,5'}).addTo(custTrackMap);
-    custTrackMap.fitBounds([[provLat,provLng],[custLat,custLng]],{padding:[60,60]});
-
-    // Poll every 2s — mirror provider movement
-    startCustomerPoll(booking.id, custLat, custLng);
-  }, 200);
+    var cLat=booking.customerLat, cLng=booking.customerLng;
+    if(cLat&&cLng){
+      if(custHomeMarker)custMap2.removeLayer(custHomeMarker);
+      custHomeMarker=L.marker([cLat,cLng],{icon:mkDestIcon('🏠')}).addTo(custMap2).bindPopup('<b>Your location</b>');
+      custMap2.setView([cLat,cLng],14);
+    }
+    startFirebasePoll(bookingId,cLat,cLng);
+  },200);
 }
 
-function startCustomerPoll(bookingId, custLat, custLng) {
-  // Mirror the provider's simulated movement
-  let custSimStep = simStep;
-  const custPoll = setInterval(() => {
-    if (!document.getElementById('customerTrackingView').classList.contains('show')) {
-      clearInterval(custPoll); return;
-    }
-    const bk = getBK();
-    const b = bk.find(x => x.id === bookingId);
-    if (!b) { clearInterval(custPoll); return; }
+async function startFirebasePoll(bookingId,custLat,custLng){
+  if(custPollTimer)clearInterval(custPollTimer);
 
-    // Read live provider position
-    const pLat = b.provLiveLatLng ? b.provLiveLatLng.lat : (simPath[simStep]||{}).lat || P.lat;
-    const pLng = b.provLiveLatLng ? b.provLiveLatLng.lng : (simPath[simStep]||{}).lng || P.lng;
+  async function poll(){
+    if(!document.getElementById('customerTrackingView').classList.contains('show')){clearInterval(custPollTimer);return;}
 
-    if (provMarkerCust) provMarkerCust.setLatLng([pLat,pLng]);
-    if (custRouteLine) {
-      custTrackMap.removeLayer(custRouteLine);
-      custRouteLine = L.polyline([[pLat,pLng],[custLat,custLng]],{color:'#E8251A',weight:5,opacity:.8}).addTo(custTrackMap);
+    // PRIMARY: Read from Firebase (cross-device, real-time)
+    var data=await fbRead('tracking/'+bookingId+'/provider');
+
+    // FALLBACK: Same device demo — read from memory
+    if((!data||!data.lat)&&myRealLat){data={lat:myRealLat,lng:myRealLng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8};}
+
+    if(!data||!data.lat){
+      setGpsBanner('cust','searching','Waiting for provider GPS...');
+      document.getElementById('custTrkTitle').textContent='Connecting to provider...';
+      updateCustSteps('waiting');
+      return;
     }
 
-    const dist = haversineKm(pLat,pLng,custLat,custLng);
-    const eta = Math.max(1, Math.round(dist*4));
-    const distStr = dist<1?Math.round(dist*1000)+'m':dist.toFixed(1)+'km';
-    document.getElementById('custTrackDist').textContent = distStr;
-    document.getElementById('custTrackTime').textContent = eta+' min';
-    document.getElementById('custTrackETA').textContent = eta+' min';
-    document.getElementById('custTrackSub').textContent = distStr + ' away · Live tracking';
-    document.getElementById('custDrawerSub').textContent = P.name + ' is ' + distStr + ' away';
+    var pLat=data.lat, pLng=data.lng;
+    var age=Date.now()-(data.ts||0);
+    var fresh=age<15000;
+    setGpsBanner('cust',fresh?'live':'searching',fresh?'Live GPS · Updated '+Math.round(age/1000)+'s ago':'Last seen '+Math.round(age/1000)+'s ago — reconnecting');
 
-    const progress = 1-(dist/haversineKm(P.lat||17.38,P.lng||78.48,custLat,custLng));
-    const steps = [
-      {label:'Professional Assigned', desc:P.name+' accepted your booking', done:true},
-      {label:'On the Way', desc:P.name+' is navigating to you', done:false, active:progress<.95},
-      {label:'Arrived', desc:'Professional reached your location', done:progress>=.95},
-      {label:'Job in Progress', desc:'Service underway', done:false},
-      {label:'Payment & Rating', desc:'Complete & rate the service', done:false},
-    ];
-    renderSteps('custTrackSteps', steps);
-
-    if (dist < 0.08) { // within 80m = arrived
-      document.getElementById('custTrackText').textContent = 'Professional has arrived!';
-      document.getElementById('custTrackDot').className = 'track-status-dot waiting';
+    // Place / animate provider marker
+    if(!custProvMarker){
+      custProvMarker=L.marker([pLat,pLng],{icon:mkIcon('👷','linear-gradient(135deg,#E8251A,#FF6B00)')}).addTo(custMap2).bindPopup('<b>'+(data.name||P.name)+'</b><br/>On the way!');
+    } else {
+      custProvMarker.setLatLng([pLat,pLng]);
     }
-  }, 2000);
+
+    // Real road route
+    if(custLat&&custLng){
+      var route=await getRoute(pLat,pLng,custLat,custLng);
+      if(custRoutePolyline)custMap2.removeLayer(custRoutePolyline);
+      custRoutePolyline=L.polyline(route.coords,{color:'#E8251A',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(custMap2);
+      custMap2.fitBounds([[pLat,pLng],[custLat,custLng]],{padding:[80,80],maxZoom:16});
+
+      var d=route.dist;
+      document.getElementById('custDist').textContent=fmtD(d);
+      document.getElementById('custEtaVal').textContent=fmtT(d);
+      document.getElementById('custTrkEta').textContent=fmtT(d);
+      document.getElementById('custDrwSub').textContent=(data.name||P.name)+' is '+fmtD(d)+' away';
+      document.getElementById('custTrkSub').textContent=fmtD(d)+' via road · Live GPS';
+
+      if(d<0.08){
+        document.getElementById('custTrkTitle').textContent='Professional has arrived!';
+        document.getElementById('custTrkDot').className='trk-dot orange';
+        updateCustSteps('arrived');
+      } else {
+        document.getElementById('custTrkTitle').textContent='Professional on the way';
+        updateCustSteps('enroute');
+      }
+    }
+  }
+
+  await poll();
+  custPollTimer=setInterval(poll,4000);
 }
 
-function closeCustomerTracking() {
+function stopCustomerTracking(){
+  if(custPollTimer){clearInterval(custPollTimer);custPollTimer=null;}
   document.getElementById('customerTrackingView').classList.remove('show');
 }
 
-// ─── RENDER STEP TIMELINE ────────────────────────────────────────
-function renderSteps(containerId, steps) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = steps.map((s, i) => `
-    <div class="track-step">
-      <div class="step-dot-wrap">
-        <div class="step-dot ${s.done?'done':s.active?'active':'waiting'}">${s.done?'✓':s.active?'●':(i+1)}</div>
-        ${i < steps.length-1 ? `<div class="step-line ${s.done?'done':''}"></div>` : ''}
-      </div>
-      <div class="step-content">
-        <div class="step-title" style="color:${s.done?'#00b37e':s.active?'#1A73E8':'#8b909e'}">${s.label}</div>
-        <div class="step-desc">${s.desc}</div>
-      </div>
-    </div>
-  `).join('');
+// ── BANNERS + STEP TIMELINES ────────────────────────────────────
+function setGpsBanner(side,state,msg){
+  var id=side==='prov'?'provGpsBanner':'custGpsBanner';
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.className='gps-banner '+state;
+  el.textContent=msg;
+}
+function updateProvSteps(stage){
+  var idx={'searching':1,'navigating':1,'arrived':2,'working':3,'done':4}[stage]||0;
+  renderTimeline('provSteps',[
+    {t:'Booking Accepted',d:'You accepted the job'},
+    {t:'Navigating',d:'Following GPS route to customer'},
+    {t:'Arrived',d:'At customer location'},
+    {t:'Job in Progress',d:'Service underway'},
+    {t:'Complete and Get Paid',d:'OTP confirmation and payment'},
+  ],idx);
+}
+function updateCustSteps(stage){
+  var idx={'waiting':0,'enroute':1,'arrived':2,'working':3,'done':4}[stage]||0;
+  renderTimeline('custSteps',[
+    {t:'Professional Assigned',d:P.name+' accepted your booking'},
+    {t:'On the Way',d:'Live GPS tracking active'},
+    {t:'Arrived',d:'Professional at your door'},
+    {t:'Job in Progress',d:'Service underway'},
+    {t:'Payment and Rating',d:'Confirm completion and pay'},
+  ],idx);
+}
+function renderTimeline(id,steps,activeIdx){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.innerHTML=steps.map(function(s,i){
+    var done=i<activeIdx, active=i===activeIdx, last=i===steps.length-1;
+    var cls=done?'done':active?'active':'wait';
+    return '<div class="drw-step"><div class="ds-col"><div class="ds-dot '+cls+'">'+(done?'&#10003;':active?'&#9679;':(i+1))+'</div>'+(last?'':'<div class="ds-line '+(done?'done':'wait')+'"></div>')+'</div><div class="ds-info"><div class="ds-title '+cls+'">'+s.t+'</div><div class="ds-desc">'+s.d+'</div></div></div>';
+  }).join('');
 }
 
 </script>
