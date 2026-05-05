@@ -869,7 +869,7 @@ const ALL_SERVICES = [
 ];
 let selectedServiceName = '';
 
-function liveSearch(q) {
+function liveSearchFn(q) {
   const dd = document.getElementById('searchDropdown');
   if (!q || q.length < 1) { dd.style.display = 'none'; return; }
   const results = ALL_SERVICES.filter(s =>
@@ -919,9 +919,13 @@ heroDate.min = new Date().toISOString().split('T')[0];
 
 // ── HERO SEARCH
 function heroSearch(){
-  const q = document.getElementById('heroSearch') ? document.getElementById('heroSearch').value.trim() : '';
-  const svc = selectedServiceName || q;
-  if(!svc){showToast('⚠️ Type or select a service first');return;}
+  // Read from new text input OR old dropdown — whichever exists
+  const newInp = document.getElementById('heroSearchInput');
+  const oldSel = document.getElementById('heroService');
+  const textVal = newInp ? newInp.value.trim() : '';
+  const dropVal = oldSel ? oldSel.value.trim() : '';
+  const svc = selectedServiceName || textVal || dropVal;
+  if(!svc){showToast('⚠️ Please select a service first');return;}
   const loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
   const addr = encodeURIComponent(selectedAddress||'');
   window.location.href='user-booking.html?service='+encodeURIComponent(svc)+'&loc='+loc+'&addr='+addr;
