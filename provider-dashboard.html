@@ -732,7 +732,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
     <div class="drawer-handle"></div>
     <div class="gps-banner searching" id="provGpsBanner">&#128225; Acquiring GPS signal...</div>
     <div id="fbSetupBanner" style="display:none;padding:10px 22px;font-size:12px;font-weight:700;background:#fffbe6;border-bottom:1px solid #ffe58a;color:#7a5a00;">
-      &#128279; Cross-device tracking: <a href="https://console.firebase.google.com" target="_blank" style="color:#E8251A;font-weight:800;">Set up Firebase</a> for customer to track on their phone. Works same-device without Firebase.
+      &#128994; Firebase connected! Set Rules: <a href="https://console.firebase.google.com/u/0/project/hamaraservice-s009/database/hamaraservice-s009-default-rtdb/rules" target="_blank" style="color:#E8251A;font-weight:800;">Click here → paste {".read":true,".write":true} → Publish</a>
     </div>
     <div class="drw-head">
       <div class="drw-title" id="provDrwTitle">Navigating to Customer</div>
@@ -1784,8 +1784,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
 // STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
 // STEP 5: Replace the URL below
-const FB_URL = 'https://hamaraservice-default-rtdb.firebaseio.com'; // ← REPLACE THIS
-const FB_ENABLED = (FB_URL.indexOf('YOURPROJECT') === -1 && FB_URL.indexOf('hamaraservice-default') === -1);
+const FB_URL = 'https://hamaraservice-s009-default-rtdb.firebaseio.com';
+const FB_ENABLED = true; // Firebase configured ✅
 
 // BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
 var trackChannel = null;
@@ -1888,7 +1888,7 @@ async function openProviderTracking(bookingId){
   updateProvSteps('searching');
   // Show Firebase setup hint if not configured
   var fbBanner = document.getElementById('fbSetupBanner');
-  if (fbBanner) fbBanner.style.display = FB_ENABLED ? 'none' : 'block';
+  if (fbBanner) fbBanner.style.display = 'block'; // show rules reminder until rules are published
 
   setTimeout(async function(){
     if(!provMap){
