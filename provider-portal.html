@@ -113,16 +113,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
       <div class="err-box" id="loginErr"></div>
       <div class="ffield">
         <label>Provider ID</label>
-        <input type="text" id="loginId" placeholder="e.g. HS-PRO-ABC123" oninput="this.value=this.value.toUpperCase()"/>
+        <input type="text" id="loginId" placeholder="e.g. HS-PRO-SOMA1234" oninput="this.value=this.value.toUpperCase()"/>
       </div>
       <div class="ffield">
         <label>Registered Mobile Number</label>
-        <input type="tel" id="loginPhone" placeholder="10-digit mobile number" maxlength="10" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <input type="password" id="loginPass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="big-btn" onclick="doLogin()">🚀 Login to Dashboard</button>
       <div class="hint-box">
         💡 Demo login: ID = <strong>DEMO</strong> · Phone = <strong>9999999999</strong><br/>
-        New provider? Click <strong>"New Provider? Register Here"</strong> above
+        Your ID = first 4 letters of name + last 4 digits of mobile<br/><small>e.g. Name "Soma Raju", Mobile ending 1234 → ID: <strong>HS-PRO-SOMA1234</strong></small><br/>Demo: ID=HS-PRO-DEMO, Password=demo123
       </div>
     </div>
   </div>
@@ -290,7 +290,7 @@ function doLogin(){
   err.style.display='none';
   if(!id||!phone){showErr('Please enter Provider ID and Mobile number');return;}
   const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  let found=providers.find(p=>p.id.toUpperCase()===id&&p.phone===phone);
+  let found=providers.find(p=>p.id.toUpperCase()===id&&p.password===pass);
   if(!found&&id==='HS-PRO-DEMO'&&phone==='9999999999'){found=createDemo(providers);}
   if(!found){showErr('Provider ID or Phone not found. Please register first.');return;}
   localStorage.setItem('hs_current_provider',JSON.stringify(found));
@@ -301,7 +301,7 @@ function doLogin(){
 function showErr(msg){const e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
 
 function createDemo(providers){
-  const demo={id:'HS-PRO-DEMO',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
+  const demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
   const idx=providers.findIndex(p=>p.id==='HS-PRO-DEMO');
   if(idx===-1)providers.push(demo);else providers[idx]=demo;
   localStorage.setItem('hs_providers',JSON.stringify(providers));
@@ -331,6 +331,8 @@ function validateStep(n){
     if(!document.getElementById('r_name').value.trim()){showToast('⚠️ Enter your full name');return false;}
     const phone=document.getElementById('r_phone').value.trim();
     if(!phone||phone.length!==10||!/^\d+$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return false;}
+    const pass=document.getElementById('r_password').value.trim();
+    if(!pass||pass.length<4){showToast('⚠️ Create a password (minimum 4 characters)');return false;}
     if(!document.getElementById('r_exp').value){showToast('⚠️ Select your experience');return false;}
     if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
     if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
@@ -436,11 +438,21 @@ function buildSummary(){
 }
 
 function submitRegistration(){
-  const id='HS-PRO-'+Math.random().toString(36).substr(2,6).toUpperCase();
+  const rawName=document.getElementById('r_name').value.trim();
+  const rawPhone=document.getElementById('r_phone').value.trim();
+  const rawPass=document.getElementById('r_password').value.trim();
+  // ID = first 4 letters of name (uppercase, letters only) + last 4 digits of phone
+  const namePart=rawName.replace(/[^a-zA-Z]/g,'').toUpperCase().padEnd(4,'X').slice(0,4);
+  const phonePart=rawPhone.slice(-4);
+  const id='HS-PRO-'+namePart+phonePart;
+  // Check if already registered
+  const existingProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  if(existingProvs.find(p=>p.id===id)){showToast('⚠️ Provider already registered with this name & mobile');return;}
   const provider={
     id,
-    name:document.getElementById('r_name').value.trim(),
-    phone:document.getElementById('r_phone').value.trim(),
+    name:rawName,
+    phone:rawPhone,
+    password:rawPass,
     email:document.getElementById('r_email').value.trim(),
     whatsapp:document.getElementById('r_whatsapp').value.trim()||document.getElementById('r_phone').value.trim(),
     gender:document.getElementById('r_gender').value,

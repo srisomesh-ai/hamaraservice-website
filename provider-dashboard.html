@@ -897,6 +897,9 @@ function initDashboard() {
   document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   document.getElementById('sb_name').textContent = P.name;
   document.getElementById('sb_id').textContent = P.id;
+  // Show friendly login info
+  const idEl = document.getElementById('sb_id');
+  if(idEl) idEl.title = 'Login ID: '+P.id+' | Use your password to log in';
   document.getElementById('availToggle').checked = P.available !== false;
   updateAvailLabel();
 

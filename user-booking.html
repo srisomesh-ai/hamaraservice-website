@@ -647,7 +647,23 @@ function startRadar(){
     status:'searching',createdAt:new Date().toISOString()
   };
   fbWrite('bookings/'+bookingId,booking);
-  fbWrite('active_bookings/'+bookingId,{...booking,acceptedBy:null});
+  fbWrite('active_bookings/'+bookingId,{
+    id:bookingId,
+    service:selSvc.n,
+    price:selSvc.p,
+    priceVal:selSvc.pv,
+    customer:document.getElementById('custName').value.trim(),
+    phone:document.getElementById('custPhone').value.trim(),
+    date:document.getElementById('bookDate').value,
+    time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
+    lat:userLL.lat,
+    lng:userLL.lng,
+    address:userAddr,
+    status:'searching',
+    createdAt:new Date().toISOString(),
+    acceptedBy:null,
+    range:RANGES[0]
+  });
 
   radarActive=true;curRange=0;
   document.getElementById('radarLog').innerHTML='';
@@ -686,10 +702,15 @@ async function runRange(idx){
     if(!p.lat||!p.lng)return false;
     return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
   });
-  rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' found within '+km+' km — sending booking request','');
+  if(inRange.length===0){
+    rlog('📡','No providers found within <strong>'+km+' km</strong> yet — expanding search…','');
+  } else {
+    rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' available within '+km+' km — sending booking alert','success');
+  }
 
   // Add radar blips
-  for(let i=0;i<Math.min(inRange.length+Math.floor(Math.random()*2),6);i++) addBlip(idx);
+  // Only add blips for REAL providers found
+  for(let i=0;i<Math.min(inRange.length,6);i++) addBlip(idx);
 
   // Notify via Firebase
   await fbWrite('active_bookings/'+bookingId+'/range',km);
@@ -767,11 +788,11 @@ function provAccepted(data){
   radarActive=false;clearTimeout(pollTimer);
   document.getElementById('radarOverlay').classList.remove('show');
   const p=typeof data==='string'?JSON.parse(data):data||{};
-  const dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat||userLL.lat+0.01,p.lng||userLL.lng+0.01).toFixed(1):(Math.random()*2+0.5).toFixed(1);
+  const dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat,p.lng).toFixed(1):'—';
   const eta=Math.max(3,Math.round(dist*4+2));
   document.getElementById('pcName').textContent=p.name||'Professional';
-  document.getElementById('pcRating').textContent=p.rating||'4.8';
-  document.getElementById('pcJobs').textContent='· '+(p.totalJobs||Math.floor(180+Math.random()*300))+' jobs';
+  document.getElementById('pcRating').textContent=p.rating?Number(p.rating).toFixed(1):'New';
+  document.getElementById('pcJobs').textContent=p.totalJobs?'· '+p.totalJobs+' jobs completed':'';
   document.getElementById('pcETA').textContent=eta+' min';
   document.getElementById('pcDist').textContent=dist+' km away';
   document.getElementById('provOverlay').classList.add('show');
