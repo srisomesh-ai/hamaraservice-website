@@ -215,6 +215,41 @@ input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--red);cursor:pointer;}
 
 .toast{position:fixed;bottom:22px;right:22px;background:#1a1a2e;color:white;padding:12px 20px;border-radius:11px;font-size:14px;font-weight:700;z-index:9999;display:none;box-shadow:var(--shadow-lg);}
+
+/* ── OTP COMPLETE MODAL ── */
+.otp-modal-box{background:white;border-radius:22px;padding:36px 32px;max-width:420px;width:92%;box-shadow:0 24px 80px rgba(0,0,0,0.25);animation:slideUp .35s ease;text-align:center;}
+.otp-code-display{font-family:"Baloo 2",sans-serif;font-size:60px;font-weight:800;letter-spacing:12px;color:var(--text);background:var(--bg);border-radius:16px;padding:20px 24px;margin:20px 0;border:3px dashed var(--border);position:relative;}
+.otp-code-display .otp-label{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:2px;display:block;margin-bottom:6px;font-family:"Nunito",sans-serif;}
+.otp-timer{font-size:13px;font-weight:800;color:var(--red);margin-bottom:16px;}
+.otp-enter-row{display:flex;gap:10px;margin:20px 0 6px;}
+.otp-digit{flex:1;height:60px;font-family:"Baloo 2",sans-serif;font-size:28px;font-weight:800;text-align:center;border:2.5px solid var(--border);border-radius:12px;outline:none;transition:border .2s;color:var(--text);}
+.otp-digit:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(30,168,75,0.12);}
+.otp-digit.filled{border-color:var(--green);background:var(--green-light);}
+.otp-verify-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--green),#34d058);color:white;border:none;border-radius:12px;font-family:"Nunito",sans-serif;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(30,168,75,0.3);}
+.otp-verify-btn:hover{transform:translateY(-2px);}
+.otp-err{background:var(--red-light);border:1.5px solid var(--red);border-radius:9px;padding:10px;font-size:13px;font-weight:700;color:var(--red);display:none;margin-top:8px;}
+
+/* ── CUSTOMER OTP POPUP (simulated) ── */
+.customer-otp-box{background:white;border-radius:22px;padding:0;max-width:380px;width:92%;box-shadow:0 24px 80px rgba(0,0,0,0.30);animation:slideUp .35s ease;overflow:hidden;}
+.customer-otp-head{background:linear-gradient(135deg,var(--green),#34d058);padding:28px 28px 24px;text-align:center;color:white;}
+.customer-otp-head h3{font-family:"Baloo 2",sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.customer-otp-head p{font-size:13px;opacity:.9;font-weight:600;}
+.customer-otp-body{padding:28px 28px 32px;text-align:center;}
+.customer-code{font-family:"Baloo 2",sans-serif;font-size:72px;font-weight:800;color:var(--text);letter-spacing:10px;line-height:1;}
+.customer-code-label{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 6px;}
+.customer-code-sub{font-size:13px;color:var(--muted);font-weight:600;line-height:1.5;margin-bottom:6px;}
+
+/* ── RATING MODAL ── */
+.rating-modal-box{background:white;border-radius:22px;padding:36px 32px;max-width:420px;width:92%;box-shadow:0 24px 80px rgba(0,0,0,0.25);animation:slideUp .35s ease;text-align:center;}
+.rating-stars-row{display:flex;justify-content:center;gap:10px;margin:20px 0;}
+.rating-star{font-size:44px;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.4;}
+.rating-star.active,.rating-star:hover{filter:none;opacity:1;transform:scale(1.2);}
+.rating-text-input{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:12px;font-family:"Nunito",sans-serif;font-size:15px;font-weight:600;outline:none;resize:none;min-height:80px;transition:border .2s;color:var(--text);}
+.rating-text-input:focus{border-color:var(--yellow);}
+.rating-submit-btn{width:100%;padding:15px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white;border:none;border-radius:12px;font-family:"Nunito",sans-serif;font-size:17px;font-weight:900;cursor:pointer;margin-top:16px;box-shadow:0 4px 18px rgba(245,158,11,0.35);transition:all .2s;}
+.rating-submit-btn:hover{transform:translateY(-2px);}
+.rating-skip{font-size:13px;color:var(--muted);font-weight:700;margin-top:12px;cursor:pointer;text-decoration:underline;}
+
 </style>
 </head>
 <body>
@@ -735,7 +770,7 @@ function loadAllBookings(filter = 'all') {
       <td><strong>₹${b.amount}</strong></td>
       <td><span class="badge ${b.status}">${cap(b.status)}</span></td>
       <td>${b.status === 'pending'
-        ? `<button class="abtn complete" onclick="updateStatus('${b.id}','completed')">✅ Done</button><button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
+        ? `<button class="abtn complete" onclick="updateStatus('${b.id}','completed')">🔐 Complete Job</button><button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
         : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>`}</td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
@@ -747,20 +782,221 @@ function filterBk(f, btn) {
   loadAllBookings(f);
 }
 
+// ─── OTP COMPLETION STATE ───────────────────────────────────────
+let pendingCompleteId = null;
+let currentRatingBookingId = null;
+let selectedRating = 0;
+const OTP_LABELS = ['','😞 Very Bad','😕 Poor','😐 Okay','😊 Good','🤩 Excellent!'];
+
 function updateStatus(id, status) {
+  if (status === 'completed') {
+    // Trigger OTP flow instead of direct complete
+    initiateOTPCompletion(id);
+    return;
+  }
+  // Cancellation — direct
+  if (!confirm('Cancel this booking? This cannot be undone.')) return;
   const bk = getBK();
   const idx = bk.findIndex(b => b.id === id);
   if (idx > -1) {
-    bk[idx].status = status;
+    bk[idx].status = 'cancelled';
     saveBK(bk);
-    // If completed, add a review prompt (auto for demo)
-    if (status === 'completed' && P.id === 'HS-PRO-DEMO') {
-      // don't auto-add reviews in real mode
-    }
     syncProviderStats();
     loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
-    showToast(status === 'completed' ? '✅ Booking marked completed!' : '❌ Booking cancelled');
+    showToast('❌ Booking cancelled');
   }
+}
+
+// ─── STEP 1: Provider clicks "Mark Complete" ────────────────────
+function initiateOTPCompletion(bookingId) {
+  const bk = getBK();
+  const booking = bk.find(b => b.id === bookingId);
+  if (!booking) return;
+
+  // Generate 4-digit OTP and store in booking
+  const otp = String(Math.floor(1000 + Math.random() * 9000));
+  const bkIdx = bk.findIndex(b => b.id === bookingId);
+  bk[bkIdx].completionOTP = otp;
+  bk[bkIdx].otpGeneratedAt = new Date().toISOString();
+  saveBK(bk);
+
+  pendingCompleteId = bookingId;
+
+  // Show customer OTP popup (in real app: SMS to customer phone)
+  document.getElementById('customerCodeDisplay').textContent = otp;
+  document.getElementById('customerCodeBookingInfo').textContent =
+    booking.service + ' · ' + (booking.customer || 'Customer');
+  document.getElementById('customerOTPModal').classList.add('show');
+
+  // Pre-fill the provider OTP entry modal info
+  document.getElementById('otpBookingInfo').textContent =
+    'Service: ' + booking.service + ' · Customer: ' + (booking.customer || '—');
+
+  // Clear any previous OTP digits
+  ['od1','od2','od3','od4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = ''; el.classList.remove('filled');
+  });
+  document.getElementById('otpErr').style.display = 'none';
+}
+
+// ─── STEP 2: Customer closes popup → OTP request modal appears ──
+function showRatingModal() { /* called after job done */ }
+// This is called from "I've shared the code" button on customer popup
+// We override it to show the provider entry modal
+document.addEventListener('DOMContentLoaded', function() {
+  // When customer popup close → show provider entry modal
+});
+
+function showProviderOTPEntry() {
+  closeModal('customerOTPModal');
+  setTimeout(() => {
+    document.getElementById('otpRequestModal').classList.add('show');
+    document.getElementById('od1').focus();
+  }, 300);
+}
+
+// ─── OTP DIGIT INPUT LOGIC ───────────────────────────────────────
+function otpInput(el, num) {
+  const val = el.value.replace(/[^0-9]/g,'');
+  el.value = val;
+  el.classList.toggle('filled', val.length > 0);
+  if (val && num < 4) {
+    document.getElementById('od' + (num+1)).focus();
+  }
+  if (num === 4 && val) {
+    // Auto-attempt verify when last digit entered
+    const all = ['od1','od2','od3','od4'].map(id => document.getElementById(id).value);
+    if (all.every(v => v.length === 1)) verifyOTP();
+  }
+}
+function otpBack(e, num) {
+  if (e.key === 'Backspace' && !e.target.value && num > 1) {
+    const prev = document.getElementById('od' + (num-1));
+    prev.value = ''; prev.classList.remove('filled'); prev.focus();
+  }
+}
+function getEnteredOTP() {
+  return ['od1','od2','od3','od4'].map(id => document.getElementById(id).value).join('');
+}
+
+// ─── STEP 3: Provider enters OTP → Verify ───────────────────────
+function verifyOTP() {
+  const entered = getEnteredOTP();
+  if (entered.length < 4) { showToast('⚠️ Enter all 4 digits'); return; }
+
+  const bk = getBK();
+  const booking = bk.find(b => b.id === pendingCompleteId);
+  if (!booking) { closeModal('otpRequestModal'); return; }
+
+  if (entered !== booking.completionOTP) {
+    document.getElementById('otpErr').style.display = 'block';
+    ['od1','od2','od3','od4'].forEach(id => {
+      const el = document.getElementById(id);
+      el.style.borderColor = 'var(--red)';
+      el.style.background = 'var(--red-light)';
+      setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 1500);
+    });
+    return;
+  }
+
+  // ✅ OTP correct — mark job as completed
+  const idx = bk.findIndex(b => b.id === pendingCompleteId);
+  bk[idx].status = 'completed';
+  bk[idx].completedAt = new Date().toISOString();
+  bk[idx].completionOTP = null; // clear OTP
+  saveBK(bk);
+
+  closeModal('otpRequestModal');
+
+  // Compute earnings for success screen
+  const catalog = JSON.parse(localStorage.getItem('hs_catalog') || 'null') || [];
+  const svc = catalog.find(s => s.name === booking.service);
+  const commPct = svc ? svc.commission : 12;
+  const commAmt = svc ? svc.commAmt : Math.round(booking.amount * commPct / 100);
+  const provAmt = booking.amount - commAmt;
+
+  // Show success modal
+  document.getElementById('jobDoneInfo').textContent =
+    booking.service + ' for ' + (booking.customer || 'Customer') + ' · ' + booking.id;
+  document.getElementById('jobDoneAmount').textContent = '₹' + provAmt.toLocaleString('en-IN');
+  document.getElementById('jobDoneCommNote').textContent =
+    'Platform commission: ₹' + commAmt + ' (' + commPct + '%) · Your earnings: ₹' + provAmt;
+  document.getElementById('jobDoneModal').classList.add('show');
+
+  syncProviderStats();
+  loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
+
+  // After success modal — show rating modal for customer
+  currentRatingBookingId = pendingCompleteId;
+  pendingCompleteId = null;
+
+  // Trigger rating modal after 2.5 seconds
+  setTimeout(() => {
+    closeModal('jobDoneModal');
+    openCustomerRatingModal(booking);
+  }, 2500);
+}
+
+// ─── STEP 4: Rating Modal ────────────────────────────────────────
+function openCustomerRatingModal(booking) {
+  selectedRating = 0;
+  document.getElementById('ratingLabel').textContent = '';
+  document.getElementById('ratingReviewText').value = '';
+  // Reset stars
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('rs' + i).classList.remove('active');
+  }
+  document.getElementById('ratingProviderName').textContent =
+    'Rate your ' + (booking ? booking.service : 'service') + ' by ' + P.name;
+  document.getElementById('ratingModal').classList.add('show');
+}
+
+function setRating(n) {
+  selectedRating = n;
+  document.getElementById('ratingLabel').textContent = OTP_LABELS[n];
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('rs' + i).classList.toggle('active', i <= n);
+  }
+}
+
+function submitRating() {
+  if (selectedRating === 0) { showToast('⭐ Please tap a star to rate'); return; }
+  const review = document.getElementById('ratingReviewText').value.trim();
+  const bk = getBK();
+  const booking = bk.find(b => b.id === currentRatingBookingId);
+
+  const reviewObj = {
+    customer: booking ? (booking.customer || 'Customer') : 'Customer',
+    stars: selectedRating,
+    text: review || OTP_LABELS[selectedRating].replace(/[^a-zA-Z ]/g,'').trim() || 'Great service!',
+    date: new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short'}),
+    bookingId: currentRatingBookingId || ''
+  };
+
+  // Save review
+  const reviews = getReviews();
+  reviews.push(reviewObj);
+  saveReviews(reviews);
+
+  // Update provider avg rating in providers list
+  const avgRating = (reviews.reduce((s,r) => s+r.stars, 0) / reviews.length).toFixed(1);
+  const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  const pidx = all.findIndex(p => p.id === P.id);
+  if (pidx > -1) {
+    all[pidx].rating = +avgRating;
+    all[pidx].reviews = reviews.length;
+    P = all[pidx];
+    localStorage.setItem('hs_providers', JSON.stringify(all));
+    localStorage.setItem('hs_current_provider', JSON.stringify(P));
+  }
+
+  closeModal('ratingModal');
+  loadRatings(); loadOverview();
+
+  // Show thank you
+  showToast('⭐ Thank you! ' + selectedRating + '/5 rating added to ' + P.name + ''s profile.');
+  currentRatingBookingId = null;
 }
 
 function viewBk(id) {
@@ -1194,5 +1430,81 @@ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
 </script>
+
+<!-- ══ OTP REQUEST MODAL (Provider side — enter code customer tells them) ══ -->
+<div class="modal-overlay" id="otpRequestModal">
+  <div class="otp-modal-box">
+    <div style="font-size:48px;margin-bottom:8px;">🔐</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;">Enter Completion Code</div>
+    <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:4px;">Ask the customer for their 4-digit code</div>
+    <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:4px;" id="otpBookingInfo">Service: — · Customer: —</div>
+    <div class="otp-enter-row">
+      <input class="otp-digit" type="text" maxlength="1" id="od1" oninput="otpInput(this,1)" onkeydown="otpBack(event,1)"/>
+      <input class="otp-digit" type="text" maxlength="1" id="od2" oninput="otpInput(this,2)" onkeydown="otpBack(event,2)"/>
+      <input class="otp-digit" type="text" maxlength="1" id="od3" oninput="otpInput(this,3)" onkeydown="otpBack(event,3)"/>
+      <input class="otp-digit" type="text" maxlength="1" id="od4" oninput="otpInput(this,4)" onkeydown="otpBack(event,4)"/>
+    </div>
+    <div class="otp-err" id="otpErr">❌ Wrong code. Ask the customer again.</div>
+    <button class="otp-verify-btn" onclick="verifyOTP()">✅ Verify & Close Job</button>
+    <div style="margin-top:14px;"><button onclick="closeModal('otpRequestModal')" style="background:none;border:none;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ══ CUSTOMER OTP POPUP (simulated — in real app sent via SMS) ══ -->
+<div class="modal-overlay" id="customerOTPModal">
+  <div class="customer-otp-box">
+    <div class="customer-otp-head">
+      <div style="font-size:40px;margin-bottom:10px;">📱</div>
+      <h3>Your Completion Code</h3>
+      <p>Share this code with your service provider to confirm the job is done</p>
+    </div>
+    <div class="customer-otp-body">
+      <div class="customer-code-label">One-Time Code</div>
+      <div class="customer-code" id="customerCodeDisplay">----</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:8px;" id="customerCodeBookingInfo"></div>
+      <div class="customer-code-sub" style="margin-top:14px;">Only share this code once the service is <strong>fully completed</strong> to your satisfaction.</div>
+      <div style="background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:#7a5a00;margin-top:12px;">
+        ⏳ This code is valid for 10 minutes. Do not share with anyone else.
+      </div>
+      <button onclick="showProviderOTPEntry()" style="width:100%;padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:11px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:16px;color:var(--muted);">I've shared the code — Enter it now ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RATING MODAL (After job complete — customer rates provider) ══ -->
+<div class="modal-overlay" id="ratingModal">
+  <div class="rating-modal-box">
+    <div style="font-size:48px;margin-bottom:8px;">⭐</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;">Rate Your Service</div>
+    <div style="font-size:14px;color:var(--muted);font-weight:600;" id="ratingProviderName">How was your experience?</div>
+    <div class="rating-stars-row" id="ratingStarsRow">
+      <span class="rating-star" onclick="setRating(1)" id="rs1">⭐</span>
+      <span class="rating-star" onclick="setRating(2)" id="rs2">⭐</span>
+      <span class="rating-star" onclick="setRating(3)" id="rs3">⭐</span>
+      <span class="rating-star" onclick="setRating(4)" id="rs4">⭐</span>
+      <span class="rating-star" onclick="setRating(5)" id="rs5">⭐</span>
+    </div>
+    <div style="font-size:18px;font-weight:800;color:var(--text);height:24px;margin-bottom:14px;" id="ratingLabel"></div>
+    <textarea class="rating-text-input" id="ratingReviewText" placeholder="Share your experience (optional)…"></textarea>
+    <button class="rating-submit-btn" onclick="submitRating()">⭐ Submit Rating</button>
+    <div class="rating-skip" onclick="closeModal('ratingModal')">Skip for now</div>
+  </div>
+</div>
+
+<!-- ══ JOB COMPLETE SUCCESS ══ -->
+<div class="modal-overlay" id="jobDoneModal">
+  <div class="otp-modal-box">
+    <div style="font-size:64px;margin-bottom:12px;">🎉</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--green);margin-bottom:8px;">Job Completed!</div>
+    <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:8px;" id="jobDoneInfo"></div>
+    <div style="background:var(--green-light);border:1.5px solid var(--green);border-radius:12px;padding:16px;margin:16px 0;">
+      <div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:4px;">💰 Payment Credited to Your Wallet</div>
+      <div style="font-family:'Baloo 2',sans-serif;font-size:28px;font-weight:800;color:var(--green);" id="jobDoneAmount">₹0</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;" id="jobDoneCommNote"></div>
+    </div>
+    <button onclick="closeModal('jobDoneModal')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--green),#34d058);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;">Done ✓</button>
+  </div>
+</div>
+
 </body>
 </html>
