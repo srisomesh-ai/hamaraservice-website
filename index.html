@@ -3,494 +3,686 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>HamaraService – Home Services at Your Doorstep</title>
+<title>HamaraService – Verified Home Services at Your Doorstep</title>
+<meta name="description" content="Book verified, background-checked home service professionals. House cleaning, plumbing, electrical, cooking and 20+ services. Pay after service. 4.8★ rated."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
 :root{
-  --brand:#E8251A;--brand2:#ff5a3d;--brand-bg:#fff1f0;
-  --ink:#0d0d0d;--ink2:#3a3f4b;--muted:#8b909e;
-  --line:#eaedf2;--bg:#f7f8fc;--white:#fff;
-  --green:#00a86b;--green-bg:#e8faf4;
-  --yellow:#f59e0b;--yellow-bg:#fffbeb;
-  --blue:#1B4FFF;--blue-bg:#eef1ff;
-  --r:14px;--r2:22px;
-  --sh:0 2px 12px rgba(0,0,0,.07);
-  --sh2:0 8px 32px rgba(0,0,0,.11);
+  --brand:#E8251A;--brand2:#c91d14;--brand-bg:#fff1f0;--brand-border:rgba(232,37,26,.15);
+  --ink:#0d0d0d;--ink2:#3d4047;--muted:#8a909c;
+  --line:#eaecf0;--bg:#f7f8fc;--white:#fff;
+  --green:#00956a;--green-bg:#e8f8f2;
+  --blue:#1B4FFF;--blue-bg:#eef2ff;
+  --yellow:#d97706;--yellow-bg:#fffbeb;
+  --gold:#f59e0b;
+  --r:12px;--r2:18px;--r3:24px;
+  --sh:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
+  --sh2:0 8px 32px rgba(0,0,0,.10);
+  --sh3:0 20px 60px rgba(0,0,0,.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
-body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);line-height:1.5;overflow-x:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);overflow-x:hidden;}
 
-/* ─── HEADER ─── */
+/* ── HEADER ── */
 header{
   position:sticky;top:0;z-index:900;
-  background:rgba(255,255,255,.97);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
+  background:var(--white);
   border-bottom:1px solid var(--line);
-  height:60px;padding:0 20px;
+  transition:box-shadow .3s;
+}
+header.scrolled{box-shadow:0 2px 20px rgba(0,0,0,.08);}
+.header-main{
+  height:58px;padding:0 20px;
   display:flex;align-items:center;justify-content:space-between;
+  max-width:1200px;margin:0 auto;
 }
-header.scrolled{box-shadow:var(--sh);}
 .logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
-.logo-mark{width:32px;height:32px;background:var(--brand);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.logo-mark svg{width:18px;height:18px;fill:white;}
-.logo-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-.3px;}
-.logo-name span{color:var(--brand);}
+.logo-box{width:34px;height:34px;background:var(--brand);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-box svg{width:19px;height:19px;fill:white;}
+.logo-text{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:var(--ink);}
+.logo-text span{color:var(--brand);}
 .header-right{display:flex;align-items:center;gap:8px;}
-.h-btn{padding:8px 16px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;border:none;}
-.h-btn.ghost{background:transparent;color:var(--ink2);border:1.5px solid var(--line);}
-.h-btn.ghost:hover,.h-btn.ghost:active{border-color:var(--ink);color:var(--ink);}
-.h-btn.solid{background:var(--brand);color:white;font-weight:700;box-shadow:0 3px 12px rgba(232,37,26,.28);}
-.h-btn.solid:hover,.h-btn.solid:active{background:var(--brand2);}
-@media(max-width:520px){
-  #navSignBtn{display:none!important;}
-  header{height:56px;padding:0 16px;}
-  .logo-name{font-size:15px;}
-  .h-btn{padding:7px 12px;font-size:13px;}
-}
-@media(max-width:360px){
-  #navLoginBtn{display:none;}
-}
+.hbtn{padding:8px 16px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .18s;display:inline-flex;align-items:center;}
+.hbtn.ghost{color:var(--ink2);border:1.5px solid var(--line);background:var(--white);}
+.hbtn.ghost:active{background:var(--bg);}
+.hbtn.solid{background:var(--brand);color:var(--white);font-weight:700;box-shadow:0 3px 12px rgba(232,37,26,.3);}
+.hbtn.solid:active{background:var(--brand2);}
+.header-support{display:none;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--green);}
+@media(min-width:640px){.header-support{display:flex;}}
 
-/* ─── HERO ─── */
+/* Trust bar */
+.trust-bar{
+  background:linear-gradient(90deg,#0d0d0d 0%,#1a1225 100%);
+  padding:8px 20px;
+  display:flex;align-items:center;justify-content:center;
+  gap:20px;overflow-x:auto;scrollbar-width:none;
+}
+.trust-bar::-webkit-scrollbar{display:none;}
+.tb-item{display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;}
+.tb-icon{font-size:14px;}
+.tb-text{font-size:11px;font-weight:600;color:rgba(255,255,255,.65);}
+.tb-text strong{color:rgba(255,255,255,.95);}
+.tb-sep{width:1px;height:14px;background:rgba(255,255,255,.15);flex-shrink:0;}
+
+/* ── HERO ── */
 .hero{
-  background:linear-gradient(160deg,#0d0d0d 0%,#1a1225 40%,#0d0d0d 100%);
-  padding:32px 20px 44px;
+  background:linear-gradient(155deg,#0d0d0d 0%,#1a0a20 50%,#0d0d0d 100%);
+  padding:28px 20px 36px;
   position:relative;overflow:hidden;
 }
-.hero::after{
-  content:'';position:absolute;
-  top:-60%;right:-30%;
-  width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(232,37,26,.18) 0%,transparent 65%);
-  pointer-events:none;
-}
-.hero-badge{
+.hero-glow{position:absolute;top:-40%;right:-20%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(232,37,26,.14),transparent 65%);pointer-events:none;}
+.hero-glow2{position:absolute;bottom:-30%;left:-10%;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(27,79,255,.08),transparent 65%);pointer-events:none;}
+
+/* Live badge */
+.live-badge{
   display:inline-flex;align-items:center;gap:7px;
-  background:rgba(255,255,255,.09);
-  border:1px solid rgba(255,255,255,.14);
-  color:rgba(255,255,255,.75);
-  font-size:12px;font-weight:500;
-  padding:6px 13px;border-radius:100px;
-  margin-bottom:18px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.8);font-size:12px;font-weight:600;
+  padding:6px 13px;border-radius:100px;margin-bottom:16px;
 }
-.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:#00a86b;animation:blink 2s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#00c87a;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
 .hero h1{
   font-family:'Sora',sans-serif;
-  font-size:clamp(28px,7vw,52px);
+  font-size:clamp(26px,6.5vw,52px);
   font-weight:800;color:white;
-  line-height:1.1;letter-spacing:-.8px;
-  margin-bottom:12px;
+  line-height:1.1;letter-spacing:-.5px;
+  margin-bottom:10px;
 }
 .hero h1 em{
   font-style:normal;
-  background:linear-gradient(90deg,#ff8a7a,var(--brand));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
+  background:linear-gradient(90deg,#ff9b8a,var(--brand));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.hero-sub{font-size:14px;color:rgba(255,255,255,.5);margin-bottom:28px;line-height:1.6;max-width:340px;}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.5);margin-bottom:24px;line-height:1.65;max-width:380px;}
 
 /* Search card */
-.search-card{
-  background:white;border-radius:var(--r2);
-  box-shadow:0 16px 48px rgba(0,0,0,.28);
-  overflow:hidden;
-}
-.search-cats{display:flex;background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;}
-.search-cats::-webkit-scrollbar{display:none;}
-.s-cat{flex:none;padding:13px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
-.s-cat.on{color:var(--brand);border-bottom-color:var(--brand);background:white;}
-.search-form{padding:16px 16px 18px;display:flex;flex-direction:column;gap:11px;}
-.sf-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
-.sf-input{width:100%;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .2s;-webkit-appearance:none;appearance:none;}
-.sf-input:focus{border-color:var(--brand);background:white;}
-.sf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.loc-btn{display:flex;align-items:center;gap:9px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;transition:all .2s;}
+.search-card{background:var(--white);border-radius:var(--r2);box-shadow:0 20px 60px rgba(0,0,0,.32);overflow:hidden;position:relative;z-index:1;}
+.s-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;}
+.s-tabs::-webkit-scrollbar{display:none;}
+.s-tab{flex:none;padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .18s;}
+.s-tab.on{color:var(--brand);border-bottom-color:var(--brand);background:var(--white);}
+.s-form{padding:16px 16px 18px;display:flex;flex-direction:column;gap:10px;}
+.s-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;}
+.s-inp{width:100%;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;-webkit-appearance:none;transition:border .18s;}
+.s-inp:focus{border-color:var(--brand);background:var(--white);}
+.s-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.loc-btn{display:flex;align-items:center;gap:9px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;text-align:left;transition:all .18s;}
 .loc-btn:active{border-color:var(--brand);}
-.loc-btn svg{flex-shrink:0;color:var(--brand);}
-.loc-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.search-go{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.1px;}
-.search-go:active{background:var(--brand2);transform:scale(.98);}
+.loc-btn .loc-ic{color:var(--brand);flex-shrink:0;font-size:16px;}
+.loc-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.s-go{width:100%;padding:15px;background:var(--brand);color:var(--white);border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s;letter-spacing:-.1px;}
+.s-go:active{background:var(--brand2);transform:scale(.98);}
 
-.hero-trust{display:flex;align-items:center;justify-content:center;gap:0;margin-top:20px;flex-wrap:wrap;gap:16px;}
-.trust-item{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.45);font-size:12px;font-weight:500;}
-.trust-item strong{color:rgba(255,255,255,.8);font-weight:700;}
+/* Micro trust below search */
+.search-trust{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px;flex-wrap:wrap;}
+.st-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:rgba(255,255,255,.45);}
+.st-item strong{color:rgba(255,255,255,.8);}
+.st-sep{color:rgba(255,255,255,.2);font-size:10px;}
 
-/* ─── SECTION ─── */
-.sec{padding:32px 20px;}
-.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+/* ── SOCIAL PROOF TICKER ── */
+.ticker{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:8px 16px;display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);}
+.ticker-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
+.ticker strong{color:rgba(255,255,255,.9);}
+
+/* ── GUARANTEE STRIP ── */
+.guarantee-strip{background:var(--white);border-bottom:1px solid var(--line);}
+.guarantee-inner{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;overflow-x:auto;scrollbar-width:none;}
+.guarantee-inner::-webkit-scrollbar{display:none;}
+.g-item{flex:none;display:flex;align-items:center;gap:10px;padding:16px 20px;border-right:1px solid var(--line);}
+.g-item:first-child{padding-left:0;}
+.g-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.g-icon.green{background:var(--green-bg);}
+.g-icon.blue{background:var(--blue-bg);}
+.g-icon.yellow{background:var(--yellow-bg);}
+.g-icon.red{background:var(--brand-bg);}
+.g-title{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;}
+.g-sub{font-size:11px;color:var(--muted);white-space:nowrap;margin-top:1px;}
+
+/* ── SECTION ── */
+.sec{padding:28px 20px;}
+.sec.gray{background:var(--bg);}
+.sec-hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;}
 .sec-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.3px;}
-.sec-link{font-size:13px;font-weight:600;color:var(--brand);text-decoration:none;display:flex;align-items:center;gap:3px;}
+.sec-sub{font-size:13px;color:var(--muted);margin-top:3px;}
+.sec-link{font-size:13px;font-weight:700;color:var(--brand);text-decoration:none;display:flex;align-items:center;gap:2px;white-space:nowrap;}
 
-/* ─── SERVICES GRID — Urban Company style ─── */
-.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.svc-tile{
-  background:var(--bg);border-radius:16px;
-  padding:16px 12px 14px;
-  display:flex;flex-direction:column;align-items:center;
-  cursor:pointer;transition:all .22s;
-  position:relative;border:1.5px solid transparent;
-  -webkit-tap-highlight-color:transparent;
-}
-.svc-tile:active{transform:scale(.96);background:var(--brand-bg);border-color:rgba(232,37,26,.2);}
-.svc-tile.hot{background:var(--brand-bg);border-color:rgba(232,37,26,.18);}
-.svc-tile-emoji{font-size:32px;line-height:1;margin-bottom:9px;}
-.svc-tile-name{font-size:12px;font-weight:700;color:var(--ink2);text-align:center;line-height:1.3;}
-.svc-tile.hot .svc-tile-name{color:var(--brand);}
-.svc-tile-price{font-size:11px;color:var(--muted);font-weight:500;margin-top:3px;}
-.svc-hot-badge{position:absolute;top:8px;right:8px;background:var(--brand);color:white;font-size:8px;font-weight:800;padding:2px 6px;border-radius:100px;letter-spacing:.3px;text-transform:uppercase;}
+/* ── SERVICES ── */
+.cat-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:16px;}
+.cat-row::-webkit-scrollbar{display:none;}
+.cat-chip{flex:none;padding:7px 14px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:var(--white);color:var(--muted);font-family:'DM Sans',sans-serif;}
+.cat-chip.on{background:var(--brand);color:var(--white);border-color:var(--brand);box-shadow:0 3px 10px rgba(232,37,26,.22);}
+.svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media(max-width:380px){.svc-grid{grid-template-columns:repeat(3,1fr);}}
+.svc-tile{background:var(--bg);border:1.5px solid var(--line);border-radius:16px;padding:16px 8px 13px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;transition:all .18s;}
+.svc-tile:active{transform:scale(.94);background:var(--brand-bg);border-color:var(--brand-border);}
+.svc-tile.hot{background:var(--brand-bg);border-color:var(--brand-border);}
+.svc-emoji{font-size:28px;margin-bottom:8px;line-height:1;}
+.svc-name{font-size:11px;font-weight:700;color:var(--ink2);text-align:center;line-height:1.3;}
+.svc-price{font-size:10px;color:var(--muted);margin-top:3px;font-weight:500;}
+.svc-tile.hot .svc-name{color:var(--brand);}
+.hot-tag{position:absolute;top:7px;right:7px;background:var(--brand);color:white;font-size:8px;font-weight:800;padding:2px 5px;border-radius:100px;letter-spacing:.3px;}
 
-/* Category pills scroller */
-.cat-pills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:18px;}
-.cat-pills::-webkit-scrollbar{display:none;}
-.cat-pill{flex:none;padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:1.5px solid var(--line);background:var(--white);color:var(--ink2);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;}
-.cat-pill.on{background:var(--brand);color:white;border-color:var(--brand);box-shadow:0 3px 10px rgba(232,37,26,.25);}
-
-/* ─── HOW IT WORKS ─── */
-.hiw-sec{background:var(--bg);}
-.hiw-steps{display:flex;flex-direction:column;gap:0;}
-.hiw-step{display:flex;align-items:flex-start;gap:16px;padding:18px 0;border-bottom:1px solid var(--line);}
-.hiw-step:last-child{border:none;}
-.hiw-ic{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-.hiw-ic.r{background:var(--brand-bg);}
-.hiw-ic.g{background:var(--green-bg);}
-.hiw-ic.b{background:var(--blue-bg);}
-.hiw-ic.y{background:var(--yellow-bg);}
-.hiw-num{font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
-.hiw-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+/* ── HOW IT WORKS ── */
+.hiw-list{display:flex;flex-direction:column;gap:0;}
+.hiw-item{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--line);}
+.hiw-item:last-child{border:none;}
+.hiw-num-col{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;}
+.hiw-num-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:14px;font-weight:800;flex-shrink:0;}
+.hiw-num-circle.c1{background:#fff1f0;color:var(--brand);}
+.hiw-num-circle.c2{background:var(--blue-bg);color:var(--blue);}
+.hiw-num-circle.c3{background:var(--green-bg);color:var(--green);}
+.hiw-num-circle.c4{background:var(--yellow-bg);color:var(--yellow);}
+.hiw-connector{width:2px;flex:1;background:var(--line);margin:6px 0;min-height:24px;}
+.hiw-content{flex:1;padding-top:7px;}
+.hiw-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;}
 .hiw-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.hiw-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;margin-top:7px;}
 
-/* ─── WHY US ─── */
-.why-sec{background:linear-gradient(160deg,#0d0d0d,#1a1225);}
-.why-head .sec-title{color:white;}
-.why-feats{display:flex;flex-direction:column;gap:14px;margin-top:22px;}
-.why-feat{display:flex;align-items:flex-start;gap:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;}
-.why-feat-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.why-feat-ic.r{background:rgba(232,37,26,.18);}
-.why-feat-ic.g{background:rgba(0,168,107,.18);}
-.why-feat-ic.b{background:rgba(27,79,255,.18);}
-.why-feat-ic.y{background:rgba(245,158,11,.18);}
-.why-feat-title{font-size:15px;font-weight:700;color:white;margin-bottom:3px;}
-.why-feat-desc{font-size:13px;color:rgba(255,255,255,.45);line-height:1.6;}
-.why-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;}
-.why-stat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px;}
-.why-stat-num{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;color:white;letter-spacing:-1px;}
-.why-stat-num sup{font-size:18px;}
-.why-stat-label{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;font-weight:500;}
+/* ── TRUST PILLARS ── */
+.trust-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.trust-card{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r2);padding:18px 16px;position:relative;overflow:hidden;}
+.trust-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;}
+.trust-card.green::before{background:var(--green);}
+.trust-card.blue::before{background:var(--blue);}
+.trust-card.gold::before{background:var(--gold);}
+.trust-card.red::before{background:var(--brand);}
+.trust-icon{font-size:26px;margin-bottom:10px;}
+.trust-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--ink);margin-bottom:5px;line-height:1.3;}
+.trust-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.trust-link{font-size:11px;font-weight:700;color:var(--brand);margin-top:8px;display:block;}
 
-/* ─── TESTIMONIALS ─── */
+/* ── STATS BAND ── */
+.stats-band{background:linear-gradient(135deg,#0d0d0d,#1a0a20);padding:28px 20px;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.08);border-radius:var(--r2);overflow:hidden;}
+.stat-box{background:#0d0d0d;padding:22px 16px;text-align:center;}
+.stat-num{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;color:var(--white);letter-spacing:-1px;line-height:1;}
+.stat-num sup{font-size:16px;vertical-align:super;}
+.stat-label{font-size:12px;color:rgba(255,255,255,.4);margin-top:5px;font-weight:500;line-height:1.4;}
+
+/* ── REVIEWS ── */
 .reviews-scroll{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;}
 .reviews-scroll::-webkit-scrollbar{display:none;}
-.review-card{flex:none;width:280px;background:var(--bg);border:1.5px solid var(--line);border-radius:18px;padding:20px;}
-.review-stars{color:var(--yellow);font-size:13px;letter-spacing:1px;margin-bottom:10px;}
-.review-text{font-size:14px;color:var(--ink2);line-height:1.65;margin-bottom:14px;font-style:italic;}
+.review-card{flex:none;width:270px;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r2);padding:18px;}
+.review-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.review-stars{display:flex;gap:2px;}
+.review-star{color:var(--gold);font-size:13px;}
+.review-verified{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--green);background:var(--green-bg);padding:3px 8px;border-radius:100px;}
+.review-text{font-size:13px;color:var(--ink2);line-height:1.65;margin-bottom:14px;}
 .review-author{display:flex;align-items:center;gap:10px;}
-.review-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.review-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:white;flex-shrink:0;}
 .review-name{font-size:13px;font-weight:700;color:var(--ink);}
-.review-loc{font-size:11px;color:var(--muted);}
+.review-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.review-service{font-size:11px;font-weight:700;color:var(--brand);background:var(--brand-bg);padding:2px 8px;border-radius:100px;display:inline-block;margin-top:3px;}
 
-/* ─── PARTNER BANNER ─── */
-.partner-sec{background:var(--bg);}
-.partner-card{
-  background:linear-gradient(135deg,#0d0d0d 0%,#1a1225 100%);
-  border-radius:22px;padding:28px 24px;
-}
-.partner-label{font-size:11px;font-weight:700;color:rgba(232,37,26,.8);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
-.partner-title{font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:white;letter-spacing:-.5px;margin-bottom:10px;line-height:1.2;}
-.partner-sub{font-size:13px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:20px;}
-.partner-earn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 18px;margin-bottom:20px;}
-.partner-earn-label{font-size:11px;color:rgba(255,255,255,.4);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
-.partner-earn-val{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:white;letter-spacing:-1px;}
-.partner-earn-sub{font-size:12px;color:rgba(255,255,255,.35);margin-top:3px;}
-.partner-perks{display:flex;flex-direction:column;gap:9px;margin-bottom:22px;}
-.partner-perk{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
-.partner-perk-ic{width:26px;height:26px;border-radius:8px;background:rgba(0,168,107,.2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.partner-btns{display:flex;flex-direction:column;gap:9px;}
-.p-btn-primary{display:block;text-align:center;padding:15px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(232,37,26,.3);transition:all .2s;}
-.p-btn-primary:active{background:var(--brand2);transform:scale(.98);}
-.p-btn-ghost{display:block;text-align:center;padding:14px;background:transparent;color:rgba(255,255,255,.6);border:1.5px solid rgba(255,255,255,.2);border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;text-decoration:none;transition:all .2s;}
-.p-btn-ghost:active{border-color:rgba(255,255,255,.5);}
+/* ── SAFETY SECTION ── */
+.safety-card{background:linear-gradient(135deg,#0d0d0d,#1a1225);border-radius:var(--r2);padding:24px 20px;}
+.safety-title{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--white);margin-bottom:6px;}
+.safety-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.6;}
+.safety-items{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.safety-item{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px 12px;display:flex;align-items:flex-start;gap:10px;}
+.safety-ic{font-size:20px;flex-shrink:0;}
+.safety-text{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);line-height:1.5;}
 
-/* ─── FOOTER ─── */
-footer{background:#0d0d0d;padding:32px 20px 24px;}
+/* ── PRESS ── */
+.press-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:16px;}
+.press-logos{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;}
+.press-logo{font-size:14px;font-weight:800;color:var(--muted);opacity:.5;letter-spacing:.5px;font-family:'Sora',sans-serif;}
+
+/* ── PARTNER ── */
+.partner-card{background:var(--brand);border-radius:var(--r2);padding:24px 20px;position:relative;overflow:hidden;}
+.partner-card::after{content:'';position:absolute;top:-40%;right:-20%;width:300px;height:300px;background:rgba(255,255,255,.07);border-radius:50%;pointer-events:none;}
+.partner-eyebrow{font-size:11px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;}
+.partner-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--white);letter-spacing:-.4px;margin-bottom:8px;line-height:1.2;position:relative;}
+.partner-sub{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:18px;line-height:1.65;position:relative;}
+.partner-earn-box{background:rgba(0,0,0,.2);border-radius:14px;padding:16px;margin-bottom:18px;position:relative;}
+.partner-earn-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.partner-earn-val{font-family:'Sora',sans-serif;font-size:34px;font-weight:800;color:var(--white);letter-spacing:-1px;}
+.partner-earn-note{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;}
+.partner-perks{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;position:relative;}
+.perk{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:rgba(255,255,255,.75);}
+.perk-ic{width:24px;height:24px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.p-btns{display:flex;flex-direction:column;gap:9px;position:relative;}
+.p-primary{display:block;text-align:center;padding:15px;background:var(--white);color:var(--brand);border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.p-primary:active{opacity:.9;transform:scale(.98);}
+.p-ghost{display:block;text-align:center;padding:14px;background:transparent;color:rgba(255,255,255,.75);border:1.5px solid rgba(255,255,255,.25);border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;text-decoration:none;}
+
+/* ── APP BANNER ── */
+.app-banner{background:var(--bg);border-radius:var(--r2);padding:22px 18px;display:flex;align-items:center;gap:16px;}
+.app-text{flex:1;}
+.app-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.app-sub{font-size:12px;color:var(--muted);line-height:1.5;}
+.app-rating{display:flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;font-weight:700;color:var(--yellow);}
+.app-rating span{color:var(--muted);font-weight:500;}
+.app-btns{display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+.app-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--ink);color:white;border-radius:11px;text-decoration:none;font-size:12px;font-weight:600;}
+.app-btn-store{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;}
+.app-btn-label{font-size:10px;opacity:.65;}
+
+/* ── FOOTER ── */
+footer{background:#0d0d0d;padding:28px 20px 40px;}
 .footer-logo{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
-.footer-logo .logo-name{color:white;}
-.footer-desc{font-size:13px;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:20px;}
-.footer-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
-.footer-links a{font-size:13px;color:rgba(255,255,255,.4);text-decoration:none;padding:4px 0;}
-.footer-links a:active{color:rgba(255,255,255,.8);}
-.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:18px;font-size:12px;color:rgba(255,255,255,.25);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.footer-logo .logo-text{color:var(--white);}
+.footer-logo .logo-text span{color:var(--brand);}
+.footer-desc{font-size:13px;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:6px;}
+.footer-support{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--green);margin-bottom:20px;}
+.footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px;}
+.footer-grid a{font-size:13px;color:rgba(255,255,255,.4);text-decoration:none;padding:4px 0;display:block;}
+.footer-grid a:active{color:rgba(255,255,255,.8);}
+.footer-badges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.trust-badge{display:flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:11px;font-weight:600;color:rgba(255,255,255,.55);}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:18px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:rgba(255,255,255,.25);}
 
-/* ─── MAP MODAL ─── */
-.modal-bg{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);}
-.modal-bg.show{display:flex;align-items:flex-end;justify-content:center;}
-@media(min-width:600px){.modal-bg.show{align-items:center;}}
-.modal-sheet{background:white;border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:92vh;overflow:hidden;animation:slideUp .32s cubic-bezier(.16,1,.3,1);}
-@media(min-width:600px){.modal-sheet{border-radius:22px;margin:20px;}}
-@keyframes slideUp{from{transform:translateY(100%);opacity:.6}to{transform:translateY(0);opacity:1}}
-.modal-drag{width:40px;height:4px;background:var(--line);border-radius:2px;margin:12px auto;}
-.modal-hd{padding:4px 18px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);}
-.modal-hd-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;}
-.modal-close{width:34px;height:34px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:17px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
-#mapContainer{height:260px;}
-.modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
-.map-row{display:flex;gap:8px;}
-.map-inp{flex:1;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;-webkit-appearance:none;}
-.map-inp:focus{border-color:var(--brand);}
-.map-action-btn{padding:11px 14px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
-.map-action-btn.search{background:var(--brand);color:white;}
-.map-action-btn.gps{background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);}
-.addr-pill{padding:11px 13px;background:var(--bg);border-radius:var(--r);font-size:13px;font-weight:500;color:var(--ink2);line-height:1.5;display:flex;align-items:flex-start;gap:8px;}
-.addr-pill svg{flex-shrink:0;margin-top:2px;color:var(--brand);}
-.map-confirm{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
-
-/* ─── AUTH MODAL ─── */
-.auth-sheet{background:white;border-radius:22px 22px 0 0;width:100%;max-width:480px;animation:slideUp .32s cubic-bezier(.16,1,.3,1);}
-.auth-tabs{display:flex;gap:0;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:22px;}
-.auth-tab{flex:1;padding:10px;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s;}
-.auth-tab.on{background:white;color:var(--brand);box-shadow:var(--sh);}
-.auth-inner{padding:20px 20px 32px;}
-.auth-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px;}
-.auth-sub{font-size:14px;color:var(--muted);margin-bottom:22px;}
-.auth-err{background:var(--brand-bg);border:1.5px solid rgba(232,37,26,.2);border-radius:var(--r);padding:10px 13px;font-size:13px;font-weight:500;color:var(--brand);display:none;margin-bottom:12px;}
-.af{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
-.af label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;}
-.af input{padding:13px 14px;font-family:'DM Sans',sans-serif;font-size:15px;border:1.5px solid var(--line);border-radius:var(--r);outline:none;-webkit-appearance:none;color:var(--ink);}
-.af input:focus{border-color:var(--brand);}
-.af-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.auth-submit{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(232,37,26,.25);margin-top:4px;}
-.auth-submit:active{background:var(--brand2);transform:scale(.98);}
-.auth-alt{text-align:center;font-size:13px;color:var(--muted);margin-top:14px;}
-.auth-alt a{color:var(--brand);font-weight:600;cursor:pointer;}
-
-/* User widget */
+/* ── USER WIDGET ── */
 #userWidget{display:none;position:relative;}
-.user-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg);border:1.5px solid var(--line);border-radius:100px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink2);}
-.user-av{width:24px;height:24px;border-radius:50%;background:var(--brand);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
-.user-dd{position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:16px;box-shadow:var(--sh2);border:1px solid var(--line);overflow:hidden;min-width:170px;display:none;z-index:100;animation:slideUp .2s ease;}
-.user-dd.open{display:block;}
+.u-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg);border:1.5px solid var(--line);border-radius:100px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink2);}
+.u-av{width:24px;height:24px;border-radius:50%;background:var(--brand);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.u-dd{position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:16px;box-shadow:var(--sh3);border:1px solid var(--line);overflow:hidden;min-width:170px;display:none;z-index:200;animation:ddIn .2s ease;}
+.u-dd.open{display:block;}
+@keyframes ddIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .dd-item{padding:13px 16px;font-size:14px;font-weight:500;color:var(--ink2);cursor:pointer;display:block;text-decoration:none;}
 .dd-item:active{background:var(--bg);}
 .dd-item.red{color:var(--brand);}
 .dd-sep{height:1px;background:var(--line);}
 
+/* ── MODALS ── */
+.modal-bg{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);}
+.modal-bg.show{display:flex;align-items:flex-end;justify-content:center;}
+@media(min-width:600px){.modal-bg.show{align-items:center;}}
+.modal-sheet{background:var(--white);border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:92vh;overflow:hidden;animation:sheetUp .3s cubic-bezier(.16,1,.3,1);}
+@media(min-width:600px){.modal-sheet{border-radius:22px;margin:20px;}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-drag{width:40px;height:4px;background:var(--line);border-radius:2px;margin:12px auto;}
+.sheet-hd{padding:4px 18px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.sheet-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;}
+.sheet-close{width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+#mapCont{height:260px;}
+.map-body{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+.map-row{display:flex;gap:8px;}
+.map-inp{flex:1;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;-webkit-appearance:none;}
+.map-inp:focus{border-color:var(--brand);}
+.map-btn{padding:11px 14px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.map-btn.search{background:var(--brand);color:white;}
+.map-btn.gps{background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);}
+.addr-row{padding:11px 13px;background:var(--bg);border-radius:var(--r);font-size:13px;color:var(--ink2);line-height:1.5;display:flex;align-items:flex-start;gap:8px;}
+.map-confirm{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+.auth-sheet{background:var(--white);border-radius:22px 22px 0 0;width:100%;max-width:480px;animation:sheetUp .3s cubic-bezier(.16,1,.3,1);}
+.auth-tabs{display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:20px;}
+.auth-tab{flex:1;padding:10px;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);}
+.auth-tab.on{background:white;color:var(--brand);box-shadow:var(--sh);}
+.auth-body{padding:18px 20px 32px;}
+.auth-title{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.auth-err{background:var(--brand-bg);border:1.5px solid var(--brand-border);border-radius:var(--r);padding:10px 13px;font-size:13px;color:var(--brand);display:none;margin-bottom:12px;}
+.af{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.af label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;}
+.af input{padding:13px 14px;font-family:'DM Sans',sans-serif;font-size:15px;border:1.5px solid var(--line);border-radius:var(--r);outline:none;-webkit-appearance:none;color:var(--ink);}
+.af input:focus{border-color:var(--brand);}
+.af-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.auth-submit{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;box-shadow:0 4px 14px rgba(232,37,26,.25);}
+.auth-submit:active{background:var(--brand2);transform:scale(.98);}
+.auth-alt{text-align:center;font-size:13px;color:var(--muted);margin-top:14px;}
+.auth-alt a{color:var(--brand);font-weight:600;cursor:pointer;}
+
 /* Toast */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0d0d0d;color:white;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:500;z-index:99999;display:none;box-shadow:0 8px 28px rgba(0,0,0,.25);white-space:nowrap;max-width:90vw;text-align:center;}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#0d0d0d;color:white;padding:12px 22px;border-radius:100px;font-size:14px;font-weight:500;z-index:99999;display:none;box-shadow:var(--sh3);white-space:nowrap;max-width:90vw;text-align:center;}
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<header id="siteHeader">
-  <a class="logo" href="#">
-    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
-    <span class="logo-name">Hamara<span>Service</span></span>
-  </a>
-  <div class="header-right">
-    <a class="h-btn ghost" id="navLoginBtn" href="#" onclick="openAuth('login');return false;">Log in</a>
-    <a class="h-btn ghost" id="navSignBtn" href="#" onclick="openAuth('register');return false;" style="display:none" id="navSignBtn">Sign up</a>
-    <a class="h-btn solid" href="provider-portal.html">Partner</a>
-    <div id="userWidget">
-      <div class="user-pill" onclick="toggleDD()">
-        <div class="user-av" id="uAvLetter">U</div>
-        <span id="uName">Account</span>
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+<header id="hdr">
+  <div class="header-main">
+    <a class="logo" href="#">
+      <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+      <span class="logo-text">Hamara<span>Service</span></span>
+    </a>
+    <div class="header-right">
+      <div class="header-support">
+        <span>📞</span>
+        <a href="tel:+919999999999" style="color:inherit;text-decoration:none;">+91-9999-999-999</a>
       </div>
-      <div class="user-dd" id="userDD">
-        <a class="dd-item" onclick="window.location.href='user-booking.html'">📋 My Bookings</a>
-        <a class="dd-item" onclick="showProfile()">👤 My Profile</a>
-        <div class="dd-sep"></div>
-        <a class="dd-item red" onclick="logout()">Sign out</a>
+      <a class="hbtn ghost" id="navLogin" href="#" onclick="openAuth('login');return false;">Log in</a>
+      <a class="hbtn solid" href="provider-portal.html">Partner</a>
+      <div id="userWidget">
+        <div class="u-pill" onclick="toggleDD()">
+          <div class="u-av" id="uAv">U</div>
+          <span id="uName">Me</span>
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="u-dd" id="uDD">
+          <a class="dd-item" onclick="location.href='user-booking.html'">📋 My Bookings</a>
+          <a class="dd-item" onclick="showProfile()">👤 Profile</a>
+          <div class="dd-sep"></div>
+          <a class="dd-item red" onclick="logout()">Sign out</a>
+        </div>
       </div>
     </div>
+  </div>
+  <!-- Trust bar -->
+  <div class="trust-bar">
+    <div class="tb-item"><span class="tb-icon">✅</span><span class="tb-text"><strong>Background Verified</strong> Professionals</span></div>
+    <div class="tb-sep"></div>
+    <div class="tb-item"><span class="tb-icon">💰</span><span class="tb-text">Pay <strong>After Service</strong> — No Advance</span></div>
+    <div class="tb-sep"></div>
+    <div class="tb-item"><span class="tb-icon">🔄</span><span class="tb-text"><strong>Free Redo</strong> if Not Satisfied</span></div>
+    <div class="tb-sep"></div>
+    <div class="tb-item"><span class="tb-icon">📞</span><span class="tb-text"><strong>24/7 Support</strong> — Always Available</span></div>
   </div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><span class="hero-badge-dot"></span>Live in 50+ cities across India</div>
-  <h1>Home Services<br/>at Your <em>Doorstep</em></h1>
-  <p class="hero-sub">Verified professionals for every home need. Book in under 60 seconds.</p>
+  <div class="hero-glow"></div><div class="hero-glow2"></div>
+  <div class="live-badge"><span class="live-dot"></span>Live in 50+ cities across India</div>
+  <h1>Trusted Home Services<br/>at Your <em>Doorstep</em></h1>
+  <p class="hero-sub">Verified, trained professionals for cleaning, repair, cooking and 20+ more. Transparent prices. Pay only after you're satisfied.</p>
 
   <div class="search-card">
-    <div class="search-cats" id="searchCats">
-      <button class="s-cat on" onclick="setSearchCat(this)">🧹 Cleaning</button>
-      <button class="s-cat" onclick="setSearchCat(this)">🔧 Repair</button>
-      <button class="s-cat" onclick="setSearchCat(this)">👨‍🍳 Cooking</button>
-      <button class="s-cat" onclick="setSearchCat(this)">💆 Beauty</button>
-      <button class="s-cat" onclick="setSearchCat(this)">🌿 All</button>
+    <div class="s-tabs" id="sTabs">
+      <button class="s-tab on" onclick="setTab(this)">🧹 Cleaning</button>
+      <button class="s-tab" onclick="setTab(this)">🔧 Repair</button>
+      <button class="s-tab" onclick="setTab(this)">👨‍🍳 Cooking</button>
+      <button class="s-tab" onclick="setTab(this)">💆 Beauty</button>
+      <button class="s-tab" onclick="setTab(this)">🌿 All</button>
     </div>
-    <div class="search-form">
+    <div class="s-form">
       <div>
-        <div class="sf-label">Service</div>
-        <select class="sf-input" id="heroSvc">
+        <div class="s-label">What service do you need?</div>
+        <select class="s-inp" id="hSvc">
           <option value="">Select a service…</option>
-          <option>House Maid</option><option>Deep House Cleaning</option>
-          <option>Bathroom Cleaning</option><option>Kitchen Cleaning</option>
-          <option>AC Cleaning</option><option>AC Repair</option>
-          <option>Plumber Visit</option><option>Electrician Visit</option>
-          <option>Carpenter Visit</option><option>Cooking Person (Per Meal)</option>
-          <option>Full-Day Cook</option><option>Haircut (Men)</option>
-          <option>Full Body Massage</option><option>Doctor Visit</option>
-          <option>Baby Sitter</option><option>Car Wash</option>
+          <optgroup label="🧹 Cleaning">
+            <option>House Maid (Hourly) — ₹150/hr</option>
+            <option>Deep House Cleaning — ₹1,499</option>
+            <option>Bathroom Cleaning — ₹399</option>
+            <option>Kitchen Cleaning — ₹699</option>
+          </optgroup>
+          <optgroup label="🔧 Repair">
+            <option>Plumber Visit — ₹399</option>
+            <option>Electrician Visit — ₹399</option>
+            <option>Carpenter Visit — ₹349</option>
+            <option>AC Cleaning — ₹599</option>
+            <option>AC Repair — ₹599</option>
+          </optgroup>
+          <optgroup label="👨‍🍳 Cooking">
+            <option>Cooking Person (Per Meal) — ₹299</option>
+            <option>Full-Day Cook — ₹799</option>
+          </optgroup>
+          <optgroup label="💆 Beauty">
+            <option>Haircut Men — ₹199</option>
+            <option>Haircut Women — ₹349</option>
+            <option>Full Body Massage — ₹999</option>
+          </optgroup>
+          <optgroup label="🏥 Medical">
+            <option>Doctor Visit — ₹699</option>
+            <option>Nurse Visit — ₹399</option>
+            <option>Lab Test Collection — ₹199</option>
+          </optgroup>
+          <optgroup label="🚗 Vehicle">
+            <option>Car Wash — ₹499</option>
+            <option>Bike Wash — ₹199</option>
+          </optgroup>
         </select>
       </div>
-      <div class="sf-row">
-        <div>
-          <div class="sf-label">Date</div>
-          <input type="date" class="sf-input" id="heroDate"/>
-        </div>
-        <div>
-          <div class="sf-label">Time</div>
-          <select class="sf-input" id="heroTime">
-            <option>Morning 8–11</option><option>Afternoon 12–3</option>
-            <option>Evening 4–7</option>
+      <div class="s-row">
+        <div><div class="s-label">Date</div><input type="date" class="s-inp" id="hDate"/></div>
+        <div><div class="s-label">Preferred Time</div>
+          <select class="s-inp" id="hTime">
+            <option>Morning 8–11 AM</option>
+            <option>Afternoon 12–3 PM</option>
+            <option>Evening 4–7 PM</option>
           </select>
         </div>
       </div>
       <div>
-        <div class="sf-label">Your Location</div>
-        <button class="loc-btn" onclick="openMapModal()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
-          <span id="locLabel">Set your location</span>
+        <div class="s-label">Your location</div>
+        <button class="loc-btn" onclick="openMap()">
+          <span class="loc-ic">📍</span>
+          <span id="locTxt">Tap to set your location</span>
         </button>
       </div>
-      <button class="search-go" onclick="doSearch()">Find Professionals Near You →</button>
+      <button class="s-go" onclick="goSearch()">Find Professionals Near You →</button>
     </div>
   </div>
 
-  <div class="hero-trust">
-    <div class="trust-item"><strong>1.5L+</strong> customers</div>
-    <div class="trust-item"><strong>4.8★</strong> rating</div>
-    <div class="trust-item"><strong>10K+</strong> professionals</div>
+  <div class="search-trust">
+    <div class="st-item">🔒 <strong>Secure</strong> payment</div>
+    <div class="st-sep">·</div>
+    <div class="st-item">⭐ <strong>4.8</strong> avg rating</div>
+    <div class="st-sep">·</div>
+    <div class="st-item">✅ <strong>Verified</strong> pros only</div>
+  </div>
+  <div style="text-align:center">
+    <div class="ticker"><span class="ticker-dot"></span><strong id="tickerCount">247</strong> bookings placed in your city today</div>
   </div>
 </section>
 
+<!-- GUARANTEE STRIP -->
+<div class="guarantee-strip">
+  <div class="guarantee-inner">
+    <div class="g-item">
+      <div class="g-icon green">✅</div>
+      <div><div class="g-title">Verified Professionals</div><div class="g-sub">Aadhaar + Police check</div></div>
+    </div>
+    <div class="g-item">
+      <div class="g-icon blue">💰</div>
+      <div><div class="g-title">Pay After Service</div><div class="g-sub">Zero advance payment</div></div>
+    </div>
+    <div class="g-item">
+      <div class="g-icon yellow">🔄</div>
+      <div><div class="g-title">Free Redo Guarantee</div><div class="g-sub">Not happy? We redo free</div></div>
+    </div>
+    <div class="g-item">
+      <div class="g-icon red">🗺️</div>
+      <div><div class="g-title">Live GPS Tracking</div><div class="g-sub">Like Ola — real time</div></div>
+    </div>
+    <div class="g-item">
+      <div class="g-icon green">📞</div>
+      <div><div class="g-title">24/7 Support</div><div class="g-sub">Always here for you</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- SERVICES -->
-<section class="sec" id="services">
+<section class="sec">
   <div class="sec-hd">
-    <div class="sec-title">Popular Services</div>
-    <a class="sec-link" href="user-booking.html">All <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></a>
+    <div><div class="sec-title">All Services</div><div class="sec-sub">Tap to book instantly</div></div>
+    <a class="sec-link" href="user-booking.html">View all →</a>
   </div>
-
-  <!-- Category filter pills -->
-  <div class="cat-pills" id="catPills">
-    <button class="cat-pill on" onclick="filterCat('all',this)">All</button>
-    <button class="cat-pill" onclick="filterCat('Home Cleaning',this)">🧹 Cleaning</button>
-    <button class="cat-pill" onclick="filterCat('Repairs',this)">🔧 Repair</button>
-    <button class="cat-pill" onclick="filterCat('Cooking',this)">👨‍🍳 Cooking</button>
-    <button class="cat-pill" onclick="filterCat('Beauty & Grooming',this)">💆 Beauty</button>
-    <button class="cat-pill" onclick="filterCat('Medical',this)">🏥 Medical</button>
-    <button class="cat-pill" onclick="filterCat('Vehicle Care',this)">🚗 Vehicle</button>
-    <button class="cat-pill" onclick="filterCat('Care Services',this)">👶 Care</button>
+  <div class="cat-row" id="catRow">
+    <button class="cat-chip on" onclick="filterSvc('all',this)">All</button>
+    <button class="cat-chip" onclick="filterSvc('cleaning',this)">🧹 Cleaning</button>
+    <button class="cat-chip" onclick="filterSvc('repair',this)">🔧 Repair</button>
+    <button class="cat-chip" onclick="filterSvc('cooking',this)">👨‍🍳 Cooking</button>
+    <button class="cat-chip" onclick="filterSvc('beauty',this)">💆 Beauty</button>
+    <button class="cat-chip" onclick="filterSvc('medical',this)">🏥 Medical</button>
+    <button class="cat-chip" onclick="filterSvc('vehicle',this)">🚗 Vehicle</button>
   </div>
-
   <div class="svc-grid" id="svcGrid"></div>
 </section>
 
 <!-- HOW IT WORKS -->
-<section class="sec hiw-sec">
-  <div class="sec-hd"><div class="sec-title">How it works</div></div>
-  <div class="hiw-steps">
-    <div class="hiw-step">
-      <div class="hiw-ic r">📍</div>
-      <div><div class="hiw-num">Step 01</div><div class="hiw-title">Pick your service</div><div class="hiw-desc">Select what you need, set date, time and your location in seconds.</div></div>
+<section class="sec gray">
+  <div class="sec-hd"><div><div class="sec-title">How HamaraService works</div><div class="sec-sub">Book in under 60 seconds</div></div></div>
+  <div class="hiw-list">
+    <div class="hiw-item">
+      <div class="hiw-num-col"><div class="hiw-num-circle c1">1</div><div class="hiw-connector"></div></div>
+      <div class="hiw-content"><div class="hiw-title">Choose your service</div><div class="hiw-desc">Browse 25+ services with fixed transparent prices. No hidden charges — what you see is what you pay.</div><div class="hiw-badge">💰 Fixed Price — No Bargaining</div></div>
     </div>
-    <div class="hiw-step">
-      <div class="hiw-ic b">⚡</div>
-      <div><div class="hiw-num">Step 02</div><div class="hiw-title">Get matched instantly</div><div class="hiw-desc">Our system finds the nearest verified professional available for your slot.</div></div>
+    <div class="hiw-item">
+      <div class="hiw-num-col"><div class="hiw-num-circle c2">2</div><div class="hiw-connector"></div></div>
+      <div class="hiw-content"><div class="hiw-title">We match you instantly</div><div class="hiw-desc">Our system finds the nearest verified professional available for your exact time slot. You can see their profile and ratings before confirming.</div><div class="hiw-badge">✅ Aadhaar Verified Professional</div></div>
     </div>
-    <div class="hiw-step">
-      <div class="hiw-ic g">✅</div>
-      <div><div class="hiw-num">Step 03</div><div class="hiw-title">Relax at home</div><div class="hiw-desc">Track the professional on a live map. Pay only after the job is done.</div></div>
+    <div class="hiw-item">
+      <div class="hiw-num-col"><div class="hiw-num-circle c3">3</div><div class="hiw-connector"></div></div>
+      <div class="hiw-content"><div class="hiw-title">Track live on map</div><div class="hiw-desc">Watch your professional navigate to you on a live map — just like Ola or Swiggy. You'll know exactly when they arrive.</div><div class="hiw-badge">🗺️ Real-Time GPS Tracking</div></div>
     </div>
-    <div class="hiw-step">
-      <div class="hiw-ic y">⭐</div>
-      <div><div class="hiw-num">Step 04</div><div class="hiw-title">Rate & review</div><div class="hiw-desc">Your feedback keeps quality high for everyone in your neighbourhood.</div></div>
+    <div class="hiw-item">
+      <div class="hiw-num-col"><div class="hiw-num-circle c4">4</div></div>
+      <div class="hiw-content"><div class="hiw-title">Pay after — only if satisfied</div><div class="hiw-desc">Confirm with a 4-digit code, pay securely via UPI or card. Not satisfied? We redo the service free of charge. No questions asked.</div><div class="hiw-badge">🔐 OTP Confirmation + Pay After</div></div>
     </div>
   </div>
 </section>
 
-<!-- WHY US -->
-<section class="sec why-sec">
-  <div class="why-head"><div class="sec-title">Why HamaraService</div></div>
-  <div class="why-feats">
-    <div class="why-feat">
-      <div class="why-feat-ic r">🛡️</div>
-      <div><div class="why-feat-title">100% Background Verified</div><div class="why-feat-desc">Aadhaar-checked and police-verified before onboarding.</div></div>
+<!-- TRUST PILLARS -->
+<section class="sec">
+  <div class="sec-hd"><div><div class="sec-title">Why customers trust us</div><div class="sec-sub">Built around your safety and satisfaction</div></div></div>
+  <div class="trust-grid">
+    <div class="trust-card green">
+      <div class="trust-icon">🛡️</div>
+      <div class="trust-title">100% Background Verified</div>
+      <div class="trust-desc">Every professional passes Aadhaar check, police verification and in-person interview before joining.</div>
     </div>
-    <div class="why-feat">
-      <div class="why-feat-ic g">💰</div>
-      <div><div class="why-feat-title">Pay After Service</div><div class="why-feat-desc">No advance payment. Pay only when satisfied.</div></div>
+    <div class="trust-card blue">
+      <div class="trust-icon">🎓</div>
+      <div class="trust-title">Trained & Certified</div>
+      <div class="trust-desc">40+ hours of hands-on training. Certified in safety, hygiene and service quality standards.</div>
     </div>
-    <div class="why-feat">
-      <div class="why-feat-ic b">🗺️</div>
-      <div><div class="why-feat-title">Live GPS Tracking</div><div class="why-feat-desc">Watch your professional on the map, Ola / Swiggy style.</div></div>
+    <div class="trust-card gold">
+      <div class="trust-icon">💰</div>
+      <div class="trust-title">No Advance Payment</div>
+      <div class="trust-desc">Pay only after the job is fully done and you are 100% satisfied. Zero risk to you.</div>
     </div>
-    <div class="why-feat">
-      <div class="why-feat-ic y">🔄</div>
-      <div><div class="why-feat-title">Satisfaction Guarantee</div><div class="why-feat-desc">Not happy? Full re-do or 100% refund. No questions asked.</div></div>
+    <div class="trust-card red">
+      <div class="trust-icon">🔄</div>
+      <div class="trust-title">Free Redo Guarantee</div>
+      <div class="trust-desc">Not happy with the result? We send another professional to redo it at zero cost. Period.</div>
     </div>
-  </div>
-  <div class="why-stats">
-    <div class="why-stat"><div class="why-stat-num">1.5L<sup>+</sup></div><div class="why-stat-label">Happy customers</div></div>
-    <div class="why-stat"><div class="why-stat-num">10K<sup>+</sup></div><div class="why-stat-label">Verified pros</div></div>
-    <div class="why-stat"><div class="why-stat-num">4.8<sup>★</sup></div><div class="why-stat-label">Average rating</div></div>
-    <div class="why-stat"><div class="why-stat-num">50<sup>+</sup></div><div class="why-stat-label">Cities live</div></div>
   </div>
 </section>
+
+<!-- STATS -->
+<div class="stats-band">
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-num">1.5L<sup>+</sup></div><div class="stat-label">Happy customers served across India</div></div>
+    <div class="stat-box"><div class="stat-num">10K<sup>+</sup></div><div class="stat-label">Verified professionals onboarded</div></div>
+    <div class="stat-box"><div class="stat-num">4.8<sup>★</sup></div><div class="stat-label">Average rating from 50,000+ reviews</div></div>
+    <div class="stat-box"><div class="stat-num">50<sup>+</sup></div><div class="stat-label">Cities active across India</div></div>
+  </div>
+</div>
 
 <!-- REVIEWS -->
 <section class="sec">
-  <div class="sec-hd"><div class="sec-title">What customers say</div></div>
+  <div class="sec-hd"><div><div class="sec-title">Real customer reviews</div><div class="sec-sub">50,000+ verified ratings</div></div></div>
   <div class="reviews-scroll">
     <div class="review-card">
-      <div class="review-stars">★★★★★</div>
-      <div class="review-text">"Booked deep cleaning — team arrived on time, wore shoe covers, spotless work. Will use every month!"</div>
-      <div class="review-author"><div class="review-av" style="background:#fdecea">👩</div><div><div class="review-name">Priya Sharma</div><div class="review-loc">Hyderabad</div></div></div>
+      <div class="review-top">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-verified">✅ Verified</div>
+      </div>
+      <div class="review-text">"Booked deep cleaning — team arrived exactly on time, wore shoe covers, used professional equipment. My apartment has never looked this clean!"</div>
+      <div class="review-author">
+        <div class="review-av" style="background:#E8251A">P</div>
+        <div><div class="review-name">Priya Sharma</div><div class="review-meta">Hyderabad · 3 days ago</div><div class="review-service">Deep Cleaning</div></div>
+      </div>
     </div>
     <div class="review-card">
-      <div class="review-stars">★★★★★</div>
-      <div class="review-text">"Electrician fixed everything in 45 minutes. Very professional and cleaned up after. Exceptional!"</div>
-      <div class="review-author"><div class="review-av" style="background:#eff3ff">👨</div><div><div class="review-name">Rahul Nair</div><div class="review-loc">Bengaluru</div></div></div>
+      <div class="review-top">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-verified">✅ Verified</div>
+      </div>
+      <div class="review-text">"The electrician diagnosed and fixed the issue in 30 minutes. Very professional, explained what was wrong and cleaned up after. 10/10!"</div>
+      <div class="review-author">
+        <div class="review-av" style="background:#1B4FFF">R</div>
+        <div><div class="review-name">Rahul Nair</div><div class="review-meta">Bengaluru · 1 week ago</div><div class="review-service">Electrician Visit</div></div>
+      </div>
     </div>
     <div class="review-card">
-      <div class="review-stars">★★★★★</div>
-      <div class="review-text">"The cook made the most amazing food. My whole family loved it. Highly recommended!"</div>
-      <div class="review-author"><div class="review-av" style="background:#e8faf4">👩</div><div><div class="review-name">Anita Reddy</div><div class="review-loc">Chennai</div></div></div>
+      <div class="review-top">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-verified">✅ Verified</div>
+      </div>
+      <div class="review-text">"Live GPS tracking is amazing — watched the plumber navigate to my house just like Swiggy! Fixed the leak in 20 mins. Superb service."</div>
+      <div class="review-author">
+        <div class="review-av" style="background:#00956a">V</div>
+        <div><div class="review-name">Vikram Patel</div><div class="review-meta">Mumbai · 2 weeks ago</div><div class="review-service">Plumber Visit</div></div>
+      </div>
     </div>
     <div class="review-card">
-      <div class="review-stars">★★★★★</div>
-      <div class="review-text">"Live tracking is amazing — just like Ola. Knew exactly when the plumber was arriving."</div>
-      <div class="review-author"><div class="review-av" style="background:#fffbeb">👨</div><div><div class="review-name">Vikram Patel</div><div class="review-loc">Mumbai</div></div></div>
+      <div class="review-top">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-verified">✅ Verified</div>
+      </div>
+      <div class="review-text">"Cook made amazing food, entire family loved it. The fact that I paid AFTER the service gave me so much confidence. Will use every week!"</div>
+      <div class="review-author">
+        <div class="review-av" style="background:#d97706">A</div>
+        <div><div class="review-name">Anita Reddy</div><div class="review-meta">Chennai · 5 days ago</div><div class="review-service">Full-Day Cook</div></div>
+      </div>
     </div>
+  </div>
+</section>
+
+<!-- SAFETY -->
+<section class="sec gray">
+  <div class="safety-card">
+    <div class="safety-title">Your safety is our top priority</div>
+    <div class="safety-sub">Every HamaraService professional follows a strict safety protocol on every visit.</div>
+    <div class="safety-items">
+      <div class="safety-item"><div class="safety-ic">🪪</div><div class="safety-text">Aadhaar & Police Verified ID</div></div>
+      <div class="safety-item"><div class="safety-ic">😷</div><div class="safety-text">Mask & Gloves Always Worn</div></div>
+      <div class="safety-item"><div class="safety-ic">👟</div><div class="safety-text">Shoe Covers in Your Home</div></div>
+      <div class="safety-item"><div class="safety-ic">🧴</div><div class="safety-text">Sanitized Equipment</div></div>
+      <div class="safety-item"><div class="safety-ic">📸</div><div class="safety-text">Before & After Photos</div></div>
+      <div class="safety-item"><div class="safety-ic">🔐</div><div class="safety-text">OTP Job Closure System</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRESS -->
+<section class="sec">
+  <div class="press-title">As seen in</div>
+  <div class="press-logos">
+    <div class="press-logo">ECONOMIC TIMES</div>
+    <div class="press-logo">YOUR STORY</div>
+    <div class="press-logo">NDTV</div>
+    <div class="press-logo">INC42</div>
+    <div class="press-logo">STARTUP INDIA</div>
   </div>
 </section>
 
 <!-- PARTNER -->
-<section class="sec partner-sec">
+<section class="sec gray">
   <div class="partner-card">
-    <div class="partner-label">For Professionals</div>
-    <div class="partner-title">Earn ₹800–₹2000 every single day</div>
-    <div class="partner-sub">Join thousands of professionals across India who have transformed their income with HamaraService.</div>
-    <div class="partner-earn">
+    <div class="partner-eyebrow">For Service Professionals</div>
+    <div class="partner-title">Earn ₹800–₹2,000 every day on your terms</div>
+    <div class="partner-sub">Join 10,000+ professionals across India. Flexible hours, guaranteed payments, steady customers.</div>
+    <div class="partner-earn-box">
       <div class="partner-earn-label">Average monthly earnings</div>
       <div class="partner-earn-val">₹24,000</div>
-      <div class="partner-earn-sub">Working 6 days/week · 4–6 bookings/day</div>
+      <div class="partner-earn-note">Working 6 days/week · 4–6 bookings/day</div>
     </div>
     <div class="partner-perks">
-      <div class="partner-perk"><div class="partner-perk-ic">✅</div>Guaranteed payment within 24 hours</div>
-      <div class="partner-perk"><div class="partner-perk-ic">📍</div>Work within your preferred radius only</div>
-      <div class="partner-perk"><div class="partner-perk-ic">📱</div>Manage everything from your phone</div>
-      <div class="partner-perk"><div class="partner-perk-ic">🛡️</div>Insurance and safety support included</div>
+      <div class="perk"><div class="perk-ic">✅</div>Payment guaranteed within 24 hours</div>
+      <div class="perk"><div class="perk-ic">📍</div>Work only within your preferred area</div>
+      <div class="perk"><div class="perk-ic">📱</div>Manage everything from your phone</div>
+      <div class="perk"><div class="perk-ic">🛡️</div>Insurance and accident support included</div>
     </div>
-    <div class="partner-btns">
-      <a class="p-btn-primary" href="provider-portal.html">Start Earning Today →</a>
-      <a class="p-btn-ghost" href="provider-portal.html">Already registered? Login</a>
+    <div class="p-btns">
+      <a class="p-primary" href="provider-portal.html">Register as Professional →</a>
+      <a class="p-ghost" href="provider-portal.html">Already registered? Login to dashboard</a>
+    </div>
+  </div>
+</section>
+
+<!-- APP BANNER -->
+<section class="sec">
+  <div class="app-banner">
+    <div class="app-text">
+      <div class="app-title">Get the HamaraService app</div>
+      <div class="app-sub">Track professionals live, manage bookings, get exclusive app-only offers</div>
+      <div class="app-rating">★★★★★ <span>4.8 · 1L+ downloads</span></div>
+    </div>
+    <div class="app-btns">
+      <a class="app-btn" href="#">
+        <div><div class="app-btn-label">Download on</div><div class="app-btn-store">App Store</div></div>
+      </a>
+      <a class="app-btn" href="#">
+        <div><div class="app-btn-label">Get it on</div><div class="app-btn-store">Play Store</div></div>
+      </a>
     </div>
   </div>
 </section>
@@ -498,42 +690,45 @@ footer{background:#0d0d0d;padding:32px 20px 24px;}
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">
-    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
-    <span class="logo-name">Hamara<span style="color:var(--brand)">Service</span></span>
+    <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="logo-text">Hamara<span>Service</span></span>
   </div>
-  <p class="footer-desc">India's most trusted platform for home services. Safe, reliable, always on time.</p>
-  <div class="footer-links">
-    <a href="#">House Cleaning</a><a href="#">Plumbing</a>
-    <a href="#">AC Service</a><a href="#">Electrical</a>
-    <a href="#">About us</a><a href="#">Careers</a>
-    <a href="#">Privacy Policy</a><a href="admin.html">Admin</a>
+  <p class="footer-desc">India's most trusted home service platform. Safe, reliable, background-verified professionals at your doorstep.</p>
+  <div class="footer-support">📞 <a href="tel:+919999999999" style="color:inherit;text-decoration:none;">+91-9999-999-999</a> · 24/7 Customer Support</div>
+  <div class="footer-grid">
+    <a href="#">House Cleaning</a><a href="#">Plumbing & Repair</a>
+    <a href="#">AC Service</a><a href="#">Electrician</a>
+    <a href="#">Cooking Service</a><a href="#">Doctor at Home</a>
+    <a href="#">About Us</a><a href="#">Careers</a>
+    <a href="#">Privacy Policy</a><a href="#">Terms of Service</a>
+    <a href="#">Refund Policy</a><a href="admin.html">Admin Panel</a>
+  </div>
+  <div class="footer-badges">
+    <div class="trust-badge">🔒 SSL Secured</div>
+    <div class="trust-badge">✅ DPDP Compliant</div>
+    <div class="trust-badge">🛡️ Insured Pros</div>
+    <div class="trust-badge">🏦 Safe Payments</div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 HamaraService</span>
-    <span>Made with ❤️ in India</span>
+    <span>© 2026 HamaraService Technologies Pvt Ltd. All rights reserved.</span>
+    <span>Made with ❤️ in India 🇮🇳</span>
   </div>
 </footer>
 
 <!-- MAP MODAL -->
 <div class="modal-bg" id="mapModal">
   <div class="modal-sheet">
-    <div class="modal-drag"></div>
-    <div class="modal-hd">
-      <span class="modal-hd-title">Set your location</span>
-      <button class="modal-close" onclick="closeMap()">✕</button>
-    </div>
-    <div id="mapContainer"></div>
-    <div class="modal-body">
+    <div class="sheet-drag"></div>
+    <div class="sheet-hd"><span class="sheet-title">Set your location</span><button class="sheet-close" onclick="closeMap()">✕</button></div>
+    <div id="mapCont"></div>
+    <div class="map-body">
       <div class="map-row">
-        <input class="map-inp" id="mapSrch" placeholder="Search area, street, city…" onkeydown="if(event.key==='Enter')searchLoc()"/>
-        <button class="map-action-btn search" onclick="searchLoc()">Search</button>
-        <button class="map-action-btn gps" onclick="getGPS()">📍 GPS</button>
+        <input class="map-inp" id="mapQ" placeholder="Search area, street, city…" onkeydown="if(event.key==='Enter')searchMap()"/>
+        <button class="map-btn search" onclick="searchMap()">Search</button>
+        <button class="map-btn gps" onclick="getGPS()">📍</button>
       </div>
-      <div class="addr-pill" id="addrPill">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
-        Tap on map or use GPS to set location
-      </div>
-      <button class="map-confirm" onclick="confirmLoc()">Confirm Location</button>
+      <div class="addr-row" id="addrRow">📍 Tap on the map or use GPS to set your location</div>
+      <button class="map-confirm" onclick="confirmLoc()">Confirm This Location</button>
     </div>
   </div>
 </div>
@@ -541,32 +736,32 @@ footer{background:#0d0d0d;padding:32px 20px 24px;}
 <!-- AUTH MODAL -->
 <div class="modal-bg" id="authModal">
   <div class="auth-sheet">
-    <div class="modal-drag"></div>
-    <div class="auth-inner">
+    <div class="sheet-drag"></div>
+    <div class="auth-body">
       <div class="auth-tabs">
-        <button class="auth-tab on" id="atLogin" onclick="switchAuth('login')">Log in</button>
-        <button class="auth-tab" id="atReg" onclick="switchAuth('register')">Sign up</button>
+        <button class="auth-tab on" id="atL" onclick="switchAuth('login')">Log in</button>
+        <button class="auth-tab" id="atR" onclick="switchAuth('register')">Sign up</button>
       </div>
-      <div id="authLoginP">
+      <div id="authLP">
         <div class="auth-title">Welcome back 👋</div>
-        <div class="auth-sub">Log in to track bookings and get offers</div>
+        <div class="auth-sub">Log in to track bookings and get exclusive offers</div>
         <div class="auth-err" id="authErr"></div>
-        <div class="af"><label>Mobile Number</label><input type="tel" id="cu_phone" maxlength="10" placeholder="10-digit mobile"/></div>
-        <div class="af"><label>Full Name</label><input type="text" id="cu_name_login" placeholder="As registered" onkeydown="if(event.key==='Enter')doLogin()"/></div>
-        <button class="auth-submit" onclick="doLogin()">Continue →</button>
-        <div class="auth-alt">No account? <a onclick="switchAuth('register')">Sign up free</a></div>
+        <div class="af"><label>Mobile Number</label><input type="tel" id="cu_phone" maxlength="10" placeholder="10-digit mobile number" inputmode="numeric"/></div>
+        <div class="af"><label>Full Name (as registered)</label><input type="text" id="cu_name" placeholder="Your full name" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="auth-submit" onclick="doLogin()">Log in →</button>
+        <div class="auth-alt">New here? <a onclick="switchAuth('register')">Create free account</a></div>
       </div>
-      <div id="authRegP" style="display:none">
+      <div id="authRP" style="display:none">
         <div class="auth-title">Create account ✨</div>
-        <div class="auth-sub">Optional — track bookings and get exclusive offers</div>
-        <div class="af-2col">
-          <div class="af"><label>Full Name</label><input type="text" id="cu_reg_name" placeholder="Your name"/></div>
-          <div class="af"><label>Mobile</label><input type="tel" id="cu_reg_phone" maxlength="10" placeholder="10-digit"/></div>
+        <div class="auth-sub">Free sign up — track bookings &amp; get exclusive offers</div>
+        <div class="af-2">
+          <div class="af"><label>Full Name</label><input type="text" id="rName" placeholder="Your name"/></div>
+          <div class="af"><label>Mobile</label><input type="tel" id="rPhone" maxlength="10" placeholder="10-digit" inputmode="numeric"/></div>
         </div>
-        <div class="af"><label>Email (optional)</label><input type="email" id="cu_reg_email" placeholder="your@email.com"/></div>
-        <div class="af"><label>City</label><input type="text" id="cu_reg_city" placeholder="e.g. Hyderabad"/></div>
+        <div class="af"><label>Email (optional)</label><input type="email" id="rEmail" placeholder="your@email.com"/></div>
+        <div class="af"><label>City</label><input type="text" id="rCity" placeholder="e.g. Hyderabad"/></div>
         <button class="auth-submit" onclick="doRegister()">Create Account →</button>
-        <div class="auth-alt">Have an account? <a onclick="switchAuth('login')">Log in</a></div>
+        <div class="auth-alt">Already have account? <a onclick="switchAuth('login')">Log in</a></div>
       </div>
     </div>
   </div>
@@ -576,208 +771,192 @@ footer{background:#0d0d0d;padding:32px 20px 24px;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// ── SERVICES DATA (with prices from catalog)
+// ── SERVICES
 const SVCS = [
-  {name:'House Maid',emoji:'🧹',price:'₹150/hr',cat:'Home Cleaning',hot:true},
-  {name:'Deep Cleaning',emoji:'🫧',price:'₹1,499',cat:'Home Cleaning',hot:true},
-  {name:'Bathroom Cleaning',emoji:'🚿',price:'₹399',cat:'Home Cleaning'},
-  {name:'Kitchen Cleaning',emoji:'🍳',price:'₹699',cat:'Home Cleaning'},
-  {name:'AC Cleaning',emoji:'❄️',price:'₹599',cat:'Appliance Care',hot:true},
-  {name:'AC Repair',emoji:'🔩',price:'₹599',cat:'Appliance Care'},
-  {name:'Plumber Visit',emoji:'🔧',price:'₹399',cat:'Repairs',hot:true},
-  {name:'Electrician',emoji:'⚡',price:'₹399',cat:'Repairs',hot:true},
-  {name:'Carpenter',emoji:'🪚',price:'₹349',cat:'Repairs'},
-  {name:'Cooking (Meal)',emoji:'🍱',price:'₹299',cat:'Cooking'},
-  {name:'Full-Day Cook',emoji:'👨‍🍳',price:'₹799',cat:'Cooking',hot:true},
-  {name:'Haircut Men',emoji:'✂️',price:'₹199',cat:'Beauty & Grooming'},
-  {name:'Haircut Women',emoji:'💇',price:'₹349',cat:'Beauty & Grooming'},
-  {name:'Body Massage',emoji:'💆',price:'₹999',cat:'Beauty & Grooming'},
-  {name:'Doctor Visit',emoji:'👨‍⚕️',price:'₹699',cat:'Medical'},
-  {name:'Nurse Visit',emoji:'💉',price:'₹399',cat:'Medical'},
-  {name:'Lab Test',emoji:'🧪',price:'₹199',cat:'Medical'},
-  {name:'Car Wash',emoji:'🚗',price:'₹499',cat:'Vehicle Care'},
-  {name:'Bike Wash',emoji:'🏍️',price:'₹199',cat:'Vehicle Care'},
-  {name:'Baby Sitter',emoji:'👶',price:'₹200/hr',cat:'Care Services'},
-  {name:'Elder Care',emoji:'👴',price:'₹499',cat:'Care Services'},
-  {name:'Gardener',emoji:'🌱',price:'₹499',cat:'Maintenance'},
-  {name:'Pest Control',emoji:'🐛',price:'₹799',cat:'Maintenance'},
-  {name:'Room Painting',emoji:'🎨',price:'₹1,499',cat:'Painting'},
+  {e:'🧹',n:'House Maid',p:'₹150/hr',c:'cleaning',hot:true},
+  {e:'🫧',n:'Deep Cleaning',p:'₹1,499',c:'cleaning',hot:true},
+  {e:'🚿',n:'Bathroom Clean',p:'₹399',c:'cleaning'},
+  {e:'🍳',n:'Kitchen Clean',p:'₹699',c:'cleaning'},
+  {e:'🔧',n:'Plumber',p:'₹399',c:'repair',hot:true},
+  {e:'⚡',n:'Electrician',p:'₹399',c:'repair',hot:true},
+  {e:'❄️',n:'AC Cleaning',p:'₹599',c:'repair',hot:true},
+  {e:'🔩',n:'AC Repair',p:'₹599',c:'repair'},
+  {e:'🪚',n:'Carpenter',p:'₹349',c:'repair'},
+  {e:'👨‍🍳',n:'Full-Day Cook',p:'₹799',c:'cooking',hot:true},
+  {e:'🍱',n:'Cook Per Meal',p:'₹299',c:'cooking'},
+  {e:'✂️',n:'Haircut Men',p:'₹199',c:'beauty'},
+  {e:'💇',n:'Haircut Women',p:'₹349',c:'beauty'},
+  {e:'💆',n:'Body Massage',p:'₹999',c:'beauty'},
+  {e:'👨‍⚕️',n:'Doctor Visit',p:'₹699',c:'medical'},
+  {e:'💉',n:'Nurse Visit',p:'₹399',c:'medical'},
+  {e:'🧪',n:'Lab Test',p:'₹199',c:'medical'},
+  {e:'🚗',n:'Car Wash',p:'₹499',c:'vehicle'},
+  {e:'🏍️',n:'Bike Wash',p:'₹199',c:'vehicle'},
+  {e:'👶',n:'Baby Sitter',p:'₹200/hr',c:'cleaning'},
+  {e:'👴',n:'Elder Care',p:'₹499',c:'medical'},
+  {e:'🌱',n:'Gardener',p:'₹499',c:'cleaning'},
+  {e:'🐛',n:'Pest Control',p:'₹799',c:'repair'},
+  {e:'🎨',n:'Room Painting',p:'₹1,499',c:'repair'},
 ];
 
-let currentCat = 'all';
-function buildGrid(cat) {
-  const filtered = cat === 'all' ? SVCS : SVCS.filter(s => s.cat === cat);
-  document.getElementById('svcGrid').innerHTML = filtered.map(s => `
-    <div class="svc-tile ${s.hot?'hot':''}" onclick="pickService('${s.name}')">
-      ${s.hot ? '<div class="svc-hot-badge">Popular</div>' : ''}
-      <div class="svc-tile-emoji">${s.emoji}</div>
-      <div class="svc-tile-name">${s.name}</div>
-      <div class="svc-tile-price">${s.price}</div>
-    </div>
-  `).join('');
+function buildSvcs(cat){
+  const list = cat==='all' ? SVCS : SVCS.filter(s=>s.c===cat);
+  document.getElementById('svcGrid').innerHTML = list.map(s=>`
+    <div class="svc-tile${s.hot?' hot':''}" onclick="pickSvc('${s.n}')">
+      ${s.hot?'<div class="hot-tag">Popular</div>':''}
+      <div class="svc-emoji">${s.e}</div>
+      <div class="svc-name">${s.n}</div>
+      <div class="svc-price">${s.p}</div>
+    </div>`).join('');
 }
-buildGrid('all');
+buildSvcs('all');
 
-function filterCat(cat, btn) {
-  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('on'));
+function filterSvc(cat,btn){
+  document.querySelectorAll('.cat-chip').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  buildGrid(cat);
+  buildSvcs(cat);
 }
-
-function pickService(name) {
-  document.getElementById('heroSvc').value = name;
-  document.querySelector('.hero').scrollIntoView({behavior:'smooth'});
-  showToast('✅ ' + name + ' selected');
-  setTimeout(() => window.location.href = 'user-booking.html', 1200);
+function pickSvc(name){
+  showToast('✅ '+name+' selected');
+  setTimeout(()=>location.href='user-booking.html',1000);
 }
-
-function setSearchCat(btn) {
-  document.querySelectorAll('.s-cat').forEach(b => b.classList.remove('on'));
+function setTab(btn){
+  document.querySelectorAll('.s-tab').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
 }
 
-// ── DATE DEFAULT
-const hd = document.getElementById('heroDate');
-const tom = new Date(); tom.setDate(tom.getDate()+1);
-hd.value = tom.toISOString().split('T')[0];
-hd.min = new Date().toISOString().split('T')[0];
+// Default date
+const hd=document.getElementById('hDate');
+const tom=new Date();tom.setDate(tom.getDate()+1);
+hd.value=tom.toISOString().split('T')[0];
+hd.min=new Date().toISOString().split('T')[0];
 
-function doSearch() {
-  const svc = document.getElementById('heroSvc').value;
-  if (!svc) { showToast('⚠️ Please select a service first'); return; }
-  window.location.href = 'user-booking.html';
-}
+// Scroll header shadow
+window.addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>10),{passive:true});
 
-// ── HEADER SCROLL
-window.addEventListener('scroll', () => {
-  document.getElementById('siteHeader').classList.toggle('scrolled', window.scrollY > 10);
-}, {passive:true});
+// Animate ticker
+setInterval(()=>{
+  const el=document.getElementById('tickerCount');
+  if(el)el.textContent=Math.floor(200+Math.random()*100);
+},8000);
 
 // ── MAP
-let leafMap = null, leafMarker = null;
-let selLat = null, selLng = null, selAddr = '';
-
-function openMapModal() {
+let lmap=null,lmarker=null,sLat=null,sLng=null,sAddr='';
+function openMap(){
   document.getElementById('mapModal').classList.add('show');
-  setTimeout(() => {
-    if (!leafMap) {
-      leafMap = L.map('mapContainer').setView([17.3850,78.4867],12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(leafMap);
-      leafMap.on('click', e => { selLat=e.latlng.lat; selLng=e.latlng.lng; pin(selLat,selLng); revGeo(selLat,selLng); });
+  setTimeout(()=>{
+    if(!lmap){
+      lmap=L.map('mapCont').setView([17.385,78.486],12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(lmap);
+      lmap.on('click',e=>{sLat=e.latlng.lat;sLng=e.latlng.lng;pin(sLat,sLng);revGeo(sLat,sLng);});
     }
-    leafMap.invalidateSize();
+    lmap.invalidateSize();
     getGPS();
-  }, 250);
+  },250);
 }
-function closeMap() { document.getElementById('mapModal').classList.remove('show'); }
-
-function pin(lat,lng) {
-  if (leafMarker) leafMap.removeLayer(leafMarker);
-  leafMarker = L.marker([lat,lng], {
-    icon: L.divIcon({html:`<div style="width:36px;height:36px;background:#E8251A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.4)"></div>`,className:'',iconSize:[36,36],iconAnchor:[18,36]})
-  }).addTo(leafMap);
-  leafMap.panTo([lat,lng]);
+function closeMap(){document.getElementById('mapModal').classList.remove('show');}
+function pin(lat,lng){
+  if(lmarker)lmap.removeLayer(lmarker);
+  lmarker=L.marker([lat,lng],{icon:L.divIcon({html:'<div style="width:34px;height:34px;background:#E8251A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.45)"></div>',className:'',iconSize:[34,34],iconAnchor:[17,34]})}).addTo(lmap);
+  lmap.panTo([lat,lng]);
 }
-function revGeo(lat,lng) {
-  document.getElementById('addrPill').textContent = '⏳ Fetching address…';
+function revGeo(lat,lng){
+  document.getElementById('addrRow').textContent='⏳ Fetching address…';
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
     .then(r=>r.json()).then(d=>{
       const a=d.address||{};
       const parts=[a.road,a.suburb||a.neighbourhood,a.city||a.town,a.state].filter(Boolean);
-      selAddr = parts.join(', ') || d.display_name;
-      document.getElementById('addrPill').textContent = '📍 ' + selAddr;
-    }).catch(()=>{ selAddr=`${lat.toFixed(4)},${lng.toFixed(4)}`; document.getElementById('addrPill').textContent='📍 ' + selAddr; });
+      sAddr=parts.join(', ')||d.display_name;
+      document.getElementById('addrRow').textContent='📍 '+sAddr;
+    }).catch(()=>{sAddr=`${lat.toFixed(4)},${lng.toFixed(4)}`;document.getElementById('addrRow').textContent='📍 '+sAddr;});
 }
-function searchLoc() {
-  const q = document.getElementById('mapSrch').value.trim();
-  if (!q) return;
+function searchMap(){
+  const q=document.getElementById('mapQ').value.trim();if(!q)return;
   fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
     .then(r=>r.json()).then(res=>{
-      if (!res.length) { showToast('❌ Location not found'); return; }
-      selLat=+res[0].lat; selLng=+res[0].lon;
-      leafMap.setView([selLat,selLng],15); pin(selLat,selLng); revGeo(selLat,selLng);
+      if(!res.length){showToast('❌ Location not found');return;}
+      sLat=+res[0].lat;sLng=+res[0].lon;lmap.setView([sLat,sLng],15);pin(sLat,sLng);revGeo(sLat,sLng);
     });
 }
-function getGPS() {
-  if (!navigator.geolocation) return;
+function getGPS(){
+  if(!navigator.geolocation)return;
   navigator.geolocation.getCurrentPosition(pos=>{
-    selLat=pos.coords.latitude; selLng=pos.coords.longitude;
-    leafMap.setView([selLat,selLng],15); pin(selLat,selLng); revGeo(selLat,selLng);
+    sLat=pos.coords.latitude;sLng=pos.coords.longitude;
+    lmap.setView([sLat,sLng],15);pin(sLat,sLng);revGeo(sLat,sLng);
     showToast('📍 Location detected!');
   },()=>{});
 }
-function confirmLoc() {
-  if (!selLat) { showToast('📍 Tap on the map to set location'); return; }
-  const short = selAddr.length>45 ? selAddr.substring(0,45)+'…' : selAddr;
-  document.getElementById('locLabel').textContent = short || `${selLat.toFixed(4)},${selLng.toFixed(4)}`;
-  closeMap(); showToast('✅ Location confirmed!');
+function confirmLoc(){
+  if(!sLat){showToast('📍 Tap on the map to set location');return;}
+  const short=sAddr.length>42?sAddr.substring(0,42)+'…':sAddr;
+  document.getElementById('locTxt').textContent=short||`${sLat.toFixed(4)},${sLng.toFixed(4)}`;
+  closeMap();showToast('✅ Location confirmed!');
 }
-document.getElementById('mapSrch').addEventListener('keydown', e => { if(e.key==='Enter') searchLoc(); });
+function goSearch(){
+  const svc=document.getElementById('hSvc').value;
+  if(!svc){showToast('⚠️ Please select a service first');return;}
+  location.href='user-booking.html';
+}
+document.getElementById('mapQ').addEventListener('keydown',e=>{if(e.key==='Enter')searchMap();});
 
 // ── AUTH
-function openAuth(tab) {
-  document.getElementById('authModal').classList.add('show');
-  switchAuth(tab||'login');
+function openAuth(tab){document.getElementById('authModal').classList.add('show');switchAuth(tab||'login');}
+function switchAuth(t){
+  const L=t==='login';
+  document.getElementById('authLP').style.display=L?'block':'none';
+  document.getElementById('authRP').style.display=L?'none':'block';
+  document.getElementById('atL').classList.toggle('on',L);
+  document.getElementById('atR').classList.toggle('on',!L);
 }
-function switchAuth(tab) {
-  const isL = tab==='login';
-  document.getElementById('authLoginP').style.display = isL?'block':'none';
-  document.getElementById('authRegP').style.display = isL?'none':'block';
-  document.getElementById('atLogin').classList.toggle('on',isL);
-  document.getElementById('atReg').classList.toggle('on',!isL);
-}
-function doLogin() {
-  const phone=document.getElementById('cu_phone').value.trim();
-  const name=document.getElementById('cu_name_login').value.trim();
-  if(!phone||phone.length!==10){showAuthErr('Enter a valid 10-digit mobile');return;}
-  if(!name){showAuthErr('Enter your registered name');return;}
-  const users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-  const found=users.find(u=>u.phone===phone&&u.name.toLowerCase()===name.toLowerCase());
-  if(!found){showAuthErr('Account not found. Please sign up.');return;}
-  localStorage.setItem('hs_current_customer',JSON.stringify(found));
-  document.getElementById('authModal').classList.remove('show');
-  updateWidget(); showToast('✅ Welcome back, '+found.name+'!');
-}
-function doRegister() {
-  const name=document.getElementById('cu_reg_name').value.trim();
-  const phone=document.getElementById('cu_reg_phone').value.trim();
-  const email=document.getElementById('cu_reg_email').value.trim();
-  const city=document.getElementById('cu_reg_city').value.trim();
-  if(!name){showToast('⚠️ Enter your name');return;}
-  if(!phone||phone.length!==10){showToast('⚠️ Enter valid 10-digit mobile');return;}
-  const users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-  if(users.find(u=>u.phone===phone)){showToast('⚠️ Mobile already registered. Log in.');switchAuth('login');return;}
-  const u={id:'HS-CU-'+Math.random().toString(36).substr(2,6).toUpperCase(),name,phone,email,city,registeredAt:new Date().toISOString()};
-  users.push(u); localStorage.setItem('hs_customers',JSON.stringify(users));
+function doLogin(){
+  const ph=document.getElementById('cu_phone').value.trim();
+  const nm=document.getElementById('cu_name').value.trim();
+  if(!ph||ph.length!==10){showErr('Enter valid 10-digit mobile');return;}
+  if(!nm){showErr('Enter your registered name');return;}
+  const u=JSON.parse(localStorage.getItem('hs_customers')||'[]').find(u=>u.phone===ph&&u.name.toLowerCase()===nm.toLowerCase());
+  if(!u){showErr('Account not found. Please sign up.');return;}
   localStorage.setItem('hs_current_customer',JSON.stringify(u));
   document.getElementById('authModal').classList.remove('show');
-  updateWidget(); showToast('🎉 Welcome, '+name+'!');
+  updateWidget();showToast('✅ Welcome back, '+u.name+'!');
 }
-function showAuthErr(msg){const e=document.getElementById('authErr');e.textContent=msg;e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+function doRegister(){
+  const nm=document.getElementById('rName').value.trim();
+  const ph=document.getElementById('rPhone').value.trim();
+  const em=document.getElementById('rEmail').value.trim();
+  const ct=document.getElementById('rCity').value.trim();
+  if(!nm){showToast('⚠️ Enter your name');return;}
+  if(!ph||ph.length!==10){showToast('⚠️ Enter valid 10-digit mobile');return;}
+  const users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+  if(users.find(u=>u.phone===ph)){showToast('⚠️ Mobile already registered — log in');switchAuth('login');return;}
+  const u={id:'HS-CU-'+Math.random().toString(36).substr(2,6).toUpperCase(),name:nm,phone:ph,email:em,city:ct,registeredAt:new Date().toISOString()};
+  users.push(u);localStorage.setItem('hs_customers',JSON.stringify(users));
+  localStorage.setItem('hs_current_customer',JSON.stringify(u));
+  document.getElementById('authModal').classList.remove('show');
+  updateWidget();showToast('🎉 Welcome to HamaraService, '+nm+'!');
+}
+function showErr(m){const e=document.getElementById('authErr');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
 function updateWidget(){
   const cu=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
-  document.getElementById('navLoginBtn').style.display=cu?'none':'';
-  document.getElementById('navSignBtn').style.display=cu?'none':'';
+  document.getElementById('navLogin').style.display=cu?'none':'';
   document.getElementById('userWidget').style.display=cu?'block':'none';
-  if(cu){document.getElementById('uName').textContent=cu.name.split(' ')[0];document.getElementById('uAvLetter').textContent=cu.name.charAt(0).toUpperCase();}
+  if(cu){document.getElementById('uName').textContent=cu.name.split(' ')[0];document.getElementById('uAv').textContent=cu.name.charAt(0).toUpperCase();}
 }
-function toggleDD(){document.getElementById('userDD').classList.toggle('open');}
-function logout(){localStorage.removeItem('hs_current_customer');document.getElementById('userDD').classList.remove('open');updateWidget();showToast('👋 Signed out');}
+function toggleDD(){document.getElementById('uDD').classList.toggle('open');}
+function logout(){localStorage.removeItem('hs_current_customer');document.getElementById('uDD').classList.remove('open');updateWidget();showToast('👋 Signed out');}
 function showProfile(){
   const cu=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
-  if(!cu)return;
-  alert('Name: '+cu.name+'\nMobile: '+cu.phone+'\nID: '+cu.id+'\nCity: '+(cu.city||'—'));
+  if(cu)alert('Name: '+cu.name+'\nMobile: '+cu.phone+'\nCity: '+(cu.city||'—')+'\nID: '+cu.id);
   toggleDD();
 }
 document.addEventListener('click',e=>{
-  const uw=document.getElementById('userWidget');
-  if(uw&&!uw.contains(e.target))document.getElementById('userDD').classList.remove('open');
+  const w=document.getElementById('userWidget');
+  if(w&&!w.contains(e.target))document.getElementById('uDD').classList.remove('open');
   if(e.target===document.getElementById('mapModal'))closeMap();
   if(e.target===document.getElementById('authModal'))document.getElementById('authModal').classList.remove('show');
 });
 updateWidget();
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);}
 </script>
 </body>
 </html>
