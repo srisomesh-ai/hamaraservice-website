@@ -439,9 +439,9 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   <div class="search-box">
     <div class="search-body" style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:14px;">
 
-      <!-- Keyword search with live dropdown -->
-      <div class="sfield" style="position:relative;">
-        <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">What service do you need?</label>
+      <!-- Live keyword search only — no location/date on homepage -->
+      <div style="position:relative;">
+        <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:8px;">What service do you need?</label>
         <div style="position:relative;">
           <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           <input type="text" id="heroSearchInput"
@@ -449,24 +449,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
             oninput="liveSearchFn(this.value)"
             onkeydown="if(event.key==='Enter')pickFirstResult()"
             autocomplete="off"
-            style="width:100%;padding:13px 16px 13px 44px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .2s;"/>
+            style="width:100%;padding:14px 16px 14px 44px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;border:2px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .2s;"/>
         </div>
-        <div id="srchDrop" style="display:none;position:absolute;left:0;right:0;background:white;border:1.5px solid var(--line);border-top:none;border-radius:0 0 var(--r) var(--r);box-shadow:var(--sh2);z-index:200;max-height:240px;overflow-y:auto;"></div>
-      </div>
-
-      <!-- Location -->
-      <div class="sfield">
-        <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">Your Location</label>
-        <button class="loc-btn" onclick="openMapModal()">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          <span id="locationLabel">Set your location</span>
-        </button>
-      </div>
-
-      <!-- Date -->
-      <div class="sfield">
-        <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">Preferred Date</label>
-        <input type="date" id="heroDate" style="width:100%;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;-webkit-appearance:none;"/>
+        <!-- Dropdown -->
+        <div id="srchDrop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:white;border:2px solid var(--brand);border-radius:var(--r);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:9999;max-height:280px;overflow-y:auto;"></div>
       </div>
 
       <button class="search-cta" onclick="heroSearch()">Find Professionals Near You →</button>
@@ -841,52 +827,59 @@ function setTab(btn){
 
 // ── LIVE SEARCH ──────────────────────────────
 const ALL_SERVICES = [
-  {name:'House Maid',emoji:'🧹',price:'₹150/hr'},
-  {name:'Deep Cleaning',emoji:'🫧',price:'₹1,499'},
-  {name:'Bathroom Cleaning',emoji:'🚿',price:'₹399'},
-  {name:'Kitchen Cleaning',emoji:'🍳',price:'₹699'},
-  {name:'AC Cleaning',emoji:'❄️',price:'₹599'},
-  {name:'AC Repair',emoji:'🔩',price:'₹599'},
-  {name:'Plumber Visit',emoji:'🔧',price:'₹399'},
-  {name:'Electrician Visit',emoji:'⚡',price:'₹399'},
-  {name:'Carpenter Visit',emoji:'🪚',price:'₹349'},
-  {name:'Pest Control',emoji:'🐛',price:'₹799'},
-  {name:'Room Painting',emoji:'🎨',price:'₹1,499'},
-  {name:'Washing Machine Repair',emoji:'🫙',price:'₹549'},
-  {name:'Car Wash',emoji:'🚗',price:'₹499'},
-  {name:'Bike Wash',emoji:'🏍️',price:'₹199'},
-  {name:'Doctor Visit',emoji:'👨‍⚕️',price:'₹699'},
-  {name:'Lab Test Collection',emoji:'🧪',price:'₹199'},
-  {name:'Nurse Visit',emoji:'💉',price:'₹399'},
-  {name:'Haircut (Men)',emoji:'✂️',price:'₹199'},
-  {name:'Haircut (Women)',emoji:'💇',price:'₹349'},
-  {name:'Full Body Massage',emoji:'💆',price:'₹999'},
-  {name:'Day Care Helper',emoji:'🧒',price:'₹200/hr'},
-  {name:'Elder Care Attendant',emoji:'👴',price:'₹499'},
-  {name:'Cooking Person (Per Meal)',emoji:'🍱',price:'₹299'},
-  {name:'Full-Day Cook',emoji:'👨‍🍳',price:'₹799'},
-  {name:'Gardener',emoji:'🌱',price:'₹499'},
+  {name:'House Maid',          emoji:'🧹', price:'₹150/hr', keywords:['maid','clean','sweep','house']},
+  {name:'Deep Cleaning',       emoji:'🫧', price:'₹1,499',  keywords:['deep','full','thorough','clean']},
+  {name:'Bathroom Cleaning',   emoji:'🚿', price:'₹399',    keywords:['bathroom','toilet','washroom','bath']},
+  {name:'Kitchen Cleaning',    emoji:'🍳', price:'₹699',    keywords:['kitchen','cook','clean']},
+  {name:'AC Cleaning',         emoji:'❄️', price:'₹599',    keywords:['ac','air','condition','cool','filter']},
+  {name:'AC Repair',           emoji:'🔩', price:'₹599',    keywords:['ac','air','repair','fix','not cooling']},
+  {name:'Plumber Visit',       emoji:'🔧', price:'₹399',    keywords:['plumb','pipe','leak','water','tap','drain']},
+  {name:'Electrician Visit',   emoji:'⚡', price:'₹399',    keywords:['electric','wire','switch','light','fan','power']},
+  {name:'Carpenter Visit',     emoji:'🪚', price:'₹349',    keywords:['carpenter','wood','furniture','door','window']},
+  {name:'Washing Machine Repair',emoji:'🫙',price:'₹549',   keywords:['washing','machine','washer','repair']},
+  {name:'Car Wash',            emoji:'🚗', price:'₹499',    keywords:['car','wash','vehicle','auto']},
+  {name:'Bike Wash',           emoji:'🏍️',price:'₹199',    keywords:['bike','motorcycle','two wheeler','wash']},
+  {name:'Doctor Visit',        emoji:'👨‍⚕️',price:'₹699',   keywords:['doctor','physician','medical','health','ill','sick','fever']},
+  {name:'Lab Test Collection', emoji:'🧪', price:'₹199',    keywords:['lab','test','blood','sample','report']},
+  {name:'Nurse Visit',         emoji:'💉', price:'₹399',    keywords:['nurse','injection','dressing','care']},
+  {name:'Haircut (Men)',        emoji:'✂️', price:'₹199',    keywords:['haircut','hair','cut','men','shave','barber']},
+  {name:'Haircut (Women)',      emoji:'💇', price:'₹349',    keywords:['haircut','hair','cut','women','ladies','salon']},
+  {name:'Full Body Massage',   emoji:'💆', price:'₹999',    keywords:['massage','body','spa','relax','pain']},
+  {name:'Day Care Helper',     emoji:'🧒', price:'₹200/hr', keywords:['baby','child','kid','day care','nanny']},
+  {name:'Elder Care Attendant',emoji:'👴', price:'₹499',    keywords:['elder','old','senior','care','attend']},
+  {name:'Cooking Person (Per Meal)',emoji:'🍱',price:'₹299', keywords:['cook','food','meal','lunch','dinner','chef']},
+  {name:'Full-Day Cook',       emoji:'👨‍🍳',price:'₹799',   keywords:['cook','full day','daily','chef']},
+  {name:'Gardener',            emoji:'🌱', price:'₹499',    keywords:['garden','plant','grass','lawn','trim']},
+  {name:'Pest Control',        emoji:'🐛', price:'₹799',    keywords:['pest','cockroach','rat','bug','insect']},
+  {name:'Room Painting',       emoji:'🎨', price:'₹1,499',  keywords:['paint','wall','colour','color','room']},
 ];
 let selectedServiceName = '';
 
 function liveSearchFn(q) {
-  const dd = document.getElementById('searchDropdown');
-  if (!q || q.length < 1) { dd.style.display = 'none'; return; }
-  const results = ALL_SERVICES.filter(s =>
-    s.name.toLowerCase().includes(q.toLowerCase())
-  );
-  if (!results.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = results.map(s => `
-    <div onclick="pickService('${s.name}')"
-      style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .15s;"
-      onmouseover="this.style.background='var(--brand-soft)'" onmouseout="this.style.background=''">
-      <span style="font-size:22px;">${s.emoji}</span>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--ink);">${s.name}</div>
-        <div style="font-size:12px;font-weight:600;color:var(--green);">${s.price}</div>
-      </div>
-      <div style="margin-left:auto;font-size:12px;font-weight:700;color:var(--brand);">Book →</div>
-    </div>`).join('');
+  var dd = document.getElementById('srchDrop');
+  if(!dd) return;
+  if(!q || !q.trim()) { dd.style.display='none'; return; }
+  var lq = q.toLowerCase().trim();
+  var results = ALL_SERVICES.filter(function(s) {
+    if(s.name.toLowerCase().includes(lq)) return true;
+    if(s.keywords && s.keywords.some(function(k){ return k.includes(lq); })) return true;
+    return false;
+  });
+  if(!results.length) {
+    dd.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--muted);font-weight:500;">No services found — try: cleaning, plumber, doctor…</div>';
+    dd.style.display = 'block';
+    return;
+  }
+  dd.innerHTML = results.map(function(s) {
+    return '<div onclick="pickService(''+s.name+'')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fff1f0'" onmouseout="this.style.background=''">'+
+      '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
+      '<div style="flex:1;">'+
+        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
+        '<div style="font-size:12px;font-weight:600;color:#00956a;">'+s.price+'</div>'+
+      '</div>'+
+      '<span style="font-size:13px;font-weight:800;color:#E8251A;flex-shrink:0;">Book →</span>'+
+    '</div>';
+  }).join('');
   dd.style.display = 'block';
 }
 
@@ -898,15 +891,17 @@ function pickService(name) {
 }
 
 function pickFirstResult() {
-  const first = document.getElementById('searchDropdown').querySelector('div');
-  if (first) first.click();
+  var dd = document.getElementById('srchDrop');
+  if(!dd) return;
+  var first = dd.querySelector('div');
+  if(first) first.click();
 }
 
 // Close dropdown on outside click
-document.addEventListener('click', e => {
-  const inp = document.getElementById('heroSearch');
-  const dd = document.getElementById('searchDropdown');
-  if (inp && dd && !inp.contains(e.target) && !dd.contains(e.target)) {
+document.addEventListener('click', function(e) {
+  var inp = document.getElementById('heroSearchInput');
+  var dd = document.getElementById('srchDrop');
+  if(inp && dd && !inp.contains(e.target) && !dd.contains(e.target)) {
     dd.style.display = 'none';
   }
 });
@@ -919,16 +914,15 @@ heroDate.min = new Date().toISOString().split('T')[0];
 
 // ── HERO SEARCH
 function heroSearch(){
-  // Read from new text input OR old dropdown — whichever exists
-  const newInp = document.getElementById('heroSearchInput');
-  const oldSel = document.getElementById('heroService');
-  const textVal = newInp ? newInp.value.trim() : '';
-  const dropVal = oldSel ? oldSel.value.trim() : '';
-  const svc = selectedServiceName || textVal || dropVal;
-  if(!svc){showToast('⚠️ Please select a service first');return;}
-  const loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
-  const addr = encodeURIComponent(selectedAddress||'');
-  window.location.href='user-booking.html?service='+encodeURIComponent(svc)+'&loc='+loc+'&addr='+addr;
+  var inp = document.getElementById('heroSearchInput');
+  var svc = selectedServiceName || (inp ? inp.value.trim() : '');
+  if(!svc){
+    // Shake the input
+    if(inp){inp.style.border='2px solid var(--brand)';inp.focus();setTimeout(function(){inp.style.border='2px solid var(--line)';},2000);}
+    showToast('⚠️ Type or select a service first');
+    return;
+  }
+  window.location.href='user-booking.html?service='+encodeURIComponent(svc);
 }
 function selectService(name){
   selectedServiceName = name;
