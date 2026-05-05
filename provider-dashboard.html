@@ -911,8 +911,8 @@ function initDashboard() {
   loadRatings();
   loadNotifications();
 
-  // Trigger incoming alert after 8s for demo
-  setTimeout(() => triggerIncomingAlert(), 8000);
+  // ── REAL Firebase polling for new bookings ──────────────────
+  startBookingPoller();
 }
 
 function seedDemoData() {
@@ -1688,16 +1688,147 @@ function triggerIncomingAlert() {
   },1000);
 }
 
+// ════════════════════════════════════════════════════════════
+// REAL BOOKING POLLER — checks Firebase every 5 seconds
+// ════════════════════════════════════════════════════════════
+var bookingPoller = null;
+var seenBookingIds = {}; // prevent showing same booking twice
+
+function startBookingPoller() {
+  if (bookingPoller) clearInterval(bookingPoller);
+  // Poll immediately, then every 5 seconds
+  checkForNewBookings();
+  bookingPoller = setInterval(checkForNewBookings, 5000);
+}
+
+async function checkForNewBookings() {
+  try {
+    // Read all active bookings from Firebase
+    var data = await fbRead('active_bookings');
+    if (!data) return;
+
+    var provLat = P.lat || 17.3850;
+    var provLng = P.lng || 78.4867;
+    var provServices = (P.services || []).map(function(s){ return (s.name||'').toLowerCase(); });
+    var provRadius = P.radius || 10; // km
+
+    // Check each booking
+    var keys = Object.keys(data);
+    for (var i = 0; i < keys.length; i++) {
+      var bk = data[keys[i]];
+      if (!bk || !bk.id) continue;
+      if (seenBookingIds[bk.id]) continue; // already seen
+      if (bk.acceptedBy) continue;          // already accepted by someone
+      if (bk.status !== 'searching') continue;
+
+      // Check distance
+      var custLat = bk.lat, custLng = bk.lng;
+      if (!custLat || !custLng) continue;
+      var dist = haversineKm(provLat, provLng, custLat, custLng);
+      if (dist > provRadius) continue;
+
+      // Check service match (if provider has services registered)
+      if (provServices.length > 0) {
+        var reqSvc = (bk.service || '').toLowerCase();
+        var matches = provServices.some(function(s){ return reqSvc.includes(s) || s.includes(reqSvc.split(' ')[0]); });
+        if (!matches) continue;
+      }
+
+      // ✅ Found a matching booking — show alert
+      seenBookingIds[bk.id] = true;
+      showRealBookingAlert(bk, dist);
+      break; // show one at a time
+    }
+  } catch(e) {
+    console.log('Booking poll error:', e.message);
+  }
+}
+
+function showRealBookingAlert(bk, dist) {
+  // Set as pending booking
+  pendingBooking = {
+    id:          bk.id,
+    customer:    bk.customer || 'Customer',
+    phone:       bk.phone || '',
+    service:     bk.service || '',
+    date:        bk.date || '',
+    time:        bk.time || '',
+    amount:      bk.priceVal || 0,
+    status:      'pending',
+    customerLat: bk.lat,
+    customerLng: bk.lng,
+    address:     bk.address || '',
+    fromFirebase: true,
+    fbKey:       bk.id,
+  };
+
+  var distStr = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+' km';
+
+  document.getElementById('alertDetail').innerHTML =
+    '<strong>Customer:</strong> '+bk.customer+'<br/>'+
+    '<strong>Service:</strong> '+bk.service+'<br/>'+
+    '<strong>Distance:</strong> '+distStr+' away<br/>'+
+    '<strong>Address:</strong> '+(bk.address||'—')+'<br/>'+
+    '<strong>Date:</strong> '+bk.date+' at '+bk.time+'<br/>'+
+    '<strong>Amount:</strong> ₹'+(bk.priceVal||bk.price||'—');
+
+  var sec = 60;
+  document.getElementById('alertTimer').textContent = sec;
+  document.getElementById('incomingAlert').style.display = 'block';
+  clearInterval(alertCountdown);
+
+  // Play notification sound if available
+  try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA==').play(); } catch(e){}
+
+  alertCountdown = setInterval(function(){
+    sec--;
+    document.getElementById('alertTimer').textContent = sec;
+    if (sec <= 0) {
+      clearInterval(alertCountdown);
+      document.getElementById('incomingAlert').style.display = 'none';
+      // Mark as expired in Firebase so next provider can get it
+      if (pendingBooking && pendingBooking.fromFirebase) {
+        seenBookingIds[pendingBooking.id] = false; // allow retry
+      }
+      pendingBooking = null;
+      showToast('⏰ Booking request expired');
+    }
+  }, 1000);
+}
+
 function acceptNewBooking() {
   clearInterval(alertCountdown);
   document.getElementById('incomingAlert').style.display = 'none';
   if (!pendingBooking) return;
-  const bk = getBK();
+
+  // Save to local dashboard
+  var bk = getBK();
   bk.unshift(pendingBooking);
   saveBK(bk);
+
+  // ── WRITE acceptance to Firebase so customer sees it ──────
+  var providerInfo = {
+    id:         P.id,
+    name:       P.name,
+    phone:      P.phone || '',
+    rating:     P.rating || 4.8,
+    totalJobs:  P.totalJobs || 0,
+    lat:        P.lat || null,
+    lng:        P.lng || null,
+    acceptedAt: new Date().toISOString(),
+  };
+
+  // Update active_booking so customer's radar stops
+  if (pendingBooking.fromFirebase && pendingBooking.fbKey) {
+    fbWrite('active_bookings/' + pendingBooking.fbKey + '/acceptedBy', providerInfo);
+    fbWrite('active_bookings/' + pendingBooking.fbKey + '/status', 'accepted');
+    // Also delete from notifications so other providers stop seeing it
+    fbDelete('notifications/search_' + pendingBooking.fbKey);
+  }
+
   syncProviderStats();
   loadOverview(); loadAllBookings(); loadNotifications();
-  showToast('✅ Booking accepted! ' + pendingBooking.customer + ' notified.');
+  showToast('✅ Booking accepted! Notifying customer…');
   pendingBooking = null;
 }
 
@@ -1806,6 +1937,7 @@ function mkDestIcon(emoji){return L.divIcon({html:'<div style="position:relative
 
 // ── MATH ────────────────────────────────────────────────────────
 function calcDist(a,b,c,d){var R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,e=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)*Math.sin(dN/2);return R*2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e));}
+function haversineKm(a,b,c,d){return calcDist(a,b,c,d);}
 function fmtD(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';}
 function fmtT(km){var m=Math.max(1,Math.round(km*3.5));return m<60?m+' min':(Math.floor(m/60)+'h '+(m%60)+'m');}
 
@@ -1846,7 +1978,7 @@ async function fbWrite(path, data) {
 }
 
 async function fbRead(path) {
-  // 1. Try Firebase (cross-device) — try both URL formats
+  // 1. Try Firebase (cross-device)
   if (FB_ENABLED) {
     var urls = [FB_URL, FB_URL_ALT];
     for (var i=0; i<urls.length; i++) {
@@ -1854,16 +1986,24 @@ async function fbRead(path) {
         var r = await fetch(urls[i] + '/' + path + '.json', {signal:AbortSignal.timeout(5000)});
         if (r.ok) {
           var d = await r.json();
-          if (d && d.lat) { console.log('Firebase read OK via', urls[i]); return d; }
+          // For booking data, return even if no .lat field
+          if (d !== null && d !== undefined) return d;
         }
       } catch(e) { console.warn('Firebase read failed for', urls[i]); }
     }
   }
-  // 2. Fallback: localStorage (same device / same browser)
+  // 2. Fallback: localStorage
   try {
     var raw = localStorage.getItem('hs_track_' + path.replace(/\//g,'_'));
     return raw ? JSON.parse(raw) : null;
   } catch(e) { return null; }
+}
+
+async function fbDelete(path) {
+  if (!FB_ENABLED) return;
+  try {
+    await fetch(FB_URL + '/' + path + '.json', {method:'DELETE', signal:AbortSignal.timeout(5000)});
+  } catch(e) { console.warn('FB delete failed:', e.message); }
 }
 
 // Listen for BroadcastChannel messages (cross-tab same device)
