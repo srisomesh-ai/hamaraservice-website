@@ -329,22 +329,50 @@ tr:hover td{background:#fafafa;}
 
   <!-- PAYMENTS -->
   <div class="page" id="page-payments">
-    <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr));">
-      <div class="stat-card green"><div class="stat-icon">&#128176;</div><div class="stat-num" id="py-gmv">&#8377;0</div><div class="stat-label">Total GMV</div></div>
-      <div class="stat-card purple"><div class="stat-icon">&#128185;</div><div class="stat-num" id="py-comm">&#8377;0</div><div class="stat-label">Commission</div></div>
-      <div class="stat-card blue"><div class="stat-icon">&#128184;</div><div class="stat-num" id="py-paid">&#8377;0</div><div class="stat-label">Paid Out</div></div>
-      <div class="stat-card yellow"><div class="stat-icon">&#8987;</div><div class="stat-num" id="py-pend">&#8377;0</div><div class="stat-label">Pending Payout</div></div>
+    <div style="background:linear-gradient(135deg,#0f1117,#1a1f2e);border-radius:14px;padding:16px 22px;margin-bottom:18px;color:white;">
+      <div style="font-family:Baloo 2,sans-serif;font-size:14px;font-weight:800;margin-bottom:8px;">&#128179; Payment Flow</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;font-weight:700;">
+        <span style="background:rgba(255,255,255,.1);padding:5px 10px;border-radius:7px;">Customer Pays Full Amount</span>
+        <span style="opacity:.4">&#8594;</span>
+        <span style="background:rgba(232,37,26,.35);padding:5px 10px;border-radius:7px;">Platform Deducts Commission</span>
+        <span style="opacity:.4">&#8594;</span>
+        <span style="background:rgba(30,168,75,.35);padding:5px 10px;border-radius:7px;">Net Credited to Provider Wallet</span>
+        <span style="opacity:.4">&#8594;</span>
+        <span style="background:rgba(27,79,255,.35);padding:5px 10px;border-radius:7px;">Provider Requests Withdrawal</span>
+        <span style="opacity:.4">&#8594;</span>
+        <span style="background:rgba(124,58,237,.35);padding:5px 10px;border-radius:7px;">Admin Approves Here &#128071;</span>
+        <span style="opacity:.4">&#8594;</span>
+        <span style="background:rgba(30,168,75,.35);padding:5px 10px;border-radius:7px;">Bank Transfer Done</span>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:20px;">
+      <div class="stat-card green"><div class="stat-icon">&#128176;</div><div class="stat-num" id="py-gmv">&#8377;0</div><div class="stat-label">Total GMV</div><div class="stat-sub">All customer payments</div></div>
+      <div class="stat-card red"><div class="stat-icon">&#9986;</div><div class="stat-num" id="py-comm">&#8377;0</div><div class="stat-label">Platform Commission</div><div class="stat-sub">Our revenue</div></div>
+      <div class="stat-card purple"><div class="stat-icon">&#128188;</div><div class="stat-num" id="py-provider-total">&#8377;0</div><div class="stat-label">Provider Wallets Total</div><div class="stat-sub">GMV minus commission</div></div>
+      <div class="stat-card blue"><div class="stat-icon">&#9989;</div><div class="stat-num" id="py-paid">&#8377;0</div><div class="stat-label">Paid Out</div><div class="stat-sub">Approved & transferred</div></div>
+      <div class="stat-card yellow"><div class="stat-icon">&#8987;</div><div class="stat-num" id="py-pend">&#8377;0</div><div class="stat-label">Pending Payouts</div><div class="stat-sub">Needs your approval</div></div>
+      <div class="stat-card teal"><div class="stat-icon">&#127974;</div><div class="stat-num" id="py-balance">&#8377;0</div><div class="stat-label">Platform Balance</div><div class="stat-sub">Total commission earned</div></div>
     </div>
     <div class="sec-header">
-      <div class="sec-title">Payout Requests</div>
-      <div class="filters"><button class="fbtn on" id="payf-pending">Pending</button><button class="fbtn" id="payf-all">All</button></div>
+      <div class="sec-title">&#128184; Withdrawal Requests <span id="pendingWdCount" style="background:var(--red);color:white;font-size:11px;padding:2px 8px;border-radius:18px;margin-left:8px;font-weight:900;">0</span></div>
+      <div class="filters">
+        <button class="fbtn on" id="payf-pending">&#8987; Pending</button>
+        <button class="fbtn" id="payf-approved">&#9989; Approved</button>
+        <button class="fbtn" id="payf-all">All</button>
+      </div>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>Provider</th><th>Amount</th><th>Account</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead><tbody id="payoutsBody"></tbody></table></div>
-    <div class="sec-title" style="margin-bottom:12px;">Commission Ledger</div>
-    <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Provider</th><th>Service</th><th>Order Amt</th><th>Comm %</th><th>Comm Amt</th><th>Date</th></tr></thead><tbody id="ledgerBody"></tbody></table></div>
+    <div class="info-box info-yellow">&#9888; Once approved, amount is marked paid. You must manually transfer to the provider account shown.</div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Request ID</th><th>Provider</th><th>Amount</th><th>Method</th><th>Account / UPI</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="payoutsBody"></tbody></table>
+    </div>
+    <div class="sec-title" style="margin:8px 0 12px;">&#128202; Commission Ledger — Every Booking</div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Order ID</th><th>Provider</th><th>Service</th><th>Customer Paid</th><th>Comm%</th><th>Platform Gets</th><th>Provider Gets</th><th>Date</th></tr></thead>
+      <tbody id="ledgerBody"></tbody></table>
+    </div>
   </div>
 
-  <!-- PENALTIES -->
   <div class="page" id="page-penalties">
     <div class="info-box info-red">Penalties are deducted from the provider next payout. Repeated violations may lead to suspension.</div>
     <div class="sec-header">
@@ -880,31 +908,54 @@ function loadPayments(filter){
   if(filter)payFilterState=filter;
   var orders=getAllOrders();
   var completed=orders.filter(function(o){return o.status==="completed";});
-  var providers=getProviders();
   var gmv=completed.reduce(function(s,o){return s+o.amount;},0);
   var comm=completed.reduce(function(s,o){return s+o.commissionAmt;},0);
-  var totalWithdrawn=providers.reduce(function(s,p){return s+(p.withdrawnEarned||0);},0);
-  var pendPayout=Math.max(gmv-comm-totalWithdrawn,0);
+  var provTotal=gmv-comm;
+  var payouts=getPayouts();
+  var approvedP=payouts.filter(function(p){return p.status==="approved";});
+  var pendingP=payouts.filter(function(p){return p.status==="pending";});
+  var totalPaid=approvedP.reduce(function(s,p){return s+p.amount;},0);
+  var totalPend=pendingP.reduce(function(s,p){return s+p.amount;},0);
   document.getElementById("py-gmv").textContent="Rs "+fmt(gmv);
   document.getElementById("py-comm").textContent="Rs "+fmt(comm);
-  document.getElementById("py-paid").textContent="Rs "+fmt(totalWithdrawn);
-  document.getElementById("py-pend").textContent="Rs "+fmt(pendPayout);
-
-  var payouts=getPayouts();
-  if(payFilterState==="pending") payouts=payouts.filter(function(p){return p.status==="pending";});
-  document.getElementById("payoutsBody").innerHTML=payouts.map(function(p){
-    var actions=p.status==="pending"?"<button class=\"abtn approve\" onclick=\"approvePayout('"+p.id+"')\" >Pay</button> <button class=\"abtn reject\" onclick=\"rejectPayout('"+p.id+"')\" >Reject</button>":"--";
-    return "<tr><td><strong>"+p.providerName+"</strong><br/><small style=\"color:var(--muted)\">"+p.providerId+"</small></td><td style=\"color:var(--green);font-weight:800\">Rs "+fmt(p.amount)+"</td><td style=\"font-size:12px\">"+(p.account||"--")+"</td><td style=\"font-size:12px\">"+new Date(p.date).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+(p.status||"pending")+"\">"+cap(p.status||"pending")+"</span></td><td>"+actions+"</td></tr>";
-  }).join("")||"<tr><td colspan=\"6\" style=\"text-align:center;color:var(--muted);padding:20px\">No payout requests</td></tr>";
-
-  document.getElementById("ledgerBody").innerHTML=completed.slice(0,20).map(function(o){
-    return "<tr><td><strong>"+o.id+"</strong></td><td>"+o.providerName+"</td><td>"+o.service+"</td><td>Rs "+o.amount+"</td><td><strong>"+o.commissionPct+"%</strong></td><td style=\"color:var(--purple);font-weight:800\">Rs "+o.commissionAmt+"</td><td>"+o.date+"</td></tr>";
-  }).join("")||"<tr><td colspan=\"7\" style=\"text-align:center;color:var(--muted);padding:20px\">No completed orders</td></tr>";
+  document.getElementById("py-provider-total")&&(document.getElementById("py-provider-total").textContent="Rs "+fmt(provTotal));
+  document.getElementById("py-paid").textContent="Rs "+fmt(totalPaid);
+  document.getElementById("py-pend").textContent="Rs "+fmt(totalPend);
+  document.getElementById("py-balance")&&(document.getElementById("py-balance").textContent="Rs "+fmt(comm));
+  document.getElementById("pendingWdCount")&&(document.getElementById("pendingWdCount").textContent=pendingP.length);
+  var disp=payFilterState==="pending"?pendingP:payFilterState==="approved"?approvedP:payouts;
+  disp=[].concat(disp).sort(function(a,b){return new Date(b.requestedAt||0)-new Date(a.requestedAt||0);});
+  document.getElementById("payoutsBody").innerHTML=disp.map(function(p){
+    var actions=p.status==="pending"
+      ? "<button class=\"abtn approve\" onclick=\"approvePayout('"+p.id+"')\" >Approve &amp; Pay</button> <button class=\"abtn reject\" onclick=\"rejectPayout('"+p.id+"')\" >Reject</button>"
+      : p.status==="approved"
+      ? "<span style=\"color:var(--green);font-size:12px;font-weight:800\">Paid on "+( p.processedAt?new Date(p.processedAt).toLocaleDateString("en-IN"):"")+"</span>"
+      : "<span style=\"color:var(--red);font-size:12px;font-weight:800\">Rejected</span>";
+    return "<tr><td><strong style=\"font-size:12px\">"+p.id+"</strong></td><td><strong>"+(p.providerName||"")+"</strong><br/><small style=\"color:var(--muted)\">"+(p.providerId||"")+"</small></td><td style=\"font-size:15px;font-weight:900;color:var(--green)\">Rs "+fmt(p.amount)+"</td><td><span class=\"badge review\">"+(p.accountType||"UPI")+"</span></td><td style=\"font-size:12px;font-family:monospace\">"+(p.account||"--")+"</td><td style=\"font-size:12px\">"+new Date(p.requestedAt||Date.now()).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+(p.status==="approved"?"approved":p.status==="rejected"?"rejected":"pending")+"\">"+(p.status==="approved"?"Paid":p.status==="rejected"?"Rejected":"Pending")+"</span></td><td>"+actions+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"8\" style=\"text-align:center;color:var(--muted);padding:24px\">No withdrawal requests yet</td></tr>";
+  document.getElementById("ledgerBody").innerHTML=completed.slice(0,30).map(function(o){
+    return "<tr><td><strong>"+o.id+"</strong></td><td>"+o.providerName+"</td><td>"+o.service+"</td><td><strong>Rs "+o.amount+"</strong></td><td style=\"color:var(--red);font-weight:800\">"+o.commissionPct+"%</td><td style=\"color:var(--red);font-weight:900\">Rs "+o.commissionAmt+"</td><td style=\"color:var(--green);font-weight:900\">Rs "+(o.amount-o.commissionAmt)+"</td><td>"+o.date+"</td></tr>";
+  }).join("")||"<tr><td colspan=\"8\" style=\"text-align:center;color:var(--muted);padding:20px\">No completed orders</td></tr>";
 }
-document.getElementById("payf-pending").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadPayments("pending");});
-document.getElementById("payf-all").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadPayments("all");});
-function approvePayout(id){var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});if(idx>-1){p[idx].status="approved";savePayouts(p);}loadPayments();showToast("Payout approved!");}
-function rejectPayout(id){var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});if(idx>-1){p[idx].status="rejected";savePayouts(p);}loadPayments();showToast("Payout rejected");}
+document.getElementById("payf-pending").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");payFilterState="pending";loadPayments("pending");});
+document.getElementById("payf-approved")&&document.getElementById("payf-approved").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");payFilterState="approved";loadPayments("approved");});
+document.getElementById("payf-all").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");payFilterState="all";loadPayments("all");});
+function approvePayout(id){
+  var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});
+  if(idx>-1){
+    p[idx].status="approved";p[idx].processedAt=new Date().toISOString();savePayouts(p);
+    var providers=getProviders();var pidx=providers.findIndex(function(pr){return pr.id===p[idx].providerId;});
+    if(pidx>-1){providers[pidx].withdrawnEarned=(providers[pidx].withdrawnEarned||0)+p[idx].amount;saveProviders(providers);}
+    loadPayments();refreshAll();
+    showToast("Rs "+p[idx].amount+" approved! Transfer to: "+p[idx].account+" ("+p[idx].accountType+")");
+  }
+}
+function rejectPayout(id){
+  var reason=prompt("Reason for rejection (optional):")||"";
+  var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});
+  if(idx>-1){p[idx].status="rejected";p[idx].rejectedAt=new Date().toISOString();p[idx].note=reason;savePayouts(p);}
+  loadPayments();showToast("Payout rejected. Provider wallet balance restored.");
+}
 
 // ====== PENALTIES ======
 function loadPenalties(){

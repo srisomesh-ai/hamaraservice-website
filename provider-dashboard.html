@@ -309,21 +309,87 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 
   <!-- EARNINGS PAGE -->
   <div class="page" id="page-earnings">
+
+    <!-- Payment flow info banner -->
+    <div style="background:linear-gradient(135deg,#1a1f2e,#0f1117);border-radius:14px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div style="font-size:32px">💳</div>
+      <div style="flex:1">
+        <div style="font-family:'Baloo 2',sans-serif;font-size:16px;font-weight:800;color:white;margin-bottom:4px;">How payments work</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;font-weight:600;">
+          Customer pays full amount → Platform deducts commission → Your net earnings credited to wallet → You request withdrawal → Admin approves → Money in your bank within 24 hrs
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 stat cards -->
     <div class="earn-grid">
-      <div class="earn-card total"><div class="earn-amount" id="e-total">₹0</div><div class="earn-label">Total Earned</div></div>
-      <div class="earn-card today"><div class="earn-amount" id="e-today">₹0</div><div class="earn-label">Earned Today</div></div>
-      <div class="earn-card pending"><div class="earn-amount" id="e-pending">₹0</div><div class="earn-label">Pending Payout</div></div>
-      <div class="earn-card withdrawn"><div class="earn-amount" id="e-withdrawn">₹0</div><div class="earn-label">Total Withdrawn</div></div>
+      <div class="earn-card total">
+        <div class="earn-amount" id="e-gross">₹0</div>
+        <div class="earn-label">Gross Collected</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;">Total customer payments</div>
+      </div>
+      <div class="earn-card" style="border-top:4px solid var(--red);">
+        <div class="earn-amount" style="color:var(--red)" id="e-commission">₹0</div>
+        <div class="earn-label">Platform Commission</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;">Deducted automatically</div>
+      </div>
+      <div class="earn-card total">
+        <div class="earn-amount" id="e-net">₹0</div>
+        <div class="earn-label">Net Earnings (Wallet)</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;">Gross minus commission</div>
+      </div>
+      <div class="earn-card withdrawn">
+        <div class="earn-amount" id="e-withdrawn">₹0</div>
+        <div class="earn-label">Total Withdrawn</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;">Paid to your bank</div>
+      </div>
+      <div class="earn-card pending">
+        <div class="earn-amount" id="e-available">₹0</div>
+        <div class="earn-label">Available to Withdraw</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;">Ready for payout</div>
+      </div>
     </div>
-    <div class="withdraw-card">
-      <div><div style="font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800;">💳 Withdraw Earnings</div><div style="font-size:13px;opacity:.9;font-weight:600;margin-top:3px;">Available: <strong id="withdrawAmt">₹0</strong> · Credited in 24 hrs</div></div>
-      <button class="wbtn" onclick="showWithdrawModal()">💸 Withdraw Now</button>
+
+    <!-- Withdraw request card -->
+    <div id="withdrawBanner" style="background:linear-gradient(135deg,var(--green),#34d058);border-radius:14px;padding:20px 24px;color:white;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;">
+      <div>
+        <div style="font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:800;">💸 Request Withdrawal</div>
+        <div style="font-size:13px;opacity:.85;font-weight:600;margin-top:3px;">Available: <strong id="withdrawAvail">₹0</strong> · Credited to bank in 24 hrs after admin approval</div>
+      </div>
+      <button onclick="showWithdrawModal()" style="padding:13px 24px;background:white;color:var(--green);border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;transition:all .2s;">💸 Withdraw Now</button>
     </div>
-    <div class="sec-title">📅 Payment History</div>
-    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Booking ID</th><th>Service</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody id="earnBody"></tbody></table></div>
+
+    <!-- Pending withdraw requests -->
+    <div id="pendingWithdrawSection" style="display:none;margin-bottom:22px;">
+      <div class="sec-title" style="margin-bottom:12px;">⏳ Pending Withdrawal Requests</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Request ID</th><th>Amount</th><th>To Account</th><th>Requested</th><th>Status</th></tr></thead>
+        <tbody id="pendingWithdrawBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Commission breakdown per booking -->
+    <div class="sec-title" style="margin-bottom:12px;">📊 Payment Breakdown (Per Booking)</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Booking ID</th><th>Service</th><th>Date</th>
+          <th>Customer Paid</th><th>Commission</th><th>Your Earnings</th><th>Status</th>
+        </tr></thead>
+        <tbody id="earnBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Withdrawal history -->
+    <div class="sec-title" style="margin-bottom:12px;">🏦 Withdrawal History</div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Request ID</th><th>Amount</th><th>To Account</th><th>Requested</th><th>Processed</th><th>Status</th></tr></thead>
+      <tbody id="withdrawHistoryBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- PROFILE PAGE -->
+<!-- PROFILE PAGE -->
   <div class="page" id="page-profile">
     <div class="profile-card">
       <div class="pcsec">👤 Personal Details</div>
@@ -439,13 +505,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 <div class="modal-overlay" id="withdrawModal">
   <div class="modal-box">
     <div class="modal-title">💸 Withdraw Earnings</div>
-    <div class="modal-sub">Transfer to your bank or UPI</div>
-    <div class="pfield" style="margin-bottom:12px;"><label>Amount (₹)</label><input type="number" id="wdAmt" placeholder="Enter amount"/></div>
-    <div class="pfield"><label>UPI ID or Bank Account</label><input type="text" id="wdAcc" placeholder="UPI ID or Account number"/></div>
-    <div style="background:var(--green-light);border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--green);margin-top:10px;">💡 Credited within 24 hours</div>
+    <div class="modal-sub">Funds will be transferred after admin approval (within 24 hrs)</div>
+    <div style="background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;font-weight:700;color:var(--green);">
+      ✅ Available balance: <strong id="wdAvailDisplay">₹0</strong>
+    </div>
+    <div class="pfield" style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:800;">Amount to Withdraw (₹)</label>
+      <input type="number" id="wdAmt" placeholder="Enter amount" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-family:Nunito;font-size:15px;font-weight:700;outline:none;width:100%;" onfocus="this.style.borderColor=&quot;var(--green)&quot;" onblur="this.style.borderColor=&quot;var(--border)&quot;"/>
+    </div>
+    <div class="pfield" style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:800;">Payment Method</label>
+      <select id="wdType" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-family:Nunito;font-size:14px;font-weight:600;outline:none;width:100%;background:var(--bg);">
+        <option value="upi">UPI ID</option>
+        <option value="bank">Bank Account</option>
+        <option value="wallet">PayTM / PhonePe Wallet</option>
+      </select>
+    </div>
+    <div class="pfield" style="margin-bottom:6px;">
+      <label style="font-size:12px;font-weight:800;">UPI ID / Account Number</label>
+      <input type="text" id="wdAcc" placeholder="e.g. 9999999999@paytm or HDFC account no." style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-family:Nunito;font-size:14px;font-weight:600;outline:none;width:100%;" onfocus="this.style.borderColor=&quot;var(--green)&quot;" onblur="this.style.borderColor=&quot;var(--border)&quot;"/>
+    </div>
+    <div style="background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;color:#7a5a00;margin-top:10px;">
+      ⏳ Your request goes to admin for approval. Funds credited within 24 hours of approval.
+    </div>
     <div class="modal-btns">
       <button class="mbtn sec" onclick="closeModal('withdrawModal')">Cancel</button>
-      <button class="mbtn primary" onclick="processWithdraw()">✅ Confirm</button>
+      <button class="mbtn primary" onclick="processWithdraw()">📤 Submit Request</button>
     </div>
   </div>
 </div>
@@ -482,19 +567,53 @@ function getReviews() { return JSON.parse(localStorage.getItem('hs_rv_' + P.id) 
 function saveReviews(rv) { localStorage.setItem('hs_rv_' + P.id, JSON.stringify(rv)); }
 
 // ════════ STATS COMPUTE ════════
-function computeStats() {
+function computeStats(){
   const bk = getBK();
-  const completed = bk.filter(b => b.status === 'completed');
-  const pending   = bk.filter(b => b.status === 'pending');
-  const today = new Date().toISOString().split('T')[0];
-  const todayEarned = completed.filter(b => b.date === today).reduce((s, b) => s + b.amount, 0);
-  const totalEarned = completed.reduce((s, b) => s + b.amount, 0);
-  const pendingEarned = pending.reduce((s, b) => s + b.amount, 0);
-  const withdrawn = P.withdrawnEarned || 0;
-  const reviews = getReviews();
-  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.stars, 0) / reviews.length).toFixed(1) : null;
+  const catalog = JSON.parse(localStorage.getItem("hs_catalog")||"null") || [];
+  const completed = bk.filter(b => b.status === "completed");
+  const pending   = bk.filter(b => b.status === "pending");
+  const today = new Date().toISOString().split("T")[0];
 
-  return { bk, completed, pending, totalEarned, todayEarned, pendingEarned, withdrawn, reviews, avgRating, today };
+  // For each completed booking, compute commission from catalog
+  let grossEarned = 0, commissionTotal = 0, netEarned = 0;
+  completed.forEach(b => {
+    const svc = catalog.find(s => s.name === b.service);
+    const commPct = svc ? svc.commission : 12;
+    const commAmt = svc ? svc.commAmt : Math.round(b.amount * commPct / 100);
+    const provAmt = b.amount - commAmt;
+    grossEarned += b.amount;
+    commissionTotal += commAmt;
+    netEarned += provAmt;
+    // Annotate booking for display
+    b._commAmt = commAmt;
+    b._provAmt = provAmt;
+    b._commPct = commPct;
+  });
+
+  const todayGross = completed.filter(b => b.date === today).reduce((s,b) => s+b.amount, 0);
+
+  // Payout tracking
+  const payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]")
+    .filter(p => p.providerId === P.id);
+  const withdrawn = payouts
+    .filter(p => p.status === "approved")
+    .reduce((s,p) => s+p.amount, 0);
+  const pendingWithdraw = payouts
+    .filter(p => p.status === "pending")
+    .reduce((s,p) => s+p.amount, 0);
+  const available = Math.max(netEarned - withdrawn - pendingWithdraw, 0);
+
+  const reviews = getReviews();
+  const avgRating = reviews.length
+    ? (reviews.reduce((s,r) => s+r.stars, 0) / reviews.length).toFixed(1)
+    : null;
+
+  return {
+    bk, completed, pending, payouts,
+    grossEarned, commissionTotal, netEarned,
+    todayGross, withdrawn, pendingWithdraw, available,
+    reviews, avgRating, today
+  };
 }
 
 // ════════ LOGIN CHECK ════════
@@ -676,18 +795,59 @@ function syncProviderStats() {
 }
 
 // ════════ EARNINGS ════════
-function loadEarnings() {
+function loadEarnings(){
   const s = computeStats();
-  document.getElementById('e-total').textContent = '₹' + s.totalEarned.toLocaleString('en-IN');
-  document.getElementById('e-today').textContent = '₹' + s.todayEarned.toLocaleString('en-IN');
-  document.getElementById('e-pending').textContent = '₹' + s.pendingEarned.toLocaleString('en-IN');
-  document.getElementById('e-withdrawn').textContent = '₹' + (s.withdrawn).toLocaleString('en-IN');
-  document.getElementById('withdrawAmt').textContent = '₹' + s.totalEarned.toLocaleString('en-IN');
-  document.getElementById('earnBody').innerHTML = s.completed.map(b => `
-    <tr><td>${b.date}</td><td><strong>${b.id}</strong></td><td>${b.service}</td>
-    <td>${b.customer}</td><td><strong style="color:var(--green)">₹${b.amount}</strong></td>
-    <td><span class="badge completed">Paid</span></td></tr>
-  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No completed bookings yet</td></tr>';
+
+  document.getElementById("e-gross").textContent      = "₹"+s.grossEarned.toLocaleString("en-IN");
+  document.getElementById("e-commission").textContent = "₹"+s.commissionTotal.toLocaleString("en-IN");
+  document.getElementById("e-net").textContent        = "₹"+s.netEarned.toLocaleString("en-IN");
+  document.getElementById("e-withdrawn").textContent  = "₹"+s.withdrawn.toLocaleString("en-IN");
+  document.getElementById("e-available").textContent  = "₹"+s.available.toLocaleString("en-IN");
+  document.getElementById("withdrawAvail").textContent = "₹"+s.available.toLocaleString("en-IN");
+  document.getElementById("wdAvailDisplay") && (document.getElementById("wdAvailDisplay").textContent = "₹"+s.available.toLocaleString("en-IN"));
+
+  // Booking breakdown table
+  const sorted = [...s.completed].sort((a,b) => new Date(b.date)-new Date(a.date));
+  document.getElementById("earnBody").innerHTML = sorted.map(b => `
+    <tr>
+      <td><strong>${b.id}</strong></td>
+      <td>${b.service}</td>
+      <td>${b.date}</td>
+      <td><strong>₹${b.amount}</strong></td>
+      <td style="color:var(--red);font-weight:800;">-₹${b._commAmt||0} <small style="color:var(--muted)">(${b._commPct||12}%)</small></td>
+      <td style="color:var(--green);font-weight:900;">₹${b._provAmt||b.amount}</td>
+      <td><span class="badge completed">Credited</span></td>
+    </tr>
+  `).join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
+
+  // Pending withdraw requests
+  const pendingReqs = s.payouts.filter(p => p.status === "pending");
+  document.getElementById("pendingWithdrawSection").style.display = pendingReqs.length ? "block" : "none";
+  document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(p => `
+    <tr>
+      <td><strong>${p.id}</strong></td>
+      <td style="color:var(--green);font-weight:800;">₹${p.amount.toLocaleString("en-IN")}</td>
+      <td style="font-size:12px">${p.account} <small>(${p.accountType})</small></td>
+      <td style="font-size:12px">${new Date(p.requestedAt).toLocaleDateString("en-IN")}</td>
+      <td><span class="badge pending">⏳ Pending Admin Approval</span></td>
+    </tr>
+  `).join("");
+
+  // Full withdrawal history
+  const allPayouts = [...s.payouts].sort((a,b) => new Date(b.requestedAt)-new Date(a.requestedAt));
+  document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(p => `
+    <tr>
+      <td><strong>${p.id}</strong></td>
+      <td style="font-weight:800;">₹${p.amount.toLocaleString("en-IN")}</td>
+      <td style="font-size:12px">${p.account}</td>
+      <td style="font-size:12px">${new Date(p.requestedAt).toLocaleDateString("en-IN")}</td>
+      <td style="font-size:12px">${p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—"}</td>
+      <td><span class="badge ${p.status}">${
+        p.status==="approved" ? "✅ Paid" :
+        p.status==="rejected" ? "❌ Rejected" : "⏳ Pending"
+      }</span></td>
+    </tr>
+  `).join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
 }
 
 // ════════ PROFILE ════════
@@ -978,17 +1138,43 @@ function rejectNewBooking() {
 }
 
 // ════════ WITHDRAW ════════
-function showWithdrawModal(){document.getElementById('withdrawModal').classList.add('show');}
+function showWithdrawModal(){
+  const s = computeStats();
+  const avail = document.getElementById("wdAvailDisplay");
+  if(avail) avail.textContent = "₹"+s.available.toLocaleString("en-IN");
+  document.getElementById("withdrawModal").classList.add("show");
+}
 function processWithdraw(){
-  const amt=document.getElementById('wdAmt').value;
-  const acc=document.getElementById('wdAcc').value;
-  if(!amt||!acc){showToast('⚠️ Fill all fields');return;}
-  const all=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  const idx=all.findIndex(p=>p.id===P.id);
-  if(idx>-1){all[idx].withdrawnEarned=(all[idx].withdrawnEarned||0)+parseInt(amt);P=all[idx];localStorage.setItem('hs_providers',JSON.stringify(all));localStorage.setItem('hs_current_provider',JSON.stringify(P));}
-  closeModal('withdrawModal');
+  const amt = parseInt(document.getElementById("wdAmt").value);
+  const acc = document.getElementById("wdAcc").value.trim();
+  const type = document.getElementById("wdType").value;
+  if(!amt || amt <= 0){showToast("⚠️ Enter a valid amount");return;}
+  if(!acc){showToast("⚠️ Enter your bank account or UPI ID");return;}
+
+  const s = computeStats();
+  const available = s.netEarned - s.withdrawn - s.pendingWithdraw;
+  if(amt > available){showToast("⚠️ Amount exceeds available balance ₹"+available);return;}
+
+  // Create payout request
+  const payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]");
+  const req = {
+    id: "WD-"+Date.now().toString(36).toUpperCase(),
+    providerId: P.id,
+    providerName: P.name,
+    providerPhone: P.phone,
+    amount: amt,
+    account: acc,
+    accountType: type,
+    status: "pending",
+    requestedAt: new Date().toISOString(),
+    processedAt: null,
+    note: ""
+  };
+  payouts.push(req);
+  localStorage.setItem("hs_payouts", JSON.stringify(payouts));
+  closeModal("withdrawModal");
   loadEarnings();
-  showToast('💸 Withdrawal of ₹'+amt+' initiated!');
+  showToast("✅ Withdrawal request of ₹"+amt+" submitted! Admin will process within 24 hrs.");
 }
 
 // ════════ NAV ════════
