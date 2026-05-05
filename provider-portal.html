@@ -246,7 +246,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const SERVICES=[{name:'House Maid',icon:'🧹',defaultPrice:499},{name:'Cooking Person',icon:'👨‍🍳',defaultPrice:799},{name:'AC Cleaning',icon:'❄️',defaultPrice:799},{name:'Plumber',icon:'🔧',defaultPrice:599},{name:'Electrician',icon:'⚡',defaultPrice:699},{name:'Carpenter',icon:'🪚',defaultPrice:799},{name:'Pest Control',icon:'🐛',defaultPrice:999},{name:'Deep Cleaning',icon:'🫧',defaultPrice:1499},{name:'Painting',icon:'🎨',defaultPrice:1999},{name:'Car Wash',icon:'🚗',defaultPrice:399},{name:'Gardener',icon:'🌱',defaultPrice:499},{name:'Security Guard',icon:'💂',defaultPrice:999},{name:'Driver',icon:'🚙',defaultPrice:699},{name:'Baby Sitter',icon:'👶',defaultPrice:599},{name:'Nurse / Care',icon:'🏥',defaultPrice:1199}];
+const SERVICES=[
+  {name:"House Maid (Hourly)",icon:"🧹",defaultPrice:150},
+  {name:"Deep House Cleaning",icon:"🫧",defaultPrice:1499},
+  {name:"Bathroom Cleaning",icon:"🚿",defaultPrice:399},
+  {name:"Kitchen Cleaning",icon:"🍳",defaultPrice:699},
+  {name:"AC Cleaning",icon:"❄️",defaultPrice:599},
+  {name:"AC Repair",icon:"🔩",defaultPrice:599},
+  {name:"Washing Machine Repair",icon:"🫙",defaultPrice:549},
+  {name:"Car Wash",icon:"🚗",defaultPrice:499},
+  {name:"Bike Wash",icon:"🏍️",defaultPrice:199},
+  {name:"Doctor Visit",icon:"👨‍⚕️",defaultPrice:699},
+  {name:"Lab Test Collection",icon:"🧪",defaultPrice:199},
+  {name:"Nurse Visit",icon:"💉",defaultPrice:399},
+  {name:"Haircut (Men)",icon:"✂️",defaultPrice:199},
+  {name:"Haircut (Women)",icon:"💇",defaultPrice:349},
+  {name:"Full Body Massage",icon:"💆",defaultPrice:999},
+  {name:"Day Care Helper",icon:"🧒",defaultPrice:200},
+  {name:"Elder Care Attendant",icon:"👴",defaultPrice:499},
+  {name:"Cooking Person (Per Meal)",icon:"🍱",defaultPrice:299},
+  {name:"Full-Day Cook",icon:"👨‍🍳",defaultPrice:799},
+  {name:"Electrician Visit",icon:"⚡",defaultPrice:399},
+  {name:"Plumber Visit",icon:"🔧",defaultPrice:399},
+  {name:"Carpenter Visit",icon:"🪚",defaultPrice:349},
+  {name:"Cockroach Control",icon:"🐛",defaultPrice:799},
+  {name:"Termite Inspection",icon:"🔍",defaultPrice:499},
+  {name:"Room Painting",icon:"🎨",defaultPrice:1499},
+];
 
 function switchTab(tab){
   const isLogin=tab==='login';
