@@ -42,13 +42,17 @@
   .panel-sub{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:20px;}
 
   /* SERVICE SELECT */
-  .svc-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
-  .svc-btn{border:2px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
-  .svc-btn:hover{border-color:var(--red);background:var(--red-light);}
-  .svc-btn.active{border-color:var(--red);background:var(--red-light);box-shadow:0 0 0 3px rgba(232,37,26,0.12);}
-  .svc-btn .si{font-size:22px;display:block;margin-bottom:4px;}
-  .svc-btn .sn{font-size:12px;font-weight:800;color:var(--text);line-height:1.2;}
+  /* SERVICE GRID — Urban Company 3-col style */
+  .svc-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+  .svc-btn{border:1.5px solid var(--border);border-radius:14px;padding:14px 6px 12px;text-align:center;cursor:pointer;transition:all .18s;background:var(--bg);position:relative;-webkit-tap-highlight-color:transparent;}
+  .svc-btn:active{transform:scale(.94);}
+  .svc-btn.active{border-color:var(--red);background:#fff1f0;}
+  .svc-btn .si{font-size:26px;display:block;margin-bottom:7px;line-height:1;}
+  .svc-btn .sn{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;}
+  .svc-btn .sp{font-size:10px;font-weight:600;color:var(--muted);margin-top:2px;}
   .svc-btn.active .sn{color:var(--red);}
+  .svc-btn.active .sp{color:rgba(232,37,26,.55);}
+  .svc-hot{position:absolute;top:5px;right:5px;background:var(--red);color:white;font-size:8px;font-weight:800;padding:2px 5px;border-radius:100px;}
 
   /* INPUTS */
   .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
@@ -318,14 +322,30 @@
 <script>
 // ── Services list ──
 const SERVICES = [
-  {icon:'🧹',name:'House Maid'},{icon:'❄️',name:'AC Cleaning'},
-  {icon:'🚗',name:'Car Wash'},{icon:'🛵',name:'Bike Wash'},
-  {icon:'🩺',name:'Doctor Visit'},{icon:'🧪',name:'Lab Test'},
-  {icon:'🚘',name:'Driver on Demand'},{icon:'💇',name:'Hair Salon at Home'},
-  {icon:'👶',name:'Day Care'},{icon:'👨‍🍳',name:'Cooking Person'},
-  {icon:'⚡',name:'Electrician'},{icon:'🔧',name:'Plumber'},
-  {icon:'🪚',name:'Carpenter'},{icon:'🐛',name:'Pest Control'},
-  {icon:'🖌️',name:'Home Painting'},
+  {icon:'🧹',name:'House Maid',price:'₹150/hr',hot:true},
+  {icon:'🫧',name:'Deep Cleaning',price:'₹1,499',hot:true},
+  {icon:'🚿',name:'Bathroom Cleaning',price:'₹399'},
+  {icon:'🍳',name:'Kitchen Cleaning',price:'₹699'},
+  {icon:'❄️',name:'AC Cleaning',price:'₹599',hot:true},
+  {icon:'🔩',name:'AC Repair',price:'₹599'},
+  {icon:'🔧',name:'Plumber',price:'₹399',hot:true},
+  {icon:'⚡',name:'Electrician',price:'₹399',hot:true},
+  {icon:'🪚',name:'Carpenter',price:'₹349'},
+  {icon:'🍱',name:'Cooking (Meal)',price:'₹299'},
+  {icon:'👨‍🍳',name:'Full-Day Cook',price:'₹799',hot:true},
+  {icon:'✂️',name:'Haircut Men',price:'₹199'},
+  {icon:'💇',name:'Haircut Women',price:'₹349'},
+  {icon:'💆',name:'Body Massage',price:'₹999'},
+  {icon:'👨‍⚕️',name:'Doctor Visit',price:'₹699'},
+  {icon:'💉',name:'Nurse Visit',price:'₹399'},
+  {icon:'🧪',name:'Lab Test',price:'₹199'},
+  {icon:'🚗',name:'Car Wash',price:'₹499'},
+  {icon:'🏍️',name:'Bike Wash',price:'₹199'},
+  {icon:'👶',name:'Baby Sitter',price:'₹200/hr'},
+  {icon:'👴',name:'Elder Care',price:'₹499'},
+  {icon:'🌱',name:'Gardener',price:'₹499'},
+  {icon:'🐛',name:'Pest Control',price:'₹799'},
+  {icon:'🎨',name:'Room Painting',price:'₹1,499'},
 ];
 
 let selectedSvc = null;
@@ -340,7 +360,12 @@ SERVICES.forEach((s,i) => {
   const btn = document.createElement('div');
   btn.className = 'svc-btn';
   btn.id = `sb_${i}`;
-  btn.innerHTML = `<span class="si">${s.icon}</span><span class="sn">${s.name}</span>`;
+  btn.innerHTML = `
+    ${s.hot ? '<div class="svc-hot">Popular</div>' : ''}
+    <span class="si">${s.icon}</span>
+    <span class="sn">${s.name}</span>
+    <span class="sp">${s.price}</span>
+  `;
   btn.onclick = () => selectSvc(i);
   svcGrid.appendChild(btn);
 });

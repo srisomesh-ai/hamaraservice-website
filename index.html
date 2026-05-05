@@ -45,7 +45,15 @@ header.scrolled{box-shadow:var(--sh);}
 .h-btn.ghost:hover,.h-btn.ghost:active{border-color:var(--ink);color:var(--ink);}
 .h-btn.solid{background:var(--brand);color:white;font-weight:700;box-shadow:0 3px 12px rgba(232,37,26,.28);}
 .h-btn.solid:hover,.h-btn.solid:active{background:var(--brand2);}
-@media(max-width:480px){.h-btn.ghost:first-child{display:none;}}
+@media(max-width:520px){
+  #navSignBtn{display:none!important;}
+  header{height:56px;padding:0 16px;}
+  .logo-name{font-size:15px;}
+  .h-btn{padding:7px 12px;font-size:13px;}
+}
+@media(max-width:360px){
+  #navLoginBtn{display:none;}
+}
 
 /* ─── HERO ─── */
 .hero{
@@ -284,8 +292,8 @@ footer{background:#0d0d0d;padding:32px 20px 24px;}
   </a>
   <div class="header-right">
     <a class="h-btn ghost" id="navLoginBtn" href="#" onclick="openAuth('login');return false;">Log in</a>
-    <a class="h-btn ghost" id="navSignBtn" href="#" onclick="openAuth('register');return false;">Sign up</a>
-    <a class="h-btn solid" href="provider-portal.html">Become a Partner</a>
+    <a class="h-btn ghost" id="navSignBtn" href="#" onclick="openAuth('register');return false;" style="display:none" id="navSignBtn">Sign up</a>
+    <a class="h-btn solid" href="provider-portal.html">Partner</a>
     <div id="userWidget">
       <div class="user-pill" onclick="toggleDD()">
         <div class="user-av" id="uAvLetter">U</div>
