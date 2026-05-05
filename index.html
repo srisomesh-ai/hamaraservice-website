@@ -395,6 +395,36 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 }
 </style>
 </style>
+  <!-- Firebase Auth SDK -->
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+    // ══════════════════════════════════════════════════════════
+    // FIREBASE CONFIG — hamaraservice-s009
+    // To get your API key:
+    // 1. Go to https://console.firebase.google.com/project/hamaraservice-s009/settings/general
+    // 2. Scroll to "Your apps" → Web app → Config
+    // 3. Copy the apiKey, messagingSenderId, appId values below
+    // ══════════════════════════════════════════════════════════
+    var FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyC_REPLACE_WITH_REAL_KEY",
+      authDomain:        "hamaraservice-s009.firebaseapp.com",
+      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:         "hamaraservice-s009",
+      storageBucket:     "hamaraservice-s009.appspot.com",
+      messagingSenderId: "REPLACE_SENDER_ID",
+      appId:             "REPLACE_APP_ID"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    var fbAuth = firebase.auth();
+    var fbDB   = firebase.database();
+    // Google provider
+    var googleProvider = new firebase.auth.GoogleAuthProvider();
+    googleProvider.addScope('email');
+    googleProvider.addScope('profile');
+  </script>
 </head>
 <body>
 
@@ -748,351 +778,232 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <div class="modal-overlay" id="authModal">
   <div class="auth-modal-box">
     <div class="auth-body">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Log in</button>
-        <button class="auth-tab" id="tabReg" onclick="switchAuthTab('register')">Sign up</button>
-      </div>
-      <!-- LOGIN -->
-      <div id="authLoginPanel">
-        <div class="auth-title">Welcome back</div>
-        <div class="auth-sub">Log in to track your bookings and get exclusive offers</div>
-        <div class="auth-err" id="authErr"></div>
-        <div class="afield"><label>Mobile Number</label><input type="tel" id="cu_phone" maxlength="10" placeholder="10-digit mobile"/></div>
-        <div class="afield"><label>Full Name</label><input type="text" id="cu_name_login" placeholder="As registered" onkeydown="if(event.key==='Enter')doUserLogin()"/></div>
-        <button class="auth-submit" onclick="doUserLogin()">Continue →</button>
-        <div class="auth-alt">Don't have an account? <a onclick="switchAuthTab('register')">Sign up free</a></div>
-      </div>
-      <!-- REGISTER -->
-      <div id="authRegPanel" style="display:none;">
-        <div class="auth-title">Create account</div>
-        <div class="auth-sub">Optional — track bookings & get exclusive offers</div>
-        <div class="auth-2col">
-          <div class="afield"><label>Full Name</label><input type="text" id="cu_reg_name" placeholder="Your name"/></div>
-          <div class="afield"><label>Mobile</label><input type="tel" id="cu_reg_phone" maxlength="10" placeholder="10-digit"/></div>
+      <button onclick="closeAuthModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;">✕</button>
+
+      <div id="authLoginView">
+        <div class="auth-title">Welcome back 👋</div>
+        <div class="auth-sub">Sign in to track bookings and manage your account</div>
+
+        <!-- Google Sign-In -->
+        <button onclick="signInWithGoogle()" id="googleSignInBtn" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">or</span>
+          <div style="flex:1;height:1px;background:var(--line);"></div>
         </div>
-        <div class="afield"><label>Email (optional)</label><input type="email" id="cu_reg_email" placeholder="your@email.com"/></div>
-        <div class="afield"><label>City</label><input type="text" id="cu_reg_city" placeholder="e.g. Hyderabad"/></div>
-        <button class="auth-submit" onclick="doUserRegister()">Create Account →</button>
-        <div class="auth-alt">Already have an account? <a onclick="switchAuthTab('login')">Log in</a></div>
+
+        <!-- Email login -->
+        <div class="auth-err" id="loginErr"></div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile Number or Email</label>
+            <input type="text" id="loginId" placeholder="Mobile number or email address" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Name (as registered)</label>
+            <input type="text" id="loginName" placeholder="Your full name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'" onkeydown="if(event.key==='Enter')doLogin()"/>
+          </div>
+          <button onclick="doLogin()" class="auth-submit">Log in →</button>
+        </div>
+        <div class="auth-alt">New here? <a onclick="switchAuthTab('register')">Create free account</a></div>
       </div>
+
+      <div id="authRegView" style="display:none;">
+        <div class="auth-title">Create account ✨</div>
+        <div class="auth-sub">Track bookings, get offers and manage your services</div>
+
+        <!-- Google Sign-Up -->
+        <button onclick="signInWithGoogle()" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign up with Google
+        </button>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">or sign up with mobile</span>
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="auth-2col">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Full Name</label>
+              <input type="text" id="regName" placeholder="Your name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile</label>
+              <input type="tel" id="regPhone" placeholder="10-digit" maxlength="10" inputmode="numeric" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email (optional)</label>
+            <input type="email" id="regEmail" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">City</label>
+            <input type="text" id="regCity" placeholder="e.g. Hyderabad" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+          </div>
+          <button onclick="doRegister()" class="auth-submit">Create Account →</button>
+        </div>
+        <div class="auth-alt">Have an account? <a onclick="switchAuthTab('login')">Log in</a></div>
+      </div>
+
     </div>
   </div>
-</div>
-
-<!-- ─── TOAST ─── -->
-<div class="toast" id="toast"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>
-// ── SERVICES DATA
-const SERVICES = [
-  {name:'House Maid',price:'₹150/hr',emoji:'🧹',popular:true},
-  {name:'Deep Cleaning',price:'₹1,499',emoji:'🫧',popular:true},
-  {name:'AC Service',emoji:'❄️',popular:true},
-  {name:'Plumber',price:'₹399',emoji:'🔧'},
-  {name:'Electrician',price:'₹399',emoji:'⚡'},
-  {name:'Carpenter',price:'₹349',emoji:'🪚'},
-  {name:'Pest Control',price:'₹799',emoji:'🐛'},
-  {name:'Painting',price:'₹1,499',emoji:'🎨'},
-  {name:'Cooking',emoji:'👨‍🍳'},
-  {name:'Car Wash',price:'₹499',emoji:'🚗'},
-  {name:'Gardener',price:'₹499',emoji:'🌱'},
-  {name:'Security Guard',price:'₹999',emoji:'💂'},
-  {name:'Driver',price:'₹699',emoji:'🚙'},
-  {name:'Baby Sitter',price:'₹200/hr',emoji:'👶'},
-  {name:'Nurse / Care',price:'₹399',emoji:'🏥'},
-];
-
-// ── BUILD SERVICES GRID
-document.getElementById('servicesGrid').innerHTML = SERVICES.map(s=>`
-  <div class="svc-card ${s.popular?'popular':''}" onclick="selectService('${s.name}')">
-    ${s.popular?'<div class="svc-pop">Popular</div>':''}
-    <div class="svc-card-img">${s.emoji}</div>
-    <div class="svc-card-info">
-      <div class="svc-name">${s.name}</div>
-      <div class="svc-price-tag">${s.price||''}</div>
-    </div>
-  </div>`).join('');
-
-// ── HEADER SCROLL
-window.addEventListener('scroll',()=>{
-  document.getElementById('siteHeader').classList.toggle('scrolled',window.scrollY>10);
-});
-
-// ── SEARCH TAB
-function setTab(btn){
-  document.querySelectorAll('.search-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-// ── LIVE SEARCH ──────────────────────────────
-const ALL_SERVICES = [
-  {name:'House Maid',          emoji:'🧹', price:'₹150/hr', keywords:['maid','clean','sweep','house']},
-  {name:'Deep Cleaning',       emoji:'🫧', price:'₹1,499',  keywords:['deep','full','thorough','clean']},
-  {name:'Bathroom Cleaning',   emoji:'🚿', price:'₹399',    keywords:['bathroom','toilet','washroom','bath']},
-  {name:'Kitchen Cleaning',    emoji:'🍳', price:'₹699',    keywords:['kitchen','cook','clean']},
-  {name:'AC Cleaning',         emoji:'❄️', price:'₹599',    keywords:['ac','air','condition','cool','filter']},
-  {name:'AC Repair',           emoji:'🔩', price:'₹599',    keywords:['ac','air','repair','fix','not cooling']},
-  {name:'Plumber Visit',       emoji:'🔧', price:'₹399',    keywords:['plumb','pipe','leak','water','tap','drain']},
-  {name:'Electrician Visit',   emoji:'⚡', price:'₹399',    keywords:['electric','wire','switch','light','fan','power']},
-  {name:'Carpenter Visit',     emoji:'🪚', price:'₹349',    keywords:['carpenter','wood','furniture','door','window']},
-  {name:'Washing Machine Repair',emoji:'🫙',price:'₹549',   keywords:['washing','machine','washer','repair']},
-  {name:'Car Wash',            emoji:'🚗', price:'₹499',    keywords:['car','wash','vehicle','auto']},
-  {name:'Bike Wash',           emoji:'🏍️',price:'₹199',    keywords:['bike','motorcycle','two wheeler','wash']},
-  {name:'Doctor Visit',        emoji:'👨‍⚕️',price:'₹699',   keywords:['doctor','physician','medical','health','ill','sick','fever']},
-  {name:'Lab Test Collection', emoji:'🧪', price:'₹199',    keywords:['lab','test','blood','sample','report']},
-  {name:'Nurse Visit',         emoji:'💉', price:'₹399',    keywords:['nurse','injection','dressing','care']},
-  {name:'Haircut (Men)',        emoji:'✂️', price:'₹199',    keywords:['haircut','hair','cut','men','shave','barber']},
-  {name:'Haircut (Women)',      emoji:'💇', price:'₹349',    keywords:['haircut','hair','cut','women','ladies','salon']},
-  {name:'Full Body Massage',   emoji:'💆', price:'₹999',    keywords:['massage','body','spa','relax','pain']},
-  {name:'Day Care Helper',     emoji:'🧒', price:'₹200/hr', keywords:['baby','child','kid','day care','nanny']},
-  {name:'Elder Care Attendant',emoji:'👴', price:'₹499',    keywords:['elder','old','senior','care','attend']},
-  {name:'Cooking Person (Per Meal)',emoji:'🍱',price:'₹299', keywords:['cook','food','meal','lunch','dinner','chef']},
-  {name:'Full-Day Cook',       emoji:'👨‍🍳',price:'₹799',   keywords:['cook','full day','daily','chef']},
-  {name:'Gardener',            emoji:'🌱', price:'₹499',    keywords:['garden','plant','grass','lawn','trim']},
-  {name:'Pest Control',        emoji:'🐛', price:'₹799',    keywords:['pest','cockroach','rat','bug','insect']},
-  {name:'Room Painting',       emoji:'🎨', price:'₹1,499',  keywords:['paint','wall','colour','color','room']},
-];
-let selectedServiceName = '';
-
-function liveSearchFn(q) {
-  var dd = document.getElementById('srchDrop');
-  if(!dd) return;
-  if(!q || !q.trim()) { dd.style.display='none'; return; }
-  var lq = q.toLowerCase().trim();
-  var results = ALL_SERVICES.filter(function(s) {
-    if(s.name.toLowerCase().includes(lq)) return true;
-    if(s.keywords && s.keywords.some(function(k){ return k.includes(lq); })) return true;
-    return false;
-  });
-  if(!results.length) {
-    dd.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--muted);font-weight:500;">No services found — try: cleaning, plumber, doctor…</div>';
-    dd.style.display = 'block';
-    return;
-  }
-  dd.innerHTML = results.map(function(s) {
-    return '<div onclick="pickService(''+s.name+'')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fff1f0'" onmouseout="this.style.background=''">'+
-      '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
-      '<div style="flex:1;">'+
-        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
-        '<div style="font-size:12px;font-weight:600;color:#00956a;">'+s.price+'</div>'+
-      '</div>'+
-      '<span style="font-size:13px;font-weight:800;color:#E8251A;flex-shrink:0;">Book →</span>'+
-    '</div>';
-  }).join('');
-  dd.style.display = 'block';
-}
-
-function pickService(name) {
-  selectedServiceName = name;
-  document.getElementById('heroSearch').value = name;
-  document.getElementById('searchDropdown').style.display = 'none';
-  showToast('✅ ' + name + ' selected — set your location and date');
-}
-
-function pickFirstResult() {
-  var dd = document.getElementById('srchDrop');
-  if(!dd) return;
-  var first = dd.querySelector('div');
-  if(first) first.click();
-}
-
-// Close dropdown on outside click
-document.addEventListener('click', function(e) {
-  var inp = document.getElementById('heroSearchInput');
-  var dd = document.getElementById('srchDrop');
-  if(inp && dd && !inp.contains(e.target) && !dd.contains(e.target)) {
-    dd.style.display = 'none';
-  }
-});
-
-// ── HERO DATE DEFAULT
-const heroDate = document.getElementById('heroDate');
-const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-heroDate.value = tomorrow.toISOString().split('T')[0];
-heroDate.min = new Date().toISOString().split('T')[0];
-
-// ── HERO SEARCH
-function heroSearch(){
-  var inp = document.getElementById('heroSearchInput');
-  var svc = selectedServiceName || (inp ? inp.value.trim() : '');
-  if(!svc){
-    // Shake the input
-    if(inp){inp.style.border='2px solid var(--brand)';inp.focus();setTimeout(function(){inp.style.border='2px solid var(--line)';},2000);}
-    showToast('⚠️ Type or select a service first');
-    return;
-  }
-  window.location.href='user-booking.html?service='+encodeURIComponent(svc);
-}
-function selectService(name){
-  selectedServiceName = name;
-  const loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
-  const addr = encodeURIComponent(selectedAddress||'');
-  window.location.href='user-booking.html?service='+encodeURIComponent(name)+'&loc='+loc+'&addr='+addr;
-}
-
-// ── MAP
-let leafletMap=null,leafletMarker=null;
-let selectedLatLng=null,selectedAddress='';
-
-function openMapModal(){
-  document.getElementById('mapModal').classList.add('show');
-  setTimeout(()=>{
-    if(!leafletMap){
-      leafletMap=L.map('mapContainer').setView([17.3850,78.4867],12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(leafletMap);
-      leafletMap.on('click',e=>{
-        selectedLatLng={lat:e.latlng.lat,lng:e.latlng.lng};
-        placePin(e.latlng.lat,e.latlng.lng);
-        reverseGeocode(e.latlng.lat,e.latlng.lng);
-      });
-    }
-    leafletMap.invalidateSize();
-    detectLocation(true);
-  },200);
-}
-function closeMapModal(){document.getElementById('mapModal').classList.remove('show');}
-
-function placePin(lat,lng){
-  if(leafletMarker)leafletMap.removeLayer(leafletMarker);
-  leafletMarker=L.marker([lat,lng],{
-    icon:L.divIcon({html:`<div style="width:32px;height:32px;background:#E8251A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.4)"></div>`,className:'',iconSize:[32,32],iconAnchor:[16,32]})
-  }).addTo(leafletMap);
-  leafletMap.panTo([lat,lng]);
-}
-function reverseGeocode(lat,lng){
-  document.getElementById('addrDisplay').textContent='📍 Fetching address…';
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(d=>{
-      const a=d.address||{};
-      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
-      selectedAddress=parts.join(', ')||d.display_name;
-      document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
-    }).catch(()=>{
-      selectedAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
-    });
-}
-function detectLocation(silent){
-  if(!navigator.geolocation){if(!silent)showToast('❌ GPS not supported');return;}
-  if(!silent)showToast('📍 Getting your location…');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const {latitude:lat,longitude:lng}=pos.coords;
-    selectedLatLng={lat,lng};
-    if(leafletMap)leafletMap.setView([lat,lng],15);
-    placePin(lat,lng);reverseGeocode(lat,lng);
-    if(!silent)showToast('✅ Location found!');
-  },err=>{if(!silent)showToast('❌ Could not get location');});
-}
-function searchLocation(){
-  const q=document.getElementById('mapSearchInput').value.trim();
-  if(!q){showToast('⚠️ Enter an address to search');return;}
-  showToast('🔍 Searching…');
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(res=>{
-      if(!res.length){showToast('❌ Location not found');return;}
-      const lat=+res[0].lat,lng=+res[0].lon;
-      selectedLatLng={lat,lng};
-      leafletMap.setView([lat,lng],15);
-      placePin(lat,lng);reverseGeocode(lat,lng);
-    }).catch(()=>showToast('❌ Search failed'));
-}
-document.getElementById('mapSearchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchLocation();});
-function confirmLocation(){
-  if(!selectedLatLng){showToast('📍 Please tap the map or use GPS first');return;}
-  const short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):`${selectedLatLng.lat.toFixed(4)}, ${selectedLatLng.lng.toFixed(4)}`;
-  document.getElementById('locationLabel').textContent=short;
-  closeMapModal();showToast('✅ Location confirmed!');
-}
-
-// ── AUTH
-function openUserAuth(tab){
+</div>function openUserAuth(tab){
   document.getElementById('authModal').classList.add('show');
   switchAuthTab(tab||'login');
 }
+function closeAuthModal(){
+  document.getElementById('authModal').classList.remove('show');
+}
 function switchAuthTab(tab){
-  const isLogin=tab==='login';
-  document.getElementById('authLoginPanel').style.display=isLogin?'block':'none';
-  document.getElementById('authRegPanel').style.display=isLogin?'none':'block';
-  document.getElementById('tabLogin').classList.toggle('active',isLogin);
-  document.getElementById('tabReg').classList.toggle('active',!isLogin);
+  var isLogin=(tab==='login');
+  document.getElementById('authLoginView').style.display=isLogin?'block':'none';
+  document.getElementById('authRegView').style.display=isLogin?'none':'block';
 }
-function doUserLogin(){
-  const phone=document.getElementById('cu_phone').value.trim();
-  const name=document.getElementById('cu_name_login').value.trim();
-  if(!phone||phone.length!==10){showAuthErr('Enter a valid 10-digit mobile number');return;}
-  if(!name){showAuthErr('Enter your registered name');return;}
-  const users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-  const found=users.find(u=>u.phone===phone&&u.name.toLowerCase()===name.toLowerCase());
-  if(!found){showAuthErr('Account not found. Please sign up first.');return;}
-  localStorage.setItem('hs_current_customer',JSON.stringify(found));
-  document.getElementById('authModal').classList.remove('show');
-  updateUserWidget();showToast('✅ Welcome back, '+found.name+'!');
+
+// ── GOOGLE SIGN-IN ─────────────────────────────────────────────
+function signInWithGoogle(){
+  var btn = document.getElementById('googleSignInBtn');
+  if(btn){btn.textContent='Signing in…';btn.disabled=true;}
+  fbAuth.signInWithPopup(googleProvider)
+    .then(function(result){
+      var user = result.user;
+      var userData = {
+        id:          'HS-CU-'+user.uid.slice(0,8).toUpperCase(),
+        uid:         user.uid,
+        name:        user.displayName || 'Customer',
+        email:       user.email || '',
+        phone:       user.phoneNumber || '',
+        photo:       user.photoURL || '',
+        city:        '',
+        provider:    'google',
+        registeredAt: new Date().toISOString(),
+      };
+      // Save to Firebase Realtime DB
+      fbDB.ref('customers/'+user.uid).set(userData);
+      // Save locally
+      localStorage.setItem('hs_current_customer', JSON.stringify(userData));
+      closeAuthModal();
+      updateUserWidget();
+      showToast('✅ Welcome, '+userData.name+'!');
+    })
+    .catch(function(err){
+      console.error('Google sign-in error:', err);
+      if(btn){btn.textContent='Continue with Google';btn.disabled=false;}
+      if(err.code==='auth/popup-closed-by-user'){showToast('Sign-in cancelled');return;}
+      showToast('⚠️ Sign-in failed: '+err.message);
+    });
 }
-function doUserRegister(){
-  const name=document.getElementById('cu_reg_name').value.trim();
-  const phone=document.getElementById('cu_reg_phone').value.trim();
-  const email=document.getElementById('cu_reg_email').value.trim();
-  const city=document.getElementById('cu_reg_city').value.trim();
+
+// ── MOBILE/EMAIL LOGIN ─────────────────────────────────────────
+function doLogin(){
+  var id   = document.getElementById('loginId').value.trim();
+  var name = document.getElementById('loginName').value.trim();
+  var err  = document.getElementById('loginErr');
+  if(!id){err.textContent='Enter your mobile or email';err.style.display='block';return;}
+  if(!name){err.textContent='Enter your registered name';err.style.display='block';return;}
+  err.style.display='none';
+
+  // Check Firebase DB first
+  fbDB.ref('customers').orderByChild('phone').equalTo(id).once('value', function(snap){
+    var found = null;
+    snap.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
+    if(!found){
+      // Try by email
+      fbDB.ref('customers').orderByChild('email').equalTo(id).once('value', function(s2){
+        s2.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
+        if(found){ loginSuccess(found); }
+        else {
+          // Fallback localStorage
+          var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+          var lsFound=users.find(function(u){ return (u.phone===id||u.email===id)&&u.name.toLowerCase()===name.toLowerCase(); });
+          if(lsFound){ loginSuccess(lsFound); }
+          else { err.textContent='Account not found. Please sign up.'; err.style.display='block'; }
+        }
+      });
+    } else { loginSuccess(found); }
+  }).catch(function(){
+    // Firebase unavailable — fallback localStorage
+    var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+    var lsFound=users.find(function(u){ return (u.phone===id||u.email===id)&&u.name.toLowerCase()===name.toLowerCase(); });
+    if(lsFound){ loginSuccess(lsFound); }
+    else { err.textContent='Account not found. Please sign up.'; err.style.display='block'; }
+  });
+}
+
+function loginSuccess(user){
+  localStorage.setItem('hs_current_customer', JSON.stringify(user));
+  closeAuthModal();
+  updateUserWidget();
+  showToast('✅ Welcome back, '+user.name+'!');
+}
+
+// ── REGISTER ───────────────────────────────────────────────────
+function doRegister(){
+  var name  = document.getElementById('regName').value.trim();
+  var phone = document.getElementById('regPhone').value.trim();
+  var email = document.getElementById('regEmail').value.trim();
+  var city  = document.getElementById('regCity').value.trim();
   if(!name){showToast('⚠️ Enter your name');return;}
-  if(!phone||phone.length!==10){showToast('⚠️ Enter valid 10-digit mobile');return;}
-  const users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-  if(users.find(u=>u.phone===phone)){showToast('⚠️ Mobile already registered. Log in instead.');switchAuthTab('login');return;}
-  const user={id:'HS-CU-'+Math.random().toString(36).substr(2,6).toUpperCase(),name,phone,email,city,registeredAt:new Date().toISOString()};
-  users.push(user);
-  localStorage.setItem('hs_customers',JSON.stringify(users));
-  localStorage.setItem('hs_current_customer',JSON.stringify(user));
-  document.getElementById('authModal').classList.remove('show');
-  updateUserWidget();showToast('🎉 Welcome to HamaraService, '+name+'!');
-}
-function showAuthErr(msg){
-  const e=document.getElementById('authErr');e.textContent=msg;e.style.display='block';
-  setTimeout(()=>e.style.display='none',4000);
-}
-function updateUserWidget(){
-  const cu=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
-  const loginBtn=document.getElementById('navLoginBtn');
-  const regBtn=document.getElementById('navRegBtn');
-  const widget=document.getElementById('userWidget');
-  if(cu){
-    loginBtn.style.display='none';regBtn.style.display='none';widget.style.display='block';
-    document.getElementById('userWidgetName').textContent=cu.name.split(' ')[0];
-    document.getElementById('userAvatarLetter').textContent=cu.name.charAt(0).toUpperCase();
-  } else {
-    loginBtn.style.display='';regBtn.style.display='';widget.style.display='none';
+  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return;}
+
+  var userData = {
+    id:          'HS-CU-'+Date.now().toString(36).toUpperCase(),
+    name:        name,
+    phone:       phone,
+    email:       email,
+    city:        city,
+    provider:    'manual',
+    registeredAt: new Date().toISOString(),
+  };
+
+  // Save to Firebase
+  fbDB.ref('customers/'+userData.id).set(userData).then(function(){
+    console.log('Customer saved to Firebase');
+  }).catch(function(e){ console.warn('Firebase save failed:', e.message); });
+
+  // Save locally
+  var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+  if(users.find(function(u){return u.phone===phone;})){
+    showToast('⚠️ Mobile already registered — log in');
+    switchAuthTab('login');return;
   }
+  users.push(userData);
+  localStorage.setItem('hs_customers', JSON.stringify(users));
+  localStorage.setItem('hs_current_customer', JSON.stringify(userData));
+  closeAuthModal();
+  updateUserWidget();
+  showToast('🎉 Welcome to HamaraService, '+name+'!');
 }
-function toggleUserMenu(){
-  document.getElementById('userDropdown').classList.toggle('open');
-}
+
+// ── AUTH STATE LISTENER ────────────────────────────────────────
+fbAuth.onAuthStateChanged(function(user){
+  if(user){
+    var existing = JSON.parse(localStorage.getItem('hs_current_customer')||'null');
+    if(!existing || existing.uid !== user.uid){
+      // Restore from Firebase DB
+      fbDB.ref('customers/'+user.uid).once('value', function(snap){
+        if(snap.exists()){
+          localStorage.setItem('hs_current_customer', JSON.stringify(snap.val()));
+          updateUserWidget();
+        }
+      });
+    }
+  }
+});
+
 function logoutUser(){
+  fbAuth.signOut().catch(function(){});
   localStorage.removeItem('hs_current_customer');
   document.getElementById('userDropdown').classList.remove('open');
-  updateUserWidget();showToast('👋 Signed out successfully');
+  updateUserWidget();
+  showToast('👋 Signed out');
 }
-function showUserProfile(){
-  const cu=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
-  if(!cu)return;
-  const bks=JSON.parse(localStorage.getItem('hs_customer_bookings_'+cu.id)||'[]');
-  alert('Account: '+cu.name+'\nMobile: '+cu.phone+'\nEmail: '+(cu.email||'—')+'\nCity: '+(cu.city||'—')+'\nID: '+cu.id+'\nBookings: '+bks.length);
-}
-document.addEventListener('click',e=>{
-  const widget=document.getElementById('userWidget');
-  const dd=document.getElementById('userDropdown');
-  if(dd&&!widget.contains(e.target))dd.classList.remove('open');
-  const authModal=document.getElementById('authModal');
-  if(e.target===authModal)authModal.classList.remove('show');
-  const mapModal=document.getElementById('mapModal');
-  if(e.target===mapModal)closeMapModal();
-});
-updateUserWidget();
 
-// ── TOAST
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.style.display='block';
-  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);
-}
-</script>
-</body>
-</html>
+
