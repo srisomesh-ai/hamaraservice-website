@@ -250,6 +250,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 .rating-submit-btn:hover{transform:translateY(-2px);}
 .rating-skip{font-size:13px;color:var(--muted);font-weight:700;margin-top:12px;cursor:pointer;text-decoration:underline;}
 
+
+/* NEW STATUS BADGES */
+.badge.otp_verified{background:#fff0e6;color:#FF6B00;}
+.badge.payment_pending{background:#e8f0fd;color:#1A73E8;}
+.badge.paid{background:#e6faf4;color:#00b37e;}
+/* payment window overlay */
+.pay-window{background:white;border-radius:24px;padding:0;max-width:440px;width:92%;box-shadow:0 28px 80px rgba(0,0,0,.28);animation:slideUp .35s ease;overflow:hidden;}
+.pay-window-head{background:linear-gradient(135deg,#1A73E8,#4da6ff);padding:28px 28px 24px;text-align:center;color:white;}
+.pay-window-head h3{font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+.pay-window-body{padding:24px 28px 30px;}
+.pay-breakdown{background:#f7f8fc;border-radius:14px;padding:18px;margin-bottom:20px;}
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e8eaef;font-size:14px;font-weight:600;}
+.pay-row:last-child{border:none;padding-top:12px;margin-top:4px;}
+.pay-row.total{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;}
+.pay-row.total span:last-child{color:#1A73E8;}
+.pay-method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.pay-method{border:2px solid #e8eaef;border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;font-size:13px;font-weight:700;}
+.pay-method:hover,.pay-method.selected{border-color:#1A73E8;background:#eff3ff;color:#1A73E8;}
+.pay-method .pm-icon{font-size:28px;display:block;margin-bottom:4px;}
+.pay-now-btn{width:100%;padding:16px;background:linear-gradient(135deg,#1A73E8,#4da6ff);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(27,79,255,.3);}
+.pay-now-btn:hover{transform:translateY(-2px);}
+/* provider payment-pending pulsing badge */
+@keyframes payPulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pay-pending-badge{display:inline-flex;align-items:center;gap:6px;background:#e8f0fd;color:#1A73E8;border:1.5px solid #1A73E8;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;}
+.pay-pending-dot{width:8px;height:8px;border-radius:50%;background:#1A73E8;animation:payPulse 1.5s infinite;}
+
 </style>
 </head>
 <body>
@@ -334,6 +360,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
         <div class="filters">
           <button class="fbtn active" onclick="filterBk('all',this)">All</button>
           <button class="fbtn" onclick="filterBk('pending',this)">⏳ Pending</button>
+          <button class="fbtn" onclick="filterBk('payment_pending',this)">💳 Awaiting Payment</button>
+          <button class="fbtn" onclick="filterBk('paid',this)">💰 Paid</button>
           <button class="fbtn" onclick="filterBk('completed',this)">✅ Completed</button>
           <button class="fbtn" onclick="filterBk('cancelled',this)">❌ Cancelled</button>
         </div>
@@ -580,6 +608,61 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   </div>
 </div>
 
+
+<!-- ══ CUSTOMER PAYMENT WINDOW ══ -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="pay-window">
+    <div class="pay-window-head">
+      <div style="font-size:36px;margin-bottom:8px;">💳</div>
+      <h3>Pay for Your Service</h3>
+      <p style="font-size:13px;opacity:.85;font-weight:600;">Job completed · Secure payment</p>
+    </div>
+    <div class="pay-window-body">
+      <div class="pay-breakdown">
+        <div class="pay-row"><span>Service</span><span id="pw-service">—</span></div>
+        <div class="pay-row"><span>Provider</span><span id="pw-provider">—</span></div>
+        <div class="pay-row"><span>Booking ID</span><span id="pw-id" style="font-size:12px;color:#8b909e">—</span></div>
+        <div class="pay-row"><span>Date</span><span id="pw-date">—</span></div>
+        <div class="pay-row total"><span>Total Amount</span><span id="pw-amount">₹0</span></div>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;color:#3a3f4b;margin-bottom:10px;">Choose Payment Method</div>
+      <div class="pay-method-grid">
+        <div class="pay-method" onclick="selectPayMethod(this,'upi')"><span class="pm-icon">📲</span>UPI</div>
+        <div class="pay-method" onclick="selectPayMethod(this,'card')"><span class="pm-icon">💳</span>Card</div>
+        <div class="pay-method" onclick="selectPayMethod(this,'netbanking')"><span class="pm-icon">🏦</span>Net Banking</div>
+        <div class="pay-method" onclick="selectPayMethod(this,'cash')"><span class="pm-icon">💵</span>Cash</div>
+      </div>
+
+      <div id="payGatewayNote" style="background:#fffbe6;border:1.5px solid #ffe58a;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:#7a5a00;margin-bottom:16px;display:none;">
+        🔗 Payment gateway will be integrated here (Razorpay / PayU / Cashfree). Currently in demo mode.
+      </div>
+
+      <button class="pay-now-btn" id="payNowBtn" onclick="processCustomerPayment()" disabled
+        style="opacity:.5;cursor:not-allowed;">Select payment method to continue</button>
+
+      <div style="text-align:center;font-size:12px;color:#8b909e;font-weight:600;margin-top:14px;">
+        🔒 Your payment is secured · All amounts in Indian Rupees
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAYMENT SUCCESS (customer) ══ -->
+<div class="modal-overlay" id="paySuccessModal">
+  <div class="otp-modal-box">
+    <div style="font-size:64px;margin-bottom:12px;">✅</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--green);margin-bottom:8px;">Payment Successful!</div>
+    <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:20px;" id="paySuccessInfo">—</div>
+    <div style="background:var(--green-light);border:1.5px solid var(--green);border-radius:12px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:800;color:var(--green);margin-bottom:6px;">TRANSACTION ID</div>
+      <div style="font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:800;color:var(--text);" id="payTxnId">—</div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:20px;">The provider has been notified. Your booking is now fully closed.</div>
+    <button onclick="afterPaymentSuccess()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--green),#34d058);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;">Rate Your Experience ⭐</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -605,8 +688,9 @@ function saveReviews(rv) { localStorage.setItem('hs_rv_' + P.id, JSON.stringify(
 function computeStats(){
   const bk = getBK();
   const catalog = JSON.parse(localStorage.getItem("hs_catalog")||"null") || [];
-  const completed = bk.filter(b => b.status === "completed");
-  const pending   = bk.filter(b => b.status === "pending");
+  const completed = bk.filter(b => b.status === 'completed' || b.status === 'paid');
+  const pending   = bk.filter(b => b.status === 'pending');
+  const awaitingPayment = bk.filter(b => b.status === 'payment_pending');
   const today = new Date().toISOString().split("T")[0];
 
   // For each completed booking, compute commission from catalog
@@ -720,6 +804,10 @@ function loadOverview() {
   document.getElementById('st-earned').textContent = '₹' + s.totalEarned.toLocaleString('en-IN');
   document.getElementById('st-rating').textContent = s.avgRating || '—';
   document.getElementById('st-pending').textContent = s.pending.length;
+  // Show awaiting payment badge if any
+  if (s.awaitingPayment && s.awaitingPayment.length > 0) {
+    showToast('💳 ' + s.awaitingPayment.length + ' booking(s) awaiting customer payment');
+  }
   document.getElementById('pendingBadge').textContent = s.pending.length;
 
   // Donut
@@ -769,9 +857,15 @@ function loadAllBookings(filter = 'all') {
       <td>${b.date}<br/><small style="color:var(--muted)">${b.time}</small></td>
       <td><strong>₹${b.amount}</strong></td>
       <td><span class="badge ${b.status}">${cap(b.status)}</span></td>
-      <td>${b.status === 'pending'
-        ? `<button class="abtn complete" onclick="updateStatus('${b.id}','completed')">🔐 Complete Job</button><button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
-        : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>`}</td>
+      <td>
+        ${b.status === 'pending'
+          ? `<button class="abtn complete" onclick="updateStatus('${b.id}','completed')">🔐 Complete Job</button><button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
+          : b.status === 'payment_pending'
+          ? `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div><button class="abtn view" onclick="openPaymentWindow(getBK().find(x=>x.id==='${b.id}'))" style="margin-top:4px">💳 Pay Now</button>`
+          : b.status === 'paid'
+          ? `<span class="badge paid">💰 Paid · Processing</span>`
+          : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>`}
+      </td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
 }
@@ -900,42 +994,135 @@ function verifyOTP() {
     return;
   }
 
-  // ✅ OTP correct — mark job as completed
+  // ✅ OTP correct — status → payment_pending (awaiting customer payment)
   const idx = bk.findIndex(b => b.id === pendingCompleteId);
-  bk[idx].status = 'completed';
-  bk[idx].completedAt = new Date().toISOString();
-  bk[idx].completionOTP = null; // clear OTP
+  bk[idx].status = 'payment_pending';
+  bk[idx].otpVerifiedAt = new Date().toISOString();
+  bk[idx].completionOTP = null;
   saveBK(bk);
 
   closeModal('otpRequestModal');
 
-  // Compute earnings for success screen
-  const catalog = JSON.parse(localStorage.getItem('hs_catalog') || 'null') || [];
+  // Refresh provider panel — shows "Payment Pending"
+  syncProviderStats();
+  loadAllBookings(); loadOverview(); loadNotifications();
+
+  showToast('✅ Job verified! Waiting for customer payment…');
+
+  // Open customer payment window (in real app: push notification / SMS link)
+  currentRatingBookingId = pendingCompleteId;
+  pendingCompleteId = null;
+  openPaymentWindow(booking);
+
+  // Start polling — update provider panel when payment comes in
+  startPaymentPolling(booking.id);
+}
+
+// ─── PAYMENT WINDOW ──────────────────────────────────────────────
+let selectedPayMethod = null;
+
+function openPaymentWindow(booking) {
+  document.getElementById('pw-service').textContent  = booking.service;
+  document.getElementById('pw-provider').textContent = P.name;
+  document.getElementById('pw-id').textContent       = booking.id;
+  document.getElementById('pw-date').textContent     = booking.date + ' ' + (booking.time||'');
+  document.getElementById('pw-amount').textContent   = '₹' + booking.amount.toLocaleString('en-IN');
+  selectedPayMethod = null;
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  const btn = document.getElementById('payNowBtn');
+  btn.textContent = 'Select payment method to continue';
+  btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
+  document.getElementById('paymentModal').classList.add('show');
+}
+
+function selectPayMethod(el, method) {
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPayMethod = method;
+  document.getElementById('payGatewayNote').style.display = method !== 'cash' ? 'block' : 'none';
+  const btn = document.getElementById('payNowBtn');
+  btn.textContent = method === 'cash' ? '💵 Confirm Cash Payment' : '💳 Pay ₹' + document.getElementById('pw-amount').textContent.replace('₹','');
+  btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+}
+
+function processCustomerPayment() {
+  if (!selectedPayMethod) { showToast('⚠️ Select a payment method'); return; }
+  const bookingId = currentRatingBookingId;
+  const bk = getBK();
+  const idx = bk.findIndex(b => b.id === bookingId);
+  if (idx < 0) return;
+
+  // Generate transaction ID
+  const txnId = 'TXN' + Date.now().toString(36).toUpperCase();
+
+  // Mark booking as paid → completed
+  bk[idx].status = 'paid';
+  bk[idx].paidAt = new Date().toISOString();
+  bk[idx].paymentMethod = selectedPayMethod;
+  bk[idx].txnId = txnId;
+  saveBK(bk);
+
+  closeModal('paymentModal');
+
+  // Show payment success
+  document.getElementById('paySuccessInfo').textContent =
+    bk[idx].service + ' · ₹' + bk[idx].amount + ' via ' + selectedPayMethod.toUpperCase();
+  document.getElementById('payTxnId').textContent = txnId;
+  document.getElementById('paySuccessModal').classList.add('show');
+
+  // Refresh provider panel
+  syncProviderStats();
+  loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
+  stopPaymentPolling();
+}
+
+function afterPaymentSuccess() {
+  // Move booking to fully completed after payment
+  const bookingId = currentRatingBookingId;
+  const bk = getBK();
+  const idx = bk.findIndex(b => b.id === bookingId);
+  if (idx > -1 && bk[idx].status === 'paid') {
+    bk[idx].status = 'completed';
+    bk[idx].completedAt = new Date().toISOString();
+    saveBK(bk);
+    syncProviderStats();
+    loadAllBookings(); loadOverview(); loadEarnings();
+  }
+  closeModal('paySuccessModal');
+  const booking = bk[idx];
+  openCustomerRatingModal(booking);
+}
+
+// ─── PAYMENT POLLING — provider sees update when customer pays ───
+let pollInterval = null;
+function startPaymentPolling(bookingId) {
+  stopPaymentPolling();
+  pollInterval = setInterval(() => {
+    const bk = getBK();
+    const b = bk.find(x => x.id === bookingId);
+    if (b && (b.status === 'paid' || b.status === 'completed')) {
+      stopPaymentPolling();
+      syncProviderStats();
+      loadAllBookings(); loadOverview(); loadEarnings();
+      showPaymentReceivedAlert(b);
+    }
+  }, 2000); // check every 2 seconds
+}
+function stopPaymentPolling() {
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+function showPaymentReceivedAlert(booking) {
+  const catalog = JSON.parse(localStorage.getItem('hs_catalog')||'null')||[];
   const svc = catalog.find(s => s.name === booking.service);
   const commPct = svc ? svc.commission : 12;
   const commAmt = svc ? svc.commAmt : Math.round(booking.amount * commPct / 100);
   const provAmt = booking.amount - commAmt;
-
-  // Show success modal
   document.getElementById('jobDoneInfo').textContent =
-    booking.service + ' for ' + (booking.customer || 'Customer') + ' · ' + booking.id;
+    booking.service + ' · ' + (booking.customer||'Customer') + ' · ' + booking.id;
   document.getElementById('jobDoneAmount').textContent = '₹' + provAmt.toLocaleString('en-IN');
   document.getElementById('jobDoneCommNote').textContent =
-    'Platform commission: ₹' + commAmt + ' (' + commPct + '%) · Your earnings: ₹' + provAmt;
+    'Paid via ' + (booking.paymentMethod||'—').toUpperCase() + ' · Commission: ₹' + commAmt + ' (' + commPct + '%) · Your net: ₹' + provAmt;
   document.getElementById('jobDoneModal').classList.add('show');
-
-  syncProviderStats();
-  loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
-
-  // After success modal — show rating modal for customer
-  currentRatingBookingId = pendingCompleteId;
-  pendingCompleteId = null;
-
-  // Trigger rating modal after 2.5 seconds
-  setTimeout(() => {
-    closeModal('jobDoneModal');
-    openCustomerRatingModal(booking);
-  }, 2500);
 }
 
 // ─── STEP 4: Rating Modal ────────────────────────────────────────
@@ -1305,6 +1492,7 @@ function loadNotifications() {
   const s = computeStats();
   const notifs = [];
   s.pending.forEach(b => notifs.push({type:'booking',icon:'📋',title:'Pending Booking',sub:`${b.customer} booked ${b.service} for ${b.date} at ${b.time}`,time:'Waiting for action',unread:true}));
+  (s.awaitingPayment||[]).forEach(b => notifs.push({type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:`${b.customer} · ${b.service} · ₹${b.amount} — OTP verified, payment pending`,time:'Action needed',unread:true}));
   s.completed.slice(-3).forEach(b => notifs.push({type:'payment',icon:'💰',title:'Payment Received',sub:`₹${b.amount} for ${b.service} by ${b.customer}`,time:b.date,unread:false}));
   if (s.reviews.length) notifs.push({type:'rating',icon:'⭐',title:s.reviews.length + ' Customer Review(s)',sub:'Check your Ratings page for feedback',time:'Recent',unread:false});
   notifs.push({type:'alert',icon:'💡',title:'Profile Tip',sub:'Complete your profile to get 40% more bookings!',time:'Always',unread:false});
