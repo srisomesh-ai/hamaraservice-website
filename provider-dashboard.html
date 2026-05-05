@@ -731,6 +731,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   <div class="trk-drawer">
     <div class="drawer-handle"></div>
     <div class="gps-banner searching" id="provGpsBanner">&#128225; Acquiring GPS signal...</div>
+    <div id="fbSetupBanner" style="display:none;padding:10px 22px;font-size:12px;font-weight:700;background:#fffbe6;border-bottom:1px solid #ffe58a;color:#7a5a00;">
+      &#128279; Cross-device tracking: <a href="https://console.firebase.google.com" target="_blank" style="color:#E8251A;font-weight:800;">Set up Firebase</a> for customer to track on their phone. Works same-device without Firebase.
+    </div>
     <div class="drw-head">
       <div class="drw-title" id="provDrwTitle">Navigating to Customer</div>
       <div class="drw-sub">Real GPS location active on this device</div>
@@ -742,8 +745,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
         <div class="drw-detail" id="provDrwCustDetail">--</div>
       </div>
       <div class="drw-btns">
-        <button class="drw-btn" id="provCallBtn" title="Call">&#128222;</button>
-        <button class="drw-btn" onclick="openGoogleMapsNav()" title="Google Maps">&#128506;</button>
+        <button class="drw-btn" id="provCallBtn" title="Call customer">&#128222;</button>
+        <button class="drw-btn" onclick="openGoogleMapsNav()" title="Open Google Maps">&#128506;</button>
+        <button class="drw-btn" onclick="shareTrackingLink(activeBookingId)" title="Share tracking link with customer">&#128279;</button>
       </div>
     </div>
     <div class="drw-stats">
@@ -1768,13 +1772,24 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // Sync: Firebase Realtime Database (free tier)
 // ════════════════════════════════════════════════════════════════
 
-// ── FIREBASE CONFIG ──────────────────────────────────────────────
-// Free Firebase Realtime DB — no server needed, real-time sync
-// TO SET UP YOUR OWN (free):
-//   1. Go to https://console.firebase.google.com
-//   2. Create project → Realtime Database → Start in test mode
-//   3. Replace this URL with your database URL
-const FB = 'https://hamaraservice-track-default-rtdb.firebaseio.com';
+// ══════════════════════════════════════════════════════════════
+// REAL-TIME SYNC ENGINE
+// PRIMARY  : localStorage + BroadcastChannel (same device, instant)
+// SECONDARY: Firebase Realtime DB (cross-device — configure below)
+// ══════════════════════════════════════════════════════════════
+
+// ── FIREBASE SETUP (cross-device tracking) ────────────────────
+// STEP 1: Go to https://console.firebase.google.com
+// STEP 2: Create project → Build → Realtime Database → Create database
+// STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
+// STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
+// STEP 5: Replace the URL below
+const FB_URL = 'https://hamaraservice-default-rtdb.firebaseio.com'; // ← REPLACE THIS
+const FB_ENABLED = (FB_URL.indexOf('YOURPROJECT') === -1 && FB_URL.indexOf('hamaraservice-default') === -1);
+
+// BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
+var trackChannel = null;
+try { trackChannel = new BroadcastChannel('hs_tracking'); } catch(e) {}
 
 // ── MAP + STATE ──────────────────────────────────────────────────
 var provMap=null, custMap2=null;
@@ -1808,14 +1823,49 @@ async function getRoute(fromLat,fromLng,toLat,toLng){
   return{coords:[[fromLat,fromLng],[toLat,toLng]],dist:calcDist(fromLat,fromLng,toLat,toLng),dur:calcDist(fromLat,fromLng,toLat,toLng)*4};
 }
 
-// ── FIREBASE: PUBLISH PROVIDER LOCATION ─────────────────────────
-async function fbWrite(path,data){
-  try{await fetch(FB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
-  catch(e){}
+// ── DUAL SYNC: localStorage + BroadcastChannel + Firebase ────────
+async function fbWrite(path, data) {
+  // 1. localStorage (same device, instant, always works)
+  try { localStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data)); } catch(e) {}
+  // 2. BroadcastChannel (cross-tab on same device, instant)
+  try { if(trackChannel) trackChannel.postMessage({path:path, data:data}); } catch(e) {}
+  // 3. Firebase (cross-device — only if configured)
+  if (FB_ENABLED) {
+    try {
+      await fetch(FB_URL + '/' + path + '.json', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data),
+        signal: AbortSignal.timeout(5000)
+      });
+    } catch(e) { /* Firebase not reachable — localStorage fallback active */ }
+  }
 }
-async function fbRead(path){
-  try{var r=await fetch(FB+'/'+path+'.json');return await r.json();}
-  catch(e){return null;}
+
+async function fbRead(path) {
+  // 1. Try Firebase first (cross-device)
+  if (FB_ENABLED) {
+    try {
+      var r = await fetch(FB_URL + '/' + path + '.json', {signal: AbortSignal.timeout(4000)});
+      var d = await r.json();
+      if (d && d.lat) return d;
+    } catch(e) {}
+  }
+  // 2. Fallback: localStorage (same device)
+  try {
+    var raw = localStorage.getItem('hs_track_' + path.replace(/\//g,'_'));
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+// Listen for BroadcastChannel messages (cross-tab same device)
+if (trackChannel) {
+  trackChannel.onmessage = function(ev) {
+    try {
+      var path = ev.data.path, data = ev.data.data;
+      localStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data));
+    } catch(e) {}
+  };
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1836,6 +1886,9 @@ async function openProviderTracking(bookingId){
   document.getElementById('providerTrackingView').classList.add('show');
   setGpsBanner('prov','searching','Acquiring GPS signal...');
   updateProvSteps('searching');
+  // Show Firebase setup hint if not configured
+  var fbBanner = document.getElementById('fbSetupBanner');
+  if (fbBanner) fbBanner.style.display = FB_ENABLED ? 'none' : 'block';
 
   setTimeout(async function(){
     if(!provMap){
@@ -1908,10 +1961,19 @@ function startRealGPS(bookingId,destLat,destLng){
       await fbWrite('tracking/'+bookingId+'/provider',{lat:lat,lng:lng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8,service:activeBookingData?(activeBookingData.service||''):''});
     },
     function(err){
-      var msgs={1:'Location permission denied — tap Allow in browser',2:'GPS signal unavailable — try moving outside',3:'GPS timeout — retrying...'};
-      setGpsBanner('prov','error',msgs[err.code]||'GPS error');
-      document.getElementById('provTrkTitle').textContent='GPS Error';
-      if(err.code!==1)setTimeout(function(){startRealGPS(bookingId,destLat,destLng);},6000);
+      var msgs={
+        1:'Location permission denied — please tap Allow when browser asks',
+        2:'GPS unavailable — make sure you are outdoors or near a window',
+        3:'GPS is slow — retrying automatically...'
+      };
+      setGpsBanner('prov','error',msgs[err.code]||'GPS error: '+err.message);
+      document.getElementById('provTrkTitle').textContent = err.code===1 ? 'Allow Location Access' : 'GPS Signal Weak';
+      document.getElementById('provTrkSub').textContent = msgs[err.code]||'GPS error';
+      if(err.code!==1) setTimeout(function(){startRealGPS(bookingId,destLat,destLng);},6000);
+      // Show manual instructions on permission denied
+      if(err.code===1){
+        showToast('⚠️ GPS denied — go to browser Settings → Site permissions → Location → Allow for '+window.location.hostname);
+      }
     },
     {enableHighAccuracy:true,maximumAge:2000,timeout:20000}
   );
@@ -1925,8 +1987,24 @@ function stopProviderTracking(){
 function openGoogleMapsNav(){
   if(!activeBookingData){return;}
   var lat=activeBookingData.customerLat,lng=activeBookingData.customerLng;
-  if(!lat){showToast('No customer location — customer did not share GPS');return;}
-  window.open('https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'&travelmode=driving','_blank');
+  if(!lat){showToast('Customer location not available');return;}
+  // Try Google Maps first, fall back to general maps
+  var gUrl='https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'&travelmode=driving';
+  window.open(gUrl,'_blank');
+  showToast('\uD83D\uDDFA Opened in Google Maps!');
+}
+
+// Share customer tracking link (for sending to customer via WhatsApp/SMS)
+function shareTrackingLink(bookingId){
+  var url = window.location.href.split('?')[0] + '?track=' + bookingId;
+  if(navigator.share){
+    navigator.share({title:'Track your service professional',text:'Track '+P.name+' in real time:',url:url});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(url);
+    showToast('\uD83D\uDD17 Tracking link copied! Share with customer via WhatsApp');
+  } else {
+    prompt('Copy this tracking link and send to customer:',url);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
