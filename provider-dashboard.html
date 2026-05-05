@@ -1784,7 +1784,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
 // STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
 // STEP 5: Replace the URL below
-const FB_URL = 'https://hamaraservice-s009-default-rtdb.firebaseio.com';
+const FB_URL = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FB_URL_ALT = 'https://hamaraservice-s009-default-rtdb.firebaseio.com'; // fallback
 const FB_ENABLED = true; // Firebase configured ✅
 
 // BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
@@ -1829,29 +1830,36 @@ async function fbWrite(path, data) {
   try { localStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data)); } catch(e) {}
   // 2. BroadcastChannel (cross-tab on same device, instant)
   try { if(trackChannel) trackChannel.postMessage({path:path, data:data}); } catch(e) {}
-  // 3. Firebase (cross-device — only if configured)
+  // 3. Firebase (cross-device)
   if (FB_ENABLED) {
-    try {
-      await fetch(FB_URL + '/' + path + '.json', {
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(data),
-        signal: AbortSignal.timeout(5000)
-      });
-    } catch(e) { /* Firebase not reachable — localStorage fallback active */ }
+    var urls = [FB_URL, FB_URL_ALT];
+    for (var i=0; i<urls.length; i++) {
+      try {
+        var resp = await fetch(urls[i] + '/' + path + '.json', {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(data), signal:AbortSignal.timeout(6000)
+        });
+        if (resp.ok) { console.log('Firebase write OK via', urls[i]); break; }
+      } catch(e) { console.warn('Firebase write failed for', urls[i], e.message); }
+    }
   }
 }
 
 async function fbRead(path) {
-  // 1. Try Firebase first (cross-device)
+  // 1. Try Firebase (cross-device) — try both URL formats
   if (FB_ENABLED) {
-    try {
-      var r = await fetch(FB_URL + '/' + path + '.json', {signal: AbortSignal.timeout(4000)});
-      var d = await r.json();
-      if (d && d.lat) return d;
-    } catch(e) {}
+    var urls = [FB_URL, FB_URL_ALT];
+    for (var i=0; i<urls.length; i++) {
+      try {
+        var r = await fetch(urls[i] + '/' + path + '.json', {signal:AbortSignal.timeout(5000)});
+        if (r.ok) {
+          var d = await r.json();
+          if (d && d.lat) { console.log('Firebase read OK via', urls[i]); return d; }
+        }
+      } catch(e) { console.warn('Firebase read failed for', urls[i]); }
+    }
   }
-  // 2. Fallback: localStorage (same device)
+  // 2. Fallback: localStorage (same device / same browser)
   try {
     var raw = localStorage.getItem('hs_track_' + path.replace(/\//g,'_'));
     return raw ? JSON.parse(raw) : null;
