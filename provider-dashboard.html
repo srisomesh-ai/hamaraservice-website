@@ -276,6 +276,76 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 .pay-pending-badge{display:inline-flex;align-items:center;gap:6px;background:#e8f0fd;color:#1A73E8;border:1.5px solid #1A73E8;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;}
 .pay-pending-dot{width:8px;height:8px;border-radius:50%;background:#1A73E8;animation:payPulse 1.5s infinite;}
 
+
+/* ══ TRACKING OVERLAY — UBER STYLE ══ */
+.tracking-overlay{position:fixed;inset:0;z-index:2000;background:#0f1117;display:none;flex-direction:column;}
+.tracking-overlay.show{display:flex;animation:fadeIn .3s ease;}
+.tracking-map-wrap{flex:1;position:relative;min-height:0;}
+#trackingMap{width:100%;height:100%;}
+
+/* Top pill — back + trip info */
+.tracking-top-bar{position:absolute;top:16px;left:16px;right:16px;z-index:10;display:flex;align-items:center;gap:12px;}
+.track-back-btn{width:44px;height:44px;border-radius:50%;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.25);flex-shrink:0;transition:all .2s;}
+.track-back-btn:hover{background:#f0f0f0;transform:scale(1.05);}
+.track-status-pill{background:white;border-radius:100px;padding:10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);flex:1;}
+.track-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.track-status-dot.moving{background:#00b37e;animation:pulse 1.5s infinite;}
+.track-status-dot.waiting{background:#f59e0b;animation:pulse 1.5s infinite;}
+.track-status-text{font-size:14px;font-weight:800;color:#0f1117;}
+.track-status-sub{font-size:12px;color:#8b909e;font-weight:600;}
+.track-eta-badge{background:#0f1117;color:white;border-radius:100px;padding:8px 14px;font-size:13px;font-weight:800;white-space:nowrap;}
+
+/* Custom map markers */
+.marker-provider{width:44px;height:44px;background:linear-gradient(135deg,#E8251A,#FF6B00);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(232,37,26,.5);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.marker-customer{width:44px;height:44px;background:linear-gradient(135deg,#1A73E8,#4da6ff);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(27,79,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.marker-pulse{position:absolute;width:70px;height:70px;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(232,37,26,.2);animation:markerPulse 2s infinite;}
+@keyframes markerPulse{0%{transform:translate(-50%,-50%) scale(.8);opacity:1}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+
+/* Bottom drawer — Swiggy/Ola style */
+.tracking-drawer{background:white;border-radius:24px 24px 0 0;padding:0;box-shadow:0 -8px 32px rgba(0,0,0,.18);flex-shrink:0;max-height:52vh;overflow-y:auto;}
+.drawer-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:12px auto 0;}
+.drawer-head{padding:16px 22px 14px;border-bottom:1px solid #f0f0f0;}
+.drawer-title{font-family:'Baloo 2',sans-serif;font-size:19px;font-weight:800;color:#0f1117;margin-bottom:2px;}
+.drawer-sub{font-size:13px;color:#8b909e;font-weight:600;}
+
+/* Provider card in customer view */
+.prov-track-card{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid #f7f8fc;}
+.prov-track-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#E8251A,#FF6B00);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:2px solid #fdecea;}
+.prov-track-info{flex:1;}
+.prov-track-name{font-size:16px;font-weight:800;color:#0f1117;}
+.prov-track-detail{font-size:13px;color:#8b909e;font-weight:600;margin-top:2px;}
+.prov-track-rating{font-size:13px;font-weight:800;color:#f59e0b;}
+.prov-track-actions{display:flex;gap:8px;}
+.track-action-btn{width:42px;height:42px;border-radius:50%;border:2px solid #e5e7eb;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s;}
+.track-action-btn:hover{border-color:#E8251A;background:#fdecea;}
+
+/* Stats row */
+.track-stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid #f7f8fc;}
+.track-stat{padding:14px 0;text-align:center;border-right:1px solid #f7f8fc;}
+.track-stat:last-child{border-right:none;}
+.track-stat-val{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;color:#0f1117;}
+.track-stat-label{font-size:11px;color:#8b909e;font-weight:700;margin-top:2px;}
+
+/* Steps timeline */
+.track-steps{padding:14px 22px;}
+.track-step{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;}
+.track-step:last-child{margin-bottom:0;}
+.step-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0;}
+.step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:800;}
+.step-dot.done{background:#00b37e;color:white;}
+.step-dot.active{background:#1A73E8;color:white;box-shadow:0 0 0 5px rgba(27,79,255,.15);}
+.step-dot.waiting{background:#f0f0f0;color:#8b909e;}
+.step-line{width:2px;flex:1;background:#f0f0f0;margin:4px 0;min-height:20px;}
+.step-line.done{background:#00b37e;}
+.step-content{flex:1;padding-top:1px;}
+.step-title{font-size:14px;font-weight:800;color:#0f1117;}
+.step-desc{font-size:12px;color:#8b909e;font-weight:600;margin-top:2px;}
+.step-time{font-size:11px;color:#8b909e;font-weight:700;margin-top:3px;}
+
+/* Navigate button in booking table */
+.nav-btn-track{padding:7px 14px;background:linear-gradient(135deg,#1A73E8,#4da6ff);color:white;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
+.nav-btn-track:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(27,79,255,.35);}
+
 </style>
 </head>
 <body>
@@ -663,6 +733,129 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════════════
+     PROVIDER TRACKING VIEW (Provider navigates to customer)
+══════════════════════════════════════════════════ -->
+<div class="tracking-overlay" id="providerTrackingView">
+  <div class="tracking-map-wrap">
+    <div id="trackingMap"></div>
+    <!-- Top bar -->
+    <div class="tracking-top-bar">
+      <button class="track-back-btn" onclick="closeTracking()">←</button>
+      <div class="track-status-pill">
+        <div class="track-status-dot moving" id="trackStatusDot"></div>
+        <div>
+          <div class="track-status-text" id="trackStatusText">Navigating to customer</div>
+          <div class="track-status-sub" id="trackStatusSub">Follow route on map</div>
+        </div>
+      </div>
+      <div class="track-eta-badge" id="trackEtaBadge">-- min</div>
+    </div>
+  </div>
+
+  <!-- Bottom drawer -->
+  <div class="tracking-drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-head">
+      <div class="drawer-title" id="trackDrawerTitle">En Route to Customer</div>
+      <div class="drawer-sub" id="trackDrawerSub">Customer is waiting</div>
+    </div>
+
+    <!-- Customer info card -->
+    <div class="prov-track-card">
+      <div class="prov-track-av">👤</div>
+      <div class="prov-track-info">
+        <div class="prov-track-name" id="trackCustomerName">—</div>
+        <div class="prov-track-detail" id="trackCustomerDetail">—</div>
+        <div class="prov-track-rating">⭐ Verified Customer</div>
+      </div>
+      <div class="prov-track-actions">
+        <button class="track-action-btn" title="Call Customer" onclick="showToast('📞 Calling customer…')">📞</button>
+        <button class="track-action-btn" title="Open in Maps" onclick="openExternalNav()">🗺️</button>
+      </div>
+    </div>
+
+    <!-- Distance / Time / Amount -->
+    <div class="track-stats-row">
+      <div class="track-stat">
+        <div class="track-stat-val" id="trackDistance">—</div>
+        <div class="track-stat-label">Distance</div>
+      </div>
+      <div class="track-stat">
+        <div class="track-stat-val" id="trackETA">—</div>
+        <div class="track-stat-label">ETA</div>
+      </div>
+      <div class="track-stat">
+        <div class="track-stat-val" id="trackAmount">—</div>
+        <div class="track-stat-label">Earnings</div>
+      </div>
+    </div>
+
+    <!-- Progress steps -->
+    <div class="track-steps" id="trackSteps"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     CUSTOMER TRACKING VIEW (Customer watches provider)
+══════════════════════════════════════════════════ -->
+<div class="tracking-overlay" id="customerTrackingView">
+  <div class="tracking-map-wrap">
+    <div id="customerTrackingMap"></div>
+    <div class="tracking-top-bar">
+      <button class="track-back-btn" onclick="closeCustomerTracking()">←</button>
+      <div class="track-status-pill">
+        <div class="track-status-dot moving" id="custTrackDot"></div>
+        <div>
+          <div class="track-status-text" id="custTrackText">Professional on the way</div>
+          <div class="track-status-sub" id="custTrackSub">Live tracking enabled</div>
+        </div>
+      </div>
+      <div class="track-eta-badge" id="custTrackETA">-- min</div>
+    </div>
+  </div>
+
+  <div class="tracking-drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-head">
+      <div class="drawer-title">Your Professional is Coming</div>
+      <div class="drawer-sub" id="custDrawerSub">Live location tracking</div>
+    </div>
+
+    <!-- Provider card -->
+    <div class="prov-track-card">
+      <div class="prov-track-av">👷</div>
+      <div class="prov-track-info">
+        <div class="prov-track-name" id="custTrackProvName">—</div>
+        <div class="prov-track-detail" id="custTrackProvDetail">—</div>
+        <div class="prov-track-rating" id="custTrackRating">⭐ — · Verified Professional</div>
+      </div>
+      <div class="prov-track-actions">
+        <button class="track-action-btn" onclick="showToast('📞 Calling professional…')">📞</button>
+        <button class="track-action-btn" onclick="showToast('💬 Chat coming soon!')">💬</button>
+      </div>
+    </div>
+
+    <div class="track-stats-row">
+      <div class="track-stat">
+        <div class="track-stat-val" id="custTrackDist">—</div>
+        <div class="track-stat-label">Away</div>
+      </div>
+      <div class="track-stat">
+        <div class="track-stat-val" id="custTrackTime">—</div>
+        <div class="track-stat-label">ETA</div>
+      </div>
+      <div class="track-stat">
+        <div class="track-stat-val" id="custTrackAmt">—</div>
+        <div class="track-stat-label">Service Cost</div>
+      </div>
+    </div>
+
+    <div class="track-steps" id="custTrackSteps"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -859,12 +1052,16 @@ function loadAllBookings(filter = 'all') {
       <td><span class="badge ${b.status}">${cap(b.status)}</span></td>
       <td>
         ${b.status === 'pending'
-          ? `<button class="abtn complete" onclick="updateStatus('${b.id}','completed')">🔐 Complete Job</button><button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
+          ? `<button class="nav-btn-track" onclick="openProviderTracking('${b.id}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
+             <br/><button class="abtn complete" onclick="updateStatus('${b.id}','completed')">🔐 Complete Job</button>
+             <button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
           : b.status === 'payment_pending'
-          ? `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div><button class="abtn view" onclick="openPaymentWindow(getBK().find(x=>x.id==='${b.id}'))" style="margin-top:4px">💳 Pay Now</button>`
+          ? `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>
+             <button class="abtn view" onclick="openPaymentWindow(getBK().find(x=>x.id==='${b.id}'))" style="margin-top:4px">💳 Pay Now</button>`
           : b.status === 'paid'
           ? `<span class="badge paid">💰 Paid · Processing</span>`
-          : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>`}
+          : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>
+             ${b.tracking?`<br/><button class="abtn view" onclick="openCustomerTracking('${b.id}')" style="margin-top:3px">📍 Customer View</button>`:''}`}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
@@ -1523,14 +1720,19 @@ function triggerIncomingAlert() {
   if (!P.available) return;
   const cust = DEMO_CUSTOMERS[Math.floor(Math.random()*DEMO_CUSTOMERS.length)];
   const svc  = (P.services||[])[0] || {name:'House Maid',icon:'🧹',price:499};
+  const baseLat = P.lat||17.3850, baseLng = P.lng||78.4867;
   pendingBooking = {
     id:'HS-BK-'+Math.random().toString(36).substr(2,6).toUpperCase(),
     customer:cust, phone:'98'+Math.floor(10000000+Math.random()*89999999),
     service:svc.name, date:new Date().toISOString().split('T')[0],
     time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
-    amount:svc.price, status:'pending'
+    amount:svc.price, status:'pending',
+    customerLat: baseLat + (Math.random()-.5)*.035,
+    customerLng: baseLng + (Math.random()-.5)*.035,
+    tracking: false
   };
-  document.getElementById('alertDetail').innerHTML = `<strong>Customer:</strong> ${cust}<br/><strong>Service:</strong> ${svc.icon} ${svc.name}<br/><strong>Amount:</strong> ₹${svc.price}`;
+  const custDist = haversineKm(baseLat, baseLng, pendingBooking.customerLat, pendingBooking.customerLng);
+  document.getElementById('alertDetail').innerHTML = `<strong>Customer:</strong> ${cust}<br/><strong>Service:</strong> ${svc.icon} ${svc.name}<br/><strong>Distance:</strong> ${custDist.toFixed(1)} km away<br/><strong>Amount:</strong> ₹${svc.price}`;
   let sec = 60;
   document.getElementById('alertTimer').textContent = sec;
   document.getElementById('incomingAlert').style.display = 'block';
@@ -1617,6 +1819,293 @@ function showPage(name){
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
+
+// ════════════════════════════════════════════════════════════════
+// TRACKING ENGINE — Ola / Uber / Swiggy style
+// ════════════════════════════════════════════════════════════════
+let trackMap = null, custTrackMap = null;
+let providerMarker = null, customerMarker = null;
+let routeLine = null, custRouteLine = null;
+let provMarkerCust = null, custMarkerCust = null;
+let trackInterval = null;
+let activeTrackBooking = null;
+// Simulated positions (in real app: from GPS)
+let simProvLat, simProvLng, simCustLat, simCustLng;
+let simStep = 0, simTotalSteps = 0;
+let simPath = [];
+
+const PROVIDER_ICON = L.divIcon({
+  html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#E8251A,#FF6B00);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(232,37,26,.5);display:flex;align-items:center;justify-content:center;font-size:22px;">👷</div>`,
+  className:'', iconSize:[44,44], iconAnchor:[22,22]
+});
+const CUSTOMER_ICON = L.divIcon({
+  html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#1A73E8,#4da6ff);border-radius:50%;border:3px solid white;box-shadow:0 4px 16px rgba(27,79,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;">🏠</div>`,
+  className:'', iconSize:[44,44], iconAnchor:[22,22]
+});
+const DEST_ICON = L.divIcon({
+  html: `<div style="width:36px;height:36px;background:white;border-radius:50%;border:3px solid #1A73E8;box-shadow:0 3px 12px rgba(27,79,255,.3);display:flex;align-items:center;justify-content:center;font-size:18px;">📍</div>`,
+  className:'', iconSize:[36,36], iconAnchor:[18,18]
+});
+
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function interpolate(lat1,lng1,lat2,lng2,t){
+  return {lat:lat1+(lat2-lat1)*t, lng:lng1+(lng2-lng1)*t};
+}
+
+// Build a simulated path between two points (zig-zag for realism)
+function buildSimPath(fromLat,fromLng,toLat,toLng){
+  const steps=30;
+  const path=[];
+  for(let i=0;i<=steps;i++){
+    const t=i/steps;
+    // Add slight random detour for road-like feel
+    const jitter = i>0&&i<steps ? (Math.random()-.5)*.003*(1-Math.abs(t-.5)*2) : 0;
+    const p=interpolate(fromLat,fromLng,toLat,toLng,t);
+    path.push({lat:p.lat+(jitter), lng:p.lng+(jitter*.5)});
+  }
+  return path;
+}
+
+// ─── OPEN PROVIDER TRACKING (provider navigates to customer) ────
+function openProviderTracking(bookingId) {
+  const bk = getBK();
+  const booking = bk.find(b => b.id === bookingId);
+  if (!booking) return;
+  activeTrackBooking = booking;
+
+  // Provider location = provider's registered location
+  const provLat = P.lat || 17.3850;
+  const provLng = P.lng || 78.4867;
+
+  // Customer location — use booking's stored lat/lng, or simulate near provider
+  const custLat = booking.customerLat || (provLat + (Math.random()-.5)*.04);
+  const custLng = booking.customerLng || (provLng + (Math.random()-.5)*.04);
+
+  simProvLat = provLat; simProvLng = provLng;
+  simCustLat = custLat; simCustLng = custLng;
+  simPath = buildSimPath(provLat, provLng, custLat, custLng);
+  simStep = 0; simTotalSteps = simPath.length;
+
+  // Fill drawer
+  document.getElementById('trackCustomerName').textContent = booking.customer || 'Customer';
+  document.getElementById('trackCustomerDetail').textContent = booking.service + ' · ' + booking.date + ' ' + booking.time;
+  document.getElementById('trackAmount').textContent = '₹' + (booking.amount - Math.round(booking.amount*(12/100)));
+
+  // Show overlay
+  document.getElementById('providerTrackingView').classList.add('show');
+
+  // Init map
+  setTimeout(() => {
+    if (!trackMap) {
+      trackMap = L.map('trackingMap', {zoomControl:false}).setView([provLat, provLng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(trackMap);
+    }
+    trackMap.setView([provLat, provLng], 14);
+    if (providerMarker) trackMap.removeLayer(providerMarker);
+    if (customerMarker) trackMap.removeLayer(customerMarker);
+    if (routeLine) trackMap.removeLayer(routeLine);
+
+    providerMarker = L.marker([provLat,provLng],{icon:PROVIDER_ICON}).addTo(trackMap).bindPopup('<b>You (Provider)</b>');
+    customerMarker = L.marker([custLat,custLng],{icon:CUSTOMER_ICON}).addTo(trackMap).bindPopup('<b>'+booking.customer+'</b><br/>'+booking.service);
+
+    // Draw initial route
+    routeLine = L.polyline([[provLat,provLng],[custLat,custLng]],{color:'#1A73E8',weight:5,opacity:.8,dashArray:'10,5'}).addTo(trackMap);
+    trackMap.fitBounds([[provLat,provLng],[custLat,custLng]],{padding:[60,60]});
+
+    updateTrackingUI();
+    startProviderMovement();
+  }, 200);
+}
+
+function updateTrackingUI() {
+  const pos = simPath[simStep] || {lat:simProvLat, lng:simProvLng};
+  const dist = haversineKm(pos.lat, pos.lng, simCustLat, simCustLng);
+  const distStr = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+'km';
+  const etaMin = Math.max(1, Math.round(dist*4)); // ~15 km/h average
+  const progress = simStep/simTotalSteps;
+
+  document.getElementById('trackDistance').textContent = distStr;
+  document.getElementById('trackETA').textContent = etaMin + ' min';
+  document.getElementById('trackEtaBadge').textContent = etaMin + ' min';
+
+  const steps = [
+    {label:'Booking Accepted', desc:'You accepted the job', done:true},
+    {label:'Navigating', desc:'En route to '+((activeTrackBooking||{}).customer||'customer'), done:progress>0, active:progress<1},
+    {label:'Arrived', desc:'At customer location', done:progress>=.95},
+    {label:'Job in Progress', desc:'Service underway', done:false},
+    {label:'Complete & Get Paid', desc:'OTP verification', done:false},
+  ];
+  renderSteps('trackSteps', steps);
+
+  if (progress >= .98) {
+    document.getElementById('trackStatusText').textContent = 'Arrived at destination!';
+    document.getElementById('trackStatusSub').textContent = 'Start the service';
+    document.getElementById('trackStatusDot').className = 'track-status-dot waiting';
+    document.getElementById('trackDrawerTitle').textContent = 'You have arrived!';
+    document.getElementById('trackDrawerSub').textContent = 'Customer is expecting you';
+  }
+
+  // Also store provider position so customer map can read it
+  if (activeTrackBooking) {
+    const bk = getBK();
+    const idx = bk.findIndex(b=>b.id===activeTrackBooking.id);
+    if (idx>-1) {
+      bk[idx].provLiveLatLng = {lat:pos.lat, lng:pos.lng};
+      bk[idx].provETA = etaMin;
+      bk[idx].tracking = true;
+      saveBK(bk);
+    }
+  }
+}
+
+function startProviderMovement() {
+  clearInterval(trackInterval);
+  trackInterval = setInterval(() => {
+    if (simStep < simTotalSteps - 1) {
+      simStep++;
+      const pos = simPath[simStep];
+      if (providerMarker) providerMarker.setLatLng([pos.lat, pos.lng]);
+      if (routeLine) {
+        trackMap.removeLayer(routeLine);
+        // Remaining route
+        const remaining = simPath.slice(simStep);
+        routeLine = L.polyline(remaining.map(p=>[p.lat,p.lng]),{color:'#1A73E8',weight:5,opacity:.8}).addTo(trackMap);
+        // Completed route (grey)
+        const done = simPath.slice(0, simStep+1);
+        L.polyline(done.map(p=>[p.lat,p.lng]),{color:'#9ca3af',weight:3,opacity:.5}).addTo(trackMap);
+      }
+      trackMap.panTo([pos.lat, pos.lng], {animate:true,duration:.5});
+      updateTrackingUI();
+    } else {
+      clearInterval(trackInterval);
+      showToast('📍 You have arrived at customer location!');
+    }
+  }, 1500); // move every 1.5s for demo (real: GPS updates)
+}
+
+function closeTracking() {
+  clearInterval(trackInterval);
+  document.getElementById('providerTrackingView').classList.remove('show');
+}
+
+function openExternalNav() {
+  if (!simCustLat) return;
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${simCustLat},${simCustLng}&travelmode=driving`;
+  window.open(url,'_blank');
+}
+
+// ─── OPEN CUSTOMER TRACKING (customer watches provider move) ────
+function openCustomerTracking(bookingId) {
+  const bk = getBK();
+  const booking = bk.find(b => b.id === bookingId);
+  if (!booking) return;
+
+  const custLat = booking.customerLat || (P.lat + (Math.random()-.5)*.04);
+  const custLng = booking.customerLng || (P.lng + (Math.random()-.5)*.04);
+  const provLat = booking.provLiveLatLng ? booking.provLiveLatLng.lat : P.lat;
+  const provLng = booking.provLiveLatLng ? booking.provLiveLatLng.lng : P.lng;
+
+  // Fill info
+  document.getElementById('custTrackProvName').textContent = P.name;
+  document.getElementById('custTrackProvDetail').textContent = booking.service + ' · Booking #' + booking.id;
+  document.getElementById('custTrackRating').textContent = '⭐ ' + (P.rating||'4.8') + ' · Background Verified';
+  document.getElementById('custTrackAmt').textContent = '₹' + booking.amount;
+  document.getElementById('customerTrackingView').classList.add('show');
+
+  setTimeout(() => {
+    if (!custTrackMap) {
+      custTrackMap = L.map('customerTrackingMap',{zoomControl:false}).setView([custLat,custLng],14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(custTrackMap);
+    }
+    custTrackMap.setView([custLat,custLng],14);
+    if (provMarkerCust) custTrackMap.removeLayer(provMarkerCust);
+    if (custMarkerCust) custTrackMap.removeLayer(custMarkerCust);
+    if (custRouteLine) custTrackMap.removeLayer(custRouteLine);
+
+    provMarkerCust = L.marker([provLat,provLng],{icon:PROVIDER_ICON}).addTo(custTrackMap).bindPopup('<b>'+P.name+'</b><br/>Coming to you!');
+    custMarkerCust = L.marker([custLat,custLng],{icon:CUSTOMER_ICON}).addTo(custTrackMap).bindPopup('<b>Your location</b>');
+    custRouteLine  = L.polyline([[provLat,provLng],[custLat,custLng]],{color:'#E8251A',weight:5,opacity:.8,dashArray:'10,5'}).addTo(custTrackMap);
+    custTrackMap.fitBounds([[provLat,provLng],[custLat,custLng]],{padding:[60,60]});
+
+    // Poll every 2s — mirror provider movement
+    startCustomerPoll(booking.id, custLat, custLng);
+  }, 200);
+}
+
+function startCustomerPoll(bookingId, custLat, custLng) {
+  // Mirror the provider's simulated movement
+  let custSimStep = simStep;
+  const custPoll = setInterval(() => {
+    if (!document.getElementById('customerTrackingView').classList.contains('show')) {
+      clearInterval(custPoll); return;
+    }
+    const bk = getBK();
+    const b = bk.find(x => x.id === bookingId);
+    if (!b) { clearInterval(custPoll); return; }
+
+    // Read live provider position
+    const pLat = b.provLiveLatLng ? b.provLiveLatLng.lat : (simPath[simStep]||{}).lat || P.lat;
+    const pLng = b.provLiveLatLng ? b.provLiveLatLng.lng : (simPath[simStep]||{}).lng || P.lng;
+
+    if (provMarkerCust) provMarkerCust.setLatLng([pLat,pLng]);
+    if (custRouteLine) {
+      custTrackMap.removeLayer(custRouteLine);
+      custRouteLine = L.polyline([[pLat,pLng],[custLat,custLng]],{color:'#E8251A',weight:5,opacity:.8}).addTo(custTrackMap);
+    }
+
+    const dist = haversineKm(pLat,pLng,custLat,custLng);
+    const eta = Math.max(1, Math.round(dist*4));
+    const distStr = dist<1?Math.round(dist*1000)+'m':dist.toFixed(1)+'km';
+    document.getElementById('custTrackDist').textContent = distStr;
+    document.getElementById('custTrackTime').textContent = eta+' min';
+    document.getElementById('custTrackETA').textContent = eta+' min';
+    document.getElementById('custTrackSub').textContent = distStr + ' away · Live tracking';
+    document.getElementById('custDrawerSub').textContent = P.name + ' is ' + distStr + ' away';
+
+    const progress = 1-(dist/haversineKm(P.lat||17.38,P.lng||78.48,custLat,custLng));
+    const steps = [
+      {label:'Professional Assigned', desc:P.name+' accepted your booking', done:true},
+      {label:'On the Way', desc:P.name+' is navigating to you', done:false, active:progress<.95},
+      {label:'Arrived', desc:'Professional reached your location', done:progress>=.95},
+      {label:'Job in Progress', desc:'Service underway', done:false},
+      {label:'Payment & Rating', desc:'Complete & rate the service', done:false},
+    ];
+    renderSteps('custTrackSteps', steps);
+
+    if (dist < 0.08) { // within 80m = arrived
+      document.getElementById('custTrackText').textContent = 'Professional has arrived!';
+      document.getElementById('custTrackDot').className = 'track-status-dot waiting';
+    }
+  }, 2000);
+}
+
+function closeCustomerTracking() {
+  document.getElementById('customerTrackingView').classList.remove('show');
+}
+
+// ─── RENDER STEP TIMELINE ────────────────────────────────────────
+function renderSteps(containerId, steps) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = steps.map((s, i) => `
+    <div class="track-step">
+      <div class="step-dot-wrap">
+        <div class="step-dot ${s.done?'done':s.active?'active':'waiting'}">${s.done?'✓':s.active?'●':(i+1)}</div>
+        ${i < steps.length-1 ? `<div class="step-line ${s.done?'done':''}"></div>` : ''}
+      </div>
+      <div class="step-content">
+        <div class="step-title" style="color:${s.done?'#00b37e':s.active?'#1A73E8':'#8b909e'}">${s.label}</div>
+        <div class="step-desc">${s.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 </script>
 
 <!-- ══ OTP REQUEST MODAL (Provider side — enter code customer tells them) ══ -->
