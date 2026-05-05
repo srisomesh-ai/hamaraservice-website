@@ -2,311 +2,406 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Book a Service – Hamara Service</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>Book a Service — HamaraService</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
-  :root {
-    --red:#E8251A; --red-dark:#b81810; --red-light:#fdecea;
-    --orange:#FF6B00; --orange-light:#fff0e6;
-    --green:#1ea84b; --green-light:#e6f9ed;
-    --yellow:#FFCC00; --yellow-light:#fffbe6;
-    --bg:#FFF8F7; --white:#fff;
-    --text:#1c1010; --muted:#7a4f4f; --border:#f2d5d3;
-    --radius:16px; --shadow:0 4px 24px rgba(232,37,26,0.10);
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  html{scroll-behavior:smooth;}
-  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:17px;}
+:root{
+  --brand:#E8251A;--brand2:#c91d14;--brand-bg:#fff1f0;--brand-border:rgba(232,37,26,.2);
+  --ink:#0f1117;--ink2:#3a3f4b;--muted:#8b909e;
+  --line:#eaedf2;--bg:#f7f8fc;--white:#fff;
+  --green:#00956a;--green-bg:#eaf8f2;--green-border:rgba(0,149,106,.2);
+  --blue:#1B4FFF;--blue-bg:#eef2ff;
+  --yellow:#d97706;--yellow-bg:#fffbeb;
+  --r:12px;--r2:18px;--r3:24px;
+  --sh:0 2px 12px rgba(0,0,0,.07);
+  --sh2:0 8px 28px rgba(0,0,0,.10);
+  --sh3:0 24px 60px rgba(0,0,0,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
 
-  header{position:sticky;top:0;z-index:200;background:var(--white);border-top:4px solid var(--red);box-shadow:0 2px 12px rgba(232,37,26,0.12);padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;}
-  .logo{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--red);text-decoration:none;display:flex;align-items:center;gap:10px;}
-  .logo-icon{width:38px;height:38px;background:var(--red);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;}
-  .header-links{display:flex;gap:10px;}
-  .hlink{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none;transition:all .2s;}
-  .hlink.outline{border:2px solid var(--border);color:var(--muted);}
-  .hlink.outline:hover{border-color:var(--red);color:var(--red);}
-  .hlink.filled{background:var(--red);color:white;box-shadow:0 2px 10px rgba(232,37,26,0.25);}
-  .hlink.filled:hover{background:var(--red-dark);}
+header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1px solid var(--line);height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-box{width:32px;height:32px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-box svg{width:18px;height:18px;fill:white;}
+.logo-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:var(--ink);}
+.logo-name span{color:var(--brand);}
+.header-back{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:9px;border:1.5px solid var(--line);}
 
-  /* BOOKING LAYOUT */
-  .booking-layout{display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 68px);}
-  @media(max-width:800px){.booking-layout{grid-template-columns:1fr;}}
+.steps-bar{background:var(--white);border-bottom:1px solid var(--line);padding:14px 20px;}
+.steps{display:flex;align-items:center;max-width:600px;margin:0 auto;}
+.step{display:flex;align-items:center;gap:7px;flex:1;}
+.step-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--muted);background:var(--white);flex-shrink:0;transition:all .3s;}
+.step.done .step-dot{background:var(--green);border-color:var(--green);color:white;}
+.step.active .step-dot{background:var(--brand);border-color:var(--brand);color:white;box-shadow:0 0 0 4px var(--brand-bg);}
+.step-label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.step.active .step-label{color:var(--brand);}
+.step.done .step-label{color:var(--green);}
+.step-line{flex:1;height:2px;background:var(--line);margin:0 6px;transition:background .3s;min-width:8px;}
 
-  /* LEFT PANEL */
-  .left-panel{background:var(--white);border-right:2px solid var(--border);padding:24px;overflow-y:auto;max-height:calc(100vh - 68px);position:sticky;top:68px;}
-  @media(max-width:800px){.left-panel{position:static;max-height:none;border-right:none;border-bottom:2px solid var(--border);}}
+.main{max-width:600px;margin:0 auto;padding:20px 20px 100px;}
 
-  .panel-title{font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px;}
-  .panel-sub{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:20px;}
+.card{background:var(--white);border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden;}
+.card-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.card-icon.red{background:var(--brand-bg);}
+.card-icon.green{background:var(--green-bg);}
+.card-icon.blue{background:var(--blue-bg);}
+.card-icon.yellow{background:var(--yellow-bg);}
+.card-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:var(--ink);}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.card-body{padding:16px 18px;}
 
-  /* SERVICE SELECT */
-  /* SERVICE GRID — Urban Company 3-col style */
-  .svc-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
-  .svc-btn{border:1.5px solid var(--border);border-radius:14px;padding:14px 6px 12px;text-align:center;cursor:pointer;transition:all .18s;background:var(--bg);position:relative;-webkit-tap-highlight-color:transparent;}
-  .svc-btn:active{transform:scale(.94);}
-  .svc-btn.active{border-color:var(--red);background:#fff1f0;}
-  .svc-btn .si{font-size:26px;display:block;margin-bottom:7px;line-height:1;}
-  .svc-btn .sn{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;}
-  .svc-btn .sp{font-size:10px;font-weight:600;color:var(--muted);margin-top:2px;}
-  .svc-btn.active .sn{color:var(--red);}
-  .svc-btn.active .sp{color:rgba(232,37,26,.55);}
-  .svc-hot{position:absolute;top:5px;right:5px;background:var(--red);color:white;font-size:8px;font-weight:800;padding:2px 5px;border-radius:100px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
+.field input,.field select{padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .18s,box-shadow .18s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--brand);background:var(--white);box-shadow:0 0 0 4px var(--brand-bg);}
+.field input::placeholder{color:var(--muted);font-weight:400;}
+.field .hint{font-size:11px;color:var(--muted);margin-top:3px;}
 
-  /* INPUTS */
-  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
-  .field label{font-size:13px;font-weight:800;color:var(--text);}
-  .field input,.field select{padding:12px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;color:var(--text);background:var(--bg);transition:border .2s;width:100%;}
-  .field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 4px rgba(232,37,26,0.08);}
+.svc-search-wrap{position:relative;}
+.svc-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+.svc-search-inp{padding-left:42px !important;}
+.svc-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:var(--sh2);z-index:100;max-height:260px;overflow-y:auto;}
+.svc-drop-item{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .15s;}
+.svc-drop-item:last-child{border:none;}
+.svc-drop-item:hover,.svc-drop-item:active{background:var(--brand-bg);}
+.sdi-emoji{font-size:22px;flex-shrink:0;}
+.sdi-name{font-size:14px;font-weight:700;color:var(--ink);}
+.sdi-price{font-size:12px;font-weight:600;color:var(--green);margin-top:1px;}
+.sdi-arrow{font-size:14px;color:var(--brand);font-weight:800;flex-shrink:0;}
 
-  /* LOCATION */
-  .loc-row{display:flex;gap:8px;margin-bottom:8px;}
-  .loc-input{flex:1;padding:12px 14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;color:var(--text);background:var(--bg);transition:border .2s;}
-  .loc-input:focus{border-color:var(--red);}
-  .loc-gps-btn{padding:12px 14px;background:var(--red-light);border:2px solid var(--red);border-radius:11px;cursor:pointer;font-size:18px;transition:all .2s;white-space:nowrap;}
-  .loc-gps-btn:hover{background:var(--red);color:white;}
-  #userMap{width:100%;height:200px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;}
-  .addr-pill{background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:#7a5a00;margin-bottom:16px;min-height:38px;}
+.sel-svc-pill{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:var(--r);margin-bottom:0;}
+.ssp-emoji{font-size:24px;}
+.ssp-info{flex:1;}
+.ssp-name{font-size:15px;font-weight:700;color:var(--green);}
+.ssp-price{font-size:12px;font-weight:600;color:var(--muted);margin-top:2px;}
+.ssp-change{font-size:12px;font-weight:700;color:var(--brand);cursor:pointer;padding:4px 8px;border-radius:6px;flex-shrink:0;}
+.ssp-change:active{background:var(--brand-bg);}
 
-  .search-btn{width:100%;padding:16px;background:var(--red);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(232,37,26,0.3);display:flex;align-items:center;justify-content:center;gap:8px;}
-  .search-btn:hover{background:var(--red-dark);transform:translateY(-2px);}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
-  /* RIGHT PANEL */
-  .right-panel{padding:24px;overflow-y:auto;}
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);}
+.summary-row:last-child{border:none;padding-bottom:0;}
+.sr-label{font-size:13px;color:var(--muted);font-weight:600;}
+.sr-val{font-size:14px;font-weight:700;color:var(--ink);text-align:right;max-width:60%;}
+.sr-val.price{font-size:18px;color:var(--brand);font-family:'Sora',sans-serif;}
 
-  .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
-  .results-title{font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
-  .results-badge{background:var(--red-light);color:var(--red);font-size:13px;font-weight:800;padding:6px 14px;border-radius:20px;}
+.gps-block{border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;}
+#miniMap{height:200px;background:#e8f0f8;}
+.gps-actions{padding:12px 14px;display:flex;gap:8px;align-items:center;background:var(--white);}
+.gps-btn{display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .18s;}
+.gps-btn.primary{background:var(--brand);color:white;flex:1;justify-content:center;}
+.gps-btn.primary:active{background:var(--brand2);}
+.gps-btn.ghost{background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);}
+.gps-addr{padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink2);background:var(--bg);border-top:1px solid var(--line);line-height:1.5;min-height:42px;display:flex;align-items:center;gap:8px;}
+.gps-addr svg{color:var(--brand);flex-shrink:0;}
+.gps-accuracy{font-size:11px;color:var(--green);font-weight:700;margin-left:auto;flex-shrink:0;}
 
-  /* EMPTY STATE */
-  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
-  .empty-icon{font-size:64px;margin-bottom:16px;}
-  .empty-title{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text);}
-  .empty-sub{font-size:15px;font-weight:600;line-height:1.6;}
+.cta-btn{width:100%;padding:16px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px;box-shadow:0 4px 16px rgba(232,37,26,.3);display:flex;align-items:center;justify-content:center;gap:10px;}
+.cta-btn:hover{background:var(--brand2);}
+.cta-btn:active{transform:scale(.98);}
+.cta-btn:disabled{background:var(--muted);box-shadow:none;cursor:not-allowed;transform:none;}
 
-  /* PROVIDER CARDS */
-  .providers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
-  .prov-card{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .22s;cursor:pointer;}
-  .prov-card:hover{border-color:var(--red);box-shadow:0 8px 32px rgba(232,37,26,0.15);transform:translateY(-3px);}
-  .prov-card-header{background:linear-gradient(135deg,var(--red),var(--orange));padding:16px 18px;display:flex;align-items:center;gap:12px;}
-  .prov-avatar{width:52px;height:52px;background:rgba(255,255,255,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;}
-  .prov-name{font-size:17px;font-weight:800;color:white;}
-  .prov-rating{font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;margin-top:2px;}
-  .prov-body{padding:16px 18px;}
-  .prov-distance{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);font-size:13px;font-weight:800;padding:5px 12px;border-radius:20px;margin-bottom:10px;}
-  .prov-services{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
-  .svc-tag{background:var(--red-light);color:var(--red);font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;}
-  .prov-price{font-size:20px;font-weight:900;color:var(--text);margin-bottom:4px;}
-  .prov-price span{font-size:13px;color:var(--muted);font-weight:600;}
-  .prov-addr{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.4;}
-  .prov-radius-bar{background:var(--bg);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;}
-  .book-now-btn{width:100%;padding:13px;background:var(--red);color:white;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .book-now-btn:hover{background:var(--red-dark);}
+/* ════ RADAR OVERLAY ════ */
+.radar-overlay{display:none;position:fixed;inset:0;z-index:500;background:#080c14;flex-direction:column;align-items:center;overflow-y:auto;}
+.radar-overlay.show{display:flex;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-  /* BOOKING MODAL */
-  .modal-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(10,5,5,0.65);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
-  .modal-overlay.show{display:flex;animation:fadeIn .25s ease;}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .modal{background:white;border-radius:24px;padding:0;max-width:480px;width:92%;box-shadow:0 20px 80px rgba(0,0,0,0.25);animation:slideUp .3s ease;overflow:hidden;}
-  @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
-  .modal-top{background:linear-gradient(135deg,var(--red),var(--orange));padding:24px;color:white;text-align:center;}
-  .modal-top .m-icon{font-size:52px;margin-bottom:8px;}
-  .modal-top .m-title{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;}
-  .modal-top .m-sub{font-size:14px;opacity:.9;font-weight:600;margin-top:4px;}
-  .modal-body{padding:24px;}
-  .modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1.5px solid var(--border);font-size:15px;}
-  .modal-row:last-of-type{border-bottom:none;}
-  .modal-label{color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px;}
-  .modal-value{font-weight:800;color:var(--text);}
-  .modal-value.green{color:var(--green);}
-  .modal-value.red{color:var(--red);}
-  .modal-btns{display:flex;gap:10px;margin-top:20px;}
-  .modal-confirm{flex:1;padding:14px;background:var(--green);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;cursor:pointer;transition:all .2s;}
-  .modal-confirm:hover{background:#178a3c;}
-  .modal-cancel{padding:14px 20px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;}
-  .modal-cancel:hover{border-color:var(--red);color:var(--red);}
+.radar-header{width:100%;padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0;background:rgba(255,255,255,.03);}
+.radar-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:white;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.radar-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:white;}
+.radar-sub-text{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;}
 
-  /* COUNTDOWN MODAL */
-  .countdown-box{text-align:center;padding:28px 24px;}
-  .cd-icon{font-size:56px;margin-bottom:12px;}
-  .cd-title{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:6px;}
-  .cd-sub{font-size:15px;color:var(--muted);font-weight:600;margin-bottom:24px;}
-  .spinner{width:52px;height:52px;border:5px solid var(--red-light);border-top-color:var(--red);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 20px;}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .ring-wrap{width:110px;height:110px;position:relative;margin:0 auto 20px;}
-  .ring-wrap svg{transform:rotate(-90deg);}
-  .ring-wrap circle{fill:none;stroke:var(--border);stroke-width:8;}
-  .ring-wrap circle.prog{stroke:var(--green);stroke-dasharray:283;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear;}
-  .ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-size:34px;font-weight:800;color:var(--green);}
-  .pulse{display:inline-block;width:10px;height:10px;background:var(--green);border-radius:50%;animation:pulse 1s ease-in-out infinite;margin-right:6px;}
-  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:.5}}
+.radar-wrap{position:relative;width:260px;height:260px;margin:24px auto 0;flex-shrink:0;}
+.radar-svg{width:100%;height:100%;}
+.radar-sweep{transform-origin:50% 50%;animation:sweep 2.5s linear infinite;}
+@keyframes sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-  /* CONFIRMED */
-  .confirmed-box{text-align:center;padding:28px 24px;}
-  .conf-icon{font-size:64px;margin-bottom:12px;animation:pop .4s ease;}
-  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
-  .conf-title{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--green);margin-bottom:8px;}
-  .conf-sub{font-size:16px;color:var(--muted);font-weight:600;margin-bottom:20px;}
-  .conf-card{background:var(--green-light);border:2px solid var(--green);border-radius:14px;padding:18px;margin-bottom:20px;text-align:left;}
-  .conf-row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;}
-  .conf-label{color:var(--muted);font-weight:700;}
-  .conf-val{font-weight:800;color:var(--text);}
-  .close-btn{padding:14px 32px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;}
-  .close-btn:hover{border-color:var(--red);color:var(--red);}
+.radar-km{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;color:white;text-align:center;margin-top:14px;}
+.radar-km-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-top:4px;padding:0 20px;}
 
-  /* NO PROVIDERS BANNER */
-  .no-prov-banner{background:var(--yellow-light);border:2px solid var(--yellow);border-radius:14px;padding:20px;text-align:center;margin-bottom:20px;}
-  .no-prov-banner p{font-size:15px;font-weight:700;color:#7a5a00;}
-  .register-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 24px;background:var(--red);color:white;border-radius:10px;text-decoration:none;font-size:15px;font-weight:800;transition:all .2s;}
-  .register-link:hover{background:var(--red-dark);}
+.radar-log{width:100%;max-width:480px;padding:0 20px;margin-top:18px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.rlog{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;display:flex;align-items:flex-start;gap:10px;animation:logIn .3s ease;}
+@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.rlog-ic{font-size:16px;flex-shrink:0;margin-top:1px;}
+.rlog-txt{font-size:13px;font-weight:500;color:rgba(255,255,255,.75);flex:1;line-height:1.5;}
+.rlog-txt strong{color:white;font-weight:700;}
+.rlog-ts{font-size:10px;color:rgba(255,255,255,.35);flex-shrink:0;white-space:nowrap;margin-top:2px;}
+.rlog.success{background:rgba(0,149,106,.15);border-color:rgba(0,149,106,.3);}
+.rlog.warn{background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.25);}
 
-  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--text);color:white;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;z-index:9999;display:none;white-space:nowrap;}
+.radar-cancel{margin:20px auto 32px;padding:12px 32px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);border-radius:100px;color:rgba(255,255,255,.65);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.radar-cancel:hover{background:rgba(255,255,255,.14);color:white;}
+
+/* ════ PROVIDER CARD ════ */
+.prov-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(8,12,20,.85);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center;}
+.prov-overlay.show{display:flex;animation:fadeIn .3s ease;}
+.prov-card{background:var(--white);border-radius:var(--r3) var(--r3) 0 0;width:100%;max-width:480px;padding:0 0 32px;animation:slideUp .4s cubic-bezier(.16,1,.3,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pc-drag{width:40px;height:4px;background:var(--line);border-radius:2px;margin:14px auto 0;}
+.pc-head{padding:16px 22px 14px;border-bottom:1px solid var(--line);}
+.pc-tag{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;margin-bottom:10px;}
+.pc-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);}
+.pc-body{padding:18px 22px;}
+.pc-pro-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.pc-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#ff6b3d);display:flex;align-items:center;justify-content:center;font-size:26px;color:white;flex-shrink:0;border:3px solid var(--white);box-shadow:0 4px 16px rgba(232,37,26,.25);}
+.pc-name{font-size:17px;font-weight:800;color:var(--ink);}
+.pc-stars{color:var(--yellow);font-size:14px;letter-spacing:.5px;}
+.pc-rating{font-size:13px;font-weight:700;color:var(--ink2);margin-left:4px;}
+.pc-jobs{font-size:12px;color:var(--muted);margin-left:4px;}
+.pc-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.pc-badge{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+.pc-badge.v{background:var(--green-bg);color:var(--green);}
+.pc-badge.c{background:var(--blue-bg);color:var(--blue);}
+.pc-eta-box{background:var(--bg);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.pc-eta-num{font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:var(--brand);}
+.pc-eta-lbl{font-size:12px;color:var(--muted);margin-top:2px;}
+.pc-dist{font-size:13px;font-weight:700;color:var(--ink2);}
+.pc-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pc-btn{padding:14px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s;}
+.pc-btn.confirm{background:var(--green);color:white;}
+.pc-btn.confirm:active{background:#007a58;}
+.pc-btn.track{background:var(--blue-bg);color:var(--blue);border:1.5px solid rgba(27,79,255,.2);}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 22px;border-radius:100px;font-size:14px;font-weight:500;z-index:9999;display:none;box-shadow:var(--sh3);white-space:nowrap;max-width:90vw;text-align:center;}
+
+@keyframes blip{0%,100%{opacity:1;r:5}50%{opacity:.5;r:8}}
 </style>
 </head>
 <body>
 
 <header>
   <a class="logo" href="index.html">
-    <div class="logo-icon">🏠</div>
-    Hamara Service
+    <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="logo-name">Hamara<span>Service</span></span>
   </a>
-  <div class="header-links">
-    <a class="hlink outline" href="index.html">🏠 Home</a>
-    <a class="hlink filled" href="provider-register.html">👷 Be a Provider</a>
-  </div>
+  <a class="header-back" href="index.html">← Home</a>
 </header>
 
-<div class="booking-layout">
-
-  <!-- LEFT: SEARCH PANEL -->
-  <div class="left-panel">
-    <div class="panel-title">🔍 Find a Provider</div>
-    <div class="panel-sub">Select service, set your location, find nearby providers</div>
-
-    <!-- SERVICE SELECT -->
-    <div class="field">
-      <label>What service do you need? *</label>
-    </div>
-    <div class="svc-select-grid" id="svcSelectGrid"></div>
-
-    <!-- DATE & TIME -->
-    <div class="field">
-      <label>📅 Date *</label>
-      <input type="date" id="bookDate"/>
-    </div>
-    <div class="field">
-      <label>🕐 Time *</label>
-      <input type="time" id="bookTime"/>
-    </div>
-
-    <!-- USER NAME -->
-    <div class="field">
-      <label>👤 Your Name *</label>
-      <input type="text" id="userName" placeholder="Enter your name"/>
-    </div>
-    <div class="field">
-      <label>📱 Mobile *</label>
-      <input type="tel" id="userPhone" placeholder="10-digit mobile" maxlength="10"/>
-    </div>
-
-    <!-- LOCATION -->
-    <div class="field">
-      <label>📍 Your Location *</label>
-    </div>
-    <div class="loc-row">
-      <input class="loc-input" id="locSearch" type="text" placeholder="Search area or street…" onkeydown="if(event.key==='Enter')searchUserLocation()"/>
-      <button class="loc-gps-btn" onclick="getUserGPS()" title="Use my GPS">🎯</button>
-    </div>
-    <div id="userMap"></div>
-    <div class="addr-pill" id="userAddrPill">Tap map or use GPS to set location</div>
-
-    <button class="search-btn" onclick="findProviders()">
-      🔍 Find Nearest Providers
-    </button>
-  </div>
-
-  <!-- RIGHT: RESULTS -->
-  <div class="right-panel" id="rightPanel">
-    <div class="empty-state" id="emptyState">
-      <div class="empty-icon">🔍</div>
-      <div class="empty-title">Select a Service to Get Started</div>
-      <div class="empty-sub">Choose a service on the left, confirm your location, then click <strong>Find Nearest Providers</strong> to see who's available near you.</div>
-
-    </div>
-    <div id="resultsArea" style="display:none">
-      <div class="results-header">
-        <div class="results-title" id="resultsTitle">Providers Found</div>
-        <div class="results-badge" id="resultsBadge">0 nearby</div>
-      </div>
-      <div id="noBanner" class="no-prov-banner" style="display:none">
-        <p>😔 No providers found within range for this service.<br/>Try a different service or expand your search area.</p>
-        <a class="register-link" href="provider-register.html">👷 Be the First Provider Here!</a>
-      </div>
-      <div class="providers-grid" id="providersGrid"></div>
-    </div>
+<div class="steps-bar">
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="s1"><div class="step-dot" id="sd1">1</div><div class="step-label">Details</div></div>
+    <div class="step-line" id="sl1"></div>
+    <div class="step" id="s2"><div class="step-dot" id="sd2">2</div><div class="step-label">Location</div></div>
+    <div class="step-line" id="sl2"></div>
+    <div class="step" id="s3"><div class="step-dot" id="sd3">3</div><div class="step-label">Searching</div></div>
+    <div class="step-line" id="sl3"></div>
+    <div class="step" id="s4"><div class="step-dot" id="sd4">4</div><div class="step-label">Confirmed</div></div>
   </div>
 </div>
 
-<!-- BOOKING CONFIRM MODAL -->
-<div class="modal-overlay" id="bookModal">
-  <div class="modal">
-    <div id="modalConfirm">
-      <div class="modal-top">
-        <div class="m-icon" id="mIcon">🧹</div>
-        <div class="m-title" id="mTitle">Confirm Booking</div>
-        <div class="m-sub" id="mSub">Review your booking details</div>
+<div class="main">
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon red">🔍</div>
+        <div><div class="card-title">Select Service</div><div class="card-sub">Type to search — e.g. Plumber, AC repair…</div></div>
       </div>
-      <div class="modal-body">
-        <div class="modal-row"><span class="modal-label">👤 Provider</span><span class="modal-value" id="mProvider">—</span></div>
-        <div class="modal-row"><span class="modal-label">🛠️ Service</span><span class="modal-value" id="mService">—</span></div>
-        <div class="modal-row"><span class="modal-label">📍 Distance</span><span class="modal-value green" id="mDist">—</span></div>
-        <div class="modal-row"><span class="modal-label">⏱️ ETA</span><span class="modal-value" id="mEta">—</span></div>
-        <div class="modal-row"><span class="modal-label">💰 Price</span><span class="modal-value red" id="mPrice">—</span></div>
-        <div class="modal-row"><span class="modal-label">📅 Date & Time</span><span class="modal-value" id="mDateTime">—</span></div>
-        <div class="modal-btns">
-          <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-          <button class="modal-confirm" onclick="confirmBooking()">✅ Confirm & Book</button>
+      <div class="card-body">
+        <div class="sel-svc-pill" id="selPill" style="display:none;">
+          <span id="pilEm" style="font-size:24px;"></span>
+          <div class="ssp-info"><div class="ssp-name" id="pilName"></div><div class="ssp-price" id="pilPrice"></div></div>
+          <span class="ssp-change" onclick="clearSvc()">✏️ Change</span>
+        </div>
+        <div id="svcSearchWrap" class="field svc-search-wrap">
+          <label>What service do you need?</label>
+          <svg class="svc-search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="svc-search-inp" type="text" id="svcInp" placeholder="e.g. House cleaning, Plumber, Electrician…" oninput="svcSearch(this.value)" onkeydown="if(event.key==='Enter')pickFirst()" autocomplete="off"/>
+          <div class="svc-drop" id="svcDrop"></div>
+          <span class="hint">Start typing and select from the dropdown</span>
         </div>
       </div>
     </div>
 
-    <!-- PHASE 2: SEARCHING -->
-    <div id="modalSearching" style="display:none">
-      <div class="countdown-box">
-        <div class="cd-icon">🔍</div>
-        <div class="cd-title">Finding Provider…</div>
-        <div class="cd-sub">Connecting you to the nearest available provider</div>
-        <div class="spinner"></div>
-        <div style="font-size:14px;font-weight:700;color:var(--muted)" id="searchStatus">Scanning providers in your area…</div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon blue">👤</div>
+        <div><div class="card-title">Your Details</div><div class="card-sub">Name, mobile, date and time</div></div>
       </div>
-    </div>
-
-    <!-- PHASE 3: COUNTDOWN -->
-    <div id="modalCountdown" style="display:none">
-      <div class="countdown-box">
-        <div class="cd-icon">🎯</div>
-        <div class="cd-title">Provider Found!</div>
-        <div class="cd-sub"><span class="pulse"></span>Waiting for acceptance…</div>
-        <div class="ring-wrap">
-          <svg width="110" height="110" viewBox="0 0 110 110">
-            <circle cx="55" cy="55" r="45"/>
-            <circle cx="55" cy="55" r="45" class="prog" id="progCircle"/>
-          </svg>
-          <div class="ring-num" id="ringNum">60</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="custName" placeholder="Enter your full name"/>
         </div>
-        <div style="font-size:14px;font-weight:700;color:var(--muted)" id="providerWaiting">—</div>
+        <div class="field">
+          <label>Mobile Number</label>
+          <input type="tel" id="custPhone" placeholder="10-digit mobile" maxlength="10" inputmode="numeric"/>
+        </div>
+        <div class="field">
+          <label>Preferred Date</label>
+          <input type="date" id="bookDate"/>
+        </div>
+        <div class="time-row">
+          <div class="field">
+            <label>Hour</label>
+            <select id="bookHour"></select>
+          </div>
+          <div class="field">
+            <label>Minute</label>
+            <select id="bookMinute">
+              <option value="00">:00</option>
+              <option value="15">:15</option>
+              <option value="30">:30</option>
+              <option value="45">:45</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- PHASE 4: CONFIRMED -->
-    <div id="modalConfirmed" style="display:none">
-      <div class="confirmed-box">
-        <div class="conf-icon">✅</div>
-        <div class="conf-title">Booking Confirmed!</div>
-        <div class="conf-sub" id="confSub">Your provider is on the way!</div>
-        <div class="conf-card" id="confCard"></div>
-        <button class="close-btn" onclick="closeModal()">🏠 Back to Home</button>
+    <div class="card" id="summaryCard" style="display:none;">
+      <div class="card-head">
+        <div class="card-icon yellow">📋</div>
+        <div><div class="card-title">Booking Summary</div></div>
+      </div>
+      <div class="card-body">
+        <div class="summary-row"><span class="sr-label">Service</span><span class="sr-val" id="sumSvc">—</span></div>
+        <div class="summary-row"><span class="sr-label">Price</span><span class="sr-val price" id="sumPrice">—</span></div>
+        <div class="summary-row"><span class="sr-label">Date &amp; Time</span><span class="sr-val" id="sumDT">—</span></div>
+        <div class="summary-row"><span class="sr-label">Name</span><span class="sr-val" id="sumName">—</span></div>
+        <div class="summary-row"><span class="sr-label">Mobile</span><span class="sr-val" id="sumPhone">—</span></div>
+      </div>
+    </div>
+
+    <button class="cta-btn" onclick="goStep2()">Continue — Confirm Location →</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" style="display:none;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon green">📍</div>
+        <div><div class="card-title">Confirm Your Location</div><div class="card-sub">Used to find professionals near you. Not shared publicly.</div></div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="gps-block">
+          <div id="miniMap"></div>
+          <div class="gps-addr" id="gpsAddr">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+            <span id="gpsAddrTxt">Tap "Use My GPS" to detect location</span>
+            <span class="gps-accuracy" id="gpsAcc" style="display:none;"></span>
+          </div>
+          <div class="gps-actions">
+            <button class="gps-btn primary" onclick="getGPS()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+              Use My GPS
+            </button>
+            <button class="gps-btn ghost" onclick="toggleLocSearch()">🔍 Search</button>
+          </div>
+        </div>
+        <div id="locSearchBar" style="display:none;padding:12px 14px;border-top:1px solid var(--line);">
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="locQ" placeholder="Type area, street or city…" style="flex:1;padding:10px 13px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLocSearch()"/>
+            <button onclick="doLocSearch()" style="padding:10px 16px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-weight:700;cursor:pointer;font-family:'DM Sans';font-size:13px;">Go</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;font-size:13px;color:var(--green);font-weight:600;display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:18px;flex-shrink:0;">🔒</span>
+      Your location is only shared with the professional after they accept your booking request.
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="cta-btn" onclick="goStep1()" style="background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);box-shadow:none;flex:0 0 auto;width:auto;padding:16px 18px;">← Back</button>
+      <button class="cta-btn" id="findBtn" onclick="startRadar()" disabled>
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        Find Nearest Professional
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- RADAR OVERLAY -->
+<div class="radar-overlay" id="radarOverlay">
+  <div class="radar-header">
+    <button class="radar-back" onclick="cancelRadar()">←</button>
+    <div>
+      <div class="radar-title">Searching for Professionals</div>
+      <div class="radar-sub-text" id="radarSubTxt">Initialising radar…</div>
+    </div>
+  </div>
+
+  <div class="radar-wrap">
+    <svg class="radar-svg" viewBox="0 0 260 260">
+      <defs>
+        <radialGradient id="rg"><stop offset="0%" stop-color="#00ff88" stop-opacity=".06"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0"/></radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <circle cx="130" cy="130" r="18"  fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="40"  fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="62"  fill="none" stroke="rgba(0,255,136,.12)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="84"  fill="none" stroke="rgba(0,255,136,.10)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="106" fill="none" stroke="rgba(0,255,136,.08)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="122" fill="none" stroke="rgba(0,255,136,.06)" stroke-width="1"/>
+      <line x1="130" y1="8" x2="130" y2="252" stroke="rgba(0,255,136,.07)" stroke-width="1"/>
+      <line x1="8" y1="130" x2="252" y2="130" stroke="rgba(0,255,136,.07)" stroke-width="1"/>
+      <!-- Active range ring -->
+      <circle id="activeRing" cx="130" cy="130" r="40" fill="url(#rg)" stroke="#00ff88" stroke-width="2" stroke-dasharray="5 3" opacity=".7"/>
+      <!-- Sweep -->
+      <g class="radar-sweep">
+        <path d="M130,130 L130,8 A122,122 0 0,1 196,37 Z" fill="rgba(0,255,136,.07)" opacity=".9"/>
+      </g>
+      <!-- You dot -->
+      <circle cx="130" cy="130" r="5" fill="#E8251A" filter="url(#glow)"/>
+      <circle cx="130" cy="130" r="9" fill="none" stroke="rgba(232,37,26,.4)" stroke-width="1.5"/>
+      <!-- Blips -->
+      <g id="blipsG"></g>
+    </svg>
+    <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:rgba(0,255,136,.6);letter-spacing:1.5px;white-space:nowrap;" id="ringLbl">1 KM</div>
+  </div>
+
+  <div class="radar-km" id="radarKm">1 km</div>
+  <div class="radar-km-sub" id="radarKmSub">Scanning within 1 km of your location…</div>
+
+  <div class="radar-log" id="radarLog"></div>
+  <button class="radar-cancel" onclick="cancelRadar()">✕ Cancel Search</button>
+</div>
+
+<!-- PROVIDER CARD -->
+<div class="prov-overlay" id="provOverlay">
+  <div class="prov-card">
+    <div class="pc-drag"></div>
+    <div class="pc-head">
+      <div class="pc-tag">✓ Professional Found &amp; Accepted</div>
+      <div class="pc-title">Your professional is on the way!</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-pro-row">
+        <div class="pc-av">👷</div>
+        <div>
+          <div class="pc-name" id="pcName">Professional</div>
+          <div style="display:flex;align-items:center;margin-top:4px;">
+            <span class="pc-stars" id="pcStars">★★★★★</span>
+            <span class="pc-rating" id="pcRating">4.8</span>
+            <span class="pc-jobs" id="pcJobs">· 312 jobs</span>
+          </div>
+          <div class="pc-badges">
+            <span class="pc-badge v">✅ Aadhaar Verified</span>
+            <span class="pc-badge c">🎓 Certified</span>
+          </div>
+        </div>
+      </div>
+      <div class="pc-eta-box">
+        <span style="font-size:28px;">🕐</span>
+        <div>
+          <div class="pc-eta-num" id="pcETA">12 min</div>
+          <div class="pc-eta-lbl">Estimated arrival time</div>
+          <div class="pc-dist" id="pcDist"></div>
+        </div>
+      </div>
+      <div class="pc-btns">
+        <button class="pc-btn confirm" onclick="confirmBooking()">✅ Confirm Booking</button>
+        <button class="pc-btn track" onclick="openTracking()">🗺️ Track Live</button>
       </div>
     </div>
   </div>
@@ -316,378 +411,414 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// ── Services list ──
-const SERVICES = [
-  {icon:'🧹',name:'House Maid',price:'₹150/hr',hot:true},
-  {icon:'🫧',name:'Deep Cleaning',price:'₹1,499',hot:true},
-  {icon:'🚿',name:'Bathroom Cleaning',price:'₹399'},
-  {icon:'🍳',name:'Kitchen Cleaning',price:'₹699'},
-  {icon:'❄️',name:'AC Cleaning',price:'₹599',hot:true},
-  {icon:'🔩',name:'AC Repair',price:'₹599'},
-  {icon:'🔧',name:'Plumber',price:'₹399',hot:true},
-  {icon:'⚡',name:'Electrician',price:'₹399',hot:true},
-  {icon:'🪚',name:'Carpenter',price:'₹349'},
-  {icon:'🍱',name:'Cooking (Meal)',price:'₹299'},
-  {icon:'👨‍🍳',name:'Full-Day Cook',price:'₹799',hot:true},
-  {icon:'✂️',name:'Haircut Men',price:'₹199'},
-  {icon:'💇',name:'Haircut Women',price:'₹349'},
-  {icon:'💆',name:'Body Massage',price:'₹999'},
-  {icon:'👨‍⚕️',name:'Doctor Visit',price:'₹699'},
-  {icon:'💉',name:'Nurse Visit',price:'₹399'},
-  {icon:'🧪',name:'Lab Test',price:'₹199'},
-  {icon:'🚗',name:'Car Wash',price:'₹499'},
-  {icon:'🏍️',name:'Bike Wash',price:'₹199'},
-  {icon:'👶',name:'Baby Sitter',price:'₹200/hr'},
-  {icon:'👴',name:'Elder Care',price:'₹499'},
-  {icon:'🌱',name:'Gardener',price:'₹499'},
-  {icon:'🐛',name:'Pest Control',price:'₹799'},
-  {icon:'🎨',name:'Room Painting',price:'₹1,499'},
+'use strict';
+
+// ── Firebase ──────────────────────────────────────────────────
+const FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+async function fbWrite(path, data) {
+  try {
+    await fetch(FB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:AbortSignal.timeout(6000)});
+  } catch(e){console.warn('FB write:',e.message);}
+}
+async function fbRead(path) {
+  try {
+    const r = await fetch(FB+'/'+path+'.json',{signal:AbortSignal.timeout(5000)});
+    if(r.ok) return await r.json();
+  } catch(e){}
+  return null;
+}
+async function fbDelete(path) {
+  try { await fetch(FB+'/'+path+'.json',{method:'DELETE',signal:AbortSignal.timeout(5000)}); } catch(e){}
+}
+
+// ── Services catalog ──────────────────────────────────────────
+const SVCS = [
+  {e:'🧹',n:'House Maid',              p:'₹150/hr',  pv:150,  kw:['maid','house','clean','sweep','mop']},
+  {e:'🫧',n:'Deep House Cleaning',     p:'₹1,499',   pv:1499, kw:['deep','full','house','thorough','clean']},
+  {e:'🚿',n:'Bathroom Cleaning',       p:'₹399',     pv:399,  kw:['bathroom','toilet','washroom','bath']},
+  {e:'🍳',n:'Kitchen Cleaning',        p:'₹699',     pv:699,  kw:['kitchen','cook','dirty','clean']},
+  {e:'❄️',n:'AC Cleaning',             p:'₹599',     pv:599,  kw:['ac','air','condition','cool','service']},
+  {e:'🔩',n:'AC Repair',               p:'₹599',     pv:599,  kw:['ac','air condition','repair','fix','not cooling']},
+  {e:'🔧',n:'Plumber Visit',           p:'₹399',     pv:399,  kw:['plumb','pipe','leak','water','tap','drain']},
+  {e:'⚡',n:'Electrician Visit',       p:'₹399',     pv:399,  kw:['electric','wire','switch','light','fan','power']},
+  {e:'🪚',n:'Carpenter Visit',         p:'₹349',     pv:349,  kw:['carpenter','wood','furniture','door','window']},
+  {e:'🫙',n:'Washing Machine Repair',  p:'₹549',     pv:549,  kw:['washing','machine','washer','repair']},
+  {e:'🐛',n:'Pest Control',            p:'₹799',     pv:799,  kw:['pest','cockroach','rat','bug','insect']},
+  {e:'🎨',n:'Room Painting',           p:'₹1,499',   pv:1499, kw:['paint','wall','colour','room']},
+  {e:'🍱',n:'Cooking Per Meal',        p:'₹299',     pv:299,  kw:['cook','food','meal','lunch','dinner']},
+  {e:'👨‍🍳',n:'Full-Day Cook',          p:'₹799',     pv:799,  kw:['cook','full day','daily','chef']},
+  {e:'✂️',n:'Haircut (Men)',            p:'₹199',     pv:199,  kw:['haircut','hair','cut','men','barber']},
+  {e:'💇',n:'Haircut (Women)',          p:'₹349',     pv:349,  kw:['haircut','hair','cut','women','ladies']},
+  {e:'💆',n:'Full Body Massage',        p:'₹999',     pv:999,  kw:['massage','body','spa','relax']},
+  {e:'👨‍⚕️',n:'Doctor Visit',           p:'₹699',     pv:699,  kw:['doctor','physician','medical','health','ill']},
+  {e:'💉',n:'Nurse Visit',              p:'₹399',     pv:399,  kw:['nurse','injection','dressing','care']},
+  {e:'🧪',n:'Lab Test Collection',     p:'₹199',     pv:199,  kw:['lab','test','blood','sample']},
+  {e:'🚗',n:'Car Wash',                p:'₹499',     pv:499,  kw:['car','wash','clean','vehicle']},
+  {e:'🏍️',n:'Bike Wash',              p:'₹199',     pv:199,  kw:['bike','motorcycle','wash']},
+  {e:'🧒',n:'Day Care Helper',         p:'₹200/hr',  pv:200,  kw:['baby','child','kid','day care','nanny']},
+  {e:'👴',n:'Elder Care Attendant',    p:'₹499',     pv:499,  kw:['elder','old','senior','care']},
+  {e:'🌱',n:'Gardener',               p:'₹499',     pv:499,  kw:['garden','plant','grass','lawn']},
 ];
 
-let selectedSvc = null;
-let userMap = null, userMarker = null;
-let userLatLng = null, userAddress = '';
-let bookingProvider = null;
-let cdTimer = null;
+// ── State ─────────────────────────────────────────────────────
+let selSvc = null, userLL = null, userAddr = '', miniMap = null, miniMarker = null;
+let bookingId = null, radarActive = false, pollTimer = null;
 
-// ── Render service selector ──
-const svcGrid = document.getElementById('svcSelectGrid');
-SERVICES.forEach((s,i) => {
-  const btn = document.createElement('div');
-  btn.className = 'svc-btn';
-  btn.id = `sb_${i}`;
-  btn.innerHTML = `
-    ${s.hot ? '<div class="svc-hot">Popular</div>' : ''}
-    <span class="si">${s.icon}</span>
-    <span class="sn">${s.name}</span>
-    <span class="sp">${s.price}</span>
-  `;
-  btn.onclick = () => selectSvc(i);
-  svcGrid.appendChild(btn);
-});
-
-function selectSvc(i) {
-  document.querySelectorAll('.svc-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById(`sb_${i}`).classList.add('active');
-  selectedSvc = i;
+// ── Steps ─────────────────────────────────────────────────────
+function setStep(n){
+  [1,2,3,4].forEach(i=>{
+    const s=document.getElementById('s'+i), d=document.getElementById('sd'+i);
+    s.className='step'+(i<n?' done':i===n?' active':'');
+    d.textContent = i<n ? '✓' : i===4?'✓':i;
+    const l=document.getElementById('sl'+i);
+    if(l) l.style.background = i<n?'var(--green)':'var(--line)';
+  });
 }
 
-// ── Default date/time ──
-const now = new Date();
-document.getElementById('bookDate').value = now.toISOString().split('T')[0];
-document.getElementById('bookTime').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+function goStep1(){ document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block'; setStep(1); window.scrollTo(0,0); }
+function goStep2(){ document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='block'; setStep(2); window.scrollTo(0,0); setTimeout(initMap,250); setTimeout(getGPS,600); }
 
-// ── Read URL params — pre-fill from homepage ──────────────────
+// ── Service search ────────────────────────────────────────────
+function svcSearch(q){
+  const drop=document.getElementById('svcDrop');
+  if(!q.trim()){drop.style.display='none';return;}
+  const lq=q.toLowerCase();
+  const res=SVCS.filter(s=>s.n.toLowerCase().includes(lq)||s.kw.some(k=>k.includes(lq))).slice(0,8);
+  if(!res.length){drop.style.display='none';return;}
+  drop.innerHTML=res.map(s=>`<div class="svc-drop-item" onclick="pickSvc(${SVCS.indexOf(s)})">
+    <span class="sdi-emoji">${s.e}</span>
+    <div class="sdi-info"><div class="sdi-name">${hl(s.n,q)}</div><div class="sdi-price">${s.p}</div></div>
+    <span class="sdi-arrow">→</span></div>`).join('');
+  drop.style.display='block';
+}
+function hl(text,q){
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return text;
+  return text.slice(0,i)+'<strong>'+text.slice(i,i+q.length)+'</strong>'+text.slice(i+q.length);
+}
+function pickFirst(){ const f=document.getElementById('svcDrop').querySelector('.svc-drop-item'); if(f)f.click(); }
+function pickSvc(idx){
+  selSvc=SVCS[idx];
+  document.getElementById('svcDrop').style.display='none';
+  document.getElementById('svcInp').value='';
+  document.getElementById('svcSearchWrap').style.display='none';
+  document.getElementById('pilEm').textContent=selSvc.e;
+  document.getElementById('pilName').textContent=selSvc.n;
+  document.getElementById('pilPrice').textContent=selSvc.p+' · Fixed price, no hidden charges';
+  document.getElementById('selPill').style.display='flex';
+  updateSummary();
+  showToast('✅ '+selSvc.n+' selected');
+}
+function clearSvc(){
+  selSvc=null;
+  document.getElementById('selPill').style.display='none';
+  document.getElementById('svcSearchWrap').style.display='block';
+  document.getElementById('svcInp').value='';
+  document.getElementById('svcInp').focus();
+  document.getElementById('summaryCard').style.display='none';
+}
+document.addEventListener('click',e=>{
+  const i=document.getElementById('svcInp'),d=document.getElementById('svcDrop');
+  if(!i.contains(e.target)&&!d.contains(e.target))d.style.display='none';
+});
+
+// ── Date / time defaults ──────────────────────────────────────
+const tom=new Date(); tom.setDate(tom.getDate()+1);
+document.getElementById('bookDate').value=tom.toISOString().split('T')[0];
+document.getElementById('bookDate').min=new Date().toISOString().split('T')[0];
+const hs=document.getElementById('bookHour');
+for(let h=6;h<=21;h++){
+  const lbl=h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
+  hs.innerHTML+=`<option value="${String(h).padStart(2,'0')}">${lbl}</option>`;
+}
+hs.value='09';
+['custName','custPhone','bookDate','bookHour','bookMinute'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){el.addEventListener('change',updateSummary);el.addEventListener('input',updateSummary);}
+});
+
+function updateSummary(){
+  if(!selSvc)return;
+  const nm=document.getElementById('custName').value.trim();
+  const ph=document.getElementById('custPhone').value.trim();
+  const dt=document.getElementById('bookDate').value;
+  if(!nm||!ph||!dt)return;
+  document.getElementById('summaryCard').style.display='block';
+  document.getElementById('sumSvc').textContent=selSvc.n;
+  document.getElementById('sumPrice').textContent=selSvc.p;
+  document.getElementById('sumDT').textContent=dt+' at '+document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
+  document.getElementById('sumName').textContent=nm;
+  document.getElementById('sumPhone').textContent=ph;
+}
+
+// ── Step 1 → 2 ───────────────────────────────────────────────
+function goStep2(){
+  if(!selSvc){showToast('⚠️ Please select a service first');return;}
+  const nm=document.getElementById('custName').value.trim();
+  const ph=document.getElementById('custPhone').value.trim();
+  const dt=document.getElementById('bookDate').value;
+  if(!nm){showToast('⚠️ Please enter your name');return;}
+  if(!/^\d{10}$/.test(ph)){showToast('⚠️ Enter a valid 10-digit mobile number');return;}
+  if(!dt){showToast('⚠️ Please select a date');return;}
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='block';
+  setStep(2);window.scrollTo(0,0);
+  setTimeout(initMap,250);
+  setTimeout(getGPS,600);
+}
+
+// ── Mini map ──────────────────────────────────────────────────
+function initMap(){
+  if(miniMap){miniMap.invalidateSize();return;}
+  miniMap=L.map('miniMap',{zoomControl:true,attributionControl:false}).setView([17.385,78.486],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(miniMap);
+  miniMap.on('click',e=>{pin(e.latlng.lat,e.latlng.lng);revGeo(e.latlng.lat,e.latlng.lng);});
+}
+function pin(lat,lng){
+  if(miniMarker)miniMap.removeLayer(miniMarker);
+  const ic=L.divIcon({html:`<div style="width:32px;height:32px;background:var(--brand);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.45);"></div>`,className:'',iconSize:[32,32],iconAnchor:[16,32]});
+  miniMarker=L.marker([lat,lng],{icon:ic}).addTo(miniMap);
+  miniMap.panTo([lat,lng]);
+  userLL={lat,lng};
+  document.getElementById('findBtn').disabled=false;
+  document.getElementById('findBtn').style.opacity='1';
+}
+async function revGeo(lat,lng){
+  document.getElementById('gpsAddrTxt').textContent='⏳ Fetching address…';
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    const a=d.address||{};
+    userAddr=[a.road,a.suburb||a.neighbourhood,a.city||a.town||a.state_district,a.state].filter(Boolean).join(', ')||d.display_name||`${lat.toFixed(5)},${lng.toFixed(5)}`;
+    document.getElementById('gpsAddrTxt').textContent=userAddr;
+  }catch(e){userAddr=`${lat.toFixed(5)},${lng.toFixed(5)}`;document.getElementById('gpsAddrTxt').textContent=userAddr;}
+}
+function getGPS(){
+  if(!navigator.geolocation){showToast('❌ GPS not available on this device');return;}
+  document.getElementById('gpsAddrTxt').textContent='📡 Detecting GPS location…';
+  document.getElementById('gpsAcc').style.display='none';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+    pin(lat,lng);miniMap.setView([lat,lng],16);revGeo(lat,lng);
+    document.getElementById('gpsAcc').textContent='±'+acc+'m';
+    document.getElementById('gpsAcc').style.display='block';
+    showToast('📍 Location detected — accuracy ±'+acc+'m');
+  },err=>{
+    const m={1:'Location permission denied — tap Allow in browser',2:'GPS signal weak — try moving outdoors',3:'GPS timed out — try again'};
+    showToast('⚠️ '+(m[err.code]||'Could not get GPS'));
+    document.getElementById('gpsAddrTxt').textContent=m[err.code]||'Could not detect GPS';
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+}
+function toggleLocSearch(){
+  const b=document.getElementById('locSearchBar');
+  b.style.display=b.style.display==='none'?'block':'none';
+  if(b.style.display==='block')document.getElementById('locQ').focus();
+}
+async function doLocSearch(){
+  const q=document.getElementById('locQ').value.trim();if(!q)return;
+  document.getElementById('gpsAddrTxt').textContent='🔍 Searching…';
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=in`,{headers:{'Accept-Language':'en'}});
+    const res=await r.json();
+    if(!res.length){showToast('❌ Location not found');return;}
+    const lat=+res[0].lat,lng=+res[0].lon;
+    pin(lat,lng);miniMap.setView([lat,lng],15);await revGeo(lat,lng);
+    document.getElementById('locSearchBar').style.display='none';
+  }catch(e){showToast('❌ Search failed');}
+}
+
+// ── RADAR SEARCH ──────────────────────────────────────────────
+const RANGES   = [1,3,5,10,15,20];
+const RING_R   = [18,40,62,84,106,122]; // SVG radius per range
+let curRange   = 0;
+
+function startRadar(){
+  if(!userLL){showToast('⚠️ Confirm your location first');return;}
+
+  bookingId='HS-BK-'+Date.now().toString(36).toUpperCase();
+  const booking={
+    id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
+    customer:document.getElementById('custName').value.trim(),
+    phone:document.getElementById('custPhone').value.trim(),
+    date:document.getElementById('bookDate').value,
+    time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
+    lat:userLL.lat,lng:userLL.lng,address:userAddr,
+    status:'searching',createdAt:new Date().toISOString()
+  };
+  fbWrite('bookings/'+bookingId,booking);
+  fbWrite('active_bookings/'+bookingId,{...booking,acceptedBy:null});
+
+  radarActive=true;curRange=0;
+  document.getElementById('radarLog').innerHTML='';
+  document.getElementById('blipsG').innerHTML='';
+  document.getElementById('radarOverlay').classList.add('show');
+  setStep(3);
+  rlog('🚀','Radar search started for <strong>'+selSvc.n+'</strong>','');
+  runRange(0);
+}
+
+async function runRange(idx){
+  if(!radarActive)return;
+  if(idx>=RANGES.length){
+    rlog('❌','No providers found within 20 km. Please try again later.','warn');
+    clearTimeout(pollTimer);return;
+  }
+  curRange=idx;
+  const km=RANGES[idx];
+
+  // Update UI
+  document.getElementById('radarKm').textContent=km+' km';
+  document.getElementById('radarKmSub').textContent='Scanning within '+km+' km of your location…';
+  document.getElementById('radarSubTxt').textContent='Range: '+km+' km';
+  document.getElementById('ringLbl').textContent=km+' KM';
+  document.getElementById('activeRing').setAttribute('r',RING_R[idx]);
+
+  if(idx===0){
+    rlog('📡','Radar active — scanning <strong>'+km+' km</strong> radius','');
+  } else {
+    rlog('↔️','Expanding range to <strong>'+km+' km</strong> — no response within '+RANGES[idx-1]+' km','warn');
+  }
+
+  // Count real providers in localStorage within range
+  const allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  const inRange=allProvs.filter(p=>{
+    if(!p.lat||!p.lng)return false;
+    return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
+  });
+  rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' found within '+km+' km — sending booking request','');
+
+  // Add radar blips
+  for(let i=0;i<Math.min(inRange.length+Math.floor(Math.random()*2),6);i++) addBlip(idx);
+
+  // Notify via Firebase
+  await fbWrite('active_bookings/'+bookingId+'/range',km);
+  await fbWrite('notifications/search_'+bookingId,{
+    bookingId,service:selSvc.n,lat:userLL.lat,lng:userLL.lng,range:km,
+    ts:Date.now(),status:'searching'
+  });
+
+  // Poll for acceptance every 3s for up to 18s, then expand
+  let waited=0;
+  const maxWait=18000;
+  clearTimeout(pollTimer);
+
+  const poll=async()=>{
+    if(!radarActive)return;
+    waited+=3000;
+
+    // Check Firebase for acceptance
+    const req=await fbRead('active_bookings/'+bookingId);
+    if(req&&req.acceptedBy){
+      clearTimeout(pollTimer);
+      provAccepted(req.acceptedBy);return;
+    }
+    // Check localStorage (provider dashboard acceptance)
+    const lsKey='hs_accepted_'+bookingId;
+    const lsVal=localStorage.getItem(lsKey);
+    if(lsVal){
+      localStorage.removeItem(lsKey);
+      clearTimeout(pollTimer);
+      provAccepted(JSON.parse(lsVal));return;
+    }
+    if(waited>=maxWait){
+      if(idx<RANGES.length-1)runRange(idx+1);
+      else{rlog('❌','No providers accepted your request. Please try again.','warn');}
+      return;
+    }
+    pollTimer=setTimeout(poll,3000);
+  };
+  pollTimer=setTimeout(poll,3000);
+}
+
+function addBlip(rangeIdx){
+  const g=document.getElementById('blipsG');
+  const angle=Math.random()*2*Math.PI;
+  const maxR=RING_R[rangeIdx]*0.85, minR=rangeIdx===0?8:RING_R[rangeIdx]*0.3;
+  const r=minR+Math.random()*(maxR-minR);
+  const x=130+r*Math.cos(angle), y=130+r*Math.sin(angle);
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',4);
+  c.setAttribute('fill','#00ff88');c.setAttribute('opacity','0.85');
+  c.style.animation='blip 2s ease infinite';
+  c.style.animationDelay=(Math.random()*1.5)+'s';
+  g.appendChild(c);
+}
+
+function rlog(icon,text,type){
+  const log=document.getElementById('radarLog');
+  const now=new Date();
+  const ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  const div=document.createElement('div');
+  div.className='rlog '+(type||'');
+  div.innerHTML=`<span class="rlog-ic">${icon}</span><span class="rlog-txt">${text}</span><span class="rlog-ts">${ts}</span>`;
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+}
+
+function cancelRadar(){
+  radarActive=false;clearTimeout(pollTimer);
+  if(bookingId){fbDelete('active_bookings/'+bookingId);fbDelete('notifications/search_'+bookingId);}
+  document.getElementById('radarOverlay').classList.remove('show');setStep(2);
+}
+
+// ── Provider accepted ─────────────────────────────────────────
+function provAccepted(data){
+  radarActive=false;clearTimeout(pollTimer);
+  document.getElementById('radarOverlay').classList.remove('show');
+  const p=typeof data==='string'?JSON.parse(data):data||{};
+  const dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat||userLL.lat+0.01,p.lng||userLL.lng+0.01).toFixed(1):(Math.random()*2+0.5).toFixed(1);
+  const eta=Math.max(3,Math.round(dist*4+2));
+  document.getElementById('pcName').textContent=p.name||'Professional';
+  document.getElementById('pcRating').textContent=p.rating||'4.8';
+  document.getElementById('pcJobs').textContent='· '+(p.totalJobs||Math.floor(180+Math.random()*300))+' jobs';
+  document.getElementById('pcETA').textContent=eta+' min';
+  document.getElementById('pcDist').textContent=dist+' km away';
+  document.getElementById('provOverlay').classList.add('show');
+  rlog('🎉','<strong>'+(p.name||'Professional')+'</strong> accepted your booking!','success');
+  setStep(4);
+}
+
+function confirmBooking(){
+  document.getElementById('provOverlay').classList.remove('show');
+  if(bookingId){
+    fbWrite('bookings/'+bookingId+'/status','confirmed');
+    fbDelete('active_bookings/'+bookingId);
+    // Save to localStorage
+    const bk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+    bk.push({id:bookingId,service:selSvc.n,price:selSvc.p,date:document.getElementById('bookDate').value,time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,customer:document.getElementById('custName').value.trim(),phone:document.getElementById('custPhone').value.trim(),address:userAddr,lat:userLL.lat,lng:userLL.lng,status:'confirmed'});
+    localStorage.setItem('hs_customer_bookings',JSON.stringify(bk));
+  }
+  showToast('🎉 Booking confirmed! Your professional is on the way.');
+  setTimeout(()=>window.location.href='index.html',2500);
+}
+
+function openTracking(){
+  document.getElementById('provOverlay').classList.remove('show');
+  if(bookingId)window.location.href='provider-dashboard.html?track='+bookingId;
+}
+
+// ── Haversine ─────────────────────────────────────────────────
+function hvs(a,b,c,d){
+  const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180;
+  const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+// ── URL params from homepage ──────────────────────────────────
 (function(){
-  const params = new URLSearchParams(window.location.search);
-  const svc = params.get('service');
-  const locRaw = params.get('loc');
-  const addr = params.get('addr');
-
-  if (svc) {
-    // Find and select the matching service button
-    const btns = document.querySelectorAll('.svc-btn');
-    btns.forEach(btn => {
-      const nm = btn.querySelector('.sn');
-      if (nm && nm.textContent.toLowerCase().includes(svc.toLowerCase())) {
-        btn.click();
-      }
-    });
-    // Also try partial match on service name
-    SERVICES.forEach((s,i) => {
-      if (s.name.toLowerCase().includes(svc.toLowerCase())) {
-        selectSvc(i);
-      }
-    });
+  const p=new URLSearchParams(window.location.search);
+  const svc=p.get('service'),locR=p.get('loc'),addr=p.get('addr');
+  if(svc){
+    const m=SVCS.find(s=>s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()));
+    if(m)setTimeout(()=>pickSvc(SVCS.indexOf(m)),300);
+    else{setTimeout(()=>{document.getElementById('svcInp').value=svc;svcSearch(svc);},300);}
   }
-
-  if (locRaw) {
-    try {
-      const ll = JSON.parse(decodeURIComponent(locRaw));
-      userLatLng = ll;
-      if (addr) {
-        userAddress = decodeURIComponent(addr);
-        document.getElementById('userAddrPill').textContent = '📍 ' + userAddress;
-      }
-      // If map is ready, place pin
-      if (userMap) {
-        placeUserPin(ll.lat, ll.lng);
-        userMap.setView([ll.lat, ll.lng], 14);
-      } else {
-        // Store for when map loads
-        window._pendingLoc = ll;
-      }
-    } catch(e) {}
-  }
-
-  // If both service and location came from homepage, auto-search immediately
-  if (svc && locRaw) {
-    setTimeout(() => {
-      if (selectedSvc !== null && userLatLng) {
-        findProviders();
-        // Scroll results into view on mobile
-        setTimeout(() => {
-          const rp = document.getElementById('rightPanel');
-          if (rp && window.innerWidth < 800) rp.scrollIntoView({behavior:'smooth'});
-        }, 800);
-      }
-    }, 600);
-  }
+  if(locR){try{const ll=JSON.parse(decodeURIComponent(locR));userLL=ll;if(addr)userAddr=decodeURIComponent(addr);}catch(e){}}
 })();
 
-// ── User Map ──
-function initUserMap() {
-  if (userMap) return;
-  userMap = L.map('userMap',{zoomControl:false}).setView([20.5937,78.9629],5);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(userMap);
-  userMap.on('click',e=>placeUserPin(e.latlng.lat,e.latlng.lng));
-  getUserGPS(true);
-}
-window.addEventListener('load', function(){
-  initUserMap();
-  // Apply location passed from homepage
-  if (window._pendingLoc) {
-    setTimeout(() => {
-      placeUserPin(window._pendingLoc.lat, window._pendingLoc.lng);
-      if (userMap) userMap.setView([window._pendingLoc.lat, window._pendingLoc.lng], 14);
-    }, 500);
-  }
-});
-
-function placeUserPin(lat,lng) {
-  userLatLng={lat,lng};
-  document.getElementById('manualCoords') && (document.getElementById('manualCoords').textContent=`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-  if (userMarker) userMarker.setLatLng([lat,lng]);
-  else {
-    userMarker = L.marker([lat,lng],{
-      icon:L.divIcon({html:`<div style="font-size:32px;margin-top:-32px;margin-left:-12px;filter:drop-shadow(0 3px 6px rgba(232,37,26,0.5))">📍</div>`,className:'',iconSize:[24,32],iconAnchor:[12,32]})
-    }).addTo(userMap);
-  }
-  reverseGeocodeUser(lat,lng);
-}
-
-function getUserGPS(silent) {
-  if (!navigator.geolocation){if(!silent)showToast('❌ GPS not supported');return;}
-  if (!silent) showToast('🎯 Getting location…');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const{latitude:lat,longitude:lng}=pos.coords;
-    if(!userMap) initUserMap();
-    userMap.setView([lat,lng],15);
-    placeUserPin(lat,lng);
-    if(!silent) showToast('✅ Location set!');
-  },()=>{if(!silent)showToast('❌ Could not get GPS');},{timeout:10000});
-}
-
-function searchUserLocation() {
-  const q = document.getElementById('locSearch').value.trim();
-  if(!q){showToast('⚠️ Enter a location');return;}
-  showToast('🔍 Searching…');
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
-  .then(r=>r.json()).then(res=>{
-    if(!res.length){showToast('❌ Not found');return;}
-    const{lat,lon}=res[0];
-    if(!userMap) initUserMap();
-    userMap.setView([+lat,+lon],15);
-    placeUserPin(+lat,+lon);
-  }).catch(()=>showToast('❌ Search failed'));
-}
-
-let gcTimer;
-function reverseGeocodeUser(lat,lng){
-  document.getElementById('userAddrPill').textContent='Fetching address…';
-  clearTimeout(gcTimer);
-  gcTimer=setTimeout(()=>{
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(d=>{
-      const a=d.address||{};
-      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
-      userAddress=parts.join(', ')||d.display_name||`${lat.toFixed(5)},${lng.toFixed(5)}`;
-      document.getElementById('userAddrPill').textContent='📍 '+userAddress;
-    }).catch(()=>{userAddress=`${lat.toFixed(5)},${lng.toFixed(5)}`;document.getElementById('userAddrPill').textContent='📍 '+userAddress;});
-  },600);
-}
-
-// ── Haversine Distance ──
-function haversine(lat1,lng1,lat2,lng2){
-  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-// ── Find Providers ──
-function findProviders() {
-  // Scroll to results on mobile immediately
-  if (window.innerWidth < 800) {
-    setTimeout(() => {
-      const rp = document.getElementById('rightPanel');
-      if (rp) rp.scrollIntoView({behavior:'smooth', block:'start'});
-    }, 300);
-  }
-  if (selectedSvc===null){showToast('⚠️ Please select a service');return;}
-  if (!userLatLng){showToast('⚠️ Please set your location');return;}
-  if (!document.getElementById('userName').value.trim()){showToast('⚠️ Please enter your name');return;}
-  if (!document.getElementById('userPhone').value.trim()||document.getElementById('userPhone').value.length<10){showToast('⚠️ Enter valid mobile number');return;}
-
-  const svcName = SERVICES[selectedSvc].name;
-  const providers = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-
-  // Filter: provider offers this service AND user is within provider's radius
-  const matching = providers
-    .filter(p => p.available && p.services.some(s=>s.name===svcName))
-    .map(p => {
-      const dist = haversine(userLatLng.lat, userLatLng.lng, p.lat, p.lng);
-      return {...p, dist};
-    })
-    .filter(p => p.dist <= p.radius)
-    .sort((a,b) => a.dist-b.dist);
-
-  // Show results
-  document.getElementById('emptyState').style.display='none';
-  document.getElementById('resultsArea').style.display='block';
-  document.getElementById('resultsTitle').textContent=`Providers for "${svcName}"`;
-  document.getElementById('resultsBadge').textContent=`${matching.length} nearby`;
-
-  const grid=document.getElementById('providersGrid');
-  grid.innerHTML='';
-
-  if(!matching.length){
-    document.getElementById('noBanner').style.display='block';
-    return;
-  }
-  document.getElementById('noBanner').style.display='none';
-
-  matching.forEach(p=>{
-    const svcObj = p.services.find(s=>s.name===svcName);
-    const price = svcObj?.price||499;
-    const distTxt = p.dist<1 ? `${(p.dist*1000).toFixed(0)} m away` : `${p.dist.toFixed(1)} km away`;
-    const eta = Math.round(p.dist*3+5); // rough estimate
-
-    const card=document.createElement('div');
-    card.className='prov-card';
-    card.innerHTML=`
-      <div class="prov-card-header">
-        <div class="prov-avatar">👷</div>
-        <div>
-          <div class="prov-name">${p.name}</div>
-          <div class="prov-rating">⭐ ${p.rating} · ${p.experience}</div>
-        </div>
-      </div>
-      <div class="prov-body">
-        <div class="prov-distance">📍 ${distTxt}</div>
-        <div class="prov-services">
-          ${p.services.map(s=>`<span class="svc-tag">${s.icon} ${s.name}</span>`).join('')}
-        </div>
-        <div class="prov-price">₹${price} <span>per visit</span></div>
-        <div class="prov-addr">📍 ${p.address||'Location set'}</div>
-        <div class="prov-radius-bar">
-          <span>🔵 Serves up to ${p.radius} km</span>
-          <span>⏱️ ETA ~${eta} min</span>
-        </div>
-        <button class="book-now-btn" onclick="openBookModal(${JSON.stringify(p).replace(/"/g,'&quot;')}, ${price}, '${distTxt}', ${eta})">
-          ✅ Book Now
-        </button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-
-  document.getElementById('rightPanel').scrollIntoView({behavior:'smooth'});
-}
-
-// ── Book Modal ──
-function openBookModal(provider, price, distTxt, eta) {
-  bookingProvider = provider;
-  const svcName = SERVICES[selectedSvc].name;
-  const svcIcon = SERVICES[selectedSvc].icon;
-  const date = document.getElementById('bookDate').value;
-  const time = document.getElementById('bookTime').value;
-
-  document.getElementById('mIcon').textContent = svcIcon;
-  document.getElementById('mTitle').textContent = 'Confirm Booking';
-  document.getElementById('mSub').textContent = `${svcIcon} ${svcName}`;
-  document.getElementById('mProvider').textContent = provider.name;
-  document.getElementById('mService').textContent = `${svcIcon} ${svcName}`;
-  document.getElementById('mDist').textContent = distTxt;
-  document.getElementById('mEta').textContent = `~${eta} minutes`;
-  document.getElementById('mPrice').textContent = `₹${price}`;
-  document.getElementById('mDateTime').textContent = `${date} at ${time}`;
-
-  showPhase('modalConfirm');
-  document.getElementById('bookModal').classList.add('show');
-}
-
-function showPhase(id) {
-  ['modalConfirm','modalSearching','modalCountdown','modalConfirmed'].forEach(p=>{
-    document.getElementById(p).style.display = p===id ? 'block' : 'none';
-  });
-}
-
-function confirmBooking() {
-  showPhase('modalSearching');
-  let step=0;
-  const statuses=['Scanning providers in your area…','Checking availability…','Contacting nearest provider…','Provider is responding…'];
-  const si=setInterval(()=>{
-    if(step<statuses.length) document.getElementById('searchStatus').textContent=statuses[step++];
-    else clearInterval(si);
-  },700);
-  setTimeout(()=>{clearInterval(si);startCountdown();},3000);
-}
-
-function startCountdown() {
-  showPhase('modalCountdown');
-  document.getElementById('providerWaiting').innerHTML=`🧑 ${bookingProvider.name} · ⭐ ${bookingProvider.rating}`;
-  let secs=60;
-  const num=document.getElementById('ringNum');
-  const circle=document.getElementById('progCircle');
-  circle.style.strokeDashoffset=0;
-  num.textContent=secs;
-
-  clearInterval(cdTimer);
-  cdTimer=setInterval(()=>{
-    secs--;
-    num.textContent=secs;
-    circle.style.strokeDashoffset=283*(1-secs/60);
-    if(secs<=10){circle.style.stroke='#FFCC00';num.style.color='#b38a00';}
-    if(secs<=0){clearInterval(cdTimer);showConfirmed();}
-  },1000);
-
-  // Auto-accept after 5 seconds for demo
-  setTimeout(()=>{clearInterval(cdTimer);showConfirmed();},5000);
-}
-
-function showConfirmed() {
-  const svcName=SERVICES[selectedSvc].name;
-  const svcIcon=SERVICES[selectedSvc].icon;
-  const svcObj=bookingProvider.services.find(s=>s.name===svcName);
-  const price=svcObj?.price||499;
-  const bookingId='HS-'+Math.random().toString(36).substr(2,8).toUpperCase();
-
-  document.getElementById('confSub').textContent=`${bookingProvider.name} has accepted your booking!`;
-  document.getElementById('confCard').innerHTML=`
-    <div class="conf-row"><span class="conf-label">📋 Booking ID</span><span class="conf-val">${bookingId}</span></div>
-    <div class="conf-row"><span class="conf-label">🛠️ Service</span><span class="conf-val">${svcIcon} ${svcName}</span></div>
-    <div class="conf-row"><span class="conf-label">👷 Provider</span><span class="conf-val">${bookingProvider.name}</span></div>
-    <div class="conf-row"><span class="conf-label">📱 Contact</span><span class="conf-val">${bookingProvider.phone}</span></div>
-    <div class="conf-row"><span class="conf-label">💰 Amount</span><span class="conf-val">₹${price}</span></div>
-    <div class="conf-row"><span class="conf-label">📅 Scheduled</span><span class="conf-val">${document.getElementById('bookDate').value} ${document.getElementById('bookTime').value}</span></div>
-    <div class="conf-row"><span class="conf-label">👤 Customer</span><span class="conf-val">${document.getElementById('userName').value}</span></div>
-  `;
-  showPhase('modalConfirmed');
-}
-
-function closeModal() {
-  clearInterval(cdTimer);
-  document.getElementById('bookModal').classList.remove('show');
-  // Reset ring
-  document.getElementById('progCircle').style.stroke='var(--green)';
-  document.getElementById('ringNum').style.color='var(--green)';
-}
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.style.display='block';
-  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);
-}
+// ── Toast ─────────────────────────────────────────────────────
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
 </script>
 </body>
 </html>
