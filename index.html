@@ -143,18 +143,29 @@ section{padding:80px 40px;}
   .services-grid{grid-template-columns:repeat(5,1fr);}
 }
 .svc-card{
-  background:var(--bg);border:1.5px solid var(--line);
-  border-radius:var(--r2);padding:24px 16px;
-  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:var(--white);border:1.5px solid var(--line);
+  border-radius:var(--r2);padding:0;
+  display:flex;flex-direction:column;align-items:center;
   cursor:pointer;transition:all .25s;text-align:center;
   position:relative;overflow:hidden;
+  box-shadow:var(--sh);
 }
+.svc-card-img{
+  width:100%;aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+  font-size:44px;background:var(--brand-soft);
+  border-radius:var(--r2) var(--r2) 0 0;
+  transition:background .25s;
+}
+.svc-card:hover .svc-card-img,.svc-card.popular .svc-card-img{background:linear-gradient(135deg,var(--brand-soft),#ffe0de);}
+.svc-card-info{padding:10px 10px 12px;width:100%;}
 .svc-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--brand),#ff8a7a);opacity:0;transition:opacity .25s;}
 .svc-card:hover{border-color:var(--brand);transform:translateY(-4px);box-shadow:var(--sh2);}
 .svc-card:hover::before{opacity:.05;}
 .svc-card.popular{border-color:rgba(232,37,26,.2);background:var(--brand-soft);}
-.svc-emoji{font-size:36px;line-height:1;position:relative;}
-.svc-name{font-size:13px;font-weight:600;color:var(--ink2);line-height:1.3;position:relative;}
+.svc-emoji{display:none;}
+.svc-name{font-size:12px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.svc-price-tag{font-size:11px;font-weight:600;color:var(--green);margin-top:2px;}
 .svc-card:hover .svc-name{color:var(--brand);}
 .svc-pop{position:absolute;top:10px;right:10px;background:var(--brand);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;letter-spacing:.5px;}
 .svc-book{
@@ -810,9 +821,11 @@ const SERVICES = [
 document.getElementById('servicesGrid').innerHTML = SERVICES.map(s=>`
   <div class="svc-card ${s.popular?'popular':''}" onclick="selectService('${s.name}')">
     ${s.popular?'<div class="svc-pop">Popular</div>':''}
-    <div class="svc-emoji">${s.emoji}</div>
-    <div class="svc-name">${s.name}</div>
-    <button class="svc-book">Book Now</button>
+    <div class="svc-card-img">${s.emoji}</div>
+    <div class="svc-card-info">
+      <div class="svc-name">${s.name}</div>
+      <div class="svc-price-tag">${s.price||''}</div>
+    </div>
   </div>`).join('');
 
 // ── HEADER SCROLL
@@ -826,6 +839,78 @@ function setTab(btn){
   btn.classList.add('active');
 }
 
+// ── LIVE SEARCH ──────────────────────────────
+const ALL_SERVICES = [
+  {name:'House Maid',emoji:'🧹',price:'₹150/hr'},
+  {name:'Deep Cleaning',emoji:'🫧',price:'₹1,499'},
+  {name:'Bathroom Cleaning',emoji:'🚿',price:'₹399'},
+  {name:'Kitchen Cleaning',emoji:'🍳',price:'₹699'},
+  {name:'AC Cleaning',emoji:'❄️',price:'₹599'},
+  {name:'AC Repair',emoji:'🔩',price:'₹599'},
+  {name:'Plumber Visit',emoji:'🔧',price:'₹399'},
+  {name:'Electrician Visit',emoji:'⚡',price:'₹399'},
+  {name:'Carpenter Visit',emoji:'🪚',price:'₹349'},
+  {name:'Pest Control',emoji:'🐛',price:'₹799'},
+  {name:'Room Painting',emoji:'🎨',price:'₹1,499'},
+  {name:'Washing Machine Repair',emoji:'🫙',price:'₹549'},
+  {name:'Car Wash',emoji:'🚗',price:'₹499'},
+  {name:'Bike Wash',emoji:'🏍️',price:'₹199'},
+  {name:'Doctor Visit',emoji:'👨‍⚕️',price:'₹699'},
+  {name:'Lab Test Collection',emoji:'🧪',price:'₹199'},
+  {name:'Nurse Visit',emoji:'💉',price:'₹399'},
+  {name:'Haircut (Men)',emoji:'✂️',price:'₹199'},
+  {name:'Haircut (Women)',emoji:'💇',price:'₹349'},
+  {name:'Full Body Massage',emoji:'💆',price:'₹999'},
+  {name:'Day Care Helper',emoji:'🧒',price:'₹200/hr'},
+  {name:'Elder Care Attendant',emoji:'👴',price:'₹499'},
+  {name:'Cooking Person (Per Meal)',emoji:'🍱',price:'₹299'},
+  {name:'Full-Day Cook',emoji:'👨‍🍳',price:'₹799'},
+  {name:'Gardener',emoji:'🌱',price:'₹499'},
+];
+let selectedServiceName = '';
+
+function liveSearch(q) {
+  const dd = document.getElementById('searchDropdown');
+  if (!q || q.length < 1) { dd.style.display = 'none'; return; }
+  const results = ALL_SERVICES.filter(s =>
+    s.name.toLowerCase().includes(q.toLowerCase())
+  );
+  if (!results.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = results.map(s => `
+    <div onclick="pickService('${s.name}')"
+      style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .15s;"
+      onmouseover="this.style.background='var(--brand-soft)'" onmouseout="this.style.background=''">
+      <span style="font-size:22px;">${s.emoji}</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);">${s.name}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--green);">${s.price}</div>
+      </div>
+      <div style="margin-left:auto;font-size:12px;font-weight:700;color:var(--brand);">Book →</div>
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function pickService(name) {
+  selectedServiceName = name;
+  document.getElementById('heroSearch').value = name;
+  document.getElementById('searchDropdown').style.display = 'none';
+  showToast('✅ ' + name + ' selected — set your location and date');
+}
+
+function pickFirstResult() {
+  const first = document.getElementById('searchDropdown').querySelector('div');
+  if (first) first.click();
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  const inp = document.getElementById('heroSearch');
+  const dd = document.getElementById('searchDropdown');
+  if (inp && dd && !inp.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
 // ── HERO DATE DEFAULT
 const heroDate = document.getElementById('heroDate');
 const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
@@ -834,15 +919,18 @@ heroDate.min = new Date().toISOString().split('T')[0];
 
 // ── HERO SEARCH
 function heroSearch(){
-  const svc = document.getElementById('heroService').value;
-  if(!svc){showToast('⚠️ Please select a service first');return;}
-  window.location.href='user-booking.html';
+  const q = document.getElementById('heroSearch') ? document.getElementById('heroSearch').value.trim() : '';
+  const svc = selectedServiceName || q;
+  if(!svc){showToast('⚠️ Type or select a service first');return;}
+  const loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
+  const addr = encodeURIComponent(selectedAddress||'');
+  window.location.href='user-booking.html?service='+encodeURIComponent(svc)+'&loc='+loc+'&addr='+addr;
 }
 function selectService(name){
-  document.getElementById('heroService').value=name;
-  document.querySelector('.hero').scrollIntoView({behavior:'smooth'});
-  showToast('✅ '+name+' selected — set your date & location below');
-  setTimeout(()=>window.location.href='user-booking.html',1500);
+  selectedServiceName = name;
+  const loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
+  const addr = encodeURIComponent(selectedAddress||'');
+  window.location.href='user-booking.html?service='+encodeURIComponent(name)+'&loc='+loc+'&addr='+addr;
 }
 
 // ── MAP

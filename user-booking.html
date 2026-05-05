@@ -229,14 +229,10 @@
   <!-- RIGHT: RESULTS -->
   <div class="right-panel" id="rightPanel">
     <div class="empty-state" id="emptyState">
-      <div class="empty-icon">🗺️</div>
-      <div class="empty-title">Find Service Providers Near You</div>
-      <div class="empty-sub">Select a service and set your location on the left, then click <strong>"Find Nearest Providers"</strong> to see available providers in your area.</div>
-      <div style="margin-top:24px;padding:16px;background:var(--orange-light);border-radius:12px;border:2px solid #ffb366;">
-        <div style="font-size:14px;font-weight:800;color:#8a4000;margin-bottom:6px;">🧪 Testing this for the first time?</div>
-        <div style="font-size:13px;font-weight:600;color:#7a4f4f;margin-bottom:12px;">Register yourself as a provider first, then come back here to book!</div>
-        <a href="provider-register.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:var(--orange);color:white;border-radius:10px;text-decoration:none;font-size:14px;font-weight:800;">👷 Register as Provider</a>
-      </div>
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Select a Service to Get Started</div>
+      <div class="empty-sub">Choose a service on the left, confirm your location, then click <strong>Find Nearest Providers</strong> to see who's available near you.</div>
+
     </div>
     <div id="resultsArea" style="display:none">
       <div class="results-header">
@@ -381,6 +377,64 @@ const now = new Date();
 document.getElementById('bookDate').value = now.toISOString().split('T')[0];
 document.getElementById('bookTime').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
 
+// ── Read URL params — pre-fill from homepage ──────────────────
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const svc = params.get('service');
+  const locRaw = params.get('loc');
+  const addr = params.get('addr');
+
+  if (svc) {
+    // Find and select the matching service button
+    const btns = document.querySelectorAll('.svc-btn');
+    btns.forEach(btn => {
+      const nm = btn.querySelector('.sn');
+      if (nm && nm.textContent.toLowerCase().includes(svc.toLowerCase())) {
+        btn.click();
+      }
+    });
+    // Also try partial match on service name
+    SERVICES.forEach((s,i) => {
+      if (s.name.toLowerCase().includes(svc.toLowerCase())) {
+        selectSvc(i);
+      }
+    });
+  }
+
+  if (locRaw) {
+    try {
+      const ll = JSON.parse(decodeURIComponent(locRaw));
+      userLatLng = ll;
+      if (addr) {
+        userAddress = decodeURIComponent(addr);
+        document.getElementById('userAddrPill').textContent = '📍 ' + userAddress;
+      }
+      // If map is ready, place pin
+      if (userMap) {
+        placeUserPin(ll.lat, ll.lng);
+        userMap.setView([ll.lat, ll.lng], 14);
+      } else {
+        // Store for when map loads
+        window._pendingLoc = ll;
+      }
+    } catch(e) {}
+  }
+
+  // If both service and location came from homepage, auto-search immediately
+  if (svc && locRaw) {
+    setTimeout(() => {
+      if (selectedSvc !== null && userLatLng) {
+        findProviders();
+        // Scroll results into view on mobile
+        setTimeout(() => {
+          const rp = document.getElementById('rightPanel');
+          if (rp && window.innerWidth < 800) rp.scrollIntoView({behavior:'smooth'});
+        }, 800);
+      }
+    }, 600);
+  }
+})();
+
 // ── User Map ──
 function initUserMap() {
   if (userMap) return;
@@ -389,7 +443,16 @@ function initUserMap() {
   userMap.on('click',e=>placeUserPin(e.latlng.lat,e.latlng.lng));
   getUserGPS(true);
 }
-window.addEventListener('load', initUserMap);
+window.addEventListener('load', function(){
+  initUserMap();
+  // Apply location passed from homepage
+  if (window._pendingLoc) {
+    setTimeout(() => {
+      placeUserPin(window._pendingLoc.lat, window._pendingLoc.lng);
+      if (userMap) userMap.setView([window._pendingLoc.lat, window._pendingLoc.lng], 14);
+    }, 500);
+  }
+});
 
 function placeUserPin(lat,lng) {
   userLatLng={lat,lng};
@@ -453,6 +516,13 @@ function haversine(lat1,lng1,lat2,lng2){
 
 // ── Find Providers ──
 function findProviders() {
+  // Scroll to results on mobile immediately
+  if (window.innerWidth < 800) {
+    setTimeout(() => {
+      const rp = document.getElementById('rightPanel');
+      if (rp) rp.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 300);
+  }
   if (selectedSvc===null){showToast('⚠️ Please select a service');return;}
   if (!userLatLng){showToast('⚠️ Please set your location');return;}
   if (!document.getElementById('userName').value.trim()){showToast('⚠️ Please enter your name');return;}
