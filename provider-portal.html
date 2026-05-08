@@ -130,7 +130,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   <div class="panel active" id="panelLogin">
     <div class="login-card">
       <div class="card-title">👷 Provider Login</div>
-      <div class="card-sub">Enter your Provider ID and registered mobile number</div>
+      <div class="card-sub">Sign in with your registered email and password</div>
       <div class="err-box" id="loginErr"></div>
 
       <!-- Google Sign-In -->
@@ -140,22 +140,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
       </button>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <div style="flex:1;height:1px;background:#f0e0d6;"></div>
-        <span style="font-size:12px;color:#aaa;font-weight:600;">or use Provider ID + password</span>
+        <span style="font-size:12px;color:#aaa;font-weight:600;">or sign in with email &amp; password</span>
         <div style="flex:1;height:1px;background:#f0e0d6;"></div>
       </div>
 
       <div class="ffield">
-        <label>Provider ID</label>
-        <input type="text" id="loginId" placeholder="e.g. HS-PRO-SOMA1234" oninput="this.value=this.value.toUpperCase()"/>
+        <label>Registered Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <div class="ffield">
-        <label>Registered Mobile Number</label>
+        <label>Password</label>
         <input type="password" id="loginPass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="big-btn" onclick="doLogin()">🚀 Login to Dashboard</button>
+      <button onclick="fillDemo()" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:2px dashed #f5c842;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:#7a5a00;cursor:pointer;">⚡ Fill Demo Credentials</button>
       <div class="hint-box">
-        💡 Demo login: ID = <strong>DEMO</strong> · Phone = <strong>9999999999</strong><br/>
-        Your ID = first 4 letters of name + last 4 digits of mobile<br/><small>e.g. Name "Soma Raju", Mobile ending 1234 → ID: <strong>HS-PRO-SOMA1234</strong></small><br/>Demo: ID=HS-PRO-DEMO, Password=demo123
+        💡 <strong>Demo login:</strong> Email = <strong>demo@hamaraservice.in</strong> · Password = <strong>demo123</strong>
       </div>
     </div>
   </div>
@@ -195,7 +195,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
       <div class="fgrid">
         <div class="ffield"><label>Full Name *</label><input id="r_name" type="text" placeholder="Your full name"/></div>
         <div class="ffield"><label>Mobile Number *</label><input id="r_phone" type="tel" maxlength="10" placeholder="10-digit"/></div>
-        <div class="ffield"><label>Email Address</label><input id="r_email" type="email" placeholder="your@email.com"/></div>
+        <div class="ffield"><label>Email Address * <small style="font-weight:600;color:var(--red);">(used to login)</small></label><input id="r_email" type="email" placeholder="your@email.com" required/></div>
         <div class="ffield"><label>WhatsApp Number</label><input id="r_whatsapp" type="tel" maxlength="10" placeholder="If different from mobile"/></div>
         <div class="ffield"><label>Gender</label>
           <select id="r_gender"><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option></select>
@@ -211,6 +211,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
         </div>
         <div class="ffield"><label>ID Number *</label><input id="r_idnum" type="text" placeholder="ID proof number"/></div>
       </div>
+      <div class="ffield"><label>Create Password <span id="passRequiredNote">*</span></label><input id="r_password" type="password" placeholder="Minimum 4 characters (skip if using Google)" autocomplete="new-password"/><small id="passGoogleNote" style="display:none;color:var(--green);font-weight:700;font-size:12px;">✅ Password optional — you signed in with Google</small></div>
       <div class="step-nav"><button class="snb next" onclick="nextStep(1)">Next: Services →</button></div>
     </div>
 
@@ -324,20 +325,31 @@ function switchTab(tab){
   document.getElementById('tabLogin').classList.toggle('active',isLogin);
   document.getElementById('tabReg').classList.toggle('active',!isLogin);
   if(!isLogin)buildSvcGrid();
+  if(!isLogin && window._googleUid){
+    // Google user coming to register — show password optional note
+    setTimeout(function(){
+      var note = document.getElementById('passGoogleNote');
+      var req  = document.getElementById('passRequiredNote');
+      if(note) note.style.display = 'block';
+      if(req)  req.style.display  = 'none';
+    }, 350);
+  }
 }
 
 function doLogin(){
-  const id=document.getElementById('loginId').value.trim().toUpperCase();
-  const phone=document.getElementById('loginPhone').value.trim();
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('loginPass').value.trim();
   const err=document.getElementById('loginErr');
   err.style.display='none';
-  if(!id||!phone){showErr('Please enter Provider ID and Mobile number');return;}
+  if(!email||!pass){showErr('Please enter your email and password');return;}
+  if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showErr('Please enter a valid email address');return;}
   const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  let found=providers.find(p=>p.id.toUpperCase()===id&&p.password===pass);
-  if(!found&&id==='HS-PRO-DEMO'&&phone==='9999999999'){found=createDemo(providers);}
-  if(!found){showErr('Provider ID or Phone not found. Please register first.');return;}
+  let found=providers.find(p=>p.email&&p.email.toLowerCase()===email&&p.password===pass);
+  if(!found&&email==='demo@hamaraservice.in'&&pass==='demo123'){found=createDemo(providers);}
+  if(!found){showErr('Email or password not found. Please register first.');return;}
   localStorage.setItem('hs_current_provider',JSON.stringify(found));
   showToast('✅ Login successful! Redirecting...');
+  syncProviderFromFirebase();
   setTimeout(()=>window.location.href='provider-dashboard.html',800);
 }
 
@@ -374,13 +386,15 @@ function validateStep(n){
     if(!document.getElementById('r_name').value.trim()){showToast('⚠️ Enter your full name');return false;}
     const phone=document.getElementById('r_phone').value.trim();
     if(!phone||phone.length!==10||!/^\d+$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return false;}
+    const email=document.getElementById('r_email').value.trim();
+    if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showToast('⚠️ Enter a valid email address — you will use it to login');return false;}
     const pass=document.getElementById('r_password').value.trim();
-    if(!pass||pass.length<4){showToast('⚠️ Create a password (minimum 4 characters)');return false;}
+    if(!window._googleUid && (!pass||pass.length<4)){showToast('⚠️ Create a password (minimum 4 characters)');return false;}
     if(!document.getElementById('r_exp').value){showToast('⚠️ Select your experience');return false;}
     if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
     if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
     const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-    if(providers.find(p=>p.phone===phone)){showToast('⚠️ Mobile already registered. Please login.');return false;}
+    if(providers.find(p=>p.email&&p.email.toLowerCase()===email.toLowerCase())){showToast('⚠️ Email already registered. Please login.');return false;}
     return true;
   }
   if(n===2){if(getSelectedServices().length===0){showToast('⚠️ Select at least one service');return false;}return true;}
@@ -470,7 +484,7 @@ function buildSummary(){
   const rows=[
     ['Name',document.getElementById('r_name').value],
     ['Mobile',document.getElementById('r_phone').value],
-    ['Email',document.getElementById('r_email').value||'—'],
+    ['Login Email',document.getElementById('r_email').value||'—'],
     ['Experience',document.getElementById('r_exp').value],
     ['ID Proof',document.getElementById('r_idtype').value+': '+document.getElementById('r_idnum').value],
     ['Services',svcs.map(s=>s.icon+' '+s.name+' ₹'+s.price).join(' | ')],
@@ -483,7 +497,7 @@ function buildSummary(){
 function submitRegistration(){
   const rawName=document.getElementById('r_name').value.trim();
   const rawPhone=document.getElementById('r_phone').value.trim();
-  const rawPass=document.getElementById('r_password').value.trim();
+  const rawPass=document.getElementById('r_password').value.trim() || (window._googleUid ? 'google-auth-'+window._googleUid.slice(0,8) : '');
   // ID = first 4 letters of name (uppercase, letters only) + last 4 digits of phone
   const namePart=rawName.replace(/[^a-zA-Z]/g,'').toUpperCase().padEnd(4,'X').slice(0,4);
   const phonePart=rawPhone.slice(-4);
@@ -516,6 +530,7 @@ function submitRegistration(){
   providers.push(provider);
   localStorage.setItem('hs_providers',JSON.stringify(providers));
   localStorage.setItem('hs_current_provider',JSON.stringify(provider));
+  saveProviderToFirebase(provider);
   document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
   document.getElementById('stepSuccess').classList.add('active');
   document.getElementById('generatedId').textContent=id;
@@ -528,27 +543,54 @@ function providerGoogleSignIn(){
     .then(function(result){
       var user = result.user;
       // Check if this Google account is linked to a provider
+      // First check localStorage for existing provider with this Google UID or email
+      var localProviders = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+      var localFound = localProviders.find(function(p){ return p.googleUid===user.uid || (p.email&&p.email.toLowerCase()===user.email.toLowerCase()); });
+      if(localFound){
+        localStorage.setItem('hs_current_provider', JSON.stringify(localFound));
+        showToast('✅ Welcome back, '+localFound.name+'!');
+        setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
+        return;
+      }
       fbDB.ref('providers').orderByChild('googleUid').equalTo(user.uid).once('value', function(snap){
         var found = null;
         snap.forEach(function(child){ found = child.val(); });
         if(found){
           // Existing provider — log them in
           localStorage.setItem('hs_current_provider', JSON.stringify(found));
-          window.location.href = 'provider-dashboard.html';
+          var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+          if(!allProvs.find(function(p){return p.id===found.id;})) allProvs.push(found);
+          localStorage.setItem('hs_providers', JSON.stringify(allProvs));
+          showToast('✅ Welcome back, '+found.name+'!');
+          setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
         } else {
-          // New — pre-fill registration with Google data
-          showToast('✅ Google account verified! Complete your registration below.');
-          showRegistration();
+          // New provider — switch to register tab and pre-fill Google data
+          switchTab('register');
+          window.scrollTo({top:0,behavior:'smooth'});
+          setTimeout(function(){
+            var nameEl = document.getElementById('r_name');
+            var emailEl = document.getElementById('r_email');
+            if(nameEl) nameEl.value = user.displayName || '';
+            if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
+            // Store Google UID and photo for linking at submit time
+            window._googleUid = user.uid;
+            window._googlePhoto = user.photoURL || '';
+            showToast('✅ Google verified! Your name & email are pre-filled. Complete the form to register.');
+          }, 300);
+        }
+      }).catch(function(){
+        // Firebase offline — still allow registration flow
+        switchTab('register');
+        window.scrollTo({top:0,behavior:'smooth'});
+        setTimeout(function(){
           var nameEl = document.getElementById('r_name');
           var emailEl = document.getElementById('r_email');
           if(nameEl) nameEl.value = user.displayName || '';
-          if(emailEl) emailEl.value = user.email || '';
-          // Store Google UID for linking
+          if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
           window._googleUid = user.uid;
           window._googlePhoto = user.photoURL || '';
-        }
-      }).catch(function(){
-        showToast('⚠️ Could not connect to server — try ID login');
+          showToast('✅ Google verified! Complete your registration below.');
+        }, 300);
       });
     })
     .catch(function(err){
@@ -558,27 +600,17 @@ function providerGoogleSignIn(){
     });
 }
 
-// Override submitRegistration to also save to Firebase ──────────
-var _origSubmit = submitRegistration;
-function submitRegistration(){
-  _origSubmit();
-  // After registration, save provider to Firebase
-  var prov = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
-  if(!prov) return;
-  // Link Google account if signed in via Google
+// Save provider to Firebase after registration (called inside submitRegistration)
+function saveProviderToFirebase(prov){
   if(window._googleUid) prov.googleUid = window._googleUid;
   if(window._googlePhoto) prov.photo = window._googlePhoto;
-  // Save to Firebase
   fbDB.ref('providers/'+prov.id).set(prov).then(function(){
     console.log('Provider saved to Firebase:', prov.id);
   }).catch(function(e){ console.warn('Firebase provider save failed:', e.message); });
 }
 
-// Also save to Firebase on doLogin success ──────────────────────
-var _origDoLogin = doLogin;
-function doLogin(){
-  _origDoLogin();
-  // After login, also sync from Firebase if available
+// Firebase sync after login (non-blocking)
+function syncProviderFromFirebase(){
   var prov = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
   if(prov && prov.id){
     fbDB.ref('providers/'+prov.id).once('value', function(snap){
@@ -592,6 +624,12 @@ function doLogin(){
       }
     }).catch(function(){});
   }
+}
+
+function fillDemo(){
+  document.getElementById('loginEmail').value = 'demo@hamaraservice.in';
+  document.getElementById('loginPass').value = 'demo123';
+  showToast('✅ Demo credentials filled — click Login!');
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3200);}

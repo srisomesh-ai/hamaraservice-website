@@ -901,8 +901,8 @@ function liveSearchFn(q) {
     dd.style.display = 'block';
     return;
   }
-  dd.innerHTML = results.map(function(s) {
-    return '<div onclick="pickService(''+s.name+'')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fff1f0'" onmouseout="this.style.background=''">'+
+  dd.innerHTML = results.map(function(s, i) {
+    return '<div data-svc="'+encodeURIComponent(s.name)+'" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background=\'#fff1f0\'" onmouseout="this.style.background=\'\'">'+
       '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
       '<div style="flex:1;">'+
         '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
@@ -911,14 +911,18 @@ function liveSearchFn(q) {
       '<span style="font-size:13px;font-weight:800;color:#E8251A;flex-shrink:0;">Book →</span>'+
     '</div>';
   }).join('');
+  // Attach click handlers via JS (avoids quote-escaping issues with service names)
+  dd.querySelectorAll('[data-svc]').forEach(function(el){
+    el.addEventListener('click', function(){ pickService(decodeURIComponent(el.getAttribute('data-svc'))); });
+  });
   dd.style.display = 'block';
 }
 
 function pickService(name) {
   selectedServiceName = name;
-  document.getElementById('heroSearch').value = name;
-  document.getElementById('searchDropdown').style.display = 'none';
-  showToast('✅ ' + name + ' selected — set your location and date');
+  document.getElementById('heroSearchInput').value = name;
+  document.getElementById('srchDrop').style.display = 'none';
+  showToast('✅ ' + name + ' selected — click "Find Professionals" to book');
 }
 
 function pickFirstResult() {
@@ -936,12 +940,6 @@ document.addEventListener('click', function(e) {
     dd.style.display = 'none';
   }
 });
-
-// ── HERO DATE DEFAULT
-const heroDate = document.getElementById('heroDate');
-const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-heroDate.value = tomorrow.toISOString().split('T')[0];
-heroDate.min = new Date().toISOString().split('T')[0];
 
 // ── HERO SEARCH
 function heroSearch(){
@@ -1032,8 +1030,7 @@ document.getElementById('mapSearchInput').addEventListener('keydown',e=>{if(e.ke
 function confirmLocation(){
   if(!selectedLatLng){showToast('📍 Please tap the map or use GPS first');return;}
   const short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):`${selectedLatLng.lat.toFixed(4)}, ${selectedLatLng.lng.toFixed(4)}`;
-  document.getElementById('locationLabel').textContent=short;
-  closeMapModal();showToast('✅ Location confirmed!');
+  closeMapModal();showToast('✅ Location confirmed: '+short);
 }
 
 
@@ -1188,6 +1185,97 @@ function logoutUser(){
   updateUserWidget();
   showToast('👋 Signed out');
 }
+
+// ── TOAST ──────────────────────────────────────────────────────
+function showToast(msg){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.className='toast';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(function(){t.style.display='none';},3500);
+}
+
+// ── USER WIDGET ────────────────────────────────────────────────
+function updateUserWidget(){
+  var user=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
+  var loginBtn=document.getElementById('navLoginBtn');
+  var regBtn=document.getElementById('navRegBtn');
+  var widget=document.getElementById('userWidget');
+  if(user){
+    if(loginBtn)loginBtn.style.display='none';
+    if(regBtn)regBtn.style.display='none';
+    if(widget){
+      widget.style.display='block';
+      var letter=document.getElementById('userAvatarLetter');
+      var nameEl=document.getElementById('userWidgetName');
+      if(letter)letter.textContent=(user.name||'U').charAt(0).toUpperCase();
+      if(nameEl)nameEl.textContent=(user.name||'Account').split(' ')[0];
+    }
+  } else {
+    if(loginBtn)loginBtn.style.display='';
+    if(regBtn)regBtn.style.display='';
+    if(widget)widget.style.display='none';
+  }
+}
+
+function toggleUserMenu(){
+  var dd=document.getElementById('userDropdown');
+  if(dd)dd.classList.toggle('open');
+}
+
+function showUserProfile(){
+  var user=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
+  if(!user){showToast('⚠️ Please log in first');return;}
+  showToast('👤 '+user.name+' · '+user.phone+(user.city?' · '+user.city:''));
+}
+
+// Close user dropdown on outside click
+document.addEventListener('click',function(e){
+  var widget=document.getElementById('userWidget');
+  var dd=document.getElementById('userDropdown');
+  if(widget&&dd&&!widget.contains(e.target))dd.classList.remove('open');
+});
+
+// ── RENDER SERVICES GRID ──────────────────────────────────────
+(function renderServicesGrid(){
+  var grid=document.getElementById('servicesGrid');
+  if(!grid)return;
+  grid.innerHTML=ALL_SERVICES.slice(0,16).map(function(s){
+    return '<div class="svc-card" onclick="selectService(\''+s.name.replace(/'/g,"\\'")+'\')">'
+      +'<div class="svc-card-img">'+s.emoji+'</div>'
+      +'<div class="svc-card-info">'
+        +'<div class="svc-name">'+s.name+'</div>'
+        +'<div class="svc-price-tag">'+s.price+'</div>'
+      +'</div>'
+      +'<button class="svc-book">Book →</button>'
+      +'</div>';
+  }).join('');
+})();
+
+// ── HEADER SCROLL EFFECT ──────────────────────────────────────
+window.addEventListener('scroll',function(){
+  var h=document.getElementById('siteHeader');
+  if(h)h.classList.toggle('scrolled',window.scrollY>10);
+});
+
+// ── HAMBURGER MENU ────────────────────────────────────────────
+(function(){
+  var btn=document.getElementById('menuBtn');
+  if(!btn)return;
+  btn.addEventListener('click',function(){
+    openUserAuth('login');
+  });
+})();
+
+// ── INIT USER WIDGET ON LOAD ──────────────────────────────────
+updateUserWidget();
+
 </script>
 </body>
 </html>
