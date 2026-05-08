@@ -847,7 +847,7 @@ function computeStats(){
     b._commPct = commPct;
   });
 
-  var todayGross = completed.filter(function(b){ return b.date === today }).reduce(function(s,b){ return s+b.amount, 0);
+  var todayGross = completed.filter(function(b){ return b.date === today).reduce(function(s,b){ return s+b.amount, 0);
 
   // Payout tracking
   var payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]")
@@ -959,11 +959,11 @@ function loadOverview() {
     'conic-gradient(var(--green) 0% '+(compP)+'%, var(--yellow) '+(compP)+'% '+(+compP + +pendP)+'%, var(--red) '+(+compP + +pendP)+'% 100%)';
 
   // Weekly chart (last 7 calendar days)
-  var days7 = (function(){var a=[];for(var _i=0;_i<7;_i++)a.push(undefined);return a;})().map(function(_,i){
+  var days7 = Array.from(Array(7)).map(function(_,i){
     var d = new Date(); d.setDate(d.getDate() - (6 - i));
     return d.toISOString().split('T')[0];
   });
-  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b){ return b.date === d; }).reduce(function(sum,b){ return sum+b.amount; },0));
+  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b); }{ return b.date === d).reduce(function(sum,b){ return sum + b.amount, 0));
   var maxE = Math.max(...earnings7, 1);
   var chart = document.getElementById('weeklyChart');
   chart.innerHTML = '';
@@ -1000,19 +1000,23 @@ function loadAllBookings(filter = 'all') {
       <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td>
       <td>
         '+(b.status === 'pending'
-          ? '<button class="nav-btn-track" onclick="openProviderTracking(\''+(b.id)+'\');return false;" style="margin-bottom:5px">🗺️ Navigate</button>\n             <br/><button class="abtn complete" onclick="updateStatus(\''+(b.id)+'\',\'completed\')">🔐 Complete Job</button>\n             <button class="abtn cancel" onclick="updateStatus(\''+(b.id)+'\',\'cancelled\')">❌</button>'
+          ? '<button class="nav-btn-track" onclick="openProviderTracking(''+(b.id)+'');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
+             <br/><button class="abtn complete" onclick="updateStatus(''+(b.id)+'','completed')">🔐 Complete Job</button>
+             <button class="abtn cancel" onclick="updateStatus(''+(b.id)+'','cancelled')">❌</button>'
           : b.status === 'payment_pending'
-          ? '<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>\n             <button class="abtn view" onclick="openPaymentWindow(getBK().find(function(x){ return x.id===\''+(b.id)+'\'))" style="margin-top:4px">💳 Pay Now</button>'
+          ? '<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>
+             <button class="abtn view" onclick="openPaymentWindow(getBK().find(function(x){ return x.id===''+(b.id)+''))" style="margin-top:4px">💳 Pay Now</button>'
           : b.status === 'paid'
           ? '<span class="badge paid">💰 Paid · Processing</span>'
-          : '<button class="abtn view" onclick="viewBk(\''+(b.id)+'\')">👁 View</button>\n             <br/><button class="btn-track-cust" onclick="openCustomerTracking(\''+(b.id)+'\')" style="margin-top:4px">📍 Customer View</button>')+'
+          : '<button class="abtn view" onclick="viewBk(''+(b.id)+'')">👁 View</button>
+             <br/><button class="btn-track-cust" onclick="openCustomerTracking(''+(b.id)+'')" style="margin-top:4px">📍 Customer View</button>')+'
       </td>
     </tr>
   ').join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
 }
 
 function filterBk(f, btn) {
-  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active'));
+  document.querySelectorAll('.fbtn').forEach(function(b){ return b.classList.remove('active'));; }
   btn.classList.add('active');
   loadAllBookings(f);
 }
@@ -1169,7 +1173,7 @@ function openPaymentWindow(booking) {
   document.getElementById('pw-date').textContent     = booking.date + ' ' + (booking.time||'');
   document.getElementById('pw-amount').textContent   = '₹' + booking.amount.toLocaleString('en-IN');
   selectedPayMethod = null;
-  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
+  document.querySelectorAll('.pay-method').forEach(function(m){ return m.classList.remove('selected'));; }
   var btn = document.getElementById('payNowBtn');
   btn.textContent = 'Select payment method to continue';
   btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
@@ -1177,7 +1181,7 @@ function openPaymentWindow(booking) {
 }
 
 function selectPayMethod(el, method) {
-  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
+  document.querySelectorAll('.pay-method').forEach(function(m){ return m.classList.remove('selected'));; }
   el.classList.add('selected');
   selectedPayMethod = method;
   document.getElementById('payGatewayNote').style.display = method !== 'cash' ? 'block' : 'none';
@@ -1503,14 +1507,14 @@ function loadAvailability() {
     var el = document.createElement('div');
     el.className = 'tslot' + (avail.slots.includes(slot) ? ' active' : '');
     el.textContent = slot;
-    el.onclick = function(){ return el.classList.toggle('active');
+    el.onclick = function(){ el.classList.toggle('active'); };
     slotWrap.appendChild(el);
   });
 }
 
 function saveAvailability() {
-  var days = DAYS.map(function(_,i){ return  document.getElementById('day_' + i) && obj_tmp.classList.contains('on') ? i : null).filter(function(v){ return v !== null);
-  var slots = Array.from(document.querySelectorAll('.tslot.active')).map(function(el){ return el.textContent);; }
+  var days = DAYS.map(function(_,i){ return  document.getElementById('day_' + i)?.classList.contains('on') ? i : null).filter(function(v){ return v !== null);
+  var slots = [...document.querySelectorAll('.tslot.active')].map(function(el){ return el.textContent);; }
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
   var idx = all.findIndex(function(p){ return p.id === P.id);
   if (idx > -1) {
@@ -1571,7 +1575,7 @@ function locGPS() {
     newLat=pos.coords.latitude; newLng=pos.coords.longitude;
     updateMap.setView([newLat,newLng],15); updateMarker.setLatLng([newLat,newLng]);
     drawLocCircle(); reverseGeo(newLat,newLng); showToast('✅ Location updated!');
-  },function(){showToast('❌ GPS failed'));
+  },function(){showToast('GPS failed');});
 }
 
 function reverseGeo(lat,lng) {
@@ -1881,9 +1885,9 @@ function processWithdraw(){
 // ════════ NAV ════════
 var PAGE_TITLES={overview:'📊 Overview',bookings:'📋 My Bookings',earnings:'💰 Earnings',profile:'👤 My Profile',availability:'📅 Availability',location:'📍 Update Location',ratings:'⭐ Ratings',notifications:'🔔 Notifications'};
 function showPage(name){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active'));
-  document.getElementById('page-'+name) && obj_tmp.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){ return p.classList.remove('active'));; }
+  document.querySelectorAll('.nav-item').forEach(function(n){ return n.classList.remove('active'));; }
+  document.getElementById('page-'+name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(function(n){if(n.textContent.toLowerCase().includes(name.split('-')[0]))n.classList.add('active');});
   document.getElementById('pageTitle').textContent=PAGE_TITLES[name]||name;
   document.getElementById('sidebar').classList.remove('open');
@@ -1893,7 +1897,7 @@ function showPage(name){
 // ════════ UTILS ════════
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},3500);}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3500);}
 
 // ════════════════════════════════════════════════════════════════
 // REAL TRACKING ENGINE

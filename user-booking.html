@@ -715,7 +715,7 @@ function runRange(idx){
 
   // Count real providers in localStorage within range
   var allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  var inRange=allProvs.filter(function(p){ return {
+  var inRange=allProvs.filter(function(p){
     if(!p.lat||!p.lng)return false;
     return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
   });
@@ -741,7 +741,7 @@ function runRange(idx){
   var maxWait=18000;
   clearTimeout(pollTimer);
 
-  var poll=function(){
+  var poll= function(){
     if(!radarActive)return;
     waited+=3000;
 
@@ -828,7 +828,7 @@ function confirmBooking(){
     localStorage.setItem('hs_customer_bookings',JSON.stringify(bk));
   }
   showToast('🎉 Booking confirmed! Your professional is on the way.');
-  setTimeout(function(){window.location.href='index.html'},2500);
+  setTimeout(function(){window.location.href='index.html';},2500);
 }
 
 function openTracking(){
@@ -849,14 +849,14 @@ function hvs(a,b,c,d){
   var svc=p.get('service'),locR=p.get('loc'),addr=p.get('addr');
   if(svc){
     var m=SVCS.find(function(s){ return s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()));
-    if(m)setTimeout(function(){pickSvc(SVCS.indexOf(m))},300);
+    if(m)setTimeout(function(){pickSvc(SVCS.indexOf(m));},300);
     else{setTimeout(function(){document.getElementById('svcInp').value=svc;svcSearch(svc);},300);}
   }
   if(locR){try{var ll=JSON.parse(decodeURIComponent(locR));userLL=ll;if(addr)userAddr=decodeURIComponent(addr);}catch(e){}}
 })();
 
 // ── Toast ─────────────────────────────────────────────────────
-function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},3500);}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3500);}
 </script>
 </body>
 </html>

@@ -174,7 +174,7 @@ section{padding:80px 40px;}
   font-size:13px;font-weight:600;cursor:pointer;
   opacity:1;transition:all .2s;
 }
-.svc-book:hover{opacity:.85;}
+.svc-book:hover{background:var(--brand2);}
 
 /* ─── HOW IT WORKS ─── */
 .hiw-bg{background:var(--bg);}
@@ -506,7 +506,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <div class="section-label">What we offer</div>
         <div class="section-title">Services for every<br/>home need</div>
       </div>
-      <a class="see-all" href="user-booking.html">Browse all
+      <a class="see-all" href="#services">Browse all
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
@@ -799,7 +799,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <div style="display:flex;flex-direction:column;gap:11px;">
           <div>
             <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email Address</label>
-            <input type="text" id="loginEmail" type="email" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            <input type="text" id="loginEmail" type="email" placeholder="your@email.com" required style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
           </div>
           <div>
             <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Password</label>
@@ -838,12 +838,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
             </div>
           </div>
           <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email Address *</label>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email *</label>
             <input type="email" id="regEmail" placeholder="your@email.com" required style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
           </div>
           <div>
             <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Password *</label>
-            <input type="text" id="regPassword" type="password" placeholder="Create password (min 6 chars)" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            <input type="password" id="regPassword" placeholder="Create a password (min 6 chars)" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
           </div>
           <button onclick="doRegister()" class="auth-submit">Create Account →</button>
         </div>
@@ -900,8 +900,8 @@ function liveSearchFn(q) {
     dd.style.display = 'block';
     return;
   }
-  dd.innerHTML = results.map(function(s) {
-    return '<div onclick="pickService(''+s.name+'')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#fff1f0'" onmouseout="this.style.background=''">'+
+  dd.innerHTML = results.map(function(s, i) {
+    return '<div data-svc="'+encodeURIComponent(s.name)+'" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background=\'#fff1f0\'" onmouseout="this.style.background=\'\'">'+
       '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
       '<div style="flex:1;">'+
         '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
@@ -910,14 +910,18 @@ function liveSearchFn(q) {
       '<span style="font-size:13px;font-weight:800;color:#E8251A;flex-shrink:0;">Book →</span>'+
     '</div>';
   }).join('');
+  // Attach click handlers via JS (avoids quote-escaping issues with service names)
+  dd.querySelectorAll('[data-svc]').forEach(function(el){
+    el.addEventListener('click', function(){ pickService(decodeURIComponent(el.getAttribute('data-svc'))); });
+  });
   dd.style.display = 'block';
 }
 
 function pickService(name) {
   selectedServiceName = name;
-  document.getElementById('heroSearch').value = name;
-  document.getElementById('searchDropdown').style.display = 'none';
-  showToast('✅ ' + name + ' selected — set your location and date');
+  document.getElementById('heroSearchInput').value = name;
+  document.getElementById('srchDrop').style.display = 'none';
+  showToast('✅ ' + name + ' selected — click "Find Professionals" to book');
 }
 
 function pickFirstResult() {
@@ -935,12 +939,6 @@ document.addEventListener('click', function(e) {
     dd.style.display = 'none';
   }
 });
-
-// ── HERO DATE DEFAULT
-var heroDate = document.getElementById('heroDate');
-var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-heroDate.value = tomorrow.toISOString().split('T')[0];
-heroDate.min = new Date().toISOString().split('T')[0];
 
 // ── HERO SEARCH
 function heroSearch(){
@@ -992,14 +990,14 @@ function placePin(lat,lng){
 }
 function reverseGeocode(lat,lng){
   document.getElementById('addrDisplay').textContent='📍 Fetching address…';
-  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json',{headers:{'Accept-Language':'en'}})
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+(lat)+'&lon='+(lng)+'&format=json',{headers:{'Accept-Language':'en'}})
     .then(function(r){return r.json();}).then(function(d){
-      var addr_d=d.address||{};
+      var a=d.address||{};
       var parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
       selectedAddress=parts.join(', ')||d.display_name;
       document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
     }).catch(function(){
-      selectedAddress=lat.toFixed(4)+', '+lng.toFixed(4);
+      selectedAddress=(lat.toFixed(4))+', '+(lng.toFixed(4));
       document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
     });
 }
@@ -1007,32 +1005,31 @@ function detectLocation(silent){
   if(!navigator.geolocation){if(!silent)showToast('❌ GPS not supported');return;}
   if(!silent)showToast('📍 Getting your location…');
   navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude,lng=pos.coords.longitude;
+    var lat=pos.coords.latitude; var lng=pos.coords.longitude;
     selectedLatLng={lat,lng};
     if(leafletMap)leafletMap.setView([lat,lng],15);
     placePin(lat,lng);reverseGeocode(lat,lng);
     if(!silent)showToast('✅ Location found!');
-  },function(err){if(!silent)showToast('Could not get location');});
+  },function(err){if(!silent)showToast('❌ Could not get location');});
 }
 function searchLocation(){
   var q=document.getElementById('mapSearchInput').value.trim();
   if(!q){showToast('⚠️ Enter an address to search');return;}
   showToast('🔍 Searching…');
-  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1',{headers:{'Accept-Language':'en'}})
+  fetch('https://nominatim.openstreetmap.org/search?q='+(encodeURIComponent(q))+'&format=json&limit=1',{headers:{'Accept-Language':'en'}})
     .then(function(r){return r.json();}).then(function(res){
       if(!res.length){showToast('❌ Location not found');return;}
       var lat=+res[0].lat,lng=+res[0].lon;
       selectedLatLng={lat,lng};
       leafletMap.setView([lat,lng],15);
       placePin(lat,lng);reverseGeocode(lat,lng);
-    }).catch(function(){showToast('Search failed');});
+    }).catch(function(){showToast('❌ Search failed'}));
 }
 document.getElementById('mapSearchInput').addEventListener('keydown',function(e){if(e.key==='Enter')searchLocation();});
 function confirmLocation(){
   if(!selectedLatLng){showToast('📍 Please tap the map or use GPS first');return;}
-  var short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):selectedLatLng.lat.toFixed(4)+', '+selectedLatLng.lng.toFixed(4);
-  document.getElementById('locationLabel').textContent=short;
-  closeMapModal();showToast('✅ Location confirmed!');
+  var short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):(selectedLatLng.lat.toFixed(4))+', '+(selectedLatLng.lng.toFixed(4));
+  closeMapModal();showToast('✅ Location confirmed: '+short);
 }
 
 
@@ -1085,40 +1082,27 @@ function signInWithGoogle(){
 
 // ── MOBILE/EMAIL LOGIN ─────────────────────────────────────────
 function doLogin(){
-  var id   = document.getElementById('loginId').value.trim();
-  var name = document.getElementById('loginName').value.trim();
-  var err  = document.getElementById('loginErr');
-  if(!id){err.textContent='Enter your mobile or email';err.style.display='block';return;}
-  if(!name){err.textContent='Enter your registered name';err.style.display='block';return;}
+  var email=(document.getElementById('loginEmail')||{value:''}).value.trim().toLowerCase();
+  var pass=(document.getElementById('loginPassword')||{value:''}).value.trim();
+  var err=document.getElementById('loginErr');
+  if(!email){err.textContent='Enter your email';err.style.display='block';return;}
+  if(!pass){err.textContent='Enter your password';err.style.display='block';return;}
   err.style.display='none';
-
-  // Check Firebase DB first
-  fbDB.ref('customers').orderByChild('phone').equalTo(id).once('value', function(snap){
-    var found = null;
-    snap.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-    if(!found){
-      // Try by email
-      fbDB.ref('customers').orderByChild('email').equalTo(id).once('value', function(s2){
-        s2.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-        if(found){ loginSuccess(found); }
-        else {
-          // Fallback localStorage
-          var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-          var lsFound=users.find(function(u){ return (u.phone===id||u.email===id)&&u.name.toLowerCase()===name.toLowerCase(); });
-          if(lsFound){ loginSuccess(lsFound); }
-          else { err.textContent='Account not found. Please sign up.'; err.style.display='block'; }
-        }
+  fbAuth.signInWithEmailAndPassword(email,pass)
+    .then(function(r){
+      fbDB.ref('customers/'+r.user.uid).once('value',function(snap){
+        var d=snap.exists()?snap.val():{id:r.user.uid,uid:r.user.uid,name:r.user.displayName||email.split('@')[0],email:email,phone:'',provider:'email',registeredAt:new Date().toISOString()};
+        loginSuccess(d);
       });
-    } else { loginSuccess(found); }
-  }).catch(function(){
-    // Firebase unavailable — fallback localStorage
-    var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-    var lsFound=users.find(function(u){ return (u.phone===id||u.email===id)&&u.name.toLowerCase()===name.toLowerCase(); });
-    if(lsFound){ loginSuccess(lsFound); }
-    else { err.textContent='Account not found. Please sign up.'; err.style.display='block'; }
-  });
+    })
+    .catch(function(e){
+      var all=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+      var found=all.find(function(u){return u.email&&u.email.toLowerCase()===email&&u.password===pass;});
+      if(found){loginSuccess(found);return;}
+      err.textContent=(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')?'Incorrect password.':'Account not found. Please sign up.';
+      err.style.display='block';
+    });
 }
-
 function loginSuccess(user){
   localStorage.setItem('hs_current_customer', JSON.stringify(user));
   closeAuthModal();
@@ -1128,42 +1112,37 @@ function loginSuccess(user){
 
 // ── REGISTER ───────────────────────────────────────────────────
 function doRegister(){
-  var name  = document.getElementById('regName').value.trim();
-  var phone = document.getElementById('regPhone').value.trim();
-  var email = document.getElementById('regEmail').value.trim();
-  var city  = document.getElementById('regCity').value.trim();
-  if(!name){showToast('⚠️ Enter your name');return;}
-  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return;}
-
-  var userData = {
-    id:          'HS-CU-'+Date.now().toString(36).toUpperCase(),
-    name:        name,
-    phone:       phone,
-    email:       email,
-    city:        city,
-    provider:    'manual',
-    registeredAt: new Date().toISOString(),
-  };
-
-  // Save to Firebase
-  fbDB.ref('customers/'+userData.id).set(userData).then(function(){
-    console.log('Customer saved to Firebase');
-  }).catch(function(e){ console.warn('Firebase save failed:', e.message); });
-
-  // Save locally
-  var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-  if(users.find(function(u){return u.phone===phone;})){
-    showToast('⚠️ Mobile already registered — log in');
-    switchAuthTab('login');return;
-  }
-  users.push(userData);
-  localStorage.setItem('hs_customers', JSON.stringify(users));
-  localStorage.setItem('hs_current_customer', JSON.stringify(userData));
-  closeAuthModal();
-  updateUserWidget();
-  showToast('🎉 Welcome to HamaraService, '+name+'!');
+  var name=document.getElementById('regName').value.trim();
+  var phone=document.getElementById('regPhone').value.trim();
+  var email=document.getElementById('regEmail').value.trim().toLowerCase();
+  var pass=(document.getElementById('regPassword')||{value:''}).value.trim();
+  if(!name){showToast('Enter your name');return;}
+  if(!phone||!/^\d{10}$/.test(phone)){showToast('Enter valid 10-digit mobile');return;}
+  if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showToast('Enter a valid email');return;}
+  if(!pass||pass.length<6){showToast('Password must be at least 6 characters');return;}
+  fbAuth.createUserWithEmailAndPassword(email,pass)
+    .then(function(r){
+      r.user.updateProfile({displayName:name});
+      var d={id:r.user.uid,uid:r.user.uid,name:name,phone:phone,email:email,password:pass,provider:'email',registeredAt:new Date().toISOString()};
+      fbDB.ref('customers/'+d.uid).set(d).catch(function(){});
+      _finishReg(d);
+    })
+    .catch(function(e){
+      if(e.code==='auth/email-already-in-use'){showToast('Email already registered - please log in');switchAuthTab('login');return;}
+      var d={id:'HS-CU-'+Date.now().toString(36).toUpperCase(),name:name,phone:phone,email:email,password:pass,provider:'email',registeredAt:new Date().toISOString()};
+      var all=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+      if(all.find(function(u){return u.email===email;})){showToast('Email already registered');switchAuthTab('login');return;}
+      all.push(d); localStorage.setItem('hs_customers',JSON.stringify(all));
+      fbDB.ref('customers/'+d.id).set(d).catch(function(){});
+      _finishReg(d);
+    });
 }
-
+function _finishReg(d){
+  localStorage.setItem('hs_current_customer',JSON.stringify(d));
+  var all=JSON.parse(localStorage.getItem('hs_customers')||'[]');
+  if(!all.find(function(u){return u.id===d.id;})){all.push(d);localStorage.setItem('hs_customers',JSON.stringify(all));}
+  closeAuthModal(); updateUserWidget(); showToast('Welcome, '+d.name+'!');
+}
 // ── AUTH STATE LISTENER ────────────────────────────────────────
 fbAuth.onAuthStateChanged(function(user){
   if(user){
@@ -1187,7 +1166,126 @@ function logoutUser(){
   updateUserWidget();
   showToast('👋 Signed out');
 }
+
+// ── TOAST ──────────────────────────────────────────────────────
+function showToast(msg){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.className='toast';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(function(){t.style.display='none';},3500);
+}
+
+// ── USER WIDGET ────────────────────────────────────────────────
+function updateUserWidget(){
+  var user=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
+  var loginBtn=document.getElementById('navLoginBtn');
+  var regBtn=document.getElementById('navRegBtn');
+  var widget=document.getElementById('userWidget');
+  if(user){
+    if(loginBtn)loginBtn.style.display='none';
+    if(regBtn)regBtn.style.display='none';
+    if(widget){
+      widget.style.display='block';
+      var letter=document.getElementById('userAvatarLetter');
+      var nameEl=document.getElementById('userWidgetName');
+      if(letter)letter.textContent=(user.name||'U').charAt(0).toUpperCase();
+      if(nameEl)nameEl.textContent=(user.name||'Account').split(' ')[0];
+    }
+  } else {
+    if(loginBtn)loginBtn.style.display='';
+    if(regBtn)regBtn.style.display='';
+    if(widget)widget.style.display='none';
+  }
+}
+
+function toggleUserMenu(){
+  var dd=document.getElementById('userDropdown');
+  if(dd)dd.classList.toggle('open');
+}
+
+function showUserProfile(){
+  var user=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
+  if(!user){showToast('Please log in first');return;}
+  var bks=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+  var rows=bks.slice(-5).reverse().map(function(b){
+    return '<div style="background:#f7f8fc;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
+      '<div><div style="font-size:13px;font-weight:800;color:#0f1117;">'+b.service+'</div>'+
+      '<div style="font-size:11px;color:#8b909e;">'+b.date+' at '+b.time+'</div></div>'+
+      '<span style="font-size:14px;font-weight:800;color:#E8251A;">'+b.price+'</span></div>';
+  }).join('');
+  var modal=document.getElementById('profileModal');
+  if(!modal){showToast(user.name+' | '+user.email);return;}
+  document.getElementById('profileContent').innerHTML=
+    '<div style="text-align:center;margin-bottom:18px;">'+
+      '<div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#E8251A,#ff8a7a);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:white;margin:0 auto 12px;">'+
+        (user.name||'U').charAt(0).toUpperCase()+'</div>'+
+      '<div style="font-size:20px;font-weight:800;color:#0f1117;">'+user.name+'</div>'+
+      '<div style="font-size:13px;color:#8b909e;margin-top:3px;">'+(user.email||'')+'</div></div>'+
+    '<div style="background:#f7f8fc;border-radius:12px;padding:14px;margin-bottom:14px;">'+
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eaedf2;font-size:14px;">'+
+        '<span style="color:#8b909e;font-weight:700;">Mobile</span><span style="font-weight:700;">'+(user.phone||'—')+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;">'+
+        '<span style="color:#8b909e;font-weight:700;">Email</span><span style="font-weight:700;">'+(user.email||'—')+'</span></div></div>'+
+    '<div style="font-size:11px;font-weight:800;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">My Bookings ('+bks.length+')</div>'+
+    (rows||'<div style="text-align:center;padding:16px;color:#8b909e;font-size:14px;">No bookings yet — book your first service!</div>')+
+    '<button onclick="logoutUser();closeProfileModal();" style="width:100%;margin-top:14px;padding:11px;background:#f7f8fc;border:1.5px solid #eaedf2;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#8b909e;">Sign Out</button>';
+  modal.classList.add('show');
+}
+function closeProfileModal(){
+  var m=document.getElementById('profileModal');
+  if(m) m.classList.remove('show');
+}
+// Close user dropdown on outside click
+document.addEventListener('click',function(e){
+  var widget=document.getElementById('userWidget');
+  var dd=document.getElementById('userDropdown');
+  if(widget&&dd&&!widget.contains(e.target))dd.classList.remove('open');
+});
+
+// ── RENDER SERVICES GRID ──────────────────────────────────────
+(function renderServicesGrid(){
+  var grid=document.getElementById('servicesGrid');
+  if(!grid)return;
+  grid.innerHTML=ALL_SERVICES.slice(0,16).map(function(s){
+    return '<div class="svc-card" onclick="selectService(\''+s.name.replace(/'/g,"\\'")+'\')">'
+      +'<div class="svc-card-img">'+s.emoji+'</div>'
+      +'<div class="svc-card-info">'
+        +'<div class="svc-name">'+s.name+'</div>'
+        +'<div class="svc-price-tag">'+s.price+'</div>'
+      +'</div>'
+      +'<button class="svc-book">Book →</button>'
+      +'</div>';
+  }).join('');
+})();
+
+// ── HEADER SCROLL EFFECT ──────────────────────────────────────
+window.addEventListener('scroll',function(){
+  var h=document.getElementById('siteHeader');
+  if(h)h.classList.toggle('scrolled',window.scrollY>10);
+});
+
+// ── HAMBURGER MENU ────────────────────────────────────────────
+(function(){
+  var btn=document.getElementById('menuBtn');
+  if(!btn)return;
+  btn.addEventListener('click',function(){
+    openUserAuth('login');
+  });
+})();
+
+// ── INIT USER WIDGET ON LOAD ──────────────────────────────────
+updateUserWidget();
+
 </script>
-<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeProfileModal()"><div class="auth-modal-box"><div class="auth-body" style="position:relative;"><button onclick="closeProfileModal()" style="position:absolute;top:0;right:0;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:18px;color:var(--muted);">&#x2715;</button><div class="auth-title">My Profile</div><div id="profileContent"></div></div></div></div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeProfileModal()"><div class="auth-modal-box"><div class="auth-body" style="position:relative;"><button onclick="closeProfileModal()" style="position:absolute;top:0;right:0;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:20px;line-height:1;color:var(--muted);">&#x2715;</button><div class="auth-title" style="margin-bottom:16px;">My Profile</div><div id="profileContent"></div></div></div></div>
 </body>
 </html>
