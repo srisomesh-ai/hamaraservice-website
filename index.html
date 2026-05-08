@@ -171,11 +171,12 @@ section{padding:80px 40px;}
 .svc-book{
   width:100%;padding:9px;background:var(--brand);color:white;
   border:none;border-radius:8px;font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:600;cursor:pointer;
-  opacity:0;transform:translateY(6px);transition:all .2s;
-  position:relative;
+  font-size:13px;font-weight:700;cursor:pointer;
+  opacity:1;transform:translateY(0);transition:all .2s;
+  position:relative;margin-top:8px;
 }
-.svc-card:hover .svc-book{opacity:1;transform:translateY(0);}
+.svc-book:hover{background:var(--brand2);transform:translateY(-1px);}
+.svc-card:hover .svc-book{background:var(--brand2);}
 
 /* ─── HOW IT WORKS ─── */
 .hiw-bg{background:var(--bg);}
@@ -507,7 +508,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <div class="section-label">What we offer</div>
         <div class="section-title">Services for every<br/>home need</div>
       </div>
-      <a class="see-all" href="user-booking.html">Browse all
+      <a class="see-all" href="#services">Browse all
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
@@ -781,30 +782,27 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 
       <div id="authLoginView">
         <div class="auth-title">Welcome back 👋</div>
-        <div class="auth-sub">Sign in to track bookings and manage your account</div>
+        <div class="auth-sub">Sign in to track your bookings</div>
 
         <!-- Google Sign-In -->
         <button onclick="signInWithGoogle()" id="googleSignInBtn" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continue with Google
         </button>
-
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div style="flex:1;height:1px;background:var(--line);"></div>
-          <span style="font-size:12px;color:var(--muted);font-weight:600;">or</span>
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">or use email &amp; password</span>
           <div style="flex:1;height:1px;background:var(--line);"></div>
         </div>
-
-        <!-- Email login -->
         <div class="auth-err" id="loginErr"></div>
         <div style="display:flex;flex-direction:column;gap:11px;">
           <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile Number or Email</label>
-            <input type="text" id="loginId" placeholder="Mobile number or email address" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email Address</label>
+            <input type="email" id="loginEmail" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
           </div>
           <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Name (as registered)</label>
-            <input type="text" id="loginName" placeholder="Your full name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'" onkeydown="if(event.key==='Enter')doLogin()"/>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Password</label>
+            <input type="password" id="loginPassword" placeholder="Your password" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'" onkeydown="if(event.key==='Enter')doLogin()"/>
           </div>
           <button onclick="doLogin()" class="auth-submit">Log in →</button>
         </div>
@@ -839,12 +837,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
             </div>
           </div>
           <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email (optional)</label>
-            <input type="email" id="regEmail" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email Address <span style="color:var(--brand)">*</span></label>
+            <input type="email" id="regEmail" placeholder="your@email.com" required style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
           </div>
           <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">City</label>
-            <input type="text" id="regCity" placeholder="e.g. Hyderabad" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Password <span style="color:var(--brand)">*</span></label>
+            <input type="password" id="regPassword" placeholder="Create a password" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
           </div>
           <button onclick="doRegister()" class="auth-submit">Create Account →</button>
         </div>
@@ -1083,38 +1081,46 @@ function signInWithGoogle(){
 
 // ── MOBILE/EMAIL LOGIN ─────────────────────────────────────────
 function doLogin(){
-  var id   = document.getElementById('loginId').value.trim();
-  var name = document.getElementById('loginName').value.trim();
-  var err  = document.getElementById('loginErr');
-  if(!id){err.textContent='Enter your mobile or email';err.style.display='block';return;}
-  if(!name){err.textContent='Enter your registered name';err.style.display='block';return;}
+  var email = (document.getElementById('loginEmail')||{}).value;
+  var pass  = (document.getElementById('loginPassword')||{}).value;
+  if(email) email = email.trim().toLowerCase();
+  if(pass)  pass  = pass.trim();
+  var err = document.getElementById('loginErr');
+  if(!email){err.textContent='Enter your email address';err.style.display='block';return;}
+  if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){err.textContent='Enter a valid email address';err.style.display='block';return;}
+  if(!pass){err.textContent='Enter your password';err.style.display='block';return;}
   err.style.display='none';
 
-  // Check Firebase DB first
-  fbDB.ref('customers').orderByChild('phone').equalTo(id).once('value', function(snap){
-    var found = null;
-    snap.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-    if(!found){
-      // Try by email
-      fbDB.ref('customers').orderByChild('email').equalTo(id).once('value', function(s2){
-        s2.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-        if(found){ loginSuccess(found); }
-        else {
-          // Fallback localStorage
-          var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-          var lsFound=users.find(function(u){ return (u.phone===id||u.email===id)&&u.name.toLowerCase()===name.toLowerCase(); });
-          if(lsFound){ loginSuccess(lsFound); }
-          else { err.textContent='Account not found. Please sign up.'; err.style.display='block'; }
-        }
+  // Try Firebase Auth first
+  fbAuth.signInWithEmailAndPassword(email, pass)
+    .then(function(result){
+      var user = result.user;
+      fbDB.ref('customers/'+user.uid).once('value', function(snap){
+        var data = snap.exists() ? snap.val() : {
+          id: user.uid, uid: user.uid,
+          name: user.displayName||email.split('@')[0],
+          email: email, phone: '', provider: 'email',
+          registeredAt: new Date().toISOString()
+        };
+        loginSuccess(data);
       });
-    } else { loginSuccess(found); }
-  }).catch(function(){
-    // Firebase unavailable — fallback localStorage
-    var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-    var lsFound=users.find(function(u){ return (u.phone===id||u.email===id)&&u.name.toLowerCase()===name.toLowerCase(); });
-    if(lsFound){ loginSuccess(lsFound); }
-    else { err.textContent='Account not found. Please sign up.'; err.style.display='block'; }
-  });
+    })
+    .catch(function(e){
+      // Fallback: check localStorage
+      var users = JSON.parse(localStorage.getItem('hs_customers')||'[]');
+      var found = users.find(function(u){ return u.email && u.email.toLowerCase()===email && u.password===pass; });
+      if(found){ loginSuccess(found); }
+      else {
+        var msgs = {
+          'auth/user-not-found': 'No account found with this email. Please sign up.',
+          'auth/wrong-password': 'Incorrect password. Please try again.',
+          'auth/invalid-email':  'Invalid email address.',
+          'auth/too-many-requests': 'Too many attempts. Please try again later.'
+        };
+        err.textContent = msgs[e.code] || 'Login failed. Please check your email and password.';
+        err.style.display = 'block';
+      }
+    });
 }
 
 function loginSuccess(user){
@@ -1128,38 +1134,62 @@ function loginSuccess(user){
 function doRegister(){
   var name  = document.getElementById('regName').value.trim();
   var phone = document.getElementById('regPhone').value.trim();
-  var email = document.getElementById('regEmail').value.trim();
-  var city  = document.getElementById('regCity').value.trim();
+  var email = document.getElementById('regEmail').value.trim().toLowerCase();
+  var pass  = (document.getElementById('regPassword')||{value:''}).value.trim();
   if(!name){showToast('⚠️ Enter your name');return;}
-  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return;}
+  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile number');return;}
+  if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showToast('⚠️ Enter a valid email address');return;}
+  if(!pass||pass.length<6){showToast('⚠️ Create a password (minimum 6 characters)');return;}
 
-  var userData = {
-    id:          'HS-CU-'+Date.now().toString(36).toUpperCase(),
-    name:        name,
-    phone:       phone,
-    email:       email,
-    city:        city,
-    provider:    'manual',
-    registeredAt: new Date().toISOString(),
-  };
+  // Register with Firebase Auth
+  fbAuth.createUserWithEmailAndPassword(email, pass)
+    .then(function(result){
+      var uid = result.user.uid;
+      result.user.updateProfile({displayName: name});
+      var userData = {
+        id: uid, uid: uid, name: name, phone: phone,
+        email: email, password: pass,
+        provider: 'email', registeredAt: new Date().toISOString()
+      };
+      fbDB.ref('customers/'+uid).set(userData);
+      saveAndLoginCustomer(userData);
+    })
+    .catch(function(e){
+      var msgs = {
+        'auth/email-already-in-use': 'Email already registered. Please log in.',
+        'auth/weak-password': 'Password too weak. Use at least 6 characters.',
+        'auth/invalid-email': 'Invalid email address.'
+      };
+      // Fallback: save locally
+      if(e.code === 'auth/email-already-in-use'){
+        showToast('⚠️ Email already registered — please log in');
+        switchAuthTab('login'); return;
+      }
+      var userData = {
+        id: 'HS-CU-'+Date.now().toString(36).toUpperCase(),
+        name: name, phone: phone, email: email, password: pass,
+        provider: 'email', registeredAt: new Date().toISOString()
+      };
+      var users = JSON.parse(localStorage.getItem('hs_customers')||'[]');
+      if(users.find(function(u){return u.email===email;})){
+        showToast('⚠️ Email already registered — log in');
+        switchAuthTab('login'); return;
+      }
+      users.push(userData);
+      localStorage.setItem('hs_customers', JSON.stringify(users));
+      fbDB.ref('customers/'+userData.id).set(userData).catch(function(){});
+      saveAndLoginCustomer(userData);
+    });
+}
 
-  // Save to Firebase
-  fbDB.ref('customers/'+userData.id).set(userData).then(function(){
-    console.log('Customer saved to Firebase');
-  }).catch(function(e){ console.warn('Firebase save failed:', e.message); });
-
-  // Save locally
-  var users=JSON.parse(localStorage.getItem('hs_customers')||'[]');
-  if(users.find(function(u){return u.phone===phone;})){
-    showToast('⚠️ Mobile already registered — log in');
-    switchAuthTab('login');return;
-  }
-  users.push(userData);
-  localStorage.setItem('hs_customers', JSON.stringify(users));
+function saveAndLoginCustomer(userData){
   localStorage.setItem('hs_current_customer', JSON.stringify(userData));
-  closeAuthModal();
-  updateUserWidget();
-  showToast('🎉 Welcome to HamaraService, '+name+'!');
+  var users = JSON.parse(localStorage.getItem('hs_customers')||'[]');
+  if(!users.find(function(u){return u.id===userData.id;})){
+    users.push(userData); localStorage.setItem('hs_customers', JSON.stringify(users));
+  }
+  closeAuthModal(); updateUserWidget();
+  showToast('🎉 Welcome to HamaraService, '+userData.name+'!');
 }
 
 // ── AUTH STATE LISTENER ────────────────────────────────────────
@@ -1232,7 +1262,48 @@ function toggleUserMenu(){
 function showUserProfile(){
   var user=JSON.parse(localStorage.getItem('hs_current_customer')||'null');
   if(!user){showToast('⚠️ Please log in first');return;}
-  showToast('👤 '+user.name+' · '+user.phone+(user.city?' · '+user.city:''));
+  var bks=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+  var profileHTML=
+    '<div style="text-align:center;margin-bottom:20px;">'+
+      '<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#ff8a7a);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:white;margin:0 auto 12px;">'+
+        (user.name||'U').charAt(0).toUpperCase()+
+      '</div>'+
+      '<div style="font-size:20px;font-weight:800;color:var(--ink);">'+user.name+'</div>'+
+      '<div style="font-size:14px;color:var(--muted);margin-top:4px;">'+user.email+'</div>'+
+    '</div>'+
+    '<div style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px;">'+
+      '<div style="display:flex;justify-content:space-between;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:8px;">'+
+        '<span style="font-weight:700;color:var(--muted);">📱 Mobile</span>'+
+        '<span style="font-weight:700;color:var(--ink);">'+(user.phone||'—')+'</span>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:8px;">'+
+        '<span style="font-weight:700;color:var(--muted);">📧 Email</span>'+
+        '<span style="font-weight:700;color:var(--ink);">'+(user.email||'—')+'</span>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:14px;">'+
+        '<span style="font-weight:700;color:var(--muted);">📅 Member since</span>'+
+        '<span style="font-weight:700;color:var(--ink);">'+new Date(user.registeredAt||Date.now()).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+'</span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="font-size:13px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📋 My Bookings ('+bks.length+')</div>'+
+    (bks.length===0 ? '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px;">No bookings yet.<br/>Book your first service!</div>' :
+      '<div style="display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;">'+
+      bks.slice(-5).reverse().map(function(b){
+        return '<div style="background:var(--bg);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">'+
+          '<div><div style="font-size:13px;font-weight:800;color:var(--ink);">'+b.service+'</div>'+
+          '<div style="font-size:12px;color:var(--muted);">'+b.date+' · '+b.time+'</div></div>'+
+          '<div style="font-size:13px;font-weight:800;color:var(--brand);">'+b.price+'</div>'+
+        '</div>';
+      }).join('')+
+      '</div>')+
+    '<button onclick="logoutUser();closeProfileModal();" style="width:100%;margin-top:16px;padding:12px;background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);">Sign Out</button>';
+
+  document.getElementById('profileContent').innerHTML=profileHTML;
+  document.getElementById('profileModal').classList.add('show');
+}
+
+function closeProfileModal(){
+  document.getElementById('profileModal').classList.remove('show');
 }
 
 // Close user dropdown on outside click
@@ -1277,5 +1348,17 @@ window.addEventListener('scroll',function(){
 updateUserWidget();
 
 </script>
+
+<!-- ─── CUSTOMER PROFILE MODAL ─── -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeProfileModal()">
+  <div class="auth-modal-box" style="max-height:90vh;overflow-y:auto;">
+    <div class="auth-body">
+      <button onclick="closeProfileModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;">✕</button>
+      <div class="auth-title">My Profile</div>
+      <div id="profileContent"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

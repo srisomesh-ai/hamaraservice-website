@@ -290,7 +290,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const SERVICES=[
+var SERVICES=[
   {name:"House Maid (Hourly)",icon:"🧹",defaultPrice:150},
   {name:"Deep House Cleaning",icon:"🫧",defaultPrice:1499},
   {name:"Bathroom Cleaning",icon:"🚿",defaultPrice:399},
@@ -319,7 +319,7 @@ const SERVICES=[
 ];
 
 function switchTab(tab){
-  const isLogin=tab==='login';
+  var isLogin=(tab==='login');
   document.getElementById('panelLogin').classList.toggle('active',isLogin);
   document.getElementById('panelRegister').classList.toggle('active',!isLogin);
   document.getElementById('tabLogin').classList.toggle('active',isLogin);
@@ -337,43 +337,43 @@ function switchTab(tab){
 }
 
 function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pass=document.getElementById('loginPass').value.trim();
-  const err=document.getElementById('loginErr');
+  var email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  var pass=document.getElementById('loginPass').value.trim();
+  var err=document.getElementById('loginErr');
   err.style.display='none';
   if(!email||!pass){showErr('Please enter your email and password');return;}
   if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showErr('Please enter a valid email address');return;}
-  const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  let found=providers.find(p=>p.email&&p.email.toLowerCase()===email&&p.password===pass);
+  var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  var found=providers.find(function(p){return p.email&&p.email.toLowerCase()===email&&p.password===pass;});
   if(!found&&email==='demo@hamaraservice.in'&&pass==='demo123'){found=createDemo(providers);}
   if(!found){showErr('Email or password not found. Please register first.');return;}
   localStorage.setItem('hs_current_provider',JSON.stringify(found));
   showToast('✅ Login successful! Redirecting...');
   syncProviderFromFirebase();
-  setTimeout(()=>window.location.href='provider-dashboard.html',800);
+  setTimeout(function(){window.location.href='provider-dashboard.html';},800);
 }
 
-function showErr(msg){const e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
+function showErr(msg){var e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
 
 function createDemo(providers){
-  const demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
-  const idx=providers.findIndex(p=>p.id==='HS-PRO-DEMO');
+  var demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
+  var idx=providers.findIndex(function(p){return p.id==='HS-PRO-DEMO';});
   if(idx===-1)providers.push(demo);else providers[idx]=demo;
   localStorage.setItem('hs_providers',JSON.stringify(providers));
   return demo;
 }
 
-let currentStep=1,regMap=null,regMarker=null,regCircle=null,regLat=null,regLng=null,regRadius=5,regAddress='';
+var currentStep=1,regMap=null,regMarker=null,regCircle=null,regLat=null,regLng=null,regRadius=5,regAddress='';
 
 function nextStep(from){if(!validateStep(from))return;if(from===3)buildSummary();goToStep(from+1);}
 function prevStep(from){goToStep(from-1);}
 function goToStep(n){
-  document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
-  document.getElementById('step'+n)?.classList.add('active');
+  document.querySelectorAll('.form-card').forEach(function(fc){fc.classList.remove('active');});
+  var _s=document.getElementById('step'+n); if(_s)_s.classList.add('active');
   currentStep=n;
-  for(let i=1;i<=4;i++){
-    const d=document.getElementById('sd'+i);
-    const l=document.getElementById('sl'+i);
+  for(var i=1;i<=4;i++){
+    var d=document.getElementById('sd'+i);
+    var l=document.getElementById('sl'+i);
     if(d){d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);}
     if(l)l.classList.toggle('done',i<n);
   }
@@ -384,17 +384,17 @@ function goToStep(n){
 function validateStep(n){
   if(n===1){
     if(!document.getElementById('r_name').value.trim()){showToast('⚠️ Enter your full name');return false;}
-    const phone=document.getElementById('r_phone').value.trim();
+    var phone=document.getElementById('r_phone').value.trim();
     if(!phone||phone.length!==10||!/^\d+$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return false;}
-    const email=document.getElementById('r_email').value.trim();
+    var email=document.getElementById('r_email').value.trim();
     if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showToast('⚠️ Enter a valid email address — you will use it to login');return false;}
-    const pass=document.getElementById('r_password').value.trim();
+    var pass=document.getElementById('r_password').value.trim();
     if(!window._googleUid && (!pass||pass.length<4)){showToast('⚠️ Create a password (minimum 4 characters)');return false;}
     if(!document.getElementById('r_exp').value){showToast('⚠️ Select your experience');return false;}
     if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
     if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
-    const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-    if(providers.find(p=>p.email&&p.email.toLowerCase()===email.toLowerCase())){showToast('⚠️ Email already registered. Please login.');return false;}
+    var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+    if(providers.find(function(p){ return p.email&&p.email.toLowerCase()===email.toLowerCase())){showToast('⚠️ Email already registered. Please login.');return false;}
     return true;
   }
   if(n===2){if(getSelectedServices().length===0){showToast('⚠️ Select at least one service');return false;}return true;}
@@ -403,33 +403,33 @@ function validateStep(n){
 }
 
 function buildSvcGrid(){
-  const grid=document.getElementById('svcGrid');
+  var grid=document.getElementById('svcGrid');
   if(grid.children.length>0)return;
-  SERVICES.forEach(s=>{
-    const chip=document.createElement('div');
+  SERVICES.forEach(function(s){
+    var chip=document.createElement('div');
     chip.className='svc-chip';chip.dataset.name=s.name;chip.dataset.icon=s.icon;
-    chip.innerHTML=`<div class="svc-icon">${s.icon}</div><div class="svc-name">${s.name}</div><input class="svc-price-input" type="number" placeholder="₹ Price" value="${s.defaultPrice}" min="1" onclick="event.stopPropagation()"/>`;
-    chip.onclick=(e)=>{if(e.target.classList.contains('svc-price-input'))return;chip.classList.toggle('selected');};
+    chip.innerHTML='<div class="svc-icon">'+s.icon+'</div><div class="svc-name">'+s.name+'</div><input class="svc-price-input" type="number" placeholder="\u20B9 Price" value="'+s.defaultPrice+'" min="1" onclick="event.stopPropagation()"/>';
+    chip.onclick=function(e){if(e.target.classList.contains('svc-price-input'))return;chip.classList.toggle('selected');};
     grid.appendChild(chip);
   });
 }
 
 function getSelectedServices(){
-  return[...document.querySelectorAll('.svc-chip.selected')].map(c=>({name:c.dataset.name,icon:c.dataset.icon,price:parseInt(c.querySelector('.svc-price-input').value)||499}));
+  var _ch=document.querySelectorAll('.svc-chip.selected'),_sv=[];for(var _i=0;_i<_ch.length;_i++){var _c=_ch[_i];_sv.push({name:_c.dataset.name,icon:_c.dataset.icon,price:parseInt(_c.querySelector('.svc-price-input').value)||499});}return _sv;
 }
 
 function initMap(){
   if(regMap){regMap.invalidateSize();return;}
   regMap=L.map('regMap').setView([17.3850,78.4867],12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(regMap);
-  regMap.on('click',e=>{regLat=e.latlng.lat;regLng=e.latlng.lng;placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);});
+  regMap.on('click',function(e){regLat=e.latlng.lat;regLng=e.latlng.lng;placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);});
 }
 
 function placeMarker(lat,lng){
   if(regMarker)regMap.removeLayer(regMarker);
   if(regCircle)regMap.removeLayer(regCircle);
-  regMarker=L.marker([lat,lng],{draggable:true,icon:L.divIcon({html:`<div style="font-size:36px;margin-top:-36px;margin-left:-14px;filter:drop-shadow(0 3px 8px rgba(232,37,26,0.5))">📍</div>`,className:'',iconSize:[28,36],iconAnchor:[14,36]})}).addTo(regMap);
-  regMarker.on('dragend',e=>{const ll=e.target.getLatLng();regLat=ll.lat;regLng=ll.lng;drawCircle();reverseGeocode(regLat,regLng);});
+  regMarker=L.marker([lat,lng],{draggable:true,icon:L.divIcon({html:'<div style="font-size:36px;margin-top:-36px;margin-left:-10px">📍</div>',className:'',iconSize:[28,36],iconAnchor:[14,36]})}).addTo(regMap);
+  regMarker.on('dragend',function(e){var ll=e.target.getLatLng();regLat=ll.lat;regLng=ll.lng;drawCircle();reverseGeocode(regLat,regLng);});
   drawCircle();
 }
 
@@ -442,70 +442,70 @@ function drawCircle(){
 function updateRadius(val){
   regRadius=parseInt(val);
   document.getElementById('radiusLabel').textContent=val+' km';
-  const pct=((val-1)/(50-1)*100).toFixed(1);
-  document.getElementById('radiusSlider').style.background=`linear-gradient(to right,var(--red) 0%,var(--red) ${pct}%,var(--border) ${pct}%)`;
+  var pct=((val-1)/(50-1)*100).toFixed(1);
+  document.getElementById('radiusSlider').style.background='linear-gradient(to right,var(--red) 0%,var(--red) '+pct+'%,#f0ddd9 '+pct+'%)';
   drawCircle();
 }
 
 function searchLoc(){
-  const q=document.getElementById('locSearch').value.trim();
+  var q=document.getElementById('locSearch').value.trim();
   if(!q){showToast('⚠️ Enter a location');return;}
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(res=>{
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1',{headers:{'Accept-Language':'en'}})
+    .then(function(r){return r.json();}).then(function(res){
       if(!res.length){showToast('❌ Location not found');return;}
       regLat=+res[0].lat;regLng=+res[0].lon;
       regMap.setView([regLat,regLng],14);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
-    }).catch(()=>showToast('❌ Search failed'));
+    }).catch(function(){showToast('❌ Search failed');});
 }
 
 function useGPS(){
   if(!navigator.geolocation){showToast('❌ GPS not available');return;}
   showToast('🎯 Getting location...');
-  navigator.geolocation.getCurrentPosition(pos=>{
+  navigator.geolocation.getCurrentPosition(function(pos){
     regLat=pos.coords.latitude;regLng=pos.coords.longitude;
     regMap.setView([regLat,regLng],15);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
     showToast('✅ Location detected!');
-  },()=>showToast('❌ GPS failed. Click on map instead.'));
+  },function(){showToast('❌ GPS failed. Click on map instead.');});
 }
 
 function reverseGeocode(lat,lng){
   document.getElementById('addrBox').textContent='⏳ Fetching address...';
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(d=>{
-      const a=d.address||{};
-      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json',{headers:{'Accept-Language':'en'}})
+    .then(function(r){return r.json();}).then(function(d){
+      var a=d.address||{};
+      var parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
       regAddress=parts.join(', ')||d.display_name;
       document.getElementById('addrBox').textContent='📍 '+regAddress;
-    }).catch(()=>{regAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;document.getElementById('addrBox').textContent='📍 '+regAddress;});
+    }).catch(function(){regAddress=lat.toFixed(4)+', '+lng.toFixed(4);document.getElementById('addrBox').textContent='📍 '+regAddress;});
 }
 
 function buildSummary(){
-  const svcs=getSelectedServices();
-  const rows=[
+  var svcs=getSelectedServices();
+  var rows=[
     ['Name',document.getElementById('r_name').value],
     ['Mobile',document.getElementById('r_phone').value],
     ['Login Email',document.getElementById('r_email').value||'—'],
     ['Experience',document.getElementById('r_exp').value],
     ['ID Proof',document.getElementById('r_idtype').value+': '+document.getElementById('r_idnum').value],
-    ['Services',svcs.map(s=>s.icon+' '+s.name+' ₹'+s.price).join(' | ')],
-    ['Location',regAddress||`${regLat?.toFixed(4)}, ${regLng?.toFixed(4)}`],
+    ['Services',svcs.map(function(s){return s.icon+' '+s.name+' \u20B9'+s.price;}).join(' | ')],
+    ['Location',regAddress||(regLat.toFixed(4)+', '+regLng.toFixed(4))],
     ['Service Radius',regRadius+' km'],
   ];
-  document.getElementById('summaryBox').innerHTML=rows.map(([l,v])=>`<div class="summary-row"><span class="summary-label">${l}</span><span class="summary-value">${v}</span></div>`).join('');
+  document.getElementById('summaryBox').innerHTML=rows.map(function(row){var l=row[0],v=row[1];return '<div class="summary-row"><span class="summary-label">'+l+'</span><span class="summary-value">'+v+'</span></div>';}).join('');
 }
 
 function submitRegistration(){
-  const rawName=document.getElementById('r_name').value.trim();
-  const rawPhone=document.getElementById('r_phone').value.trim();
-  const rawPass=document.getElementById('r_password').value.trim() || (window._googleUid ? 'google-auth-'+window._googleUid.slice(0,8) : '');
+  var rawName=document.getElementById('r_name').value.trim();
+  var rawPhone=document.getElementById('r_phone').value.trim();
+  var rawPass=document.getElementById('r_password').value.trim() || (window._googleUid ? 'google-auth-'+window._googleUid.slice(0,8) : '');
   // ID = first 4 letters of name (uppercase, letters only) + last 4 digits of phone
-  const namePart=rawName.replace(/[^a-zA-Z]/g,'').toUpperCase().padEnd(4,'X').slice(0,4);
-  const phonePart=rawPhone.slice(-4);
-  const id='HS-PRO-'+namePart+phonePart;
+  var namePart=rawName.replace(/[^a-zA-Z]/g,'').toUpperCase().padEnd(4,'X').slice(0,4);
+  var phonePart=rawPhone.slice(-4);
+  var id='HS-PRO-'+namePart+phonePart;
   // Check if already registered
-  const existingProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  if(existingProvs.find(p=>p.id===id)){showToast('⚠️ Provider already registered with this name & mobile');return;}
-  const provider={
+  var existingProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  if(existingProvs.find(function(p){ return p.id===id)){showToast('⚠️ Provider already registered with this name & mobile');return;}
+  var provider={
     id,
     name:rawName,
     phone:rawPhone,
@@ -526,12 +526,12 @@ function submitRegistration(){
     available:true,
     registeredAt:new Date().toISOString()
   };
-  const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
   providers.push(provider);
   localStorage.setItem('hs_providers',JSON.stringify(providers));
   localStorage.setItem('hs_current_provider',JSON.stringify(provider));
   saveProviderToFirebase(provider);
-  document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.form-card').forEach(function(fc){fc.classList.remove('active');});
   document.getElementById('stepSuccess').classList.add('active');
   document.getElementById('generatedId').textContent=id;
   window.scrollTo({top:0,behavior:'smooth'});
@@ -632,10 +632,10 @@ function fillDemo(){
   showToast('✅ Demo credentials filled — click Login!');
 }
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3200);}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3200);}
 
 // Auto-redirect if already logged in
-const existing=localStorage.getItem('hs_current_provider');
+var existing=localStorage.getItem('hs_current_provider');
 if(existing){try{JSON.parse(existing);window.location.href='provider-dashboard.html';}catch(e){localStorage.removeItem('hs_current_provider');}}
 </script>
 </body>
