@@ -414,26 +414,26 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 'use strict';
 
 // ── Firebase ──────────────────────────────────────────────────
-const FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-async function fbWrite(path, data) {
+function fbWrite(path, data) {
   try {
-    await fetch(FB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:AbortSignal.timeout(6000)});
+    fetch(FB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:AbortSignal.timeout(6000)});
   } catch(e){console.warn('FB write:',e.message);}
 }
-async function fbRead(path) {
+function fbRead(path) {
   try {
-    const r = await fetch(FB+'/'+path+'.json',{signal:AbortSignal.timeout(5000)});
-    if(r.ok) return await r.json();
+    var r = fetch(FB+'/'+path+'.json',{signal:AbortSignal.timeout(5000)});
+    if(r.ok) return r.json();
   } catch(e){}
   return null;
 }
-async function fbDelete(path) {
-  try { await fetch(FB+'/'+path+'.json',{method:'DELETE',signal:AbortSignal.timeout(5000)}); } catch(e){}
+function fbDelete(path) {
+  try { fetch(FB+'/'+path+'.json',{method:'DELETE',signal:AbortSignal.timeout(5000)}); } catch(e){}
 }
 
 // ── Services catalog ──────────────────────────────────────────
-const SVCS = [
+var SVCS = [
   {e:'🧹',n:'House Maid',              p:'₹150/hr',  pv:150,  kw:['maid','house','clean','sweep','mop']},
   {e:'🫧',n:'Deep House Cleaning',     p:'₹1,499',   pv:1499, kw:['deep','full','house','thorough','clean']},
   {e:'🚿',n:'Bathroom Cleaning',       p:'₹399',     pv:399,  kw:['bathroom','toilet','washroom','bath']},
@@ -462,16 +462,16 @@ const SVCS = [
 ];
 
 // ── State ─────────────────────────────────────────────────────
-let selSvc = null, userLL = null, userAddr = '', miniMap = null, miniMarker = null;
-let bookingId = null, radarActive = false, pollTimer = null;
+var selSvc = null, userLL = null, userAddr = '', miniMap = null, miniMarker = null;
+var bookingId = null, radarActive = false, pollTimer = null;
 
 // ── Steps ─────────────────────────────────────────────────────
 function setStep(n){
-  [1,2,3,4].forEach(i=>{
-    const s=document.getElementById('s'+i), d=document.getElementById('sd'+i);
+  [1,2,3,4].forEach(function(i){
+    var s=document.getElementById('s'+i), d=document.getElementById('sd'+i);
     s.className='step'+(i<n?' done':i===n?' active':'');
     d.textContent = i<n ? '✓' : i===4?'✓':i;
-    const l=document.getElementById('sl'+i);
+    var l=document.getElementById('sl'+i);
     if(l) l.style.background = i<n?'var(--green)':'var(--line)';
   });
 }
@@ -481,10 +481,10 @@ function goStep2(){ document.getElementById('step1').style.display='none'; docum
 
 // ── Service search ────────────────────────────────────────────
 function svcSearch(q){
-  const drop=document.getElementById('svcDrop');
+  var drop=document.getElementById('svcDrop');
   if(!q||!q.trim()){drop.style.display='none';return;}
-  const lq=q.toLowerCase().trim();
-  const res=SVCS.filter(function(s){
+  var lq=q.toLowerCase().trim();
+  var res=SVCS.filter(function(s){
     return s.n.toLowerCase().includes(lq) || s.kw.some(function(k){return k.includes(lq);});
   }).slice(0,8);
   if(!res.length){
@@ -505,16 +505,16 @@ function svcSearch(q){
   }).join('');
   drop.style.display='block';
   // Position the drop correctly relative to the input
-  const inp=document.getElementById('svcInp');
-  const rect=inp.getBoundingClientRect();
+  var inp=document.getElementById('svcInp');
+  var rect=inp.getBoundingClientRect();
   drop.style.width=rect.width+'px';
 }
 function hl(text,q){
-  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  var i=text.toLowerCase().indexOf(q.toLowerCase());
   if(i<0)return text;
   return text.slice(0,i)+'<strong>'+text.slice(i,i+q.length)+'</strong>'+text.slice(i+q.length);
 }
-function pickFirst(){ const f=document.getElementById('svcDrop').querySelector('.svc-drop-item'); if(f)f.click(); }
+function pickFirst(){ var f=document.getElementById('svcDrop').querySelector('.svc-drop-item'); if(f)f.click(); }
 function pickSvc(idx){
   selSvc=SVCS[idx];
   document.getElementById('svcDrop').style.display='none';
@@ -535,31 +535,31 @@ function clearSvc(){
   document.getElementById('svcInp').focus();
   document.getElementById('summaryCard').style.display='none';
 }
-document.addEventListener('click',e=>{
-  const i=document.getElementById('svcInp'),d=document.getElementById('svcDrop');
+document.addEventListener('click',function(e){
+  var i=document.getElementById('svcInp'),d=document.getElementById('svcDrop');
   if(!i.contains(e.target)&&!d.contains(e.target))d.style.display='none';
 });
 
 // ── Date / time defaults ──────────────────────────────────────
-const tom=new Date(); tom.setDate(tom.getDate()+1);
+var tom=new Date(); tom.setDate(tom.getDate()+1);
 document.getElementById('bookDate').value=tom.toISOString().split('T')[0];
 document.getElementById('bookDate').min=new Date().toISOString().split('T')[0];
-const hs=document.getElementById('bookHour');
-for(let h=6;h<=21;h++){
-  const lbl=h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
-  hs.innerHTML+=`<option value="${String(h).padStart(2,'0')}">${lbl}</option>`;
+var hs=document.getElementById('bookHour');
+for(var h=6;h<=21;h++){
+  var lbl=h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
+  hs.innerHTML+='<option value="'+(String(h).padStart(2,'0'))+'">'+(lbl)+'</option>';
 }
 hs.value='09';
-['custName','custPhone','bookDate','bookHour','bookMinute'].forEach(id=>{
-  const el=document.getElementById(id);
+['custName','custPhone','bookDate','bookHour','bookMinute'].forEach(function(id){
+  var el=document.getElementById(id);
   if(el){el.addEventListener('change',updateSummary);el.addEventListener('input',updateSummary);}
 });
 
 function updateSummary(){
   if(!selSvc)return;
-  const nm=document.getElementById('custName').value.trim();
-  const ph=document.getElementById('custPhone').value.trim();
-  const dt=document.getElementById('bookDate').value;
+  var nm=document.getElementById('custName').value.trim();
+  var ph=document.getElementById('custPhone').value.trim();
+  var dt=document.getElementById('bookDate').value;
   if(!nm||!ph||!dt)return;
   document.getElementById('summaryCard').style.display='block';
   document.getElementById('sumSvc').textContent=selSvc.n;
@@ -572,9 +572,9 @@ function updateSummary(){
 // ── Step 1 → 2 ───────────────────────────────────────────────
 function goStep2(){
   if(!selSvc){showToast('⚠️ Please select a service first');return;}
-  const nm=document.getElementById('custName').value.trim();
-  const ph=document.getElementById('custPhone').value.trim();
-  const dt=document.getElementById('bookDate').value;
+  var nm=document.getElementById('custName').value.trim();
+  var ph=document.getElementById('custPhone').value.trim();
+  var dt=document.getElementById('bookDate').value;
   if(!nm){showToast('⚠️ Please enter your name');return;}
   if(!/^\d{10}$/.test(ph)){showToast('⚠️ Enter a valid 10-digit mobile number');return;}
   if(!dt){showToast('⚠️ Please select a date');return;}
@@ -590,71 +590,71 @@ function initMap(){
   if(miniMap){miniMap.invalidateSize();return;}
   miniMap=L.map('miniMap',{zoomControl:true,attributionControl:false}).setView([17.385,78.486],13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(miniMap);
-  miniMap.on('click',e=>{pin(e.latlng.lat,e.latlng.lng);revGeo(e.latlng.lat,e.latlng.lng);});
+  miniMap.on('click',function(e){pin(e.latlng.lat,e.latlng.lng);revGeo(e.latlng.lat,e.latlng.lng);});
 }
 function pin(lat,lng){
   if(miniMarker)miniMap.removeLayer(miniMarker);
-  const ic=L.divIcon({html:`<div style="width:32px;height:32px;background:var(--brand);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.45);"></div>`,className:'',iconSize:[32,32],iconAnchor:[16,32]});
+  var ic=L.divIcon({html:'<div style="width:32px;height:32px;background:var(--brand);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.45);"></div>',className:'',iconSize:[32,32],iconAnchor:[16,32]});
   miniMarker=L.marker([lat,lng],{icon:ic}).addTo(miniMap);
   miniMap.panTo([lat,lng]);
   userLL={lat,lng};
   document.getElementById('findBtn').disabled=false;
   document.getElementById('findBtn').style.opacity='1';
 }
-async function revGeo(lat,lng){
+function revGeo(lat,lng){
   document.getElementById('gpsAddrTxt').textContent='⏳ Fetching address…';
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}});
-    const d=await r.json();
-    const a=d.address||{};
-    userAddr=[a.road,a.suburb||a.neighbourhood,a.city||a.town||a.state_district,a.state].filter(Boolean).join(', ')||d.display_name||`${lat.toFixed(5)},${lng.toFixed(5)}`;
+    var r=fetch('https://nominatim.openstreetmap.org/reverse?lat='+(lat)+'&lon='+(lng)+'&format=json',{headers:{'Accept-Language':'en'}});
+    var d=r.json();
+    var a=d.address||{};
+    userAddr=[a.road,a.suburb||a.neighbourhood,a.city||a.town||a.state_district,a.state].filter(Boolean).join(', ')||d.display_name||(lat.toFixed(5))+','+(lng.toFixed(5));
     document.getElementById('gpsAddrTxt').textContent=userAddr;
-  }catch(e){userAddr=`${lat.toFixed(5)},${lng.toFixed(5)}`;document.getElementById('gpsAddrTxt').textContent=userAddr;}
+  }catch(e){userAddr=(lat.toFixed(5))+','+(lng.toFixed(5));document.getElementById('gpsAddrTxt').textContent=userAddr;}
 }
 function getGPS(){
   if(!navigator.geolocation){showToast('❌ GPS not available on this device');return;}
   document.getElementById('gpsAddrTxt').textContent='📡 Detecting GPS location…';
   document.getElementById('gpsAcc').style.display='none';
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
     pin(lat,lng);miniMap.setView([lat,lng],16);revGeo(lat,lng);
     document.getElementById('gpsAcc').textContent='±'+acc+'m';
     document.getElementById('gpsAcc').style.display='block';
     showToast('📍 Location detected — accuracy ±'+acc+'m');
-  },err=>{
-    const m={1:'Location permission denied — tap Allow in browser',2:'GPS signal weak — try moving outdoors',3:'GPS timed out — try again'};
+  },function(err){
+    var m={1:'Location permission denied — tap Allow in browser',2:'GPS signal weak — try moving outdoors',3:'GPS timed out — try again'};
     showToast('⚠️ '+(m[err.code]||'Could not get GPS'));
     document.getElementById('gpsAddrTxt').textContent=m[err.code]||'Could not detect GPS';
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 }
 function toggleLocSearch(){
-  const b=document.getElementById('locSearchBar');
+  var b=document.getElementById('locSearchBar');
   b.style.display=b.style.display==='none'?'block':'none';
   if(b.style.display==='block')document.getElementById('locQ').focus();
 }
-async function doLocSearch(){
-  const q=document.getElementById('locQ').value.trim();if(!q)return;
+function doLocSearch(){
+  var q=document.getElementById('locQ').value.trim();if(!q)return;
   document.getElementById('gpsAddrTxt').textContent='🔍 Searching…';
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=in`,{headers:{'Accept-Language':'en'}});
-    const res=await r.json();
+    var r=fetch('https://nominatim.openstreetmap.org/search?q='+(encodeURIComponent(q))+'&format=json&limit=1&countrycodes=in',{headers:{'Accept-Language':'en'}});
+    var res=r.json();
     if(!res.length){showToast('❌ Location not found');return;}
-    const lat=+res[0].lat,lng=+res[0].lon;
-    pin(lat,lng);miniMap.setView([lat,lng],15);await revGeo(lat,lng);
+    var lat=+res[0].lat,lng=+res[0].lon;
+    pin(lat,lng);miniMap.setView([lat,lng],15);revGeo(lat,lng);
     document.getElementById('locSearchBar').style.display='none';
   }catch(e){showToast('❌ Search failed');}
 }
 
 // ── RADAR SEARCH ──────────────────────────────────────────────
-const RANGES   = [1,3,5,10,15,20];
-const RING_R   = [18,40,62,84,106,122]; // SVG radius per range
-let curRange   = 0;
+var RANGES   = [1,3,5,10,15,20];
+var RING_R   = [18,40,62,84,106,122]; // SVG radius per range
+var curRange   = 0;
 
 function startRadar(){
   if(!userLL){showToast('⚠️ Confirm your location first');return;}
 
   bookingId='HS-BK-'+Date.now().toString(36).toUpperCase();
-  const booking={
+  var booking={
     id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
     customer:document.getElementById('custName').value.trim(),
     phone:document.getElementById('custPhone').value.trim(),
@@ -691,14 +691,14 @@ function startRadar(){
   runRange(0);
 }
 
-async function runRange(idx){
+function runRange(idx){
   if(!radarActive)return;
   if(idx>=RANGES.length){
     rlog('❌','No providers found within 20 km. Please try again later.','warn');
     clearTimeout(pollTimer);return;
   }
   curRange=idx;
-  const km=RANGES[idx];
+  var km=RANGES[idx];
 
   // Update UI
   document.getElementById('radarKm').textContent=km+' km';
@@ -714,8 +714,8 @@ async function runRange(idx){
   }
 
   // Count real providers in localStorage within range
-  const allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  const inRange=allProvs.filter(p=>{
+  var allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  var inRange=allProvs.filter(function(p){ return {
     if(!p.lat||!p.lng)return false;
     return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
   });
@@ -727,33 +727,33 @@ async function runRange(idx){
 
   // Add radar blips
   // Only add blips for REAL providers found
-  for(let i=0;i<Math.min(inRange.length,6);i++) addBlip(idx);
+  for(var i=0;i<Math.min(inRange.length,6);i++) addBlip(idx);
 
   // Notify via Firebase
-  await fbWrite('active_bookings/'+bookingId+'/range',km);
-  await fbWrite('notifications/search_'+bookingId,{
+  fbWrite('active_bookings/'+bookingId+'/range',km);
+  fbWrite('notifications/search_'+bookingId,{
     bookingId,service:selSvc.n,lat:userLL.lat,lng:userLL.lng,range:km,
     ts:Date.now(),status:'searching'
   });
 
   // Poll for acceptance every 3s for up to 18s, then expand
-  let waited=0;
-  const maxWait=18000;
+  var waited=0;
+  var maxWait=18000;
   clearTimeout(pollTimer);
 
-  const poll=async()=>{
+  var poll=function(){
     if(!radarActive)return;
     waited+=3000;
 
     // Check Firebase for acceptance
-    const req=await fbRead('active_bookings/'+bookingId);
+    var req=fbRead('active_bookings/'+bookingId);
     if(req&&req.acceptedBy){
       clearTimeout(pollTimer);
       provAccepted(req.acceptedBy);return;
     }
     // Check localStorage (provider dashboard acceptance)
-    const lsKey='hs_accepted_'+bookingId;
-    const lsVal=localStorage.getItem(lsKey);
+    var lsKey='hs_accepted_'+bookingId;
+    var lsVal=localStorage.getItem(lsKey);
     if(lsVal){
       localStorage.removeItem(lsKey);
       clearTimeout(pollTimer);
@@ -770,12 +770,12 @@ async function runRange(idx){
 }
 
 function addBlip(rangeIdx){
-  const g=document.getElementById('blipsG');
-  const angle=Math.random()*2*Math.PI;
-  const maxR=RING_R[rangeIdx]*0.85, minR=rangeIdx===0?8:RING_R[rangeIdx]*0.3;
-  const r=minR+Math.random()*(maxR-minR);
-  const x=130+r*Math.cos(angle), y=130+r*Math.sin(angle);
-  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  var g=document.getElementById('blipsG');
+  var angle=Math.random()*2*Math.PI;
+  var maxR=RING_R[rangeIdx]*0.85, minR=rangeIdx===0?8:RING_R[rangeIdx]*0.3;
+  var r=minR+Math.random()*(maxR-minR);
+  var x=130+r*Math.cos(angle), y=130+r*Math.sin(angle);
+  var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
   c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',4);
   c.setAttribute('fill','#00ff88');c.setAttribute('opacity','0.85');
   c.style.animation='blip 2s ease infinite';
@@ -784,12 +784,12 @@ function addBlip(rangeIdx){
 }
 
 function rlog(icon,text,type){
-  const log=document.getElementById('radarLog');
-  const now=new Date();
-  const ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
-  const div=document.createElement('div');
+  var log=document.getElementById('radarLog');
+  var now=new Date();
+  var ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  var div=document.createElement('div');
   div.className='rlog '+(type||'');
-  div.innerHTML=`<span class="rlog-ic">${icon}</span><span class="rlog-txt">${text}</span><span class="rlog-ts">${ts}</span>`;
+  div.innerHTML='<span class="rlog-ic">'+(icon)+'</span><span class="rlog-txt">'+(text)+'</span><span class="rlog-ts">'+(ts)+'</span>';
   log.appendChild(div);
   log.scrollTop=log.scrollHeight;
 }
@@ -804,9 +804,9 @@ function cancelRadar(){
 function provAccepted(data){
   radarActive=false;clearTimeout(pollTimer);
   document.getElementById('radarOverlay').classList.remove('show');
-  const p=typeof data==='string'?JSON.parse(data):data||{};
-  const dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat,p.lng).toFixed(1):'—';
-  const eta=Math.max(3,Math.round(dist*4+2));
+  var p=typeof data==='string'?JSON.parse(data):data||{};
+  var dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat,p.lng).toFixed(1):'—';
+  var eta=Math.max(3,Math.round(dist*4+2));
   document.getElementById('pcName').textContent=p.name||'Professional';
   document.getElementById('pcRating').textContent=p.rating?Number(p.rating).toFixed(1):'New';
   document.getElementById('pcJobs').textContent=p.totalJobs?'· '+p.totalJobs+' jobs completed':'';
@@ -823,12 +823,12 @@ function confirmBooking(){
     fbWrite('bookings/'+bookingId+'/status','confirmed');
     fbDelete('active_bookings/'+bookingId);
     // Save to localStorage
-    const bk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+    var bk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
     bk.push({id:bookingId,service:selSvc.n,price:selSvc.p,date:document.getElementById('bookDate').value,time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,customer:document.getElementById('custName').value.trim(),phone:document.getElementById('custPhone').value.trim(),address:userAddr,lat:userLL.lat,lng:userLL.lng,status:'confirmed'});
     localStorage.setItem('hs_customer_bookings',JSON.stringify(bk));
   }
   showToast('🎉 Booking confirmed! Your professional is on the way.');
-  setTimeout(()=>window.location.href='index.html',2500);
+  setTimeout(function(){window.location.href='index.html'},2500);
 }
 
 function openTracking(){
@@ -838,25 +838,25 @@ function openTracking(){
 
 // ── Haversine ─────────────────────────────────────────────────
 function hvs(a,b,c,d){
-  const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180;
-  const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
+  var R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180;
+  var x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
 // ── URL params from homepage ──────────────────────────────────
 (function(){
-  const p=new URLSearchParams(window.location.search);
-  const svc=p.get('service'),locR=p.get('loc'),addr=p.get('addr');
+  var p=new URLSearchParams(window.location.search);
+  var svc=p.get('service'),locR=p.get('loc'),addr=p.get('addr');
   if(svc){
-    const m=SVCS.find(s=>s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()));
-    if(m)setTimeout(()=>pickSvc(SVCS.indexOf(m)),300);
-    else{setTimeout(()=>{document.getElementById('svcInp').value=svc;svcSearch(svc);},300);}
+    var m=SVCS.find(function(s){ return s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()));
+    if(m)setTimeout(function(){pickSvc(SVCS.indexOf(m))},300);
+    else{setTimeout(function(){document.getElementById('svcInp').value=svc;svcSearch(svc);},300);}
   }
-  if(locR){try{const ll=JSON.parse(decodeURIComponent(locR));userLL=ll;if(addr)userAddr=decodeURIComponent(addr);}catch(e){}}
+  if(locR){try{var ll=JSON.parse(decodeURIComponent(locR));userLL=ll;if(addr)userAddr=decodeURIComponent(addr);}catch(e){}}
 })();
 
 // ── Toast ─────────────────────────────────────────────────────
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},3500);}
 </script>
 </body>
 </html>

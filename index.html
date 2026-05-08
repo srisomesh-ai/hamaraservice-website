@@ -855,7 +855,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const ALL_SERVICES = [
+var ALL_SERVICES = [
   {name:'House Maid',          emoji:'🧹', price:'₹150/hr', keywords:['maid','clean','sweep','house']},
   {name:'Deep Cleaning',       emoji:'🫧', price:'₹1,499',  keywords:['deep','full','thorough','clean']},
   {name:'Bathroom Cleaning',   emoji:'🚿', price:'₹399',    keywords:['bathroom','toilet','washroom','bath']},
@@ -882,7 +882,7 @@ const ALL_SERVICES = [
   {name:'Pest Control',        emoji:'🐛', price:'₹799',    keywords:['pest','cockroach','rat','bug','insect']},
   {name:'Room Painting',       emoji:'🎨', price:'₹1,499',  keywords:['paint','wall','colour','color','room']},
 ];
-let selectedServiceName = '';
+var selectedServiceName = '';
 
 function liveSearchFn(q) {
   var dd = document.getElementById('srchDrop');
@@ -953,22 +953,22 @@ function heroSearch(){
 }
 function selectService(name){
   selectedServiceName = name;
-  const loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
-  const addr = encodeURIComponent(selectedAddress||'');
+  var loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
+  var addr = encodeURIComponent(selectedAddress||'');
   window.location.href='user-booking.html?service='+encodeURIComponent(name)+'&loc='+loc+'&addr='+addr;
 }
 
 // ── MAP
-let leafletMap=null,leafletMarker=null;
-let selectedLatLng=null,selectedAddress='';
+var leafletMap=null,leafletMarker=null;
+var selectedLatLng=null,selectedAddress='';
 
 function openMapModal(){
   document.getElementById('mapModal').classList.add('show');
-  setTimeout(()=>{
+  setTimeout(function(){
     if(!leafletMap){
       leafletMap=L.map('mapContainer').setView([17.3850,78.4867],12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(leafletMap);
-      leafletMap.on('click',e=>{
+      leafletMap.on('click',function(e){
         selectedLatLng={lat:e.latlng.lat,lng:e.latlng.lng};
         placePin(e.latlng.lat,e.latlng.lng);
         reverseGeocode(e.latlng.lat,e.latlng.lng);
@@ -983,51 +983,51 @@ function closeMapModal(){document.getElementById('mapModal').classList.remove('s
 function placePin(lat,lng){
   if(leafletMarker)leafletMap.removeLayer(leafletMarker);
   leafletMarker=L.marker([lat,lng],{
-    icon:L.divIcon({html:`<div style="width:32px;height:32px;background:#E8251A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.4)"></div>`,className:'',iconSize:[32,32],iconAnchor:[16,32]})
+    icon:L.divIcon({html:'<div style="width:32px;height:32px;background:#E8251A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.4)"></div>',className:'',iconSize:[32,32],iconAnchor:[16,32]})
   }).addTo(leafletMap);
   leafletMap.panTo([lat,lng]);
 }
 function reverseGeocode(lat,lng){
   document.getElementById('addrDisplay').textContent='📍 Fetching address…';
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(d=>{
-      const a=d.address||{};
-      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json',{headers:{'Accept-Language':'en'}})
+    .then(function(r){return r.json();}).then(function(d){
+      var a=d.address||{};
+      var parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
       selectedAddress=parts.join(', ')||d.display_name;
       document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
-    }).catch(()=>{
-      selectedAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }).catch(function(){
+      selectedAddress=lat.toFixed(4)+', '+lng.toFixed(4);
       document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
     });
 }
 function detectLocation(silent){
   if(!navigator.geolocation){if(!silent)showToast('❌ GPS not supported');return;}
   if(!silent)showToast('📍 Getting your location…');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const {latitude:lat,longitude:lng}=pos.coords;
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude,lng=pos.coords.longitude;
     selectedLatLng={lat,lng};
     if(leafletMap)leafletMap.setView([lat,lng],15);
     placePin(lat,lng);reverseGeocode(lat,lng);
     if(!silent)showToast('✅ Location found!');
-  },err=>{if(!silent)showToast('❌ Could not get location');});
+  },function(err){if(!silent)showToast('❌ Could not get location');});
 }
 function searchLocation(){
-  const q=document.getElementById('mapSearchInput').value.trim();
+  var q=document.getElementById('mapSearchInput').value.trim();
   if(!q){showToast('⚠️ Enter an address to search');return;}
   showToast('🔍 Searching…');
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(res=>{
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1',{headers:{'Accept-Language':'en'}})
+    .then(function(r){return r.json();}).then(function(res){
       if(!res.length){showToast('❌ Location not found');return;}
-      const lat=+res[0].lat,lng=+res[0].lon;
+      var lat=+res[0].lat,lng=+res[0].lon;
       selectedLatLng={lat,lng};
       leafletMap.setView([lat,lng],15);
       placePin(lat,lng);reverseGeocode(lat,lng);
-    }).catch(()=>showToast('❌ Search failed'));
+    }).catch(function(){showToast('❌ Search failed');});
 }
-document.getElementById('mapSearchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchLocation();});
+document.getElementById('mapSearchInput').addEventListener('keydown',function(e){if(e.key==='Enter')searchLocation();}));
 function confirmLocation(){
   if(!selectedLatLng){showToast('📍 Please tap the map or use GPS first');return;}
-  const short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):`${selectedLatLng.lat.toFixed(4)}, ${selectedLatLng.lng.toFixed(4)}`;
+  var short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):selectedLatLng.lat.toFixed(4)+', '+selectedLatLng.lng.toFixed(4);
   closeMapModal();showToast('✅ Location confirmed: '+short);
 }
 

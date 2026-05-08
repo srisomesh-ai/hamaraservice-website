@@ -806,14 +806,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ════════ STATE ════════
-let P = null; // current provider
-let updateMap = null, updateMarker = null, updateCircle = null;
-let newLat = null, newLng = null, newRadius = 5;
-let alertCountdown = null;
-let pendingBooking = null;
+var P = null; // current provider
+var updateMap = null, updateMarker = null, updateCircle = null;
+var newLat = null, newLng = null, newRadius = 5;
+var alertCountdown = null;
+var pendingBooking = null;
 
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const TIME_SLOTS = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
+var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var TIME_SLOTS = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
 
 // ════════ BOOKING DB ════════
 function getBK() { return JSON.parse(localStorage.getItem('hs_bk_' + P.id) || '[]'); }
@@ -824,20 +824,20 @@ function saveReviews(rv) { localStorage.setItem('hs_rv_' + P.id, JSON.stringify(
 
 // ════════ STATS COMPUTE ════════
 function computeStats(){
-  const bk = getBK();
-  const catalog = JSON.parse(localStorage.getItem("hs_catalog")||"null") || [];
-  const completed = bk.filter(b => b.status === 'completed' || b.status === 'paid');
-  const pending   = bk.filter(b => b.status === 'pending');
-  const awaitingPayment = bk.filter(b => b.status === 'payment_pending');
-  const today = new Date().toISOString().split("T")[0];
+  var bk = getBK();
+  var catalog = JSON.parse(localStorage.getItem("hs_catalog")||"null") || [];
+  var completed = bk.filter(function(b){ return b.status === 'completed' || b.status === 'paid');
+  var pending   = bk.filter(function(b){ return b.status === 'pending');
+  var awaitingPayment = bk.filter(function(b){ return b.status === 'payment_pending');
+  var today = new Date().toISOString().split("T")[0];
 
   // For each completed booking, compute commission from catalog
-  let grossEarned = 0, commissionTotal = 0, netEarned = 0;
-  completed.forEach(b => {
-    const svc = catalog.find(s => s.name === b.service);
-    const commPct = svc ? svc.commission : 12;
-    const commAmt = svc ? svc.commAmt : Math.round(b.amount * commPct / 100);
-    const provAmt = b.amount - commAmt;
+  var grossEarned = 0, commissionTotal = 0, netEarned = 0;
+  completed.forEach(function(b){
+    var svc = catalog.find(function(s){ return s.name === b.service);
+    var commPct = svc ? svc.commission : 12;
+    var commAmt = svc ? svc.commAmt : Math.round(b.amount * commPct / 100);
+    var provAmt = b.amount - commAmt;
     grossEarned += b.amount;
     commissionTotal += commAmt;
     netEarned += provAmt;
@@ -847,22 +847,22 @@ function computeStats(){
     b._commPct = commPct;
   });
 
-  const todayGross = completed.filter(b => b.date === today).reduce((s,b) => s+b.amount, 0);
+  var todayGross = completed.filter(function(b){ return b.date === today }).reduce(function(s,b){ return s+b.amount, 0);
 
   // Payout tracking
-  const payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]")
-    .filter(p => p.providerId === P.id);
-  const withdrawn = payouts
-    .filter(p => p.status === "approved")
-    .reduce((s,p) => s+p.amount, 0);
-  const pendingWithdraw = payouts
-    .filter(p => p.status === "pending")
-    .reduce((s,p) => s+p.amount, 0);
-  const available = Math.max(netEarned - withdrawn - pendingWithdraw, 0);
+  var payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]")
+    .filter(function(p){ return p.providerId === P.id);
+  var withdrawn = payouts
+    .filter(function(p){ return p.status === "approved")
+    .reduce(function(s,p){ return s+p.amount, 0);
+  var pendingWithdraw = payouts
+    .filter(function(p){ return p.status === "pending")
+    .reduce(function(s,p){ return s+p.amount, 0);
+  var available = Math.max(netEarned - withdrawn - pendingWithdraw, 0);
 
-  const reviews = getReviews();
-  const avgRating = reviews.length
-    ? (reviews.reduce((s,r) => s+r.stars, 0) / reviews.length).toFixed(1)
+  var reviews = getReviews();
+  var avgRating = reviews.length
+    ? (reviews.reduce(function(s,r){ return s+r.stars, 0) / reviews.length).toFixed(1)
     : null;
 
   return {
@@ -874,14 +874,14 @@ function computeStats(){
 }
 
 // ════════ LOGIN CHECK ════════
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem('hs_current_provider');
+window.addEventListener('load',function(){
+  var saved = localStorage.getItem('hs_current_provider');
   if (!saved) { window.location.href = 'provider-portal.html'; return; }
   try {
     P = JSON.parse(saved);
     // re-fetch fresh from providers list
-    const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-    const fresh = all.find(pr => pr.id === P.id);
+    var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+    var fresh = all.find(function(pr){ return pr.id === P.id);
     if (fresh) { P = fresh; localStorage.setItem('hs_current_provider', JSON.stringify(P)); }
     initDashboard();
   } catch(e) { window.location.href = 'provider-portal.html'; }
@@ -898,7 +898,7 @@ function initDashboard() {
   document.getElementById('sb_name').textContent = P.name;
   document.getElementById('sb_id').textContent = P.id;
   // Show friendly login info
-  const idEl = document.getElementById('sb_id');
+  var idEl = document.getElementById('sb_id');
   if(idEl) idEl.title = 'Login ID: '+P.id+' | Use your password to log in';
   document.getElementById('availToggle').checked = P.available !== false;
   updateAvailLabel();
@@ -919,7 +919,7 @@ function initDashboard() {
 }
 
 function seedDemoData() {
-  const bk = [
+  var bk = [
     {id:'HS-BK-001',customer:'Anita Reddy',phone:'9876543210',service:'House Maid',date:'2026-05-01',time:'09:00',amount:499,status:'completed'},
     {id:'HS-BK-002',customer:'Ramesh Kumar',phone:'9123456780',service:'AC Cleaning',date:'2026-05-02',time:'11:00',amount:799,status:'completed'},
     {id:'HS-BK-003',customer:'Priya Sharma',phone:'9988776655',service:'House Maid',date:'2026-05-03',time:'10:00',amount:499,status:'completed'},
@@ -928,7 +928,7 @@ function seedDemoData() {
     {id:'HS-BK-006',customer:'Vijay Nair',phone:'9123000456',service:'House Maid',date:'2026-04-25',time:'16:00',amount:499,status:'cancelled'},
   ];
   saveBK(bk);
-  const rv = [
+  var rv = [
     {customer:'Anita Reddy',stars:5,text:'Excellent work! Very clean and punctual.',date:'May 1'},
     {customer:'Ramesh Kumar',stars:5,text:'Professional and friendly. Will book again!',date:'May 2'},
     {customer:'Priya Sharma',stars:4,text:'Good service, came on time. Satisfied.',date:'May 3'},
@@ -939,7 +939,7 @@ function seedDemoData() {
 
 // ════════ OVERVIEW ════════
 function loadOverview() {
-  const s = computeStats();
+  var s = computeStats();
   document.getElementById('st-total').textContent = s.bk.length;
   document.getElementById('st-completed').textContent = s.completed.length;
   document.getElementById('st-earned').textContent = '₹' + s.totalEarned.toLocaleString('en-IN');
@@ -952,80 +952,76 @@ function loadOverview() {
   document.getElementById('pendingBadge').textContent = s.pending.length;
 
   // Donut
-  const total = s.bk.length || 1;
-  const compP = (s.completed.length / total * 100).toFixed(0);
-  const pendP = (s.pending.length / total * 100).toFixed(0);
+  var total = s.bk.length || 1;
+  var compP = (s.completed.length / total * 100).toFixed(0);
+  var pendP = (s.pending.length / total * 100).toFixed(0);
   document.getElementById('donutChart').style.background =
-    `conic-gradient(var(--green) 0% ${compP}%, var(--yellow) ${compP}% ${+compP + +pendP}%, var(--red) ${+compP + +pendP}% 100%)`;
+    'conic-gradient(var(--green) 0% '+(compP)+'%, var(--yellow) '+(compP)+'% '+(+compP + +pendP)+'%, var(--red) '+(+compP + +pendP)+'% 100%)';
 
   // Weekly chart (last 7 calendar days)
-  const days7 = [...Array(7)].map((_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+  var days7 = (function(){var a=[];for(var _i=0;_i<7;_i++)a.push(undefined);return a;})().map(function(_,i){
+    var d = new Date(); d.setDate(d.getDate() - (6 - i));
     return d.toISOString().split('T')[0];
   });
-  const earnings7 = days7.map(d => s.completed.filter(b => b.date === d).reduce((sum, b) => sum + b.amount, 0));
-  const maxE = Math.max(...earnings7, 1);
-  const chart = document.getElementById('weeklyChart');
+  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b){ return b.date === d; }).reduce(function(sum,b){ return sum+b.amount; },0));
+  var maxE = Math.max(...earnings7, 1);
+  var chart = document.getElementById('weeklyChart');
   chart.innerHTML = '';
-  earnings7.forEach(v => {
-    const col = document.createElement('div'); col.className = 'bar-col';
-    const pct = (v / maxE * 100).toFixed(0);
-    col.innerHTML = `<div class="bar-val">${v > 0 ? '₹'+v : ''}</div><div class="bar" style="height:${Math.max(pct,4)}%"></div>`;
+  earnings7.forEach(function(v){
+    var col = document.createElement('div'); col.className = 'bar-col';
+    var pct = (v / maxE * 100).toFixed(0);
+    col.innerHTML = '<div class="bar-val">'+(v > 0 ? '₹'+v : '')+'</div><div class="bar" style="height:'+(Math.max(pct,4))+'%"></div>';
     chart.appendChild(col);
   });
-  const labelsEl = document.getElementById('weeklyLabels');
-  labelsEl.innerHTML = days7.map(d => `<span style="font-size:10px;font-weight:800;color:var(--muted);flex:1;text-align:center">${new Date(d).toLocaleDateString('en-IN',{weekday:'short'})}</span>`).join('');
+  var labelsEl = document.getElementById('weeklyLabels');
+  labelsEl.innerHTML = days7.map(function(d){ return '<span style="font-size:10px;font-weight:800;color:var(--muted);flex:1;text-align:center">'+(new Date(d).toLocaleDateString('en-IN',{weekday:'short'}))+'</span>').join('');
 
   // Recent bookings (latest 5)
-  const recent = [...s.bk].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5);
-  document.getElementById('recentBody').innerHTML = recent.map(b => `
-    <tr><td><strong>${b.id}</strong></td><td>${b.customer}</td><td>${b.service}</td>
-    <td>${b.date}</td><td><strong>₹${b.amount}</strong></td>
-    <td><span class="badge ${b.status}">${cap(b.status)}</span></td></tr>
-  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
+  var recent = Array.from(s.bk).sort(function(a,b){ return new Date(b.date) - new Date(a.date)).slice(0,5);
+  document.getElementById('recentBody').innerHTML = recent.map(function(b){ return '
+    <tr><td><strong>'+(b.id)+'</strong></td><td>'+(b.customer)+'</td><td>'+(b.service)+'</td>
+    <td>'+(b.date)+'</td><td><strong>₹'+(b.amount)+'</strong></td>
+    <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td></tr>
+  ').join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
 }
 
 // ════════ ALL BOOKINGS ════════
 function loadAllBookings(filter = 'all') {
-  let bk = getBK();
-  if (filter !== 'all') bk = bk.filter(b => b.status === filter);
-  bk = bk.sort((a,b) => new Date(b.date) - new Date(a.date));
-  document.getElementById('allBkBody').innerHTML = bk.map(b => `
+  var bk = getBK();
+  if (filter !== 'all') bk = bk.filter(function(b){ return b.status === filter);
+  bk = bk.sort(function(a,b){ return new Date(b.date) - new Date(a.date));
+  document.getElementById('allBkBody').innerHTML = bk.map(function(b){ return '
     <tr>
-      <td><strong>${b.id}</strong></td>
-      <td>${b.customer}<br/><small style="color:var(--muted)">${b.phone}</small></td>
-      <td>${b.service}</td>
-      <td>${b.date}<br/><small style="color:var(--muted)">${b.time}</small></td>
-      <td><strong>₹${b.amount}</strong></td>
-      <td><span class="badge ${b.status}">${cap(b.status)}</span></td>
+      <td><strong>'+(b.id)+'</strong></td>
+      <td>'+(b.customer)+'<br/><small style="color:var(--muted)">'+(b.phone)+'</small></td>
+      <td>'+(b.service)+'</td>
+      <td>'+(b.date)+'<br/><small style="color:var(--muted)">'+(b.time)+'</small></td>
+      <td><strong>₹'+(b.amount)+'</strong></td>
+      <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td>
       <td>
-        ${b.status === 'pending'
-          ? `<button class="nav-btn-track" onclick="openProviderTracking('${b.id}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
-             <br/><button class="abtn complete" onclick="updateStatus('${b.id}','completed')">🔐 Complete Job</button>
-             <button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
+        '+(b.status === 'pending'
+          ? '<button class="nav-btn-track" onclick="openProviderTracking(\''+(b.id)+'\');return false;" style="margin-bottom:5px">🗺️ Navigate</button>\n             <br/><button class="abtn complete" onclick="updateStatus(\''+(b.id)+'\',\'completed\')">🔐 Complete Job</button>\n             <button class="abtn cancel" onclick="updateStatus(\''+(b.id)+'\',\'cancelled\')">❌</button>'
           : b.status === 'payment_pending'
-          ? `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>
-             <button class="abtn view" onclick="openPaymentWindow(getBK().find(x=>x.id==='${b.id}'))" style="margin-top:4px">💳 Pay Now</button>`
+          ? '<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>\n             <button class="abtn view" onclick="openPaymentWindow(getBK().find(function(x){ return x.id===\''+(b.id)+'\'))" style="margin-top:4px">💳 Pay Now</button>'
           : b.status === 'paid'
-          ? `<span class="badge paid">💰 Paid · Processing</span>`
-          : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>
-             <br/><button class="btn-track-cust" onclick="openCustomerTracking('${b.id}')" style="margin-top:4px">📍 Customer View</button>`}
+          ? '<span class="badge paid">💰 Paid · Processing</span>'
+          : '<button class="abtn view" onclick="viewBk(\''+(b.id)+'\')">👁 View</button>\n             <br/><button class="btn-track-cust" onclick="openCustomerTracking(\''+(b.id)+'\')" style="margin-top:4px">📍 Customer View</button>')+'
       </td>
     </tr>
-  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
+  ').join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
 }
 
 function filterBk(f, btn) {
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active'));
   btn.classList.add('active');
   loadAllBookings(f);
 }
 
 // ─── OTP COMPLETION STATE ───────────────────────────────────────
-let pendingCompleteId = null;
-let currentRatingBookingId = null;
-let selectedRating = 0;
-const OTP_LABELS = ['','😞 Very Bad','😕 Poor','😐 Okay','😊 Good','🤩 Excellent!'];
+var pendingCompleteId = null;
+var currentRatingBookingId = null;
+var selectedRating = 0;
+var OTP_LABELS = ['','😞 Very Bad','😕 Poor','😐 Okay','😊 Good','🤩 Excellent!'];
 
 function updateStatus(id, status) {
   if (status === 'completed') {
@@ -1035,8 +1031,8 @@ function updateStatus(id, status) {
   }
   // Cancellation — direct
   if (!confirm('Cancel this booking? This cannot be undone.')) return;
-  const bk = getBK();
-  const idx = bk.findIndex(b => b.id === id);
+  var bk = getBK();
+  var idx = bk.findIndex(function(b){ return b.id === id);
   if (idx > -1) {
     bk[idx].status = 'cancelled';
     saveBK(bk);
@@ -1048,13 +1044,13 @@ function updateStatus(id, status) {
 
 // ─── STEP 1: Provider clicks "Mark Complete" ────────────────────
 function initiateOTPCompletion(bookingId) {
-  const bk = getBK();
-  const booking = bk.find(b => b.id === bookingId);
+  var bk = getBK();
+  var booking = bk.find(function(b){ return b.id === bookingId);
   if (!booking) return;
 
   // Generate 4-digit OTP and store in booking
-  const otp = String(Math.floor(1000 + Math.random() * 9000));
-  const bkIdx = bk.findIndex(b => b.id === bookingId);
+  var otp = String(Math.floor(1000 + Math.random() * 9000));
+  var bkIdx = bk.findIndex(function(b){ return b.id === bookingId);
   bk[bkIdx].completionOTP = otp;
   bk[bkIdx].otpGeneratedAt = new Date().toISOString();
   saveBK(bk);
@@ -1072,8 +1068,8 @@ function initiateOTPCompletion(bookingId) {
     'Service: ' + booking.service + ' · Customer: ' + (booking.customer || '—');
 
   // Clear any previous OTP digits
-  ['od1','od2','od3','od4'].forEach(id => {
-    const el = document.getElementById(id);
+  ['od1','od2','od3','od4'].forEach(function(id){
+    var el = document.getElementById(id);
     el.value = ''; el.classList.remove('filled');
   });
   document.getElementById('otpErr').style.display = 'none';
@@ -1089,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function showProviderOTPEntry() {
   closeModal('customerOTPModal');
-  setTimeout(() => {
+  setTimeout(function(){
     document.getElementById('otpRequestModal').classList.add('show');
     document.getElementById('od1').focus();
   }, 300);
@@ -1097,7 +1093,7 @@ function showProviderOTPEntry() {
 
 // ─── OTP DIGIT INPUT LOGIC ───────────────────────────────────────
 function otpInput(el, num) {
-  const val = el.value.replace(/[^0-9]/g,'');
+  var val = el.value.replace(/[^0-9]/g,'');
   el.value = val;
   el.classList.toggle('filled', val.length > 0);
   if (val && num < 4) {
@@ -1105,42 +1101,42 @@ function otpInput(el, num) {
   }
   if (num === 4 && val) {
     // Auto-attempt verify when last digit entered
-    const all = ['od1','od2','od3','od4'].map(id => document.getElementById(id).value);
-    if (all.every(v => v.length === 1)) verifyOTP();
+    var all = ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id).value);; }
+    if (all.every(function(v){ return v.length === 1)) verifyOTP();
   }
 }
 function otpBack(e, num) {
   if (e.key === 'Backspace' && !e.target.value && num > 1) {
-    const prev = document.getElementById('od' + (num-1));
+    var prev = document.getElementById('od' + (num-1));
     prev.value = ''; prev.classList.remove('filled'); prev.focus();
   }
 }
 function getEnteredOTP() {
-  return ['od1','od2','od3','od4'].map(id => document.getElementById(id).value).join('');
+  return ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id).value).join('');; }
 }
 
 // ─── STEP 3: Provider enters OTP → Verify ───────────────────────
 function verifyOTP() {
-  const entered = getEnteredOTP();
+  var entered = getEnteredOTP();
   if (entered.length < 4) { showToast('⚠️ Enter all 4 digits'); return; }
 
-  const bk = getBK();
-  const booking = bk.find(b => b.id === pendingCompleteId);
+  var bk = getBK();
+  var booking = bk.find(function(b){ return b.id === pendingCompleteId);
   if (!booking) { closeModal('otpRequestModal'); return; }
 
   if (entered !== booking.completionOTP) {
     document.getElementById('otpErr').style.display = 'block';
-    ['od1','od2','od3','od4'].forEach(id => {
-      const el = document.getElementById(id);
+    ['od1','od2','od3','od4'].forEach(function(id){
+      var el = document.getElementById(id);
       el.style.borderColor = 'var(--red)';
       el.style.background = 'var(--red-light)';
-      setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 1500);
+      setTimeout(function(){ el.style.borderColor = ''; el.style.background = ''; }, 1500);
     });
     return;
   }
 
   // ✅ OTP correct — status → payment_pending (awaiting customer payment)
-  const idx = bk.findIndex(b => b.id === pendingCompleteId);
+  var idx = bk.findIndex(function(b){ return b.id === pendingCompleteId);
   bk[idx].status = 'payment_pending';
   bk[idx].otpVerifiedAt = new Date().toISOString();
   bk[idx].completionOTP = null;
@@ -1164,7 +1160,7 @@ function verifyOTP() {
 }
 
 // ─── PAYMENT WINDOW ──────────────────────────────────────────────
-let selectedPayMethod = null;
+var selectedPayMethod = null;
 
 function openPaymentWindow(booking) {
   document.getElementById('pw-service').textContent  = booking.service;
@@ -1173,32 +1169,32 @@ function openPaymentWindow(booking) {
   document.getElementById('pw-date').textContent     = booking.date + ' ' + (booking.time||'');
   document.getElementById('pw-amount').textContent   = '₹' + booking.amount.toLocaleString('en-IN');
   selectedPayMethod = null;
-  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
-  const btn = document.getElementById('payNowBtn');
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
+  var btn = document.getElementById('payNowBtn');
   btn.textContent = 'Select payment method to continue';
   btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
   document.getElementById('paymentModal').classList.add('show');
 }
 
 function selectPayMethod(el, method) {
-  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
   el.classList.add('selected');
   selectedPayMethod = method;
   document.getElementById('payGatewayNote').style.display = method !== 'cash' ? 'block' : 'none';
-  const btn = document.getElementById('payNowBtn');
+  var btn = document.getElementById('payNowBtn');
   btn.textContent = method === 'cash' ? '💵 Confirm Cash Payment' : '💳 Pay ₹' + document.getElementById('pw-amount').textContent.replace('₹','');
   btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
 }
 
 function processCustomerPayment() {
   if (!selectedPayMethod) { showToast('⚠️ Select a payment method'); return; }
-  const bookingId = currentRatingBookingId;
-  const bk = getBK();
-  const idx = bk.findIndex(b => b.id === bookingId);
+  var bookingId = currentRatingBookingId;
+  var bk = getBK();
+  var idx = bk.findIndex(function(b){ return b.id === bookingId);
   if (idx < 0) return;
 
   // Generate transaction ID
-  const txnId = 'TXN' + Date.now().toString(36).toUpperCase();
+  var txnId = 'TXN' + Date.now().toString(36).toUpperCase();
 
   // Mark booking as paid → completed
   bk[idx].status = 'paid';
@@ -1223,9 +1219,9 @@ function processCustomerPayment() {
 
 function afterPaymentSuccess() {
   // Move booking to fully completed after payment
-  const bookingId = currentRatingBookingId;
-  const bk = getBK();
-  const idx = bk.findIndex(b => b.id === bookingId);
+  var bookingId = currentRatingBookingId;
+  var bk = getBK();
+  var idx = bk.findIndex(function(b){ return b.id === bookingId);
   if (idx > -1 && bk[idx].status === 'paid') {
     bk[idx].status = 'completed';
     bk[idx].completedAt = new Date().toISOString();
@@ -1234,17 +1230,17 @@ function afterPaymentSuccess() {
     loadAllBookings(); loadOverview(); loadEarnings();
   }
   closeModal('paySuccessModal');
-  const booking = bk[idx];
+  var booking = bk[idx];
   openCustomerRatingModal(booking);
 }
 
 // ─── PAYMENT POLLING — provider sees update when customer pays ───
-let pollInterval = null;
+var pollInterval = null;
 function startPaymentPolling(bookingId) {
   stopPaymentPolling();
-  pollInterval = setInterval(() => {
-    const bk = getBK();
-    const b = bk.find(x => x.id === bookingId);
+  pollInterval = setInterval(function(){
+    var bk = getBK();
+    var b = bk.find(function(x){ return x.id === bookingId);
     if (b && (b.status === 'paid' || b.status === 'completed')) {
       stopPaymentPolling();
       syncProviderStats();
@@ -1257,11 +1253,11 @@ function stopPaymentPolling() {
   if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 }
 function showPaymentReceivedAlert(booking) {
-  const catalog = JSON.parse(localStorage.getItem('hs_catalog')||'null')||[];
-  const svc = catalog.find(s => s.name === booking.service);
-  const commPct = svc ? svc.commission : 12;
-  const commAmt = svc ? svc.commAmt : Math.round(booking.amount * commPct / 100);
-  const provAmt = booking.amount - commAmt;
+  var catalog = JSON.parse(localStorage.getItem('hs_catalog')||'null')||[];
+  var svc = catalog.find(function(s){ return s.name === booking.service);
+  var commPct = svc ? svc.commission : 12;
+  var commAmt = svc ? svc.commAmt : Math.round(booking.amount * commPct / 100);
+  var provAmt = booking.amount - commAmt;
   document.getElementById('jobDoneInfo').textContent =
     booking.service + ' · ' + (booking.customer||'Customer') + ' · ' + booking.id;
   document.getElementById('jobDoneAmount').textContent = '₹' + provAmt.toLocaleString('en-IN');
@@ -1276,7 +1272,7 @@ function openCustomerRatingModal(booking) {
   document.getElementById('ratingLabel').textContent = '';
   document.getElementById('ratingReviewText').value = '';
   // Reset stars
-  for (let i = 1; i <= 5; i++) {
+  for (var i = 1; i <= 5; i++) {
     document.getElementById('rs' + i).classList.remove('active');
   }
   document.getElementById('ratingProviderName').textContent =
@@ -1287,18 +1283,18 @@ function openCustomerRatingModal(booking) {
 function setRating(n) {
   selectedRating = n;
   document.getElementById('ratingLabel').textContent = OTP_LABELS[n];
-  for (let i = 1; i <= 5; i++) {
+  for (var i = 1; i <= 5; i++) {
     document.getElementById('rs' + i).classList.toggle('active', i <= n);
   }
 }
 
 function submitRating() {
   if (selectedRating === 0) { showToast('⭐ Please tap a star to rate'); return; }
-  const review = document.getElementById('ratingReviewText').value.trim();
-  const bk = getBK();
-  const booking = bk.find(b => b.id === currentRatingBookingId);
+  var review = document.getElementById('ratingReviewText').value.trim();
+  var bk = getBK();
+  var booking = bk.find(function(b){ return b.id === currentRatingBookingId);
 
-  const reviewObj = {
+  var reviewObj = {
     customer: booking ? (booking.customer || 'Customer') : 'Customer',
     stars: selectedRating,
     text: review || OTP_LABELS[selectedRating].replace(/[^a-zA-Z ]/g,'').trim() || 'Great service!',
@@ -1307,14 +1303,14 @@ function submitRating() {
   };
 
   // Save review
-  const reviews = getReviews();
+  var reviews = getReviews();
   reviews.push(reviewObj);
   saveReviews(reviews);
 
   // Update provider avg rating in providers list
-  const avgRating = (reviews.reduce((s,r) => s+r.stars, 0) / reviews.length).toFixed(1);
-  const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  const pidx = all.findIndex(p => p.id === P.id);
+  var avgRating = (reviews.reduce(function(s,r){ return s+r.stars, 0) / reviews.length).toFixed(1);
+  var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  var pidx = all.findIndex(function(p){ return p.id === P.id);
   if (pidx > -1) {
     all[pidx].rating = +avgRating;
     all[pidx].reviews = reviews.length;
@@ -1332,24 +1328,24 @@ function submitRating() {
 }
 
 function viewBk(id) {
-  const b = getBK().find(b => b.id === id);
+  var b = getBK().find(function(b){ return b.id === id);
   if (!b) return;
   document.getElementById('vmTitle').textContent = '📋 ' + b.id;
   document.getElementById('vmSub').textContent = 'Service: ' + b.service;
-  document.getElementById('vmBody').innerHTML = `
-    <strong>Customer:</strong> ${b.customer}<br/>
-    <strong>Phone:</strong> ${b.phone}<br/>
-    <strong>Date:</strong> ${b.date} at ${b.time}<br/>
-    <strong>Amount:</strong> ₹${b.amount}<br/>
-    <strong>Status:</strong> ${cap(b.status)}
-  `;
+  document.getElementById('vmBody').innerHTML = '
+    <strong>Customer:</strong> '+(b.customer)+'<br/>
+    <strong>Phone:</strong> '+(b.phone)+'<br/>
+    <strong>Date:</strong> '+(b.date)+' at '+(b.time)+'<br/>
+    <strong>Amount:</strong> ₹'+(b.amount)+'<br/>
+    <strong>Status:</strong> '+(cap(b.status))+'
+  ';
   document.getElementById('viewModal').classList.add('show');
 }
 
 function syncProviderStats() {
-  const s = computeStats();
-  const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  const idx = all.findIndex(p => p.id === P.id);
+  var s = computeStats();
+  var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  var idx = all.findIndex(function(p){ return p.id === P.id);
   if (idx > -1) {
     all[idx].totalBookings = s.bk.length;
     all[idx].completedBookings = s.completed.length;
@@ -1364,7 +1360,7 @@ function syncProviderStats() {
 
 // ════════ EARNINGS ════════
 function loadEarnings(){
-  const s = computeStats();
+  var s = computeStats();
 
   document.getElementById("e-gross").textContent      = "₹"+s.grossEarned.toLocaleString("en-IN");
   document.getElementById("e-commission").textContent = "₹"+s.commissionTotal.toLocaleString("en-IN");
@@ -1375,47 +1371,47 @@ function loadEarnings(){
   document.getElementById("wdAvailDisplay") && (document.getElementById("wdAvailDisplay").textContent = "₹"+s.available.toLocaleString("en-IN"));
 
   // Booking breakdown table
-  const sorted = [...s.completed].sort((a,b) => new Date(b.date)-new Date(a.date));
-  document.getElementById("earnBody").innerHTML = sorted.map(b => `
+  var sorted = Array.from(s.completed).sort(function(a,b){ return new Date(b.date)-new Date(a.date));
+  document.getElementById("earnBody").innerHTML = sorted.map(function(b){ return '
     <tr>
-      <td><strong>${b.id}</strong></td>
-      <td>${b.service}</td>
-      <td>${b.date}</td>
-      <td><strong>₹${b.amount}</strong></td>
-      <td style="color:var(--red);font-weight:800;">-₹${b._commAmt||0} <small style="color:var(--muted)">(${b._commPct||12}%)</small></td>
-      <td style="color:var(--green);font-weight:900;">₹${b._provAmt||b.amount}</td>
+      <td><strong>'+(b.id)+'</strong></td>
+      <td>'+(b.service)+'</td>
+      <td>'+(b.date)+'</td>
+      <td><strong>₹'+(b.amount)+'</strong></td>
+      <td style="color:var(--red);font-weight:800;">-₹'+(b._commAmt||0)+' <small style="color:var(--muted)">('+(b._commPct||12)+'%)</small></td>
+      <td style="color:var(--green);font-weight:900;">₹'+(b._provAmt||b.amount)+'</td>
       <td><span class="badge completed">Credited</span></td>
     </tr>
-  `).join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
+  ').join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
 
   // Pending withdraw requests
-  const pendingReqs = s.payouts.filter(p => p.status === "pending");
+  var pendingReqs = s.payouts.filter(function(p){ return p.status === "pending");
   document.getElementById("pendingWithdrawSection").style.display = pendingReqs.length ? "block" : "none";
-  document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(p => `
+  document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(function(p){ return '
     <tr>
-      <td><strong>${p.id}</strong></td>
-      <td style="color:var(--green);font-weight:800;">₹${p.amount.toLocaleString("en-IN")}</td>
-      <td style="font-size:12px">${p.account} <small>(${p.accountType})</small></td>
-      <td style="font-size:12px">${new Date(p.requestedAt).toLocaleDateString("en-IN")}</td>
+      <td><strong>'+(p.id)+'</strong></td>
+      <td style="color:var(--green);font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>
+      <td style="font-size:12px">'+(p.account)+' <small>('+(p.accountType)+')</small></td>
+      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>
       <td><span class="badge pending">⏳ Pending Admin Approval</span></td>
     </tr>
-  `).join("");
+  ').join("");
 
   // Full withdrawal history
-  const allPayouts = [...s.payouts].sort((a,b) => new Date(b.requestedAt)-new Date(a.requestedAt));
-  document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(p => `
+  var allPayouts = Array.from(s.payouts).sort(function(a,b){ return new Date(b.requestedAt)-new Date(a.requestedAt));
+  document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(function(p){ return '
     <tr>
-      <td><strong>${p.id}</strong></td>
-      <td style="font-weight:800;">₹${p.amount.toLocaleString("en-IN")}</td>
-      <td style="font-size:12px">${p.account}</td>
-      <td style="font-size:12px">${new Date(p.requestedAt).toLocaleDateString("en-IN")}</td>
-      <td style="font-size:12px">${p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—"}</td>
-      <td><span class="badge ${p.status}">${
+      <td><strong>'+(p.id)+'</strong></td>
+      <td style="font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>
+      <td style="font-size:12px">'+(p.account)+'</td>
+      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>
+      <td style="font-size:12px">'+(p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—")+'</td>
+      <td><span class="badge '+(p.status)+'">'+(
         p.status==="approved" ? "✅ Paid" :
         p.status==="rejected" ? "❌ Rejected" : "⏳ Pending"
-      }</span></td>
+      )+'</span></td>
     </tr>
-  `).join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
+  ').join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
 }
 
 // ════════ PROFILE ════════
@@ -1427,27 +1423,27 @@ function loadProfile() {
   document.getElementById('pf_bio').value      = P.bio || '';
   document.getElementById('pf_idtype').value   = P.idType || '';
   document.getElementById('pf_idnum').value    = P.idNum || '';
-  const expSel = document.getElementById('pf_exp');
-  [...expSel.options].forEach(o => { if (o.value === P.experience || o.text === P.experience) o.selected = true; });
-  const genSel = document.getElementById('pf_gender');
-  [...genSel.options].forEach(o => { if (o.value === P.gender || o.text === P.gender) o.selected = true; });
+  var expSel = document.getElementById('pf_exp');
+  Array.from(expSel.options).forEach(function(o){ if (o.value === P.experience || o.text === P.experience) o.selected = true; });
+  var genSel = document.getElementById('pf_gender');
+  Array.from(genSel.options).forEach(function(o){ if (o.value === P.gender || o.text === P.gender) o.selected = true; });
 
-  const container = document.getElementById('svcsEdit');
+  var container = document.getElementById('svcsEdit');
   container.innerHTML = '';
-  (P.services || []).forEach((s, i) => {
-    const d = document.createElement('div');
+  (P.services || []).forEach(function(s,i){
+    var d = document.createElement('div');
     d.style.cssText = 'background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:14px;text-align:center;';
-    d.innerHTML = `<div style="font-size:26px;margin-bottom:5px">${s.icon}</div><div style="font-size:12px;font-weight:800;margin-bottom:8px">${s.name}</div>
+    d.innerHTML = '<div style="font-size:26px;margin-bottom:5px">'+(s.icon)+'</div><div style="font-size:12px;font-weight:800;margin-bottom:8px">'+(s.name)+'</div>
       <div style="position:relative"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--red);font-size:14px">₹</span>
-      <input type="number" id="sp_${i}" value="${s.price}" style="width:100%;padding:8px 8px 8px 22px;border:2px solid var(--border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;outline:none;text-align:center;" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"/></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:700">per visit</div>`;
+      <input type="number" id="sp_'+(i)+'" value="'+(s.price)+'" style="width:100%;padding:8px 8px 8px 22px;border:2px solid var(--border);border-radius:9px;font-family:\'Nunito\',sans-serif;font-size:15px;font-weight:800;outline:none;text-align:center;" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"/></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:700">per visit</div>';
     container.appendChild(d);
   });
 }
 
 function saveProfile() {
-  const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  const idx = all.findIndex(p => p.id === P.id);
+  var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  var idx = all.findIndex(function(p){ return p.id === P.id);
   if (idx > -1) {
     all[idx].name     = document.getElementById('pf_name').value;
     all[idx].phone    = document.getElementById('pf_phone').value;
@@ -1465,11 +1461,11 @@ function saveProfile() {
 }
 
 function saveServices() {
-  const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  const idx = all.findIndex(p => p.id === P.id);
+  var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  var idx = all.findIndex(function(p){ return p.id === P.id);
   if (idx > -1) {
-    (P.services || []).forEach((s, i) => {
-      const inp = document.getElementById(`sp_${i}`);
+    (P.services || []).forEach(function(s,i){
+      var inp = document.getElementById('sp_'+(i));
       if (inp) all[idx].services[i].price = parseInt(inp.value) || s.price;
     });
     P = all[idx];
@@ -1481,42 +1477,42 @@ function saveServices() {
 
 // ════════ AVAILABILITY ════════
 function loadAvailability() {
-  const avail = P.availability || { days:[1,2,3,4,5], slots:['9AM','10AM','11AM','2PM','3PM'], start:'08:00', end:'20:00' };
+  var avail = P.availability || { days:[1,2,3,4,5], slots:['9AM','10AM','11AM','2PM','3PM'], start:'08:00', end:'20:00' };
   if (avail.start) document.getElementById('workStart').value = avail.start;
   if (avail.end)   document.getElementById('workEnd').value   = avail.end;
 
-  const grid = document.getElementById('availGrid');
+  var grid = document.getElementById('availGrid');
   grid.innerHTML = '';
-  DAYS.forEach((d, i) => {
-    const on = avail.days.includes(i);
-    const el = document.createElement('div');
+  DAYS.forEach(function(d,i){
+    var on = avail.days.includes(i);
+    var el = document.createElement('div');
     el.className = 'avail-day ' + (on ? 'on' : 'off');
     el.id = 'day_' + i;
-    el.innerHTML = `<div class="dn">${d}</div><div class="ds">${on ? '✅' : '❌'}</div>`;
-    el.onclick = () => {
-      const was = el.classList.contains('on');
+    el.innerHTML = '<div class="dn">'+(d)+'</div><div class="ds">'+(on ? '✅' : '❌')+'</div>';
+    el.onclick = function(){
+      var was = el.classList.contains('on');
       el.classList.toggle('on', !was); el.classList.toggle('off', was);
       el.querySelector('.ds').textContent = !was ? '✅' : '❌';
     };
     grid.appendChild(el);
   });
 
-  const slotWrap = document.getElementById('timeSlots');
+  var slotWrap = document.getElementById('timeSlots');
   slotWrap.innerHTML = '';
-  TIME_SLOTS.forEach(slot => {
-    const el = document.createElement('div');
+  TIME_SLOTS.forEach(function(slot){
+    var el = document.createElement('div');
     el.className = 'tslot' + (avail.slots.includes(slot) ? ' active' : '');
     el.textContent = slot;
-    el.onclick = () => el.classList.toggle('active');
+    el.onclick = function(){ return el.classList.toggle('active');
     slotWrap.appendChild(el);
   });
 }
 
 function saveAvailability() {
-  const days = DAYS.map((_, i) => document.getElementById('day_' + i)?.classList.contains('on') ? i : null).filter(v => v !== null);
-  const slots = [...document.querySelectorAll('.tslot.active')].map(el => el.textContent);
-  const all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  const idx = all.findIndex(p => p.id === P.id);
+  var days = DAYS.map(function(_,i){ return  document.getElementById('day_' + i) && obj_tmp.classList.contains('on') ? i : null).filter(function(v){ return v !== null);
+  var slots = Array.from(document.querySelectorAll('.tslot.active')).map(function(el){ return el.textContent);; }
+  var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+  var idx = all.findIndex(function(p){ return p.id === P.id);
   if (idx > -1) {
     all[idx].availability = { days, slots, start: document.getElementById('workStart').value, end: document.getElementById('workEnd').value };
     P = all[idx];
@@ -1529,16 +1525,16 @@ function saveAvailability() {
 // ════════ LOCATION ════════
 function initUpdateMap() {
   if (updateMap) { updateMap.invalidateSize(); return; }
-  const lat = P.lat || 17.3850, lng = P.lng || 78.4867;
+  var lat = P.lat || 17.3850, lng = P.lng || 78.4867;
   newLat = lat; newLng = lng; newRadius = P.radius || 5;
   updateMap = L.map('updateMap').setView([lat, lng], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(updateMap);
-  updateMarker = L.marker([lat, lng],{draggable:true,icon:L.divIcon({html:`<div style="font-size:34px;margin-top:-34px;margin-left:-13px;filter:drop-shadow(0 3px 8px rgba(232,37,26,0.5))">📍</div>`,className:'',iconSize:[26,34],iconAnchor:[13,34]})}).addTo(updateMap);
-  updateMarker.on('dragend', e => { const ll=e.target.getLatLng(); newLat=ll.lat; newLng=ll.lng; drawLocCircle(); reverseGeo(newLat,newLng); });
-  updateMap.on('click', e => { newLat=e.latlng.lat; newLng=e.latlng.lng; updateMarker.setLatLng([newLat,newLng]); drawLocCircle(); reverseGeo(newLat,newLng); });
+  updateMarker = L.marker([lat, lng],{draggable:true,icon:L.divIcon({html:'<div style="font-size:34px;margin-top:-34px;margin-left:-13px;filter:drop-shadow(0 3px 8px rgba(232,37,26,0.5))">📍</div>',className:'',iconSize:[26,34],iconAnchor:[13,34]})}).addTo(updateMap);
+  updateMarker.on('dragend',function(e){ var ll=e.target.getLatLng(); newLat=ll.lat; newLng=ll.lng; drawLocCircle(); reverseGeo(newLat,newLng); });
+  updateMap.on('click',function(e){ newLat=e.latlng.lat; newLng=e.latlng.lng; updateMarker.setLatLng([newLat,newLng]); drawLocCircle(); reverseGeo(newLat,newLng); });
   document.getElementById('locRadiusSlider').value = newRadius;
   updateLocRadius(newRadius);
-  document.getElementById('currentAddr').textContent = P.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  document.getElementById('currentAddr').textContent = P.address || (lat.toFixed(5))+', '+(lng.toFixed(5));
   drawLocCircle();
 }
 
@@ -1551,48 +1547,48 @@ function drawLocCircle() {
 function updateLocRadius(v) {
   newRadius = parseInt(v);
   document.getElementById('locRadius2').textContent = v + ' km';
-  const pct = ((v-1)/(50-1)*100).toFixed(1);
-  document.getElementById('locRadiusSlider').style.background = `linear-gradient(to right,var(--red) 0%,var(--red) ${pct}%,var(--border) ${pct}%)`;
+  var pct = ((v-1)/(50-1)*100).toFixed(1);
+  document.getElementById('locRadiusSlider').style.background = 'linear-gradient(to right,var(--red) 0%,var(--red) '+(pct)+'%,var(--border) '+(pct)+'%)';
   drawLocCircle();
 }
 
 function searchNewLoc() {
-  const q = document.getElementById('locSearch2').value.trim();
+  var q = document.getElementById('locSearch2').value.trim();
   if (!q) { showToast('⚠️ Enter a location'); return; }
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(res=>{
+  fetch('https://nominatim.openstreetmap.org/search?q='+(encodeURIComponent(q))+'&format=json&limit=1',{headers:{'Accept-Language':'en'}})
+    .then(function(r){return r.json();}).then(function(res){
       if(!res.length){showToast('❌ Not found');return;}
       newLat=+res[0].lat; newLng=+res[0].lon;
       updateMap.setView([newLat,newLng],14); updateMarker.setLatLng([newLat,newLng]);
       drawLocCircle(); reverseGeo(newLat,newLng);
-    }).catch(()=>showToast('❌ Search failed'));
+    }).catch(function(){showToast('❌ Search failed'}));
 }
 
 function locGPS() {
   if(!navigator.geolocation){showToast('❌ GPS not supported');return;}
   showToast('🎯 Getting location…');
-  navigator.geolocation.getCurrentPosition(pos=>{
+  navigator.geolocation.getCurrentPosition(function(pos){
     newLat=pos.coords.latitude; newLng=pos.coords.longitude;
     updateMap.setView([newLat,newLng],15); updateMarker.setLatLng([newLat,newLng]);
     drawLocCircle(); reverseGeo(newLat,newLng); showToast('✅ Location updated!');
-  },()=>showToast('❌ GPS failed'));
+  },function(){showToast('❌ GPS failed'));
 }
 
 function reverseGeo(lat,lng) {
   document.getElementById('currentAddr').textContent = 'Fetching…';
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(d=>{
-      const a=d.address||{};
-      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+(lat)+'&lon='+(lng)+'&format=json',{headers:{'Accept-Language':'en'}})
+    .then(function(r){return r.json();}).then(function(d){
+      var a=d.address||{};
+      var parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
       P._newAddress = parts.join(', ')||d.display_name;
       document.getElementById('currentAddr').textContent = P._newAddress;
-    }).catch(()=>{P._newAddress=`${lat.toFixed(5)}, ${lng.toFixed(5)}`;document.getElementById('currentAddr').textContent=P._newAddress;});
+    }).catch(function(){P._newAddress=(lat.toFixed(5))+', '+(lng.toFixed(5));document.getElementById('currentAddr').textContent=P._newAddress;});
 }
 
 function saveLocation() {
   if(!newLat){showToast('⚠️ Please set location on the map');return;}
-  const all = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  const idx = all.findIndex(p=>p.id===P.id);
+  var all = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  var idx = all.findIndex(function(p){ return p.id===P.id);
   if(idx>-1){
     all[idx].lat=newLat; all[idx].lng=newLng; all[idx].radius=newRadius;
     all[idx].address=P._newAddress||all[idx].address;
@@ -1605,57 +1601,57 @@ function saveLocation() {
 
 // ════════ RATINGS ════════
 function loadRatings() {
-  const reviews = getReviews();
-  const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.stars,0)/reviews.length) : 0;
+  var reviews = getReviews();
+  var avg = reviews.length ? (reviews.reduce(function(s,r){ return s+r.stars,0)/reviews.length) : 0;
   document.getElementById('ratingNum').textContent = reviews.length ? avg.toFixed(1) : '—';
   document.getElementById('ratingStars').textContent = reviews.length ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5-Math.round(avg)) : '—';
   document.getElementById('reviewCount').textContent = reviews.length;
 
   // bars
-  const bars = document.getElementById('ratingBars');
-  bars.innerHTML = [5,4,3,2,1].map(n => {
-    const cnt = reviews.filter(r=>r.stars===n).length;
-    const pct = reviews.length ? (cnt/reviews.length*100).toFixed(0) : 0;
-    return `<div class="rbar-row"><span class="rbar-label">${n} ★</span><div class="rbar-wrap"><div class="rbar-fill" style="width:${pct}%"></div></div><span class="rbar-count">${cnt}</span></div>`;
+  var bars = document.getElementById('ratingBars');
+  bars.innerHTML = [5,4,3,2,1].map(function(n){
+    var cnt = reviews.filter(function(r){ return r.stars===n).length;
+    var pct = reviews.length ? (cnt/reviews.length*100).toFixed(0) : 0;
+    return '<div class="rbar-row"><span class="rbar-label">'+(n)+' ★</span><div class="rbar-wrap"><div class="rbar-fill" style="width:'+(pct)+'%"></div></div><span class="rbar-count">'+(cnt)+'</span></div>';
   }).join('');
 
   // reviews list
   document.getElementById('reviewsList').innerHTML = reviews.length
-    ? reviews.map(r=>`<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">
+    ? reviews.map(function(r){ return '<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <strong style="font-size:13px">${r.customer}</strong>
-          <span style="color:#f59e0b;font-size:13px">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+          <strong style="font-size:13px">'+(r.customer)+'</strong>
+          <span style="color:#f59e0b;font-size:13px">'+('★'.repeat(r.stars))+('☆'.repeat(5-r.stars))+'</span>
         </div>
-        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">${r.text}</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:700">${r.date}</div>
-      </div>`).join('')
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">'+(r.text)+'</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700">'+(r.date)+'</div>
+      </div>').join('')
     : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px;font-weight:700">No reviews yet</div>';
 }
 
 // ════════ NOTIFICATIONS ════════
 function loadNotifications() {
-  const s = computeStats();
-  const notifs = [];
-  s.pending.forEach(b => notifs.push({type:'booking',icon:'📋',title:'Pending Booking',sub:`${b.customer} booked ${b.service} for ${b.date} at ${b.time}`,time:'Waiting for action',unread:true}));
-  (s.awaitingPayment||[]).forEach(b => notifs.push({type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:`${b.customer} · ${b.service} · ₹${b.amount} — OTP verified, payment pending`,time:'Action needed',unread:true}));
-  s.completed.slice(-3).forEach(b => notifs.push({type:'payment',icon:'💰',title:'Payment Received',sub:`₹${b.amount} for ${b.service} by ${b.customer}`,time:b.date,unread:false}));
+  var s = computeStats();
+  var notifs = [];
+  s.pending.forEach(function(b){ return notifs.push(; }{type:'booking',icon:'📋',title:'Pending Booking',sub:(b.customer)+' booked '+(b.service)+' for '+(b.date)+' at '+(b.time),time:'Waiting for action',unread:true}));
+  (s.awaitingPayment||[]).forEach(function(b){ return notifs.push(; }{type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:(b.customer)+' · '+(b.service)+' · ₹'+(b.amount)+' — OTP verified, payment pending',time:'Action needed',unread:true}));
+  s.completed.slice(-3).forEach(function(b){ return notifs.push(; }{type:'payment',icon:'💰',title:'Payment Received',sub:'₹'+(b.amount)+' for '+(b.service)+' by '+(b.customer),time:b.date,unread:false}));
   if (s.reviews.length) notifs.push({type:'rating',icon:'⭐',title:s.reviews.length + ' Customer Review(s)',sub:'Check your Ratings page for feedback',time:'Recent',unread:false});
   notifs.push({type:'alert',icon:'💡',title:'Profile Tip',sub:'Complete your profile to get 40% more bookings!',time:'Always',unread:false});
 
-  document.getElementById('notifBadge').textContent = notifs.filter(n=>n.unread).length;
-  document.getElementById('notifList').innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.unread?'unread':''}">
-      <div class="notif-icon-wrap ${n.type}">${n.icon}</div>
-      <div style="flex:1"><div class="notif-title">${n.title}</div><div class="notif-sub">${n.sub}</div><div class="notif-time">${n.time}</div></div>
-      ${n.unread?'<div class="unread-dot"></div>':''}
-    </div>`).join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
+  document.getElementById('notifBadge').textContent = notifs.filter(function(n){ return n.unread).length;
+  document.getElementById('notifList').innerHTML = notifs.map(function(n){ return '
+    <div class="notif-item '+(n.unread?'unread':'')+'">
+      <div class="notif-icon-wrap '+(n.type)+'">'+(n.icon)+'</div>
+      <div style="flex:1"><div class="notif-title">'+(n.title)+'</div><div class="notif-sub">'+(n.sub)+'</div><div class="notif-time">'+(n.time)+'</div></div>
+      '+(n.unread?'<div class="unread-dot"></div>':'')+'
+    </div>').join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
 }
 
 // ════════ AVAILABILITY TOGGLE ════════
 function toggleAvailability() {
-  const isOn = document.getElementById('availToggle').checked;
-  const all = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  const idx = all.findIndex(p=>p.id===P.id);
+  var isOn = document.getElementById('availToggle').checked;
+  var all = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  var idx = all.findIndex(function(p){ return p.id===P.id);
   if(idx>-1){all[idx].available=isOn;P=all[idx];localStorage.setItem('hs_providers',JSON.stringify(all));localStorage.setItem('hs_current_provider',JSON.stringify(P));}
   updateAvailLabel();
   showToast(isOn?'🟢 You are now AVAILABLE for bookings!':'🔴 You are now UNAVAILABLE');
@@ -1663,12 +1659,12 @@ function toggleAvailability() {
 function updateAvailLabel(){document.getElementById('availLabel').textContent=P.available!==false?'🟢 Available':'🔴 Unavailable';}
 
 // ════════ INCOMING ALERT ════════
-const DEMO_CUSTOMERS = ['Kavitha Rao','Srikanth Reddy','Meena Kumari','Ravi Shankar','Divya Nair'];
+var DEMO_CUSTOMERS = ['Kavitha Rao','Srikanth Reddy','Meena Kumari','Ravi Shankar','Divya Nair'];
 function triggerIncomingAlert() {
   if (!P.available) return;
-  const cust = DEMO_CUSTOMERS[Math.floor(Math.random()*DEMO_CUSTOMERS.length)];
-  const svc  = (P.services||[])[0] || {name:'House Maid',icon:'🧹',price:499};
-  const baseLat = P.lat||17.3850, baseLng = P.lng||78.4867;
+  var cust = DEMO_CUSTOMERS[Math.floor(Math.random()*DEMO_CUSTOMERS.length)];
+  var svc  = (P.services||[])[0] || {name:'House Maid',icon:'🧹',price:499};
+  var baseLat = P.lat||17.3850, baseLng = P.lng||78.4867;
   pendingBooking = {
     id:'HS-BK-'+Math.random().toString(36).substr(2,6).toUpperCase(),
     customer:cust, phone:'98'+Math.floor(10000000+Math.random()*89999999),
@@ -1679,13 +1675,13 @@ function triggerIncomingAlert() {
     customerLng: baseLng + (Math.random()-.5)*.035,
     tracking: false
   };
-  const custDist = haversineKm(baseLat, baseLng, pendingBooking.customerLat, pendingBooking.customerLng);
-  document.getElementById('alertDetail').innerHTML = `<strong>Customer:</strong> ${cust}<br/><strong>Service:</strong> ${svc.icon} ${svc.name}<br/><strong>Distance:</strong> ${custDist.toFixed(1)} km away<br/><strong>Amount:</strong> ₹${svc.price}`;
-  let sec = 60;
+  var custDist = haversineKm(baseLat, baseLng, pendingBooking.customerLat, pendingBooking.customerLng);
+  document.getElementById('alertDetail').innerHTML = '<strong>Customer:</strong> '+(cust)+'<br/><strong>Service:</strong> '+(svc.icon)+' '+(svc.name)+'<br/><strong>Distance:</strong> '+(custDist.toFixed(1))+' km away<br/><strong>Amount:</strong> ₹'+(svc.price);
+  var sec = 60;
   document.getElementById('alertTimer').textContent = sec;
   document.getElementById('incomingAlert').style.display = 'block';
   clearInterval(alertCountdown);
-  alertCountdown = setInterval(()=>{
+  alertCountdown = setInterval(function(){
     sec--; document.getElementById('alertTimer').textContent = sec;
     if(sec<=0){clearInterval(alertCountdown);document.getElementById('incomingAlert').style.display='none';showToast('⏰ Booking request expired');}
   },1000);
@@ -1704,10 +1700,10 @@ function startBookingPoller() {
   bookingPoller = setInterval(checkForNewBookings, 5000);
 }
 
-async function checkForNewBookings() {
+function checkForNewBookings() {
   try {
     // Read all active bookings from Firebase
-    var data = await fbRead('active_bookings');
+    var data = fbRead('active_bookings');
     if (!data) return;
 
     var provLat = P.lat || 17.3850;
@@ -1844,25 +1840,25 @@ function rejectNewBooking() {
 
 // ════════ WITHDRAW ════════
 function showWithdrawModal(){
-  const s = computeStats();
-  const avail = document.getElementById("wdAvailDisplay");
+  var s = computeStats();
+  var avail = document.getElementById("wdAvailDisplay");
   if(avail) avail.textContent = "₹"+s.available.toLocaleString("en-IN");
   document.getElementById("withdrawModal").classList.add("show");
 }
 function processWithdraw(){
-  const amt = parseInt(document.getElementById("wdAmt").value);
-  const acc = document.getElementById("wdAcc").value.trim();
-  const type = document.getElementById("wdType").value;
+  var amt = parseInt(document.getElementById("wdAmt").value);
+  var acc = document.getElementById("wdAcc").value.trim();
+  var type = document.getElementById("wdType").value;
   if(!amt || amt <= 0){showToast("⚠️ Enter a valid amount");return;}
   if(!acc){showToast("⚠️ Enter your bank account or UPI ID");return;}
 
-  const s = computeStats();
-  const available = s.netEarned - s.withdrawn - s.pendingWithdraw;
+  var s = computeStats();
+  var available = s.netEarned - s.withdrawn - s.pendingWithdraw;
   if(amt > available){showToast("⚠️ Amount exceeds available balance ₹"+available);return;}
 
   // Create payout request
-  const payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]");
-  const req = {
+  var payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]");
+  var req = {
     id: "WD-"+Date.now().toString(36).toUpperCase(),
     providerId: P.id,
     providerName: P.name,
@@ -1883,12 +1879,12 @@ function processWithdraw(){
 }
 
 // ════════ NAV ════════
-const PAGE_TITLES={overview:'📊 Overview',bookings:'📋 My Bookings',earnings:'💰 Earnings',profile:'👤 My Profile',availability:'📅 Availability',location:'📍 Update Location',ratings:'⭐ Ratings',notifications:'🔔 Notifications'};
+var PAGE_TITLES={overview:'📊 Overview',bookings:'📋 My Bookings',earnings:'💰 Earnings',profile:'👤 My Profile',availability:'📅 Availability',location:'📍 Update Location',ratings:'⭐ Ratings',notifications:'🔔 Notifications'};
 function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+name)?.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(name.split('-')[0]))n.classList.add('active');});
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active'));
+  document.getElementById('page-'+name) && obj_tmp.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){if(n.textContent.toLowerCase().includes(name.split('-')[0]))n.classList.add('active');});
   document.getElementById('pageTitle').textContent=PAGE_TITLES[name]||name;
   document.getElementById('sidebar').classList.remove('open');
   if(name==='location')setTimeout(initUpdateMap,200);
@@ -1897,7 +1893,7 @@ function showPage(name){
 // ════════ UTILS ════════
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},3500);}
 
 // ════════════════════════════════════════════════════════════════
 // REAL TRACKING ENGINE
@@ -1918,9 +1914,9 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
 // STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
 // STEP 5: Replace the URL below
-const FB_URL = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // ✅ LIVE
-const FB_URL_ALT = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // same
-const FB_ENABLED = true; // Firebase configured ✅
+var FB_URL = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // ✅ LIVE
+var FB_URL_ALT = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // same
+var FB_ENABLED = true; // Firebase configured ✅
 
 // BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
 var trackChannel = null;
@@ -1945,11 +1941,11 @@ function fmtD(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';}
 function fmtT(km){var m=Math.max(1,Math.round(km*3.5));return m<60?m+' min':(Math.floor(m/60)+'h '+(m%60)+'m');}
 
 // ── OSRM: REAL ROAD ROUTE (free, no key) ────────────────────────
-async function getRoute(fromLat,fromLng,toLat,toLng){
+function getRoute(fromLat,fromLng,toLat,toLng){
   try{
     var url='https://router.project-osrm.org/route/v1/driving/'+fromLng+','+fromLat+';'+toLng+','+toLat+'?overview=full&geometries=geojson';
-    var r=await fetch(url,{signal:AbortSignal.timeout(8000)});
-    var d=await r.json();
+    var r=fetch(url,{signal:AbortSignal.timeout(8000)});
+    var d=r.json();
     if(d.code==='Ok'&&d.routes.length){
       var coords=d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
       return{coords:coords,dist:d.routes[0].distance/1000,dur:d.routes[0].duration/60};
@@ -1960,7 +1956,7 @@ async function getRoute(fromLat,fromLng,toLat,toLng){
 }
 
 // ── DUAL SYNC: localStorage + BroadcastChannel + Firebase ────────
-async function fbWrite(path, data) {
+function fbWrite(path, data) {
   // 1. localStorage (same device, instant, always works)
   try { localStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data)); } catch(e) {}
   // 2. BroadcastChannel (cross-tab on same device, instant)
@@ -1970,7 +1966,7 @@ async function fbWrite(path, data) {
     var urls = [FB_URL, FB_URL_ALT];
     for (var i=0; i<urls.length; i++) {
       try {
-        var resp = await fetch(urls[i] + '/' + path + '.json', {
+        var resp = fetch(urls[i] + '/' + path + '.json', {
           method:'PUT', headers:{'Content-Type':'application/json'},
           body:JSON.stringify(data), signal:AbortSignal.timeout(6000)
         });
@@ -1980,15 +1976,15 @@ async function fbWrite(path, data) {
   }
 }
 
-async function fbRead(path) {
+function fbRead(path) {
   // 1. Try Firebase (cross-device)
   if (FB_ENABLED) {
     var urls = [FB_URL, FB_URL_ALT];
     for (var i=0; i<urls.length; i++) {
       try {
-        var r = await fetch(urls[i] + '/' + path + '.json', {signal:AbortSignal.timeout(5000)});
+        var r = fetch(urls[i] + '/' + path + '.json', {signal:AbortSignal.timeout(5000)});
         if (r.ok) {
-          var d = await r.json();
+          var d = r.json();
           // For booking data, return even if no .lat field
           if (d !== null && d !== undefined) return d;
         }
@@ -2002,10 +1998,10 @@ async function fbRead(path) {
   } catch(e) { return null; }
 }
 
-async function fbDelete(path) {
+function fbDelete(path) {
   if (!FB_ENABLED) return;
   try {
-    await fetch(FB_URL + '/' + path + '.json', {method:'DELETE', signal:AbortSignal.timeout(5000)});
+    fetch(FB_URL + '/' + path + '.json', {method:'DELETE', signal:AbortSignal.timeout(5000)});
   } catch(e) { console.warn('FB delete failed:', e.message); }
 }
 
@@ -2023,7 +2019,7 @@ if (trackChannel) {
 // PROVIDER TRACKING — Opens on provider device
 // Uses real device GPS, publishes to Firebase every 4s
 // ════════════════════════════════════════════════════════════════
-async function openProviderTracking(bookingId){
+function openProviderTracking(bookingId){
   var bk=getBK();
   var booking=bk.find(function(b){return b.id===bookingId;});
   if(!booking)return;
@@ -2041,7 +2037,7 @@ async function openProviderTracking(bookingId){
   var fbBanner = document.getElementById('fbSetupBanner');
   if (fbBanner) fbBanner.style.display = 'block'; // show rules reminder until rules are published
 
-  setTimeout(async function(){
+  setTimeout(function(){
     if(!provMap){
       provMap=L.map('provMap',{zoomControl:false}).setView([17.385,78.486],15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(provMap);
@@ -2070,7 +2066,7 @@ function startRealGPS(bookingId,destLat,destLng){
   if(gpsWatchId!==null){navigator.geolocation.clearWatch(gpsWatchId);}
 
   gpsWatchId=navigator.geolocation.watchPosition(
-    async function(pos){
+    function(pos){
       var lat=pos.coords.latitude, lng=pos.coords.longitude, acc=Math.round(pos.coords.accuracy);
       myRealLat=lat; myRealLng=lng;
 
@@ -2088,7 +2084,7 @@ function startRealGPS(bookingId,destLat,destLng){
 
       // Get real road route
       if(destLat&&destLng){
-        var route=await getRoute(lat,lng,destLat,destLng);
+        var route=getRoute(lat,lng,destLat,destLng);
         if(provRoutePolyline)provMap.removeLayer(provRoutePolyline);
         provRoutePolyline=L.polyline(route.coords,{color:'#1A73E8',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(provMap);
         provMap.fitBounds([[lat,lng],[destLat,destLng]],{padding:[80,80],maxZoom:16});
@@ -2109,7 +2105,7 @@ function startRealGPS(bookingId,destLat,destLng){
       }
 
       // PUBLISH to Firebase — customer map reads this
-      await fbWrite('tracking/'+bookingId+'/provider',{lat:lat,lng:lng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8,service:activeBookingData?(activeBookingData.service||''):''});
+      fbWrite('tracking/'+bookingId+'/provider',{lat:lat,lng:lng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8,service:activeBookingData?(activeBookingData.service||''):''});
     },
     function(err){
       var msgs={
@@ -2163,7 +2159,7 @@ function shareTrackingLink(bookingId){
 // Reads provider location from Firebase every 4 seconds
 // Shows real road route from provider to customer
 // ════════════════════════════════════════════════════════════════
-async function openCustomerTracking(bookingId){
+function openCustomerTracking(bookingId){
   var bk=getBK();
   var booking=bk.find(function(b){return b.id===bookingId;});
   if(!booking)return;
@@ -2178,7 +2174,7 @@ async function openCustomerTracking(bookingId){
   document.getElementById('customerTrackingView').classList.add('show');
   updateCustSteps('waiting');
 
-  setTimeout(async function(){
+  setTimeout(function(){
     if(!custMap2){
       custMap2=L.map('custMap',{zoomControl:false}).setView([17.385,78.486],14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(custMap2);
@@ -2194,14 +2190,14 @@ async function openCustomerTracking(bookingId){
   },200);
 }
 
-async function startFirebasePoll(bookingId,custLat,custLng){
+function startFirebasePoll(bookingId,custLat,custLng){
   if(custPollTimer)clearInterval(custPollTimer);
 
-  async function poll(){
+  function poll(){
     if(!document.getElementById('customerTrackingView').classList.contains('show')){clearInterval(custPollTimer);return;}
 
     // PRIMARY: Read from Firebase (cross-device, real-time)
-    var data=await fbRead('tracking/'+bookingId+'/provider');
+    var data=fbRead('tracking/'+bookingId+'/provider');
 
     // FALLBACK: Same device demo — read from memory
     if((!data||!data.lat)&&myRealLat){data={lat:myRealLat,lng:myRealLng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8};}
@@ -2227,7 +2223,7 @@ async function startFirebasePoll(bookingId,custLat,custLng){
 
     // Real road route
     if(custLat&&custLng){
-      var route=await getRoute(pLat,pLng,custLat,custLng);
+      var route=getRoute(pLat,pLng,custLat,custLng);
       if(custRoutePolyline)custMap2.removeLayer(custRoutePolyline);
       custRoutePolyline=L.polyline(route.coords,{color:'#E8251A',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(custMap2);
       custMap2.fitBounds([[pLat,pLng],[custLat,custLng]],{padding:[80,80],maxZoom:16});
@@ -2250,7 +2246,7 @@ async function startFirebasePoll(bookingId,custLat,custLng){
     }
   }
 
-  await poll();
+  poll();
   custPollTimer=setInterval(poll,4000);
 }
 
