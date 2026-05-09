@@ -1084,27 +1084,29 @@ function runRange(idx){
     status:    'searching'
   });
 
-  // Poll Firebase every 3 seconds for acceptance (up to 18s then expand range)
-  var waited=0;
+  // Poll Firebase every 3s for acceptance — use real timestamps, not counters
+  var rangeStart=Date.now();
+  var maxWaitMs=18000;
   clearTimeout(pollTimer);
 
   function doPoll(){
     if(!radarActive)return;
-    waited+=3000;
+    var elapsed=Date.now()-rangeStart;
 
-    // Check Firebase — provider writes acceptedBy when they accept
     fbRead('active_bookings/'+bookingId, function(req){
       if(!radarActive)return;
+      // Provider accepted
       if(req && req.acceptedBy){
         clearTimeout(pollTimer);
         provAccepted(req.acceptedBy);
         return;
       }
-      // Expand range after 18s of no response
-      if(waited>=18000){
+      // Time up — move to next range
+      if(elapsed>=maxWaitMs){
         runRange(idx+1);
         return;
       }
+      // Keep polling
       pollTimer=setTimeout(doPoll,3000);
     });
   }
@@ -1586,62 +1588,73 @@ function hvs(a,b,c,d){
 // ── Toast ─────────────────────────────────────────────────────
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3500);}
 
-function showSorryScreen(bkData){
-  document.getElementById('radarOverlay').classList.remove('show');
-  var nm=bkData?bkData.service:selSvc.n;
-  var dt=bkData?bkData.date:'';
-  var tm=bkData?bkData.time:'';
-  var div=document.getElementById('sorryOverlay');
-  if(!div){div=document.createElement('div');div.id='sorryOverlay';document.body.appendChild(div);}
-  div.style.cssText='position:fixed;inset:0;background:#0f1117;z-index:700;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;overflow-y:auto;';
-  div.innerHTML=
-    '<div style="font-size:60px;margin-bottom:16px;">😔</div>'+
-    '<div style="font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:white;text-align:center;margin-bottom:10px;">No Providers Available</div>'+
-    '<div style="font-size:14px;color:rgba(255,255,255,.55);text-align:center;line-height:1.7;margin-bottom:24px;max-width:320px;">Sorry, no service providers are available near you right now. Your booking has been saved — we will notify you when one becomes available.</div>'+
-    '<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:18px 22px;margin-bottom:28px;width:100%;max-width:350px;">'+
-      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Pending Booking</div>'+
-      '<div style="font-size:16px;font-weight:800;color:white;">'+nm+'</div>'+
-      '<div style="font-size:13px;color:rgba(255,255,255,.45);margin-top:5px;">'+dt+(tm?' at '+tm:'')+'</div>'+
-      '<div style="margin-top:10px;display:inline-block;background:rgba(255,176,0,.15);border:1px solid rgba(255,176,0,.3);color:#ffa500;font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;">⏳ Pending — Awaiting Provider</div>'+
-    '</div>'+
-    '<button onclick="window.location.href='index.html';" style="width:100%;max-width:350px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
-    '<button onclick="document.getElementById('sorryOverlay').style.display='none';startRadar();" style="width:100%;max-width:350px;padding:14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
-}
 
-
-// ── No provider available — show sorry + save pending ─────────
 function showSorryScreen(bk){
-  // Hide radar
+  // Force hide radar overlay immediately
   var ro=document.getElementById('radarOverlay');
-  if(ro) ro.classList.remove('show');
+  if(ro){ ro.classList.remove('show'); ro.style.display='none'; }
+  var po=document.getElementById('provOverlay');
+  if(po){ po.classList.remove('show'); po.style.display='none'; }
 
-  // Remove existing sorry screen
+  // Remove any existing sorry screen
   var old=document.getElementById('sorryScreen');
-  if(old) old.parentNode.removeChild(old);
+  if(old && old.parentNode){ old.parentNode.removeChild(old); }
 
-  // Build screen
   var el=document.createElement('div');
   el.id='sorryScreen';
-  el.style.cssText='position:fixed;inset:0;background:#0f1117;z-index:700;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;overflow-y:auto;';
+  el.style.position='fixed';
+  el.style.top='0';
+  el.style.left='0';
+  el.style.right='0';
+  el.style.bottom='0';
+  el.style.background='#0f1117';
+  el.style.zIndex='9999';
+  el.style.display='flex';
+  el.style.flexDirection='column';
+  el.style.alignItems='center';
+  el.style.justifyContent='center';
+  el.style.padding='28px';
+  el.style.overflowY='auto';
+  el.style.boxSizing='border-box';
+
+  var svcName=bk?(bk.service||''):(selSvc?selSvc.n:'');
+  var bkDate =bk?(bk.date||''):'';
+  var bkTime =bk?(bk.time||''):'';
+
   el.innerHTML=
-    '<div style="font-size:58px;margin-bottom:16px;">😔</div>'+
-    '<div style="font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:white;text-align:center;margin-bottom:12px;">No Providers Available</div>'+
-    '<div style="font-size:14px;color:rgba(255,255,255,.55);text-align:center;line-height:1.7;margin-bottom:28px;max-width:320px;">'+
-      'We searched up to 20 km and found no available providers for <strong style="color:white;">'+bk.service+'</strong> right now.<br/><br/>'+
-      'Your booking has been saved as <strong style="color:#ffa500;">Pending</strong>. We will notify you as soon as a provider becomes available.'+
+    '<div style="font-size:56px;margin-bottom:18px;">&#x1F614;</div>'+
+    '<div style="font-family:Sora,sans-serif;font-size:21px;font-weight:800;color:white;text-align:center;margin-bottom:12px;">No Providers Available</div>'+
+    '<div style="font-size:14px;color:rgba(255,255,255,.6);text-align:center;line-height:1.75;margin-bottom:28px;max-width:320px;">'+
+      'We searched up to 20 km and found no available providers for <strong style="color:white;">'+svcName+'</strong> right now.<br/><br/>'+
+      'Your booking is saved as <strong style="color:#ffa500;">Pending</strong>. You will be notified when a provider becomes available.'+
     '</div>'+
-    '<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:18px 22px;margin-bottom:28px;width:100%;max-width:360px;">'+
-      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Pending Booking</div>'+
-      '<div style="font-size:16px;font-weight:800;color:white;margin-bottom:4px;">'+bk.service+'</div>'+
-      '<div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:10px;">'+bk.date+' at '+bk.time+'</div>'+
-      '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.3);color:#ffa500;font-size:12px;font-weight:700;padding:5px 12px;border-radius:100px;">'+
-        '<span style="width:6px;height:6px;border-radius:50%;background:#ffa500;display:inline-block;"></span>'+
-        'Pending — Awaiting Provider'+
-      '</div>'+
+    '<div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:18px 22px;margin-bottom:28px;width:100%;max-width:360px;">'+
+      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Booking Saved</div>'+
+      '<div style="font-size:16px;font-weight:800;color:white;margin-bottom:5px;">'+svcName+'</div>'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:12px;">'+bkDate+(bkTime?' at '+bkTime:'')+'</div>'+
+      '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.35);color:#ffa500;font-size:12px;font-weight:700;padding:5px 13px;border-radius:100px;">'+
+        '<span style="width:6px;height:6px;border-radius:50%;background:#ffa500;flex-shrink:0;display:inline-block;"></span>'+
+        'Pending &#x2014; Awaiting Provider'+
+      '</span>'+
     '</div>'+
-    '<button onclick="window.location.href='index.html';" style="width:100%;max-width:360px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
-    '<button onclick="document.getElementById('sorryScreen').style.display='none';radarActive=true;runRange(0);" style="width:100%;max-width:360px;padding:14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
+    '<button id="sorryHomeBtn" style="width:100%;max-width:360px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
+    '<button id="sorryRetryBtn" style="width:100%;max-width:360px;padding:14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
+
   document.body.appendChild(el);
+
+  document.getElementById('sorryHomeBtn').onclick=function(){
+    window.location.href='index.html';
+  };
+  document.getElementById('sorryRetryBtn').onclick=function(){
+    el.style.display='none';
+    var rad=document.getElementById('radarOverlay');
+    rad.style.display='';
+    rad.classList.add('show');
+    document.getElementById('radarLog').innerHTML='';
+    document.getElementById('blipsG').innerHTML='';
+    radarActive=true;
+    runRange(0);
+  };
 }
 
 // ── Watch pending bookings — notify when provider accepts ──────
