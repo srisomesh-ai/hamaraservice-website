@@ -616,24 +616,42 @@ var RING_R   = [18,40,62,84,106,122]; // SVG radius per range
 var curRange   = 0;
 
 function startRadar(){
-  if(!userLL){showToast('Confirm your location first');return;}
+  if(!userLL){showToast('Please confirm your location first');return;}
+
   bookingId='HS-BK-'+Date.now().toString(36).toUpperCase();
-  var nm=document.getElementById('custName').value.trim();
-  var ph=document.getElementById('custPhone').value.trim();
-  var dt=document.getElementById('bookDate').value;
-  var tm=document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
-  var booking={id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
-    customer:nm,phone:ph,date:dt,time:tm,lat:userLL.lat,lng:userLL.lng,
-    address:userAddr,status:'searching',acceptedBy:null,range:RANGES[0],
-    createdAt:new Date().toISOString()};
-  fbWrite('bookings/'+bookingId,booking);
-  fbWrite('active_bookings/'+bookingId,booking);
-  radarActive=true;curRange=0;
+  var custName = document.getElementById('custName').value.trim();
+  var custPhone= document.getElementById('custPhone').value.trim();
+  var bkDate   = document.getElementById('bookDate').value;
+  var bkTime   = document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
+
+  var bkData={
+    id:        bookingId,
+    service:   selSvc.n,
+    price:     selSvc.p,
+    priceVal:  selSvc.pv,
+    customer:  custName,
+    phone:     custPhone,
+    date:      bkDate,
+    time:      bkTime,
+    lat:       userLL.lat,
+    lng:       userLL.lng,
+    address:   userAddr,
+    status:    'searching',
+    acceptedBy:null,
+    range:     RANGES[0],
+    createdAt: new Date().toISOString()
+  };
+
+  fbWrite('bookings/'+bookingId, bkData);
+  fbWrite('active_bookings/'+bookingId, bkData);
+
+  radarActive=true;
+  curRange=0;
   document.getElementById('radarLog').innerHTML='';
   document.getElementById('blipsG').innerHTML='';
   document.getElementById('radarOverlay').classList.add('show');
   setStep(3);
-  rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> professionals...','');
+  rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> providers...','');
   runRange(0);
 }
 function addBlip(rangeIdx){
@@ -971,16 +989,52 @@ function startRadar(){
 
 function runRange(idx){
   if(!radarActive)return;
+
+  // ── All ranges exhausted — no provider accepted ──────────────
   if(idx>=RANGES.length){
-    rlog('❌','No providers found within 20 km. Please try again later.','warn');
-    clearTimeout(pollTimer);return;
+    radarActive=false;
+    clearTimeout(pollTimer);
+    rlog('😔','No providers available near you right now.','warn');
+
+    // Build pending booking data
+    var bkPending={
+      id:        bookingId,
+      service:   selSvc.n,
+      price:     selSvc.p,
+      priceVal:  selSvc.pv,
+      date:      document.getElementById('bookDate').value,
+      time:      document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
+      customer:  document.getElementById('custName').value.trim(),
+      phone:     document.getElementById('custPhone').value.trim(),
+      address:   userAddr,
+      lat:       userLL.lat,
+      lng:       userLL.lng,
+      status:    'pending',
+      pendingReason: 'no_provider_available',
+      createdAt: new Date().toISOString()
+    };
+
+    // Write to Firebase as pending
+    fbWrite('bookings/'+bookingId, bkPending);
+    fbWrite('active_bookings/'+bookingId+'/status','pending_no_provider');
+
+    // Save to customer booking history in localStorage
+    var allBk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+    allBk=allBk.filter(function(b){return b.id!==bookingId;});
+    allBk.unshift(bkPending);
+    localStorage.setItem('hs_customer_bookings',JSON.stringify(allBk));
+
+    // Show sorry screen
+    showSorryScreen(bkPending);
+    return;
   }
+
   curRange=idx;
   var km=RANGES[idx];
 
-  // Update UI
+  // Update radar UI
   document.getElementById('radarKm').textContent=km+' km';
-  document.getElementById('radarKmSub').textContent='Scanning within '+km+' km of your location…';
+  document.getElementById('radarKmSub').textContent='Scanning within '+km+' km of your location...';
   document.getElementById('radarSubTxt').textContent='Range: '+km+' km';
   document.getElementById('ringLbl').textContent=km+' KM';
   document.getElementById('activeRing').setAttribute('r',RING_R[idx]);
@@ -988,65 +1042,75 @@ function runRange(idx){
   if(idx===0){
     rlog('📡','Radar active — scanning <strong>'+km+' km</strong> radius','');
   } else {
-    rlog('↔️','Expanding range to <strong>'+km+' km</strong> — no response within '+RANGES[idx-1]+' km','warn');
+    rlog('↔️','Expanding to <strong>'+km+' km</strong> — no response within '+RANGES[idx-1]+' km','warn');
   }
 
-  // Count real providers in localStorage within range
+  // Count REAL providers from localStorage within this range + service match
   var allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
   var inRange=allProvs.filter(function(p){
     if(!p.lat||!p.lng)return false;
-    return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
+    if(hvs(userLL.lat,userLL.lng,p.lat,p.lng)>km)return false;
+    // Service match (if provider has services listed)
+    if(p.services&&p.services.length>0){
+      var reqSvc=(selSvc.n||'').toLowerCase();
+      return p.services.some(function(s){
+        var sn=(s.name||s.n||'').toLowerCase();
+        return reqSvc.includes(sn.split(' ')[0])||sn.includes(reqSvc.split(' ')[0]);
+      });
+    }
+    return true;
   });
+
   if(inRange.length===0){
-    rlog('📡','No providers found within <strong>'+km+' km</strong> yet — expanding search…','');
+    rlog('📡','No providers found within <strong>'+km+' km</strong> — continuing search...','');
   } else {
-    rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' available within '+km+' km — sending booking alert','success');
+    rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' found within '+km+' km — sending alert','success');
   }
 
-  // Add radar blips
-  // Only add blips for REAL providers found
-  for(var i=0;i<Math.min(inRange.length,6);i++) addBlip(idx);
+  // Add blips only for real providers found
+  for(var bi=0;bi<Math.min(inRange.length,6);bi++) addBlip(idx);
 
-  // Notify via Firebase
-  fbWrite('active_bookings/'+bookingId+'/range',km);
-  fbWrite('notifications/search_'+bookingId,{
-    bookingId,service:selSvc.n,lat:userLL.lat,lng:userLL.lng,range:km,
-    ts:Date.now(),status:'searching'
+  // Write to Firebase so provider dashboards receive the alert
+  fbWrite('active_bookings/'+bookingId+'/range', km);
+  fbWrite('active_bookings/'+bookingId+'/status', 'searching');
+  fbWrite('active_bookings/'+bookingId+'/notifiedAt', Date.now());
+  fbWrite('notifications/search_'+bookingId, {
+    bookingId: bookingId,
+    service:   selSvc.n,
+    lat:       userLL.lat,
+    lng:       userLL.lng,
+    range:     km,
+    ts:        Date.now(),
+    status:    'searching'
   });
 
-  // Poll for acceptance every 3s for up to 18s, then expand
+  // Poll Firebase every 3 seconds for acceptance (up to 18s then expand range)
   var waited=0;
-  var maxWait=18000;
   clearTimeout(pollTimer);
 
-  var poll= function(){
+  function doPoll(){
     if(!radarActive)return;
     waited+=3000;
 
-    // Check Firebase for acceptance
-    var req=fbRead('active_bookings/'+bookingId);
-    if(req&&req.acceptedBy){
-      clearTimeout(pollTimer);
-      provAccepted(req.acceptedBy);return;
-    }
-    // Check localStorage (provider dashboard acceptance)
-    var lsKey='hs_accepted_'+bookingId;
-    var lsVal=localStorage.getItem(lsKey);
-    if(lsVal){
-      localStorage.removeItem(lsKey);
-      clearTimeout(pollTimer);
-      provAccepted(JSON.parse(lsVal));return;
-    }
-    if(waited>=maxWait){
-      if(idx<RANGES.length-1)runRange(idx+1);
-      else{rlog('❌','No providers accepted your request. Please try again.','warn');}
-      return;
-    }
-    pollTimer=setTimeout(poll,3000);
-  };
-  pollTimer=setTimeout(poll,3000);
-}
+    // Check Firebase — provider writes acceptedBy when they accept
+    fbRead('active_bookings/'+bookingId, function(req){
+      if(!radarActive)return;
+      if(req && req.acceptedBy){
+        clearTimeout(pollTimer);
+        provAccepted(req.acceptedBy);
+        return;
+      }
+      // Expand range after 18s of no response
+      if(waited>=18000){
+        runRange(idx+1);
+        return;
+      }
+      pollTimer=setTimeout(doPoll,3000);
+    });
+  }
 
+  pollTimer=setTimeout(doPoll,3000);
+}
 function addBlip(rangeIdx){
   var g=document.getElementById('blipsG');
   var angle=Math.random()*2*Math.PI;
@@ -1395,24 +1459,42 @@ const RING_R   = [18,40,62,84,106,122]; // SVG radius per range
 let curRange   = 0;
 
 function startRadar(){
-  if(!userLL){showToast('Confirm your location first');return;}
+  if(!userLL){showToast('Please confirm your location first');return;}
+
   bookingId='HS-BK-'+Date.now().toString(36).toUpperCase();
-  var nm=document.getElementById('custName').value.trim();
-  var ph=document.getElementById('custPhone').value.trim();
-  var dt=document.getElementById('bookDate').value;
-  var tm=document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
-  var booking={id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
-    customer:nm,phone:ph,date:dt,time:tm,lat:userLL.lat,lng:userLL.lng,
-    address:userAddr,status:'searching',acceptedBy:null,range:RANGES[0],
-    createdAt:new Date().toISOString()};
-  fbWrite('bookings/'+bookingId,booking);
-  fbWrite('active_bookings/'+bookingId,booking);
-  radarActive=true;curRange=0;
+  var custName = document.getElementById('custName').value.trim();
+  var custPhone= document.getElementById('custPhone').value.trim();
+  var bkDate   = document.getElementById('bookDate').value;
+  var bkTime   = document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
+
+  var bkData={
+    id:        bookingId,
+    service:   selSvc.n,
+    price:     selSvc.p,
+    priceVal:  selSvc.pv,
+    customer:  custName,
+    phone:     custPhone,
+    date:      bkDate,
+    time:      bkTime,
+    lat:       userLL.lat,
+    lng:       userLL.lng,
+    address:   userAddr,
+    status:    'searching',
+    acceptedBy:null,
+    range:     RANGES[0],
+    createdAt: new Date().toISOString()
+  };
+
+  fbWrite('bookings/'+bookingId, bkData);
+  fbWrite('active_bookings/'+bookingId, bkData);
+
+  radarActive=true;
+  curRange=0;
   document.getElementById('radarLog').innerHTML='';
   document.getElementById('blipsG').innerHTML='';
   document.getElementById('radarOverlay').classList.add('show');
   setStep(3);
-  rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> professionals...','');
+  rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> providers...','');
   runRange(0);
 }
 function addBlip(rangeIdx){
@@ -1525,6 +1607,93 @@ function showSorryScreen(bkData){
     '<button onclick="window.location.href='index.html';" style="width:100%;max-width:350px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
     '<button onclick="document.getElementById('sorryOverlay').style.display='none';startRadar();" style="width:100%;max-width:350px;padding:14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
 }
+
+
+// ── No provider available — show sorry + save pending ─────────
+function showSorryScreen(bk){
+  // Hide radar
+  var ro=document.getElementById('radarOverlay');
+  if(ro) ro.classList.remove('show');
+
+  // Remove existing sorry screen
+  var old=document.getElementById('sorryScreen');
+  if(old) old.parentNode.removeChild(old);
+
+  // Build screen
+  var el=document.createElement('div');
+  el.id='sorryScreen';
+  el.style.cssText='position:fixed;inset:0;background:#0f1117;z-index:700;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;overflow-y:auto;';
+  el.innerHTML=
+    '<div style="font-size:58px;margin-bottom:16px;">😔</div>'+
+    '<div style="font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:white;text-align:center;margin-bottom:12px;">No Providers Available</div>'+
+    '<div style="font-size:14px;color:rgba(255,255,255,.55);text-align:center;line-height:1.7;margin-bottom:28px;max-width:320px;">'+
+      'We searched up to 20 km and found no available providers for <strong style="color:white;">'+bk.service+'</strong> right now.<br/><br/>'+
+      'Your booking has been saved as <strong style="color:#ffa500;">Pending</strong>. We will notify you as soon as a provider becomes available.'+
+    '</div>'+
+    '<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:18px 22px;margin-bottom:28px;width:100%;max-width:360px;">'+
+      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Pending Booking</div>'+
+      '<div style="font-size:16px;font-weight:800;color:white;margin-bottom:4px;">'+bk.service+'</div>'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:10px;">'+bk.date+' at '+bk.time+'</div>'+
+      '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.3);color:#ffa500;font-size:12px;font-weight:700;padding:5px 12px;border-radius:100px;">'+
+        '<span style="width:6px;height:6px;border-radius:50%;background:#ffa500;display:inline-block;"></span>'+
+        'Pending — Awaiting Provider'+
+      '</div>'+
+    '</div>'+
+    '<button onclick="window.location.href='index.html';" style="width:100%;max-width:360px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
+    '<button onclick="document.getElementById('sorryScreen').style.display='none';radarActive=true;runRange(0);" style="width:100%;max-width:360px;padding:14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
+  document.body.appendChild(el);
+}
+
+// ── Watch pending bookings — notify when provider accepts ──────
+function watchPendingBookings(){
+  var pending=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]')
+    .filter(function(b){return b.status==='pending';});
+  if(!pending.length)return;
+
+  pending.forEach(function(bk){
+    fbRead('bookings/'+bk.id, function(data){
+      if(!data)return;
+      // Provider accepted this pending booking
+      if(data.status==='accepted'||data.status==='confirmed'||(data.acceptedBy&&data.acceptedBy.name)){
+        var provName=(data.acceptedBy&&data.acceptedBy.name)||'A provider';
+        // Update localStorage
+        var all=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+        all=all.map(function(b){
+          if(b.id===bk.id){b.status='confirmed';b.providerName=provName;}
+          return b;
+        });
+        localStorage.setItem('hs_customer_bookings',JSON.stringify(all));
+        // Show notification banner
+        showProviderFoundBanner(bk, data);
+      }
+    });
+  });
+}
+
+function showProviderFoundBanner(bk, data){
+  var existing=document.getElementById('provFoundBanner');
+  if(existing)return; // already showing
+  var provName=(data.acceptedBy&&data.acceptedBy.name)||'A provider';
+  var banner=document.createElement('div');
+  banner.id='provFoundBanner';
+  banner.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#00956a;color:white;padding:14px 20px;border-radius:14px;box-shadow:0 8px 32px rgba(0,149,106,.4);z-index:9999;max-width:360px;width:90%;font-family:'DM Sans',sans-serif;';
+  banner.innerHTML=
+    '<div style="font-size:13px;font-weight:800;margin-bottom:4px;">✅ Provider Available for Your Pending Booking!</div>'+
+    '<div style="font-size:13px;color:rgba(255,255,255,.85);">'+provName+' has accepted your <strong>'+bk.service+'</strong> booking.</div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px;">'+
+      '<button onclick="window.location.href='index.html';" style="flex:1;padding:9px;background:white;color:#00956a;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;">View Booking</button>'+
+      '<button onclick="this.parentNode.parentNode.style.display='none';" style="padding:9px 14px;background:rgba(255,255,255,.2);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;">Dismiss</button>'+
+    '</div>';
+  document.body.appendChild(banner);
+  // Auto dismiss after 15 seconds
+  setTimeout(function(){
+    if(banner.parentNode)banner.parentNode.removeChild(banner);
+  },15000);
+}
+
+// Run on page load and every 30 seconds
+watchPendingBookings();
+setInterval(watchPendingBookings, 30000);
 
 </script>
 </body>
