@@ -1220,27 +1220,141 @@ function showUserProfile(){
       '<div style="font-size:11px;color:#8b909e;">'+b.date+' at '+b.time+'</div></div>'+
       '<span style="font-size:14px;font-weight:800;color:#E8251A;">'+b.price+'</span></div>';
   }).join('');
+
   var modal=document.getElementById('profileModal');
   if(!modal){showToast(user.name+' | '+user.email);return;}
+
   document.getElementById('profileContent').innerHTML=
+    // ── Avatar + name ──────────────────────────────────────────
     '<div style="text-align:center;margin-bottom:18px;">'+
       '<div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#E8251A,#ff8a7a);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:white;margin:0 auto 12px;">'+
         (user.name||'U').charAt(0).toUpperCase()+'</div>'+
       '<div style="font-size:20px;font-weight:800;color:#0f1117;">'+user.name+'</div>'+
-      '<div style="font-size:13px;color:#8b909e;margin-top:3px;">'+(user.email||'')+'</div></div>'+
+      '<div style="font-size:13px;color:#8b909e;margin-top:3px;">'+(user.email||'')+'</div>'+
+    '</div>'+
+    // ── Info row ───────────────────────────────────────────────
     '<div style="background:#f7f8fc;border-radius:12px;padding:14px;margin-bottom:14px;">'+
       '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eaedf2;font-size:14px;">'+
-        '<span style="color:#8b909e;font-weight:700;">Mobile</span><span style="font-weight:700;">'+(user.phone||'—')+'</span></div>'+
+        '<span style="color:#8b909e;font-weight:700;">Mobile</span>'+
+        '<span style="font-weight:700;">'+(user.phone||'—')+'</span></div>'+
       '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;">'+
-        '<span style="color:#8b909e;font-weight:700;">Email</span><span style="font-weight:700;">'+(user.email||'—')+'</span></div></div>'+
+        '<span style="color:#8b909e;font-weight:700;">Email</span>'+
+        '<span style="font-weight:700;">'+(user.email||'—')+'</span></div>'+
+    '</div>'+
+    // ── Change Password section ────────────────────────────────
+    '<div style="background:#f7f8fc;border-radius:12px;padding:14px;margin-bottom:14px;">'+
+      '<div style="font-size:12px;font-weight:800;color:#3a3f4b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;">&#x1F512; Change Password</div>'+
+      '<div style="margin-bottom:9px;">'+
+        '<label style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Current Password</label>'+
+        '<input type="password" id="pwCurrent" placeholder="Enter current password" '+
+          'style="width:100%;padding:11px 13px;border:1.5px solid #eaedf2;border-radius:9px;font-family:DM Sans,sans-serif;font-size:14px;outline:none;background:white;box-sizing:border-box;" '+
+          'onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#eaedf2'"/>'+
+      '</div>'+
+      '<div style="margin-bottom:9px;">'+
+        '<label style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">New Password</label>'+
+        '<input type="password" id="pwNew" placeholder="Minimum 6 characters" '+
+          'style="width:100%;padding:11px 13px;border:1.5px solid #eaedf2;border-radius:9px;font-family:DM Sans,sans-serif;font-size:14px;outline:none;background:white;box-sizing:border-box;" '+
+          'onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#eaedf2'"/>'+
+      '</div>'+
+      '<div style="margin-bottom:12px;">'+
+        '<label style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Confirm New Password</label>'+
+        '<input type="password" id="pwConfirm" placeholder="Re-enter new password" '+
+          'style="width:100%;padding:11px 13px;border:1.5px solid #eaedf2;border-radius:9px;font-family:DM Sans,sans-serif;font-size:14px;outline:none;background:white;box-sizing:border-box;" '+
+          'onfocus="this.style.borderColor='#E8251A'" onblur="this.style.borderColor='#eaedf2'"/>'+
+      '</div>'+
+      '<div id="pwMsg" style="font-size:12px;margin-bottom:10px;display:none;padding:8px 12px;border-radius:8px;font-weight:600;"></div>'+
+      '<button onclick="changeUserPassword();" '+
+        'style="width:100%;padding:12px;background:#E8251A;color:white;border:none;border-radius:10px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer;">'+
+        'Update Password</button>'+
+    '</div>'+
+    // ── Bookings list ──────────────────────────────────────────
     '<div style="font-size:11px;font-weight:800;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">My Bookings ('+bks.length+')</div>'+
-    (rows||'<div style="text-align:center;padding:16px;color:#8b909e;font-size:14px;">No bookings yet — book your first service!</div>')+
-    '<button onclick="logoutUser();closeProfileModal();" style="width:100%;margin-top:14px;padding:11px;background:#f7f8fc;border:1.5px solid #eaedf2;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#8b909e;">Sign Out</button>';
+    (rows||'<div style="text-align:center;padding:16px;color:#8b909e;font-size:14px;">No bookings yet</div>')+
+    // ── Sign out ───────────────────────────────────────────────
+    '<button onclick="logoutUser();closeProfileModal();" '+
+      'style="width:100%;margin-top:14px;padding:11px;background:#f7f8fc;border:1.5px solid #eaedf2;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#8b909e;">'+
+      'Sign Out</button>';
+
   modal.classList.add('show');
 }
 function closeProfileModal(){
   var m=document.getElementById('profileModal');
   if(m) m.classList.remove('show');
+}
+
+function changeUserPassword(){
+  var cur  = (document.getElementById('pwCurrent') || {value:''}).value.trim();
+  var nw   = (document.getElementById('pwNew')     || {value:''}).value.trim();
+  var conf = (document.getElementById('pwConfirm') || {value:''}).value.trim();
+  var msg  = document.getElementById('pwMsg');
+
+  function showMsg(text, ok){
+    msg.textContent = text;
+    msg.style.display = 'block';
+    msg.style.background = ok ? '#eaf8f2' : '#fff1f0';
+    msg.style.color       = ok ? '#00956a' : '#E8251A';
+    msg.style.border      = ok ? '1px solid rgba(0,149,106,.2)' : '1px solid rgba(232,37,26,.2)';
+  }
+
+  if(!cur){ showMsg('Enter your current password', false); return; }
+  if(!nw || nw.length < 6){ showMsg('New password must be at least 6 characters', false); return; }
+  if(nw !== conf){ showMsg('Passwords do not match', false); return; }
+
+  var user = JSON.parse(localStorage.getItem('hs_current_customer') || 'null');
+  if(!user){ showMsg('Not logged in', false); return; }
+
+  // ── 1. Try Firebase Auth (email/password users) ────────────────────────────
+  var fbUser = fbAuth.currentUser;
+  if(fbUser && fbUser.email){
+    // Re-authenticate first, then update
+    var cred = firebase.auth.EmailAuthProvider.credential(fbUser.email, cur);
+    fbUser.reauthenticateWithCredential(cred)
+      .then(function(){
+        return fbUser.updatePassword(nw);
+      })
+      .then(function(){
+        // Update localStorage password too
+        user.password = nw;
+        localStorage.setItem('hs_current_customer', JSON.stringify(user));
+        // Update in hs_customers array
+        var all = JSON.parse(localStorage.getItem('hs_customers') || '[]');
+        all = all.map(function(u){ if(u.id === user.id){ u.password = nw; } return u; });
+        localStorage.setItem('hs_customers', JSON.stringify(all));
+        // Update Firebase DB record
+        if(fbDB) fbDB.ref('customers/'+user.id+'/password').set(nw).catch(function(){});
+        // Clear fields
+        document.getElementById('pwCurrent').value = '';
+        document.getElementById('pwNew').value = '';
+        document.getElementById('pwConfirm').value = '';
+        showMsg('✅ Password updated successfully!', true);
+      })
+      .catch(function(e){
+        var msgs = {
+          'auth/wrong-password':       'Current password is incorrect.',
+          'auth/too-many-requests':    'Too many attempts. Try again later.',
+          'auth/weak-password':        'New password is too weak.',
+          'auth/requires-recent-login':'Please sign out and sign in again before changing password.'
+        };
+        showMsg(msgs[e.code] || 'Failed: ' + e.message, false);
+      });
+    return;
+  }
+
+  // ── 2. Fallback: localStorage-only users ──────────────────────────────────
+  if(user.password && user.password !== cur){
+    showMsg('Current password is incorrect.', false);
+    return;
+  }
+  user.password = nw;
+  localStorage.setItem('hs_current_customer', JSON.stringify(user));
+  var all = JSON.parse(localStorage.getItem('hs_customers') || '[]');
+  all = all.map(function(u){ if(u.id === user.id){ u.password = nw; } return u; });
+  localStorage.setItem('hs_customers', JSON.stringify(all));
+  if(fbDB) fbDB.ref('customers/'+user.id+'/password').set(nw).catch(function(){});
+  document.getElementById('pwCurrent').value = '';
+  document.getElementById('pwNew').value = '';
+  document.getElementById('pwConfirm').value = '';
+  showMsg('✅ Password updated successfully!', true);
 }
 // Close user dropdown on outside click
 document.addEventListener('click',function(e){
