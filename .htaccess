@@ -4,10 +4,29 @@ DirectoryIndex index.html index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Serve existing files and directories directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route known HTML pages directly (no redirect)
+    RewriteRule ^index\.html$ - [L]
+    RewriteRule ^provider-dashboard\.html$ - [L]
+    RewriteRule ^provider-portal\.html$ - [L]
+    RewriteRule ^provider-register\.html$ - [L]
+    RewriteRule ^user-booking\.html$ - [L]
+    RewriteRule ^admin\.html$ - [L]
+    RewriteRule ^auth\.js$ - [L]
+
+    # Everything else → index.html
     RewriteRule ^.*$ /index.html [L]
 </IfModule>
+
+# MIME types
+AddType text/html .html
+AddType application/javascript .js
+AddType text/css .css
 
 # Security headers
 <IfModule mod_headers.c>

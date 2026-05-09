@@ -326,6 +326,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 .btn-track-cust{padding:6px 12px;background:var(--green-light);color:var(--green);border:1.5px solid var(--green);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-top:4px;}
 .nav-btn-track{padding:7px 14px;background:linear-gradient(135deg,#1A73E8,#4da6ff);color:white;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
 
+
+@media(min-width:769px){
+  .sidebar{transform:translateX(0) !important;}
+  .main-content{margin-left:var(--sidebar-w);}
+  .hamburger{display:none !important;}
+}
 </style>
 </head>
 <body>
@@ -827,15 +833,15 @@ function saveReviews(rv) { localStorage.setItem('hs_rv_' + P.id, JSON.stringify(
 function computeStats(){
   var bk = getBK();
   var catalog = JSON.parse(localStorage.getItem("hs_catalog")||"null") || [];
-  var completed = bk.filter(function(b){ return b.status === 'completed' || b.status === 'paid');
-  var pending   = bk.filter(function(b){ return b.status === 'pending');
-  var awaitingPayment = bk.filter(function(b){ return b.status === 'payment_pending');
+  var completed = bk.filter(function(b){ return b.status === 'completed' || b.status === 'paid'; });
+  var pending   = bk.filter(function(b){ return b.status === 'pending'; });
+  var awaitingPayment = bk.filter(function(b){ return b.status === 'payment_pending'; });
   var today = new Date().toISOString().split("T")[0];
 
   // For each completed booking, compute commission from catalog
   var grossEarned = 0, commissionTotal = 0, netEarned = 0;
   completed.forEach(function(b){
-    var svc = catalog.find(function(s){ return s.name === b.service);
+    var svc = catalog.find(function(s){ return s.name === b.service; });
     var commPct = svc ? svc.commission : 12;
     var commAmt = svc ? svc.commAmt : Math.round(b.amount * commPct / 100);
     var provAmt = b.amount - commAmt;
@@ -848,30 +854,33 @@ function computeStats(){
     b._commPct = commPct;
   });
 
-  var todayGross = completed.filter(function(b){ return b.date === today).reduce(function(s,b){ return s+b.amount, 0);
+  var todayGross = completed.filter(function(b){ return b.date === today; }).reduce(function(s,b){ return s+b.amount; }, 0);
 
   // Payout tracking
   var payouts = JSON.parse(localStorage.getItem("hs_payouts")||"[]")
-    .filter(function(p){ return p.providerId === P.id);
+    .filter(function(p){ return p.providerId === P.id; });
   var withdrawn = payouts
-    .filter(function(p){ return p.status === "approved")
-    .reduce(function(s,p){ return s+p.amount, 0);
+    .filter(function(p){ return p.status === "approved"; })
+    .reduce(function(s,p){ return s+p.amount; }, 0);
   var pendingWithdraw = payouts
-    .filter(function(p){ return p.status === "pending")
-    .reduce(function(s,p){ return s+p.amount, 0);
+    .filter(function(p){ return p.status === "pending"; })
+    .reduce(function(s,p){ return s+p.amount; }, 0);
   var available = Math.max(netEarned - withdrawn - pendingWithdraw, 0);
 
   var reviews = getReviews();
   var avgRating = reviews.length
-    ? (reviews.reduce(function(s,r){ return s+r.stars, 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce(function(s,r){ return s+r.stars; }, 0) / reviews.length).toFixed(1)
     : null;
 
   var totalEarned = netEarned;
   return {
-    bk, completed, pending, awaitingPayment, payouts,
-    grossEarned, commissionTotal, netEarned, totalEarned,
-    todayGross, withdrawn, pendingWithdraw, available,
-    reviews, avgRating, today
+    bk:bk, completed:completed, pending:pending,
+    awaitingPayment:awaitingPayment, payouts:payouts,
+    grossEarned:grossEarned, commissionTotal:commissionTotal,
+    netEarned:netEarned, totalEarned:totalEarned,
+    todayGross:todayGross, withdrawn:withdrawn,
+    pendingWithdraw:pendingWithdraw, available:available,
+    reviews:reviews, avgRating:avgRating, today:today
   };
 }
 
@@ -1015,8 +1024,8 @@ function loadOverview() {
     var d = new Date(); d.setDate(d.getDate() - (6 - i));
     return d.toISOString().split('T')[0];
   });
-  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b){ return b.date === d).reduce(function(sum,b){ return sum + b.amount, 0));
-  var maxE = Math.max(...earnings7, 1);
+  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b){ return b.date === d; }).reduce(function(sum,b){ return sum + b.amount; }, 0); });
+  var maxE = Math.max.apply(null, earnings7.concat([1]));
   var chart = document.getElementById('weeklyChart');
   chart.innerHTML = '';
   earnings7.forEach(function(v){
@@ -1026,29 +1035,36 @@ function loadOverview() {
     chart.appendChild(col);
   });
   var labelsEl = document.getElementById('weeklyLabels');
-  labelsEl.innerHTML = days7.map(function(d){ return '<span style="font-size:10px;font-weight:800;color:var(--muted);flex:1;text-align:center">'+(new Date(d).toLocaleDateString('en-IN',{weekday:'short'}))+'</span>').join('');
+  labelsEl.innerHTML = days7.map(function(d){ return '<span style="font-size:10px;font-weight:800;color:var(--muted);flex:1;text-align:center">'+(new Date(d).toLocaleDateString('en-IN',{weekday:'short'}))+'</span>'; }).join('');
 
   // Recent bookings (latest 5)
-  var recent = Array.from(s.bk).sort(function(a,b){ return new Date(b.date) - new Date(a.date)).slice(0,5);
-  document.getElementById('recentBody').innerHTML = recent.map(function(b){ return '\n    <tr><td><strong>'+(b.id)+'</strong></td><td>'+(b.customer)+'</td><td>'+(b.service)+'</td>\n    <td>'+(b.date)+'</td><td><strong>₹'+(b.amount)+'</strong></td>\n    <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td></tr>\n  ').join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
+  var recent = Array.from(s.bk).sort(function(a,b){ return new Date(b.date) - new Date(a.date); }).slice(0,5);
+  document.getElementById('recentBody').innerHTML = recent.map(function(b){ return '\n    <tr><td><strong>'+(b.id)+'</strong></td><td>'+(b.customer)+'</td><td>'+(b.service)+'</td>\n    <td>'+(b.date)+'</td><td><strong>₹'+(b.amount)+'</strong></td>\n    <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td></tr>\n  '; }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
 }
 
 // ════════ ALL BOOKINGS ════════
-function loadAllBookings(filter = 'all') {
+function loadAllBookings(filter) { if(filter===undefined) filter='all';
   var bk = getBK();
-  if (filter !== 'all') bk = bk.filter(function(b){ return b.status === filter);
-  bk = bk.sort(function(a,b){ return new Date(b.date) - new Date(a.date));
-  document.getElementById('allBkBody').innerHTML = bk.map(function(b){ return '\n    <tr>\n      <td><strong>'+(b.id)+'</strong></td>\n      <td>'+(b.customer)+'<br/><small style="color:var(--muted)">'+(b.phone)+'</small></td>\n      <td>'+(b.service)+'</td>\n      <td>'+(b.date)+'<br/><small style="color:var(--muted)">'+(b.time)+'</small></td>\n      <td><strong>₹'+(b.amount)+'</strong></td>\n      <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td>\n      <td>\n        '+(b.status === 'pending'
-          ? '<button class="nav-btn-track" onclick="openProviderTracking(\''+(b.id)+'\');return false;" style="margin-bottom:5px">🗺️ Navigate</button>\n             <br/><button class="abtn complete" onclick="updateStatus(\''+(b.id)+'\',\'completed\')">🔐 Complete Job</button>\n             <button class="abtn cancel" onclick="updateStatus(\''+(b.id)+'\',\'cancelled\')">❌</button>'
-          : b.status === 'payment_pending'
-          ? '<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>\n             <button class="abtn view" onclick="openPaymentWindow(getBK().find(function(x){ return x.id===\''+(b.id)+'\'))" style="margin-top:4px">💳 Pay Now</button>'
-          : b.status === 'paid'
-          ? '<span class="badge paid">💰 Paid · Processing</span>'
-          : '<button class="abtn view" onclick="viewBk(\''+(b.id)+'\')">👁 View</button>\n             <br/><button class="btn-track-cust" onclick="openCustomerTracking(\''+(b.id)+'\')" style="margin-top:4px">📍 Customer View</button>')+'\n      </td>\n    </tr>\n  ').join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
+  if (filter !== 'all') bk = bk.filter(function(b){ return b.status === filter; });
+  bk = bk.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+  var rows = bk.map(function(b){
+    var actions = '';
+    if(b.status === 'pending'){
+      actions = '<button class="abtn complete" onclick="updateStatus(&quot;'+b.id+'&quot;,&quot;completed&quot;)">🔐 Complete Job</button> <button class="abtn cancel" onclick="updateStatus(&quot;'+b.id+'&quot;,&quot;cancelled&quot;)">❌</button>';
+    } else if(b.status === 'payment_pending'){
+      actions = '<div class="pay-pending-badge">Awaiting Payment</div>';
+    } else if(b.status === 'paid'){
+      actions = '<span class="badge paid">&#x1F4B0; Paid</span>';
+    } else {
+      actions = '<button class="abtn view" onclick="viewBk(&quot;'+b.id+'&quot;)">&#x1F441; View</button>';
+    }
+    return '<tr><td><strong>'+b.id+'</strong></td><td>'+b.customer+'<br/><small>'+b.phone+'</small></td><td>'+b.service+'</td><td>'+b.date+'<br/><small>'+b.time+'</small></td><td><strong>₹'+b.amount+'</strong></td><td><span class="badge '+b.status+'">'+cap(b.status)+'</span></td><td>'+actions+'</td></tr>';
+  });
+  document.getElementById('allBkBody').innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
 }
 
 function filterBk(f, btn) {
-  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active'));
+  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active'); });
   btn.classList.add('active');
   loadAllBookings(f);
 }
@@ -1083,12 +1099,12 @@ function updateStatus(id, status) {
 // ─── STEP 1: Provider clicks "Mark Complete" ────────────────────
 function initiateOTPCompletion(bookingId) {
   var bk = getBK();
-  var booking = bk.find(function(b){ return b.id === bookingId);
+  var booking = bk.find(function(b){ return b.id === bookingId; });
   if (!booking) return;
 
   // Generate 4-digit OTP and store in booking
   var otp = String(Math.floor(1000 + Math.random() * 9000));
-  var bkIdx = bk.findIndex(function(b){ return b.id === bookingId);
+  var bkIdx = bk.findIndex(function(b){ return b.id === bookingId; });
   bk[bkIdx].completionOTP = otp;
   bk[bkIdx].otpGeneratedAt = new Date().toISOString();
   saveBK(bk);
@@ -1139,8 +1155,8 @@ function otpInput(el, num) {
   }
   if (num === 4 && val) {
     // Auto-attempt verify when last digit entered
-    var all = ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id)}).value);
-    if (all.every(function(v){ return v.length === 1)) verifyOTP();
+    var all = ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id).value; });
+    if (all.every(function(v){ return v.length === 1; })) verifyOTP();
   }
 }
 function otpBack(e, num) {
@@ -1150,7 +1166,7 @@ function otpBack(e, num) {
   }
 }
 function getEnteredOTP() {
-  return ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id)}).value).join('');
+  return ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id).value; }).join('');
 }
 
 // ─── STEP 3: Provider enters OTP → Verify ───────────────────────
@@ -1159,7 +1175,7 @@ function verifyOTP() {
   if (entered.length < 4) { showToast('⚠️ Enter all 4 digits'); return; }
 
   var bk = getBK();
-  var booking = bk.find(function(b){ return b.id === pendingCompleteId);
+  var booking = bk.find(function(b){ return b.id === pendingCompleteId; });
   if (!booking) { closeModal('otpRequestModal'); return; }
 
   if (entered !== booking.completionOTP) {
@@ -1174,7 +1190,7 @@ function verifyOTP() {
   }
 
   // ✅ OTP correct — status → payment_pending (awaiting customer payment)
-  var idx = bk.findIndex(function(b){ return b.id === pendingCompleteId);
+  var idx = bk.findIndex(function(b){ return b.id === pendingCompleteId; });
   bk[idx].status = 'payment_pending';
   bk[idx].otpVerifiedAt = new Date().toISOString();
   bk[idx].completionOTP = null;
@@ -1207,7 +1223,7 @@ function openPaymentWindow(booking) {
   document.getElementById('pw-date').textContent     = booking.date + ' ' + (booking.time||'');
   document.getElementById('pw-amount').textContent   = '₹' + booking.amount.toLocaleString('en-IN');
   selectedPayMethod = null;
-  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'); });
   var btn = document.getElementById('payNowBtn');
   btn.textContent = 'Select payment method to continue';
   btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
@@ -1215,7 +1231,7 @@ function openPaymentWindow(booking) {
 }
 
 function selectPayMethod(el, method) {
-  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'); });
   el.classList.add('selected');
   selectedPayMethod = method;
   document.getElementById('payGatewayNote').style.display = method !== 'cash' ? 'block' : 'none';
@@ -1228,7 +1244,7 @@ function processCustomerPayment() {
   if (!selectedPayMethod) { showToast('⚠️ Select a payment method'); return; }
   var bookingId = currentRatingBookingId;
   var bk = getBK();
-  var idx = bk.findIndex(function(b){ return b.id === bookingId);
+  var idx = bk.findIndex(function(b){ return b.id === bookingId; });
   if (idx < 0) return;
 
   // Generate transaction ID
@@ -1259,7 +1275,7 @@ function afterPaymentSuccess() {
   // Move booking to fully completed after payment
   var bookingId = currentRatingBookingId;
   var bk = getBK();
-  var idx = bk.findIndex(function(b){ return b.id === bookingId);
+  var idx = bk.findIndex(function(b){ return b.id === bookingId; });
   if (idx > -1 && bk[idx].status === 'paid') {
     bk[idx].status = 'completed';
     bk[idx].completedAt = new Date().toISOString();
@@ -1280,7 +1296,7 @@ function startPaymentPolling(bookingId) {
   stopPaymentPolling();
   pollInterval = setInterval(function(){
     var bk = getBK();
-    var b = bk.find(function(x){ return x.id === bookingId);
+    var b = bk.find(function(x){ return x.id === bookingId; });
     if (b && (b.status === 'paid' || b.status === 'completed')) {
       stopPaymentPolling();
       syncProviderStats();
@@ -1294,7 +1310,7 @@ function stopPaymentPolling() {
 }
 function showPaymentReceivedAlert(booking) {
   var catalog = JSON.parse(localStorage.getItem('hs_catalog')||'null')||[];
-  var svc = catalog.find(function(s){ return s.name === booking.service);
+  var svc = catalog.find(function(s){ return s.name === booking.service; });
   var commPct = svc ? svc.commission : 12;
   var commAmt = svc ? svc.commAmt : Math.round(booking.amount * commPct / 100);
   var provAmt = booking.amount - commAmt;
@@ -1332,7 +1348,7 @@ function submitRating() {
   if (selectedRating === 0) { showToast('⭐ Please tap a star to rate'); return; }
   var review = document.getElementById('ratingReviewText').value.trim();
   var bk = getBK();
-  var booking = bk.find(function(b){ return b.id === currentRatingBookingId);
+  var booking = bk.find(function(b){ return b.id === currentRatingBookingId; });
 
   var reviewObj = {
     customer: booking ? (booking.customer || 'Customer') : 'Customer',
@@ -1348,9 +1364,9 @@ function submitRating() {
   saveReviews(reviews);
 
   // Update provider avg rating in providers list
-  var avgRating = (reviews.reduce(function(s,r){ return s+r.stars, 0) / reviews.length).toFixed(1);
+  var avgRating = (reviews.reduce(function(s,r){ return s+r.stars; }, 0) / reviews.length).toFixed(1);
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  var pidx = all.findIndex(function(p){ return p.id === P.id);
+  var pidx = all.findIndex(function(p){ return p.id === P.id; });
   if (pidx > -1) {
     all[pidx].rating = +avgRating;
     all[pidx].reviews = reviews.length;
@@ -1363,12 +1379,12 @@ function submitRating() {
   loadRatings(); loadOverview();
 
   // Show thank you
-  showToast('⭐ Thank you! ' + selectedRating + '/5 rating added to ' + P.name + ''s profile.');
+  showToast('⭐ Thank you! ' + selectedRating + '/5 rating added to ' + P.name + ' profile.');
   currentRatingBookingId = null;
 }
 
 function viewBk(id) {
-  var b = getBK().find(function(b){ return b.id === id);
+  var b = getBK().find(function(b){ return b.id === id; });
   if (!b) return;
   document.getElementById('vmTitle').textContent = '📋 ' + b.id;
   document.getElementById('vmSub').textContent = 'Service: ' + b.service;
@@ -1404,27 +1420,49 @@ function loadEarnings(){
   document.getElementById("e-gross").textContent      = "₹"+s.grossEarned.toLocaleString("en-IN");
   document.getElementById("e-commission").textContent = "₹"+s.commissionTotal.toLocaleString("en-IN");
   document.getElementById("e-net").textContent        = "₹"+s.netEarned.toLocaleString("en-IN");
-  document.getElementById("e-withdrawn").textContent  = "₹"+s.withdrawn.toLocaleString("en-IN");
+  document.getElementById("e-today").textContent      = "₹"+s.todayGross.toLocaleString("en-IN");
   document.getElementById("e-available").textContent  = "₹"+s.available.toLocaleString("en-IN");
-  document.getElementById("withdrawAvail").textContent = "₹"+s.available.toLocaleString("en-IN");
-  document.getElementById("wdAvailDisplay") && (document.getElementById("wdAvailDisplay").textContent = "₹"+s.available.toLocaleString("en-IN"));
+  document.getElementById("e-withdrawn").textContent  = "₹"+s.withdrawn.toLocaleString("en-IN");
+  document.getElementById("e-pending").textContent    = "₹"+s.pendingWithdraw.toLocaleString("en-IN");
+  if(document.getElementById("wdAvailDisplay"))
+    document.getElementById("wdAvailDisplay").textContent = "₹"+s.available.toLocaleString("en-IN");
 
-  // Booking breakdown table
-  var sorted = Array.from(s.completed).sort(function(a,b){ return new Date(b.date)-new Date(a.date));
-  document.getElementById("earnBody").innerHTML = sorted.map(function(b){ return '\n    <tr>\n      <td><strong>'+(b.id)+'</strong></td>\n      <td>'+(b.service)+'</td>\n      <td>'+(b.date)+'</td>\n      <td><strong>₹'+(b.amount)+'</strong></td>\n      <td style="color:var(--red);font-weight:800;">-₹'+(b._commAmt||0)+' <small style="color:var(--muted)">('+(b._commPct||12)+'%)</small></td>\n      <td style="color:var(--green);font-weight:900;">₹'+(b._provAmt||b.amount)+'</td>\n      <td><span class="badge completed">Credited</span></td>\n    </tr>\n  ').join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
+  var sorted = s.completed.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  var earnRows = sorted.map(function(b){
+    return "<tr><td><strong>"+b.id+"</strong></td><td>"+b.service+"</td><td>"+b.date+"</td>"+
+      "<td><strong>₹"+b.amount+"</strong></td>"+
+      "<td style='color:#E8251A;font-weight:800;'>-₹"+(b._commAmt||0)+" <small>("+(b._commPct||12)+"%)</small></td>"+
+      "<td style='color:#00956a;font-weight:900;'>₹"+(b._provAmt||b.amount)+"</td>"+
+      "<td><span class='badge completed'>Credited</span></td></tr>";
+  }).join("");
+  document.getElementById("earnBody").innerHTML = earnRows ||
+    "<tr><td colspan='7' style='text-align:center;color:#8b909e;padding:24px'>No completed bookings yet</td></tr>";
 
-  // Pending withdraw requests
-  var pendingReqs = s.payouts.filter(function(p){ return p.status === "pending");
+  var pendingReqs = s.payouts.filter(function(p){ return p.status === "pending"; });
   document.getElementById("pendingWithdrawSection").style.display = pendingReqs.length ? "block" : "none";
-  document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(function(p){ return '\n    <tr>\n      <td><strong>'+(p.id)+'</strong></td>\n      <td style="color:var(--green);font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>\n      <td style="font-size:12px">'+(p.account)+' <small>('+(p.accountType)+')</small></td>\n      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>\n      <td><span class="badge pending">⏳ Pending Admin Approval</span></td>\n    </tr>\n  ').join("");
+  var pendRows = pendingReqs.map(function(p){
+    return "<tr><td><strong>"+p.id+"</strong></td>"+
+      "<td style='color:#00956a;font-weight:800;'>₹"+p.amount.toLocaleString("en-IN")+"</td>"+
+      "<td style='font-size:12px'>"+p.account+" <small>("+p.accountType+")</small></td>"+
+      "<td style='font-size:12px'>"+new Date(p.requestedAt).toLocaleDateString("en-IN")+"</td>"+
+      "<td><span class='badge pending'>⏳ Pending Approval</span></td></tr>";
+  }).join("");
+  document.getElementById("pendingWithdrawBody").innerHTML = pendRows;
 
-  // Full withdrawal history
-  var allPayouts = Array.from(s.payouts).sort(function(a,b){ return new Date(b.requestedAt)-new Date(a.requestedAt));
-  document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(function(p){ return '\n    <tr>\n      <td><strong>'+(p.id)+'</strong></td>\n      <td style="font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>\n      <td style="font-size:12px">'+(p.account)+'</td>\n      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>\n      <td style="font-size:12px">'+(p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—")+'</td>\n      <td><span class="badge '+(p.status)+'">'+(
-        p.status==="approved" ? "✅ Paid" :
-        p.status==="rejected" ? "❌ Rejected" : "⏳ Pending"
-      )+'</span></td>\n    </tr>\n  ').join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
+  var allPayouts = s.payouts.slice().sort(function(a,b){ return new Date(b.requestedAt)-new Date(a.requestedAt); });
+  var histRows = allPayouts.map(function(p){
+    var statusLabel = p.status==="approved" ? "✅ Paid" : p.status==="rejected" ? "❌ Rejected" : "⏳ Pending";
+    return "<tr><td><strong>"+p.id+"</strong></td>"+
+      "<td style='font-weight:800;'>₹"+p.amount.toLocaleString("en-IN")+"</td>"+
+      "<td style='font-size:12px'>"+p.account+"</td>"+
+      "<td style='font-size:12px'>"+new Date(p.requestedAt).toLocaleDateString("en-IN")+"</td>"+
+      "<td style='font-size:12px'>"+(p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—")+"</td>"+
+      "<td><span class='badge "+p.status+"'>"+statusLabel+"</span></td></tr>";
+  }).join("");
+  document.getElementById("withdrawHistoryBody").innerHTML = histRows ||
+    "<tr><td colspan='6' style='text-align:center;color:#8b909e;padding:20px'>No withdrawal history</td></tr>";
 }
+
 
 // ════════ PROFILE ════════
 function loadProfile() {
@@ -1452,7 +1490,7 @@ function loadProfile() {
 
 function saveProfile() {
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  var idx = all.findIndex(function(p){ return p.id === P.id);
+  var idx = all.findIndex(function(p){ return p.id === P.id; });
   if (idx > -1) {
     all[idx].name     = document.getElementById('pf_name').value;
     all[idx].phone    = document.getElementById('pf_phone').value;
@@ -1471,7 +1509,7 @@ function saveProfile() {
 
 function saveServices() {
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  var idx = all.findIndex(function(p){ return p.id === P.id);
+  var idx = all.findIndex(function(p){ return p.id === P.id; });
   if (idx > -1) {
     (P.services || []).forEach(function(s,i){
       var inp = document.getElementById('sp_'+(i));
@@ -1512,18 +1550,18 @@ function loadAvailability() {
     var el = document.createElement('div');
     el.className = 'tslot' + (avail.slots.includes(slot) ? ' active' : '');
     el.textContent = slot;
-    el.onclick = function(){ el.classList.toggle('active');
+    el.onclick = function(){ el.classList.toggle('active'); };
     slotWrap.appendChild(el);
   });
 }
 
 function saveAvailability() {
-  var days = DAYS.map(function(_,i){ return document.getElementById('day_' + i)?.classList.contains('on') ? i : null).filter(function(v){ return v !== null);
-  var slots = [...document.querySelectorAll('.tslot.active')].map(function(el){return el.textContent;});
+  var days = DAYS.map(function(_,i){ return (document.getElementById('day_'+i) && document.getElementById('day_'+i).classList.contains('on')) ? i : null; }).filter(function(v){ return v !== null; });
+  var slots = Array.from(document.querySelectorAll('.tslot.active')).map(function(el){return el.textContent;});
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  var idx = all.findIndex(function(p){ return p.id === P.id);
+  var idx = all.findIndex(function(p){ return p.id === P.id; });
   if (idx > -1) {
-    all[idx].availability = { days, slots, start: document.getElementById('workStart').value, end: document.getElementById('workEnd').value };
+    all[idx].availability = { days:days, slots:slots, start: document.getElementById('workStart').value, end: document.getElementById('workEnd').value };
     P = all[idx];
     localStorage.setItem('hs_providers', JSON.stringify(all));
     localStorage.setItem('hs_current_provider', JSON.stringify(P));
@@ -1570,7 +1608,7 @@ function searchNewLoc() {
       newLat=+res[0].lat; newLng=+res[0].lon;
       updateMap.setView([newLat,newLng],14); updateMarker.setLatLng([newLat,newLng]);
       drawLocCircle(); reverseGeo(newLat,newLng);
-    }).catch(function(){showToast('❌ Search failed'}));
+    }).catch(function(){showToast('Search failed');});
 }
 
 function locGPS() {
@@ -1597,7 +1635,7 @@ function reverseGeo(lat,lng) {
 function saveLocation() {
   if(!newLat){showToast('⚠️ Please set location on the map');return;}
   var all = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  var idx = all.findIndex(function(p){ return p.id===P.id);
+  var idx = all.findIndex(function(p){ return p.id===P.id; });
   if(idx>-1){
     all[idx].lat=newLat; all[idx].lng=newLng; all[idx].radius=newRadius;
     all[idx].address=P._newAddress||all[idx].address;
@@ -1611,7 +1649,7 @@ function saveLocation() {
 // ════════ RATINGS ════════
 function loadRatings() {
   var reviews = getReviews();
-  var avg = reviews.length ? (reviews.reduce(function(s,r){ return s+r.stars,0)/reviews.length) : 0;
+  var avg = reviews.length ? (reviews.reduce(function(s,r){ return s+r.stars; },0)/reviews.length) : 0;
   document.getElementById('ratingNum').textContent = reviews.length ? avg.toFixed(1) : '—';
   document.getElementById('ratingStars').textContent = reviews.length ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5-Math.round(avg)) : '—';
   document.getElementById('reviewCount').textContent = reviews.length;
@@ -1619,14 +1657,14 @@ function loadRatings() {
   // bars
   var bars = document.getElementById('ratingBars');
   bars.innerHTML = [5,4,3,2,1].map(function(n){
-    var cnt = reviews.filter(function(r){ return r.stars===n).length;
+    var cnt = reviews.filter(function(r){ return r.stars===n; }).length;
     var pct = reviews.length ? (cnt/reviews.length*100).toFixed(0) : 0;
     return '<div class="rbar-row"><span class="rbar-label">'+(n)+' ★</span><div class="rbar-wrap"><div class="rbar-fill" style="width:'+(pct)+'%"></div></div><span class="rbar-count">'+(cnt)+'</span></div>';
   }).join('');
 
   // reviews list
   document.getElementById('reviewsList').innerHTML = reviews.length
-    ? reviews.map(function(r){ return '<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">\n        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">\n          <strong style="font-size:13px">'+(r.customer)+'</strong>\n          <span style="color:#f59e0b;font-size:13px">'+('★'.repeat(r.stars))+('☆'.repeat(5-r.stars))+'</span>\n        </div>\n        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">'+(r.text)+'</div>\n        <div style="font-size:11px;color:var(--muted);font-weight:700">'+(r.date)+'</div>\n      </div>').join('')
+    ? reviews.map(function(r){ return '<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">\n        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">\n          <strong style="font-size:13px">'+(r.customer)+'</strong>\n          <span style="color:#f59e0b;font-size:13px">'+('★'.repeat(r.stars))+('☆'.repeat(5-r.stars))+'</span>\n        </div>\n        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">'+(r.text)+'</div>\n        <div style="font-size:11px;color:var(--muted);font-weight:700">'+(r.date)+'</div>\n      </div>'; }).join('')
     : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px;font-weight:700">No reviews yet</div>';
 }
 
@@ -1634,14 +1672,14 @@ function loadRatings() {
 function loadNotifications() {
   var s = computeStats();
   var notifs = [];
-  s.pending.forEach(function(b){notifs.push({type:'booking',icon:'📋',title:'Pending Booking',sub:(b.customer)+' booked '+(b.service)+' for '+(b.date)+' at '+(b.time),time:'Waiting for action',unread:true}));
-  (s.awaitingPayment||[]).forEach(function(b){notifs.push({type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:(b.customer)+' · '+(b.service)+' · ₹'+(b.amount)+' — OTP verified, payment pending',time:'Action needed',unread:true}));
-  s.completed.slice(-3).forEach(function(b){notifs.push({type:'payment',icon:'💰',title:'Payment Received',sub:'₹'+(b.amount)+' for '+(b.service)+' by '+(b.customer),time:b.date,unread:false}));
+  s.pending.forEach(function(b){notifs.push({type:'booking',icon:'📋',title:'Pending Booking',sub:(b.customer)+' booked '+(b.service)+' for '+(b.date)+' at '+(b.time),time:'Waiting for action',unread:true}); });
+  (s.awaitingPayment||[]).forEach(function(b){notifs.push({type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:(b.customer)+' · '+(b.service)+' · ₹'+(b.amount)+' — OTP verified, payment pending',time:'Action needed',unread:true}); });
+  s.completed.slice(-3).forEach(function(b){notifs.push({type:'payment',icon:'💰',title:'Payment Received',sub:'₹'+(b.amount)+' for '+(b.service)+' by '+(b.customer),time:b.date,unread:false}); });
   if (s.reviews.length) notifs.push({type:'rating',icon:'⭐',title:s.reviews.length + ' Customer Review(s)',sub:'Check your Ratings page for feedback',time:'Recent',unread:false});
   notifs.push({type:'alert',icon:'💡',title:'Profile Tip',sub:'Complete your profile to get 40% more bookings!',time:'Always',unread:false});
 
-  document.getElementById('notifBadge').textContent = notifs.filter(function(n){ return n.unread).length;
-  document.getElementById('notifList').innerHTML = notifs.map(function(n){ return '\n    <div class="notif-item '+(n.unread?'unread':'')+'">\n      <div class="notif-icon-wrap '+(n.type)+'">'+(n.icon)+'</div>\n      <div style="flex:1"><div class="notif-title">'+(n.title)+'</div><div class="notif-sub">'+(n.sub)+'</div><div class="notif-time">'+(n.time)+'</div></div>\n      '+(n.unread?'<div class="unread-dot"></div>':'')+'\n    </div>').join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
+  document.getElementById('notifBadge').textContent = notifs.filter(function(n){ return n.unread; }).length;
+  document.getElementById('notifList').innerHTML = notifs.map(function(n){ return '\n    <div class="notif-item '+(n.unread?'unread':'')+'">\n      <div class="notif-icon-wrap '+(n.type)+'">'+(n.icon)+'</div>\n      <div style="flex:1"><div class="notif-title">'+(n.title)+'</div><div class="notif-sub">'+(n.sub)+'</div><div class="notif-time">'+(n.time)+'</div></div>\n      '+(n.unread?'<div class="unread-dot"></div>':'')+'\n    </div>'; }).join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
 }
 
 // ════════ AVAILABILITY TOGGLE ════════
@@ -1939,11 +1977,15 @@ function closeSidebar() {
 // ════════ NAV ════════
 var PAGE_TITLES={overview:'📊 Overview',bookings:'📋 My Bookings',earnings:'💰 Earnings',profile:'👤 My Profile',availability:'📅 Availability',location:'📍 Update Location',ratings:'⭐ Ratings',notifications:'🔔 Notifications'};
 function showPage(name){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');}));
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');}));
-  document.getElementById('page-'+name)?.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(function(n){if(n.textContent.toLowerCase().includes(name.split('-')[0]))n.classList.add('active');});
-  document.getElementById('pageTitle').textContent=PAGE_TITLES[name]||name;
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var pg = document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    if(n.textContent.toLowerCase().includes(name.split('-')[0])) n.classList.add('active');
+  });
+  var pt = document.getElementById('pageTitle');
+  if(pt) pt.textContent = PAGE_TITLES[name]||name;
   closeSidebar();
   if(name==='location') setTimeout(initUpdateMap, 200);
 }
@@ -1985,23 +2027,34 @@ function mkDestIcon(emoji){return L.divIcon({html:'<div style="position:relative
 
 // ── MATH ────────────────────────────────────────────────────────
 function calcDist(a,b,c,d){var R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,e=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)*Math.sin(dN/2);return R*2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e));}
-function haversineKm(a,b,c,d){return calcDist(a, b:b, c:c, d);}
+function haversineKm(a,b,c,d){return calcDist(a,b,c,d);}
 function fmtD(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';}
 function fmtT(km){var m=Math.max(1,Math.round(km*3.5));return m<60?m+' min':(Math.floor(m/60)+'h '+(m%60)+'m');}
 
 // ── OSRM: REAL ROAD ROUTE (free, no key) ────────────────────────
 function getRoute(fromLat,fromLng,toLat,toLng){
-  try{
+  // Return a promise that resolves with route data
+  return new Promise(function(resolve){
     var url='https://router.project-osrm.org/route/v1/driving/'+fromLng+','+fromLat+';'+toLng+','+toLat+'?overview=full&geometries=geojson';
-    var r=fetch(url,{signal:AbortSignal.timeout(8000)});
-    var d=r.json();
-    if(d.code==='Ok'&&d.routes.length){
-      var coords=d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
-      return{coords:coords,dist:d.routes[0].distance/1000,dur:d.routes[0].duration/60};
-    }
-  }catch(e){console.warn('OSRM failed:',e);}
-  // Fallback: straight line
-  return{coords:[[fromLat, fromLng], [toLat, toLng]], dist:calcDist(fromLat, fromLng:fromLng, toLat:toLat, toLng), dur:calcDist(fromLat, fromLng:fromLng, toLat:toLat, toLng)*4};
+    var xhr=new XMLHttpRequest();
+    xhr.open('GET',url,true);
+    xhr.timeout=8000;
+    xhr.onload=function(){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        if(d.code==='Ok'&&d.routes.length){
+          var coords=d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
+          resolve({coords:coords,dist:d.routes[0].distance/1000,dur:d.routes[0].duration/60});
+          return;
+        }
+      }catch(e){}
+      resolve({coords:[[fromLat,fromLng],[toLat,toLng]],dist:calcDist(fromLat,fromLng,toLat,toLng),dur:calcDist(fromLat,fromLng,toLat,toLng)*4});
+    };
+    xhr.onerror=xhr.ontimeout=function(){
+      resolve({coords:[[fromLat,fromLng],[toLat,toLng]],dist:calcDist(fromLat,fromLng,toLat,toLng),dur:calcDist(fromLat,fromLng,toLat,toLng)*4});
+    };
+    xhr.send();
+  });
 }
 
 // ── FIREBASE HELPERS — safe, non-blocking, callback-based ──────
@@ -2065,7 +2118,7 @@ function startRealGPS(bookingId,destLat,destLng){
       }
 
       // Get real road route
-      if(destLat&&destLng){var route=getRoute(lat, lng:lng, destLat:destLat, destLng);
+      if(destLat&&destLng){getRoute(lat,lng,destLat,destLng).then(function(route){
         if(provRoutePolyline)provMap.removeLayer(provRoutePolyline);
         provRoutePolyline=L.polyline(route.coords, {color:'#1A73E8', weight:6, opacity:.85, lineJoin:'round', lineCap:'round'}).addTo(provMap);
         provMap.fitBounds([[lat,lng],[destLat,destLng]],{padding:[80,80],maxZoom:16});
@@ -2081,6 +2134,7 @@ function startRealGPS(bookingId,destLat,destLng){
           document.getElementById('provTrkTitle').textContent='You have arrived!';
           setGpsBanner('prov','live','You are at the customer location');
         }
+      });  // close .then
       } else {
         provMap.setView([lat,lng],16);
       }
@@ -2097,7 +2151,7 @@ function startRealGPS(bookingId,destLat,destLng){
       setGpsBanner('prov','error',msgs[err.code]||'GPS error: '+err.message);
       document.getElementById('provTrkTitle').textContent = err.code===1 ? 'Allow Location Access' : 'GPS Signal Weak';
       document.getElementById('provTrkSub').textContent = msgs[err.code]||'GPS error';
-      if(err.code!==1) setTimeout(function(){startRealGPS(bookingId, destLat:destLat, destLng);},6000);
+      if(err.code!==1) setTimeout(function(){startRealGPS(bookingId,destLat,destLng);},6000);
       // Show manual instructions on permission denied
       if(err.code===1){
         showToast('⚠️ GPS denied — go to browser Settings → Site permissions → Location → Allow for '+window.location.hostname);
@@ -2265,6 +2319,32 @@ function renderTimeline(id,steps,activeIdx){
     var cls=done?'done':active?'active':'wait';
     return '<div class="drw-step"><div class="ds-col"><div class="ds-dot '+cls+'">'+(done?'&#10003;':active?'&#9679;':(i+1))+'</div>'+(last?'':'<div class="ds-line '+(done?'done':'wait')+'"></div>')+'</div><div class="ds-info"><div class="ds-title '+cls+'">'+s.t+'</div><div class="ds-desc">'+s.d+'</div></div></div>';
   }).join('');
+}
+
+
+// ── Open provider tracking view for a booking ────────────────────────────────
+function openProviderTracking(bookingId) {
+  var bks = JSON.parse(localStorage.getItem('hs_provider_bookings') || '[]');
+  var bk  = bks.find(function(b){ return b.id === bookingId; });
+  if (!bk) {
+    showToast('Booking not found');
+    return;
+  }
+  // Show booking detail in viewModal
+  document.getElementById('viewModal').classList.add('show');
+  var vm = document.getElementById('viewModalContent');
+  if (vm) {
+    vm.innerHTML =
+      '<div style="font-size:13px;line-height:2;color:var(--ink);">' +
+      '<strong>Service:</strong> ' + (bk.service || '') + '<br/>' +
+      '<strong>Customer:</strong> ' + (bk.customer || '') + '<br/>' +
+      '<strong>Phone:</strong> ' + (bk.phone || '') + '<br/>' +
+      '<strong>Date:</strong> ' + (bk.date || '') + ' at ' + (bk.time || '') + '<br/>' +
+      '<strong>Address:</strong> ' + (bk.address || '') + '<br/>' +
+      '<strong>Amount:</strong> ' + (bk.price || '') + '<br/>' +
+      '<strong>Status:</strong> ' + (bk.status || '') +
+      '</div>';
+  }
 }
 
 </script>
