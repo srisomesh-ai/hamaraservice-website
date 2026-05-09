@@ -539,7 +539,9 @@ function submitRegistration(){
     totalBookings:0,completedBookings:0,
     totalEarned:0,pendingEarned:0,withdrawnEarned:0,
     available:true,
-    registeredAt:new Date().toISOString()
+    registeredAt:new Date().toISOString(),
+    googleUid: window._googleUid || null,
+    photo: window._googlePhoto || ''
   };
   var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
   providers.push(provider);
@@ -587,62 +589,126 @@ function providerGoogleSignIn(){
   fbAuth.signInWithPopup(googleProvider)
     .then(function(result){
       var user = result.user;
-      // Check if this Google account is linked to a provider
-      // First check localStorage for existing provider with this Google UID or email
+      var email = (user.email||'').toLowerCase();
+      var uid   = user.uid;
+
+      // ── STEP 1: Check localStorage for existing provider ─────────────
       var localProviders = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-      var localFound = localProviders.find(function(p){ return p.googleUid===user.uid || (p.email&&p.email.toLowerCase()===user.email.toLowerCase()); });
+      var localFound = localProviders.find(function(p){
+        return p.googleUid===uid || (p.email&&p.email.toLowerCase()===email);
+      });
+
       if(localFound){
-        localStorage.setItem('hs_current_provider', JSON.stringify(localFound));
-        showToast('✅ Welcome back, '+localFound.name+'!');
-        setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
+        handleExistingGoogleProvider(localFound, uid, user);
         return;
       }
-      fbDB.ref('providers').orderByChild('googleUid').equalTo(user.uid).once('value', function(snap){
+
+      // ── STEP 2: Check Firebase for existing provider ─────────────────
+      showToast('Checking your account...');
+      fbDB.ref('providers').orderByChild('googleUid').equalTo(uid).once('value', function(snap){
         var found = null;
         snap.forEach(function(child){ found = child.val(); });
-        if(found){
-          // Existing provider — log them in
-          localStorage.setItem('hs_current_provider', JSON.stringify(found));
-          var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-          if(!allProvs.find(function(p){return p.id===found.id;})) allProvs.push(found);
-          localStorage.setItem('hs_providers', JSON.stringify(allProvs));
-          showToast('✅ Welcome back, '+found.name+'!');
-          setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
+
+        if(!found){
+          // Also check by email
+          fbDB.ref('providers').orderByChild('email').equalTo(email).once('value', function(snap2){
+            var found2 = null;
+            snap2.forEach(function(child){ found2 = child.val(); });
+
+            if(found2){
+              // Existing provider found by email — link Google UID
+              found2.googleUid = uid;
+              found2.photo = user.photoURL || found2.photo || '';
+              var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+              var idx = allProvs.findIndex(function(p){return p.id===found2.id;});
+              if(idx>-1){allProvs[idx]=found2;}else{allProvs.push(found2);}
+              localStorage.setItem('hs_providers', JSON.stringify(allProvs));
+              handleExistingGoogleProvider(found2, uid, user);
+            } else {
+              // Brand new provider — start registration form
+              startGoogleRegistration(user);
+            }
+          }).catch(function(){
+            startGoogleRegistration(user);
+          });
         } else {
-          // New provider — switch to register tab and pre-fill Google data
-          switchTab('register');
-          window.scrollTo({top:0,behavior:'smooth'});
-          setTimeout(function(){
-            var nameEl = document.getElementById('r_name');
-            var emailEl = document.getElementById('r_email');
-            if(nameEl) nameEl.value = user.displayName || '';
-            if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
-            // Store Google UID and photo for linking at submit time
-            window._googleUid = user.uid;
-            window._googlePhoto = user.photoURL || '';
-            showToast('✅ Google verified! Your name & email are pre-filled. Complete the form to register.');
-          }, 300);
+          // Found by Google UID — sync to localStorage
+          var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+          var idx = allProvs.findIndex(function(p){return p.id===found.id;});
+          if(idx>-1){allProvs[idx]=found;}else{allProvs.push(found);}
+          localStorage.setItem('hs_providers', JSON.stringify(allProvs));
+          handleExistingGoogleProvider(found, uid, user);
         }
       }).catch(function(){
-        // Firebase offline — still allow registration flow
-        switchTab('register');
-        window.scrollTo({top:0,behavior:'smooth'});
-        setTimeout(function(){
-          var nameEl = document.getElementById('r_name');
-          var emailEl = document.getElementById('r_email');
-          if(nameEl) nameEl.value = user.displayName || '';
-          if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
-          window._googleUid = user.uid;
-          window._googlePhoto = user.photoURL || '';
-          showToast('✅ Google verified! Complete your registration below.');
-        }, 300);
+        // Firebase offline — check localStorage only, or start registration
+        if(localFound){
+          handleExistingGoogleProvider(localFound, uid, user);
+        } else {
+          startGoogleRegistration(user);
+        }
       });
     })
     .catch(function(err){
       if(err.code !== 'auth/popup-closed-by-user'){
-        showToast('⚠️ Google sign-in failed: '+(err.message||err.code));
+        showToast('Google sign-in failed: '+(err.message||err.code));
       }
     });
+}
+
+// ── Handle an existing provider found by Google sign-in ──────────────────────
+function handleExistingGoogleProvider(prov, uid, googleUser){
+  var status = prov.status || 'pending';
+
+  if(status === 'approved'){
+    // Update Google UID linkage
+    prov.googleUid = uid;
+    prov.photo = (googleUser&&googleUser.photoURL) || prov.photo || '';
+    localStorage.setItem('hs_current_provider', JSON.stringify(prov));
+    showToast('Welcome back, '+prov.name+'!');
+    sessionStorage.setItem('hs_fresh_login','1');
+    setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 700);
+    return;
+  }
+
+  if(status === 'suspended'){
+    showToast('Your account has been suspended. Contact admin: 8985849710');
+    showWaitingScreen(prov);
+    return;
+  }
+
+  // Pending approval
+  showWaitingScreen(prov);
+}
+
+// ── Start registration flow for new Google user ───────────────────────────────
+function startGoogleRegistration(user){
+  window._googleUid   = user.uid;
+  window._googlePhoto = user.photoURL || '';
+  window._googleEmail = user.email || '';
+  window._googleName  = user.displayName || '';
+
+  // Switch to register tab
+  switchTab('register');
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  setTimeout(function(){
+    var nameEl  = document.getElementById('r_name');
+    var emailEl = document.getElementById('r_email');
+    if(nameEl)  nameEl.value = user.displayName || '';
+    if(emailEl){
+      emailEl.value    = user.email || '';
+      emailEl.readOnly = true;
+      emailEl.style.background = '#f7f8fc';
+    }
+    // Hide password field — Google users don't need a password
+    var pwWrap = document.getElementById('passFieldWrap');
+    if(pwWrap) pwWrap.style.display = 'none';
+    var note = document.getElementById('passGoogleNote');
+    var req  = document.getElementById('passRequiredNote');
+    if(note) note.style.display = 'block';
+    if(req)  req.style.display  = 'none';
+    showToast('Google verified! Complete the form to register.');
+  }, 300);
 }
 
 // Save provider to Firebase after registration (called inside submitRegistration)
@@ -687,7 +753,10 @@ if(!_fromDash){
   if(existing){
     try{
       var _p=JSON.parse(existing);
-      if(_p && _p.id && _p.email) window.location.href='provider-dashboard.html';
+      // Only auto-redirect if approved
+      if(_p && _p.id && _p.email && (_p.status==='approved')){
+        window.location.href='provider-dashboard.html';
+      }
     }catch(e){localStorage.removeItem('hs_current_provider');}
   }
 }
