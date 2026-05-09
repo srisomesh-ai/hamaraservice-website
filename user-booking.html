@@ -423,6 +423,13 @@ function fbWrite(path, data){
   xhr.timeout=6000;
   xhr.send(JSON.stringify(data));
 }
+function fbDelete(path){
+  var xhr=new XMLHttpRequest();
+  xhr.open('DELETE','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.timeout=5000;
+  xhr.send();
+}
+
 function fbRead(path, cb){
   var xhr=new XMLHttpRequest();
   xhr.open('GET','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
@@ -647,9 +654,15 @@ function startRadar(){
 
   radarActive=true;
   curRange=0;
+  // Restore original radar HTML if sorry screen replaced it
+  var ro=document.getElementById('radarOverlay');
+  if(radarOriginalHTML) ro.innerHTML=radarOriginalHTML;
   document.getElementById('radarLog').innerHTML='';
   document.getElementById('blipsG').innerHTML='';
-  document.getElementById('radarOverlay').classList.add('show');
+  document.getElementById('activeRing').setAttribute('r','40');
+  document.getElementById('ringLbl').textContent='1 KM';
+  ro.style.display='';
+  ro.classList.add('show');
   setStep(3);
   rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> providers...','');
   runRange(0);
@@ -680,9 +693,23 @@ function rlog(icon,text,type){
 }
 
 function cancelRadar(){
-  radarActive=false;clearTimeout(pollTimer);
-  if(bookingId){fbDelete('active_bookings/'+bookingId);fbDelete('notifications/search_'+bookingId);}
-  document.getElementById('radarOverlay').classList.remove('show');setStep(2);
+  radarActive=false;
+  clearTimeout(pollTimer);
+  // Clean up Firebase (non-blocking)
+  if(bookingId){
+    fbDelete('active_bookings/'+bookingId);
+    fbDelete('notifications/search_'+bookingId);
+  }
+  // Hide radar
+  var ro=document.getElementById('radarOverlay');
+  if(ro){
+    ro.classList.remove('show');
+    ro.style.display='none';
+    // Reset radar content in case it was replaced by sorry screen
+    ro.innerHTML=radarOriginalHTML||'';
+  }
+  bookingId=null;
+  setStep(2);
 }
 
 // ── Provider accepted ─────────────────────────────────────────
@@ -758,6 +785,12 @@ var SVCS = [
 ];
 
 // ── State ─────────────────────────────────────────────────────
+var radarOriginalHTML = null;
+// Save radar HTML on load so Cancel can restore it
+(function(){
+  var ro=document.getElementById('radarOverlay');
+  if(ro) radarOriginalHTML = ro.innerHTML;
+})();
 var selSvc = null, userLL = null, userAddr = '', miniMap = null, miniMarker = null;
 var bookingId = null, radarActive = false, pollTimer = null;
 
@@ -1133,9 +1166,23 @@ function rlog(icon,text,type){
 }
 
 function cancelRadar(){
-  radarActive=false;clearTimeout(pollTimer);
-  if(bookingId){fbDelete('active_bookings/'+bookingId);fbDelete('notifications/search_'+bookingId);}
-  document.getElementById('radarOverlay').classList.remove('show');setStep(2);
+  radarActive=false;
+  clearTimeout(pollTimer);
+  // Clean up Firebase (non-blocking)
+  if(bookingId){
+    fbDelete('active_bookings/'+bookingId);
+    fbDelete('notifications/search_'+bookingId);
+  }
+  // Hide radar
+  var ro=document.getElementById('radarOverlay');
+  if(ro){
+    ro.classList.remove('show');
+    ro.style.display='none';
+    // Reset radar content in case it was replaced by sorry screen
+    ro.innerHTML=radarOriginalHTML||'';
+  }
+  bookingId=null;
+  setStep(2);
 }
 
 // ── Provider accepted ─────────────────────────────────────────
@@ -1486,9 +1533,15 @@ function startRadar(){
 
   radarActive=true;
   curRange=0;
+  // Restore original radar HTML if sorry screen replaced it
+  var ro=document.getElementById('radarOverlay');
+  if(radarOriginalHTML) ro.innerHTML=radarOriginalHTML;
   document.getElementById('radarLog').innerHTML='';
   document.getElementById('blipsG').innerHTML='';
-  document.getElementById('radarOverlay').classList.add('show');
+  document.getElementById('activeRing').setAttribute('r','40');
+  document.getElementById('ringLbl').textContent='1 KM';
+  ro.style.display='';
+  ro.classList.add('show');
   setStep(3);
   rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> providers...','');
   runRange(0);
@@ -1519,9 +1572,23 @@ function rlog(icon,text,type){
 }
 
 function cancelRadar(){
-  radarActive=false;clearTimeout(pollTimer);
-  if(bookingId){fbDelete('active_bookings/'+bookingId);fbDelete('notifications/search_'+bookingId);}
-  document.getElementById('radarOverlay').classList.remove('show');setStep(2);
+  radarActive=false;
+  clearTimeout(pollTimer);
+  // Clean up Firebase (non-blocking)
+  if(bookingId){
+    fbDelete('active_bookings/'+bookingId);
+    fbDelete('notifications/search_'+bookingId);
+  }
+  // Hide radar
+  var ro=document.getElementById('radarOverlay');
+  if(ro){
+    ro.classList.remove('show');
+    ro.style.display='none';
+    // Reset radar content in case it was replaced by sorry screen
+    ro.innerHTML=radarOriginalHTML||'';
+  }
+  bookingId=null;
+  setStep(2);
 }
 
 // ── Provider accepted ─────────────────────────────────────────
