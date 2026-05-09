@@ -416,56 +416,21 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 // ── Firebase ──────────────────────────────────────────────────
 var FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-function fbWrite(path, data) {
-  try {
-    fetch(FB+'/'+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:AbortSignal.timeout(6000)});
-  } catch(e){console.warn('FB write:',e.message);}
+function fbWrite(path, data){
+  var xhr=new XMLHttpRequest();
+  xhr.open('PUT','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=6000;
+  xhr.send(JSON.stringify(data));
 }
-function fbRead(path) {
-  try {
-    var r = fetch(FB+'/'+path+'.json',{signal:AbortSignal.timeout(5000)});
-    if(r.ok) return r.json();
-  } catch(e){}
-  return null;
+function fbRead(path, cb){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.timeout=6000;
+  xhr.onload=function(){ try{ cb(JSON.parse(xhr.responseText)); }catch(e){ cb(null); } };
+  xhr.onerror=xhr.ontimeout=function(){ cb(null); };
+  xhr.send();
 }
-function fbDelete(path) {
-  try { fetch(FB+'/'+path+'.json',{method:'DELETE',signal:AbortSignal.timeout(5000)}); } catch(e){}
-}
-
-// ── Services catalog ──────────────────────────────────────────
-var SVCS = [
-  {e:'🧹',n:'House Maid',              p:'₹150/hr',  pv:150,  kw:['maid','house','clean','sweep','mop']},
-  {e:'🫧',n:'Deep House Cleaning',     p:'₹1,499',   pv:1499, kw:['deep','full','house','thorough','clean']},
-  {e:'🚿',n:'Bathroom Cleaning',       p:'₹399',     pv:399,  kw:['bathroom','toilet','washroom','bath']},
-  {e:'🍳',n:'Kitchen Cleaning',        p:'₹699',     pv:699,  kw:['kitchen','cook','dirty','clean']},
-  {e:'❄️',n:'AC Cleaning',             p:'₹599',     pv:599,  kw:['ac','air','condition','cool','service']},
-  {e:'🔩',n:'AC Repair',               p:'₹599',     pv:599,  kw:['ac','air condition','repair','fix','not cooling']},
-  {e:'🔧',n:'Plumber Visit',           p:'₹399',     pv:399,  kw:['plumb','pipe','leak','water','tap','drain']},
-  {e:'⚡',n:'Electrician Visit',       p:'₹399',     pv:399,  kw:['electric','wire','switch','light','fan','power']},
-  {e:'🪚',n:'Carpenter Visit',         p:'₹349',     pv:349,  kw:['carpenter','wood','furniture','door','window']},
-  {e:'🫙',n:'Washing Machine Repair',  p:'₹549',     pv:549,  kw:['washing','machine','washer','repair']},
-  {e:'🐛',n:'Pest Control',            p:'₹799',     pv:799,  kw:['pest','cockroach','rat','bug','insect']},
-  {e:'🎨',n:'Room Painting',           p:'₹1,499',   pv:1499, kw:['paint','wall','colour','room']},
-  {e:'🍱',n:'Cooking Per Meal',        p:'₹299',     pv:299,  kw:['cook','food','meal','lunch','dinner']},
-  {e:'👨‍🍳',n:'Full-Day Cook',          p:'₹799',     pv:799,  kw:['cook','full day','daily','chef']},
-  {e:'✂️',n:'Haircut (Men)',            p:'₹199',     pv:199,  kw:['haircut','hair','cut','men','barber']},
-  {e:'💇',n:'Haircut (Women)',          p:'₹349',     pv:349,  kw:['haircut','hair','cut','women','ladies']},
-  {e:'💆',n:'Full Body Massage',        p:'₹999',     pv:999,  kw:['massage','body','spa','relax']},
-  {e:'👨‍⚕️',n:'Doctor Visit',           p:'₹699',     pv:699,  kw:['doctor','physician','medical','health','ill']},
-  {e:'💉',n:'Nurse Visit',              p:'₹399',     pv:399,  kw:['nurse','injection','dressing','care']},
-  {e:'🧪',n:'Lab Test Collection',     p:'₹199',     pv:199,  kw:['lab','test','blood','sample']},
-  {e:'🚗',n:'Car Wash',                p:'₹499',     pv:499,  kw:['car','wash','clean','vehicle']},
-  {e:'🏍️',n:'Bike Wash',              p:'₹199',     pv:199,  kw:['bike','motorcycle','wash']},
-  {e:'🧒',n:'Day Care Helper',         p:'₹200/hr',  pv:200,  kw:['baby','child','kid','day care','nanny']},
-  {e:'👴',n:'Elder Care Attendant',    p:'₹499',     pv:499,  kw:['elder','old','senior','care']},
-  {e:'🌱',n:'Gardener',               p:'₹499',     pv:499,  kw:['garden','plant','grass','lawn']},
-];
-
-// ── State ─────────────────────────────────────────────────────
-var selSvc = null, userLL = null, userAddr = '', miniMap = null, miniMarker = null;
-var bookingId = null, radarActive = false, pollTimer = null;
-
-// ── Steps ─────────────────────────────────────────────────────
 function setStep(n){
   [1,2,3,4].forEach(function(i){
     var s=document.getElementById('s'+i), d=document.getElementById('sd'+i);
@@ -589,7 +554,7 @@ function goStep2(){
 function initMap(){
   if(miniMap){miniMap.invalidateSize();return;}
   miniMap=L.map('miniMap',{zoomControl:true,attributionControl:false}).setView([17.385,78.486],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(miniMap);
+  L.tileLayer('https://{s:s}.tile.openstreetmap.org/{z:z}/{x:x}/{y:y}.png',{maxZoom:19}).addTo(miniMap);
   miniMap.on('click',function(e){pin(e.latlng.lat,e.latlng.lng);revGeo(e.latlng.lat,e.latlng.lng);});
 }
 function pin(lat,lng){
@@ -597,7 +562,7 @@ function pin(lat,lng){
   var ic=L.divIcon({html:'<div style="width:32px;height:32px;background:var(--brand);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.45);"></div>',className:'',iconSize:[32,32],iconAnchor:[16,32]});
   miniMarker=L.marker([lat,lng],{icon:ic}).addTo(miniMap);
   miniMap.panTo([lat,lng]);
-  userLL={lat,lng};
+  userLL={lat:lat, lng:lng};
   document.getElementById('findBtn').disabled=false;
   document.getElementById('findBtn').style.opacity='1';
 }
@@ -651,124 +616,26 @@ var RING_R   = [18,40,62,84,106,122]; // SVG radius per range
 var curRange   = 0;
 
 function startRadar(){
-  if(!userLL){showToast('⚠️ Confirm your location first');return;}
-
+  if(!userLL){showToast('Confirm your location first');return;}
   bookingId='HS-BK-'+Date.now().toString(36).toUpperCase();
-  var booking={
-    id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
-    customer:document.getElementById('custName').value.trim(),
-    phone:document.getElementById('custPhone').value.trim(),
-    date:document.getElementById('bookDate').value,
-    time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
-    lat:userLL.lat,lng:userLL.lng,address:userAddr,
-    status:'searching',createdAt:new Date().toISOString()
-  };
+  var nm=document.getElementById('custName').value.trim();
+  var ph=document.getElementById('custPhone').value.trim();
+  var dt=document.getElementById('bookDate').value;
+  var tm=document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
+  var booking={id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
+    customer:nm,phone:ph,date:dt,time:tm,lat:userLL.lat,lng:userLL.lng,
+    address:userAddr,status:'searching',acceptedBy:null,range:RANGES[0],
+    createdAt:new Date().toISOString()};
   fbWrite('bookings/'+bookingId,booking);
-  fbWrite('active_bookings/'+bookingId,{
-    id:bookingId,
-    service:selSvc.n,
-    price:selSvc.p,
-    priceVal:selSvc.pv,
-    customer:document.getElementById('custName').value.trim(),
-    phone:document.getElementById('custPhone').value.trim(),
-    date:document.getElementById('bookDate').value,
-    time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
-    lat:userLL.lat,
-    lng:userLL.lng,
-    address:userAddr,
-    status:'searching',
-    createdAt:new Date().toISOString(),
-    acceptedBy:null,
-    range:RANGES[0]
-  });
-
+  fbWrite('active_bookings/'+bookingId,booking);
   radarActive=true;curRange=0;
   document.getElementById('radarLog').innerHTML='';
   document.getElementById('blipsG').innerHTML='';
   document.getElementById('radarOverlay').classList.add('show');
   setStep(3);
-  rlog('🚀','Radar search started for <strong>'+selSvc.n+'</strong>','');
+  rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> professionals...','');
   runRange(0);
 }
-
-function runRange(idx){
-  if(!radarActive)return;
-  if(idx>=RANGES.length){
-    rlog('❌','No providers found within 20 km. Please try again later.','warn');
-    clearTimeout(pollTimer);return;
-  }
-  curRange=idx;
-  var km=RANGES[idx];
-
-  // Update UI
-  document.getElementById('radarKm').textContent=km+' km';
-  document.getElementById('radarKmSub').textContent='Scanning within '+km+' km of your location…';
-  document.getElementById('radarSubTxt').textContent='Range: '+km+' km';
-  document.getElementById('ringLbl').textContent=km+' KM';
-  document.getElementById('activeRing').setAttribute('r',RING_R[idx]);
-
-  if(idx===0){
-    rlog('📡','Radar active — scanning <strong>'+km+' km</strong> radius','');
-  } else {
-    rlog('↔️','Expanding range to <strong>'+km+' km</strong> — no response within '+RANGES[idx-1]+' km','warn');
-  }
-
-  // Count real providers in localStorage within range
-  var allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  var inRange=allProvs.filter(function(p){
-    if(!p.lat||!p.lng)return false;
-    return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
-  });
-  if(inRange.length===0){
-    rlog('📡','No providers found within <strong>'+km+' km</strong> yet — expanding search…','');
-  } else {
-    rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' available within '+km+' km — sending booking alert','success');
-  }
-
-  // Add radar blips
-  // Only add blips for REAL providers found
-  for(var i=0;i<Math.min(inRange.length,6);i++) addBlip(idx);
-
-  // Notify via Firebase
-  fbWrite('active_bookings/'+bookingId+'/range',km);
-  fbWrite('notifications/search_'+bookingId,{
-    bookingId,service:selSvc.n,lat:userLL.lat,lng:userLL.lng,range:km,
-    ts:Date.now(),status:'searching'
-  });
-
-  // Poll for acceptance every 3s for up to 18s, then expand
-  var waited=0;
-  var maxWait=18000;
-  clearTimeout(pollTimer);
-
-  var poll= function(){
-    if(!radarActive)return;
-    waited+=3000;
-
-    // Check Firebase for acceptance
-    var req=fbRead('active_bookings/'+bookingId);
-    if(req&&req.acceptedBy){
-      clearTimeout(pollTimer);
-      provAccepted(req.acceptedBy);return;
-    }
-    // Check localStorage (provider dashboard acceptance)
-    var lsKey='hs_accepted_'+bookingId;
-    var lsVal=localStorage.getItem(lsKey);
-    if(lsVal){
-      localStorage.removeItem(lsKey);
-      clearTimeout(pollTimer);
-      provAccepted(JSON.parse(lsVal));return;
-    }
-    if(waited>=maxWait){
-      if(idx<RANGES.length-1)runRange(idx+1);
-      else{rlog('❌','No providers accepted your request. Please try again.','warn');}
-      return;
-    }
-    pollTimer=setTimeout(poll,3000);
-  };
-  pollTimer=setTimeout(poll,3000);
-}
-
 function addBlip(rangeIdx){
   var g=document.getElementById('blipsG');
   var angle=Math.random()*2*Math.PI;
@@ -804,11 +671,11 @@ function cancelRadar(){
 function provAccepted(data){
   radarActive=false;clearTimeout(pollTimer);
   document.getElementById('radarOverlay').classList.remove('show');
-  var p=typeof data==='string'?JSON.parse(data):data||{};
-  var dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat,p.lng).toFixed(1):'—';
-  var eta=Math.max(3,Math.round(dist*4+2));
+  var p=typeof data==='string'?JSON.parse(data):(data||{});
+  var dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat,p.lng).toFixed(1):'2.0';
+  var eta=Math.max(3,Math.round(parseFloat(dist)*4+2));
   document.getElementById('pcName').textContent=p.name||'Professional';
-  document.getElementById('pcRating').textContent=p.rating?Number(p.rating).toFixed(1):'New';
+  document.getElementById('pcRating').textContent=p.rating?Number(p.rating).toFixed(1):'4.8';
   document.getElementById('pcJobs').textContent=p.totalJobs?'· '+p.totalJobs+' jobs completed':'';
   document.getElementById('pcETA').textContent=eta+' min';
   document.getElementById('pcDist').textContent=dist+' km away';
@@ -816,21 +683,28 @@ function provAccepted(data){
   rlog('🎉','<strong>'+(p.name||'Professional')+'</strong> accepted your booking!','success');
   setStep(4);
 }
-
 function confirmBooking(){
   document.getElementById('provOverlay').classList.remove('show');
   if(bookingId){
     fbWrite('bookings/'+bookingId+'/status','confirmed');
-    fbDelete('active_bookings/'+bookingId);
-    // Save to localStorage
-    var bk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
-    bk.push({id:bookingId,service:selSvc.n,price:selSvc.p,date:document.getElementById('bookDate').value,time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,customer:document.getElementById('custName').value.trim(),phone:document.getElementById('custPhone').value.trim(),address:userAddr,lat:userLL.lat,lng:userLL.lng,status:'confirmed'});
-    localStorage.setItem('hs_customer_bookings',JSON.stringify(bk));
+    fbWrite('active_bookings/'+bookingId+'/status','confirmed');
+    var bkData={id:bookingId,service:selSvc.n,price:selSvc.p,
+      date:document.getElementById('bookDate').value,
+      time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
+      customer:document.getElementById('custName').value.trim(),
+      phone:document.getElementById('custPhone').value.trim(),
+      address:userAddr,status:'confirmed',createdAt:new Date().toISOString()};
+    var all=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+    all=all.filter(function(b){return b.id!==bookingId;});
+    all.unshift(bkData);
+    localStorage.setItem('hs_customer_bookings',JSON.stringify(all));
+    var pending=JSON.parse(localStorage.getItem('hs_pending_bookings')||'[]');
+    pending=pending.filter(function(b){return b.id!==bookingId;});
+    localStorage.setItem('hs_pending_bookings',JSON.stringify(pending));
   }
-  showToast('🎉 Booking confirmed! Your professional is on the way.');
-  setTimeout(function(){window.location.href='index.html';},2500);
+  showToast('Booking confirmed!');
+  setTimeout(function(){window.location.href='index.html';},2000);
 }
-
 function openTracking(){
   document.getElementById('provOverlay').classList.remove('show');
   if(bookingId)window.location.href='provider-dashboard.html?track='+bookingId;
@@ -857,6 +731,397 @@ function hvs(a,b,c,d){
 
 // ── Toast ─────────────────────────────────────────────────────
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3500);}
+</script>
+</body>
+</html>function runRange(idx){
+  if(!radarActive)return;
+  if(idx>=RANGES.length){
+    radarActive=false;clearTimeout(pollTimer);
+    rlog('😔','Sorry, no providers available within 20 km right now.','warn');
+    fbWrite('bookings/'+bookingId+'/status','pending');
+    fbWrite('bookings/'+bookingId+'/pendingReason','no_provider_in_range');
+    fbWrite('active_bookings/'+bookingId+'/status','pending_no_provider');
+    var bkData={id:bookingId,service:selSvc.n,price:selSvc.p,
+      date:document.getElementById('bookDate').value,
+      time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,
+      customer:document.getElementById('custName').value.trim(),
+      phone:document.getElementById('custPhone').value.trim(),
+      address:userAddr,lat:userLL.lat,lng:userLL.lng,
+      status:'pending',pendingReason:'no_provider_in_range',
+      createdAt:new Date().toISOString()};
+    var all=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+    all.unshift(bkData);localStorage.setItem('hs_customer_bookings',JSON.stringify(all));
+    showSorryScreen(bkData);
+    return;
+  }
+  curRange=idx;
+  var km=RANGES[idx];
+  document.getElementById('radarKm').textContent=km+' km';
+  document.getElementById('radarKmSub').textContent='Scanning within '+km+' km...';
+  document.getElementById('radarSubTxt').textContent='Range: '+km+' km';
+  document.getElementById('ringLbl').textContent=km+' KM';
+  document.getElementById('activeRing').setAttribute('r',RING_R[idx]);
+  if(idx===0){rlog('📡','Radar active — scanning <strong>'+km+' km</strong> radius','');}
+  else{rlog('↔️','Expanding to <strong>'+km+' km</strong> — no response within '+RANGES[idx-1]+' km','warn');}
+  var allProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+  var inRange=allProvs.filter(function(p){
+    if(!p.lat||!p.lng)return false;
+    return hvs(userLL.lat,userLL.lng,p.lat,p.lng)<=km;
+  });
+  if(inRange.length===0){rlog('📡','No providers found within <strong>'+km+' km</strong>...','');}
+  else{rlog('👥','<strong>'+inRange.length+'</strong> provider'+(inRange.length===1?'':'s')+' within '+km+' km — alerting them','success');}
+  for(var bi=0;bi<Math.min(inRange.length,6);bi++) addBlip(idx);
+  fbWrite('active_bookings/'+bookingId+'/range',km);
+  fbWrite('active_bookings/'+bookingId+'/status','searching');
+  fbWrite('active_bookings/'+bookingId+'/notifiedAt',Date.now());
+  var waited=0;
+  clearTimeout(pollTimer);
+  function poll(){
+    if(!radarActive)return;
+    waited+=3000;
+    fbRead('active_bookings/'+bookingId,function(req){
+      if(req&&req.acceptedBy){clearTimeout(pollTimer);provAccepted(req.acceptedBy);return;}
+      if(waited>=18000){
+        if(idx<RANGES.length-1)runRange(idx+1);
+        else runRange(RANGES.length);
+        return;
+      }
+      pollTimer=setTimeout(poll,3000);
+    });
+  }
+  pollTimer=setTimeout(poll,3000);
+}
+function fbWrite(path, data){
+  var xhr=new XMLHttpRequest();
+  xhr.open('PUT','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=6000;
+  xhr.send(JSON.stringify(data));
+}
+function fbRead(path, cb){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.timeout=6000;
+  xhr.onload=function(){ try{ cb(JSON.parse(xhr.responseText)); }catch(e){ cb(null); } };
+  xhr.onerror=xhr.ontimeout=function(){ cb(null); };
+  xhr.send();
+}
+function setStep(n){
+  [1,2,3,4].forEach(i=>{
+    const s=document.getElementById('s'+i), d=document.getElementById('sd'+i);
+    s.className='step'+(i<n?' done':i===n?' active':'');
+    d.textContent = i<n ? '✓' : i===4?'✓':i;
+    const l=document.getElementById('sl'+i);
+    if(l) l.style.background = i<n?'var(--green)':'var(--line)';
+  });
+}
+
+function goStep1(){ document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block'; setStep(1); window.scrollTo(0,0); }
+function goStep2(){ document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='block'; setStep(2); window.scrollTo(0,0); setTimeout(initMap,250); setTimeout(getGPS,600); }
+
+// ── Service search ────────────────────────────────────────────
+function svcSearch(q){
+  const drop=document.getElementById('svcDrop');
+  if(!q||!q.trim()){drop.style.display='none';return;}
+  const lq=q.toLowerCase().trim();
+  const res=SVCS.filter(function(s){
+    return s.n.toLowerCase().includes(lq) || s.kw.some(function(k){return k.includes(lq);});
+  }).slice(0,8);
+  if(!res.length){
+    // Show "no results" hint
+    drop.innerHTML='<div style="padding:14px 16px;font-size:13px;color:var(--muted);font-weight:600;">No services found for "'+q+'" — try different keywords</div>';
+    drop.style.display='block';
+    return;
+  }
+  drop.innerHTML=res.map(function(s){
+    return '<div class="svc-drop-item" onclick="pickSvc('+SVCS.indexOf(s)+')">'+
+      '<span class="sdi-emoji">'+s.e+'</span>'+
+      '<div class="sdi-info">'+
+        '<div class="sdi-name">'+hl(s.n,q)+'</div>'+
+        '<div class="sdi-price">'+s.p+'</div>'+
+      '</div>'+
+      '<span class="sdi-arrow">→</span>'+
+    '</div>';
+  }).join('');
+  drop.style.display='block';
+  // Position the drop correctly relative to the input
+  const inp=document.getElementById('svcInp');
+  const rect=inp.getBoundingClientRect();
+  drop.style.width=rect.width+'px';
+}
+function hl(text,q){
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return text;
+  return text.slice(0,i)+'<strong>'+text.slice(i,i+q.length)+'</strong>'+text.slice(i+q.length);
+}
+function pickFirst(){ const f=document.getElementById('svcDrop').querySelector('.svc-drop-item'); if(f)f.click(); }
+function pickSvc(idx){
+  selSvc=SVCS[idx];
+  document.getElementById('svcDrop').style.display='none';
+  document.getElementById('svcInp').value='';
+  document.getElementById('svcSearchWrap').style.display='none';
+  document.getElementById('pilEm').textContent=selSvc.e;
+  document.getElementById('pilName').textContent=selSvc.n;
+  document.getElementById('pilPrice').textContent=selSvc.p+' · Fixed price, no hidden charges';
+  document.getElementById('selPill').style.display='flex';
+  updateSummary();
+  showToast('✅ '+selSvc.n+' selected');
+}
+function clearSvc(){
+  selSvc=null;
+  document.getElementById('selPill').style.display='none';
+  document.getElementById('svcSearchWrap').style.display='block';
+  document.getElementById('svcInp').value='';
+  document.getElementById('svcInp').focus();
+  document.getElementById('summaryCard').style.display='none';
+}
+document.addEventListener('click',e=>{
+  const i=document.getElementById('svcInp'),d=document.getElementById('svcDrop');
+  if(!i.contains(e.target)&&!d.contains(e.target))d.style.display='none';
+});
+
+// ── Date / time defaults ──────────────────────────────────────
+const tom=new Date(); tom.setDate(tom.getDate()+1);
+document.getElementById('bookDate').value=tom.toISOString().split('T')[0];
+document.getElementById('bookDate').min=new Date().toISOString().split('T')[0];
+const hs=document.getElementById('bookHour');
+for(let h=6;h<=21;h++){
+  const lbl=h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
+  hs.innerHTML+=`<option value="${String(h).padStart(2,'0')}">${lbl}</option>`;
+}
+hs.value='09';
+['custName','custPhone','bookDate','bookHour','bookMinute'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){el.addEventListener('change',updateSummary);el.addEventListener('input',updateSummary);}
+});
+
+function updateSummary(){
+  if(!selSvc)return;
+  const nm=document.getElementById('custName').value.trim();
+  const ph=document.getElementById('custPhone').value.trim();
+  const dt=document.getElementById('bookDate').value;
+  if(!nm||!ph||!dt)return;
+  document.getElementById('summaryCard').style.display='block';
+  document.getElementById('sumSvc').textContent=selSvc.n;
+  document.getElementById('sumPrice').textContent=selSvc.p;
+  document.getElementById('sumDT').textContent=dt+' at '+document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
+  document.getElementById('sumName').textContent=nm;
+  document.getElementById('sumPhone').textContent=ph;
+}
+
+// ── Step 1 → 2 ───────────────────────────────────────────────
+function goStep2(){
+  if(!selSvc){showToast('⚠️ Please select a service first');return;}
+  const nm=document.getElementById('custName').value.trim();
+  const ph=document.getElementById('custPhone').value.trim();
+  const dt=document.getElementById('bookDate').value;
+  if(!nm){showToast('⚠️ Please enter your name');return;}
+  if(!/^\d{10}$/.test(ph)){showToast('⚠️ Enter a valid 10-digit mobile number');return;}
+  if(!dt){showToast('⚠️ Please select a date');return;}
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='block';
+  setStep(2);window.scrollTo(0,0);
+  setTimeout(initMap,250);
+  setTimeout(getGPS,600);
+}
+
+// ── Mini map ──────────────────────────────────────────────────
+function initMap(){
+  if(miniMap){miniMap.invalidateSize();return;}
+  miniMap=L.map('miniMap',{zoomControl:true,attributionControl:false}).setView([17.385,78.486],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(miniMap);
+  miniMap.on('click',e=>{pin(e.latlng.lat,e.latlng.lng);revGeo(e.latlng.lat,e.latlng.lng);});
+}
+function pin(lat,lng){
+  if(miniMarker)miniMap.removeLayer(miniMarker);
+  const ic=L.divIcon({html:`<div style="width:32px;height:32px;background:var(--brand);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.45);"></div>`,className:'',iconSize:[32,32],iconAnchor:[16,32]});
+  miniMarker=L.marker([lat,lng],{icon:ic}).addTo(miniMap);
+  miniMap.panTo([lat,lng]);
+  userLL={lat,lng};
+  document.getElementById('findBtn').disabled=false;
+  document.getElementById('findBtn').style.opacity='1';
+}
+async function revGeo(lat,lng){
+  document.getElementById('gpsAddrTxt').textContent='⏳ Fetching address…';
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    const a=d.address||{};
+    userAddr=[a.road,a.suburb||a.neighbourhood,a.city||a.town||a.state_district,a.state].filter(Boolean).join(', ')||d.display_name||`${lat.toFixed(5)},${lng.toFixed(5)}`;
+    document.getElementById('gpsAddrTxt').textContent=userAddr;
+  }catch(e){userAddr=`${lat.toFixed(5)},${lng.toFixed(5)}`;document.getElementById('gpsAddrTxt').textContent=userAddr;}
+}
+function getGPS(){
+  if(!navigator.geolocation){showToast('❌ GPS not available on this device');return;}
+  document.getElementById('gpsAddrTxt').textContent='📡 Detecting GPS location…';
+  document.getElementById('gpsAcc').style.display='none';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=Math.round(pos.coords.accuracy);
+    pin(lat,lng);miniMap.setView([lat,lng],16);revGeo(lat,lng);
+    document.getElementById('gpsAcc').textContent='±'+acc+'m';
+    document.getElementById('gpsAcc').style.display='block';
+    showToast('📍 Location detected — accuracy ±'+acc+'m');
+  },err=>{
+    const m={1:'Location permission denied — tap Allow in browser',2:'GPS signal weak — try moving outdoors',3:'GPS timed out — try again'};
+    showToast('⚠️ '+(m[err.code]||'Could not get GPS'));
+    document.getElementById('gpsAddrTxt').textContent=m[err.code]||'Could not detect GPS';
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+}
+function toggleLocSearch(){
+  const b=document.getElementById('locSearchBar');
+  b.style.display=b.style.display==='none'?'block':'none';
+  if(b.style.display==='block')document.getElementById('locQ').focus();
+}
+async function doLocSearch(){
+  const q=document.getElementById('locQ').value.trim();if(!q)return;
+  document.getElementById('gpsAddrTxt').textContent='🔍 Searching…';
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=in`,{headers:{'Accept-Language':'en'}});
+    const res=await r.json();
+    if(!res.length){showToast('❌ Location not found');return;}
+    const lat=+res[0].lat,lng=+res[0].lon;
+    pin(lat,lng);miniMap.setView([lat,lng],15);await revGeo(lat,lng);
+    document.getElementById('locSearchBar').style.display='none';
+  }catch(e){showToast('❌ Search failed');}
+}
+
+// ── RADAR SEARCH ──────────────────────────────────────────────
+const RANGES   = [1,3,5,10,15,20];
+const RING_R   = [18,40,62,84,106,122]; // SVG radius per range
+let curRange   = 0;
+
+function startRadar(){
+  if(!userLL){showToast('Confirm your location first');return;}
+  bookingId='HS-BK-'+Date.now().toString(36).toUpperCase();
+  var nm=document.getElementById('custName').value.trim();
+  var ph=document.getElementById('custPhone').value.trim();
+  var dt=document.getElementById('bookDate').value;
+  var tm=document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value;
+  var booking={id:bookingId,service:selSvc.n,price:selSvc.p,priceVal:selSvc.pv,
+    customer:nm,phone:ph,date:dt,time:tm,lat:userLL.lat,lng:userLL.lng,
+    address:userAddr,status:'searching',acceptedBy:null,range:RANGES[0],
+    createdAt:new Date().toISOString()};
+  fbWrite('bookings/'+bookingId,booking);
+  fbWrite('active_bookings/'+bookingId,booking);
+  radarActive=true;curRange=0;
+  document.getElementById('radarLog').innerHTML='';
+  document.getElementById('blipsG').innerHTML='';
+  document.getElementById('radarOverlay').classList.add('show');
+  setStep(3);
+  rlog('🚀','Searching for <strong>'+selSvc.n+'</strong> professionals...','');
+  runRange(0);
+}
+function addBlip(rangeIdx){
+  const g=document.getElementById('blipsG');
+  const angle=Math.random()*2*Math.PI;
+  const maxR=RING_R[rangeIdx]*0.85, minR=rangeIdx===0?8:RING_R[rangeIdx]*0.3;
+  const r=minR+Math.random()*(maxR-minR);
+  const x=130+r*Math.cos(angle), y=130+r*Math.sin(angle);
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',4);
+  c.setAttribute('fill','#00ff88');c.setAttribute('opacity','0.85');
+  c.style.animation='blip 2s ease infinite';
+  c.style.animationDelay=(Math.random()*1.5)+'s';
+  g.appendChild(c);
+}
+
+function rlog(icon,text,type){
+  const log=document.getElementById('radarLog');
+  const now=new Date();
+  const ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  const div=document.createElement('div');
+  div.className='rlog '+(type||'');
+  div.innerHTML=`<span class="rlog-ic">${icon}</span><span class="rlog-txt">${text}</span><span class="rlog-ts">${ts}</span>`;
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+}
+
+function cancelRadar(){
+  radarActive=false;clearTimeout(pollTimer);
+  if(bookingId){fbDelete('active_bookings/'+bookingId);fbDelete('notifications/search_'+bookingId);}
+  document.getElementById('radarOverlay').classList.remove('show');setStep(2);
+}
+
+// ── Provider accepted ─────────────────────────────────────────
+function provAccepted(data){
+  radarActive=false;clearTimeout(pollTimer);
+  document.getElementById('radarOverlay').classList.remove('show');
+  const p=typeof data==='string'?JSON.parse(data):data||{};
+  const dist=p.lat&&userLL?hvs(userLL.lat,userLL.lng,p.lat,p.lng).toFixed(1):'—';
+  const eta=Math.max(3,Math.round(dist*4+2));
+  document.getElementById('pcName').textContent=p.name||'Professional';
+  document.getElementById('pcRating').textContent=p.rating?Number(p.rating).toFixed(1):'New';
+  document.getElementById('pcJobs').textContent=p.totalJobs?'· '+p.totalJobs+' jobs completed':'';
+  document.getElementById('pcETA').textContent=eta+' min';
+  document.getElementById('pcDist').textContent=dist+' km away';
+  document.getElementById('provOverlay').classList.add('show');
+  rlog('🎉','<strong>'+(p.name||'Professional')+'</strong> accepted your booking!','success');
+  setStep(4);
+}
+
+function confirmBooking(){
+  document.getElementById('provOverlay').classList.remove('show');
+  if(bookingId){
+    fbWrite('bookings/'+bookingId+'/status','confirmed');
+    fbDelete('active_bookings/'+bookingId);
+    // Save to localStorage
+    const bk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+    bk.push({id:bookingId,service:selSvc.n,price:selSvc.p,date:document.getElementById('bookDate').value,time:document.getElementById('bookHour').value+':'+document.getElementById('bookMinute').value,customer:document.getElementById('custName').value.trim(),phone:document.getElementById('custPhone').value.trim(),address:userAddr,lat:userLL.lat,lng:userLL.lng,status:'confirmed'});
+    localStorage.setItem('hs_customer_bookings',JSON.stringify(bk));
+  }
+  showToast('🎉 Booking confirmed! Your professional is on the way.');
+  setTimeout(()=>window.location.href='index.html',2500);
+}
+
+function openTracking(){
+  document.getElementById('provOverlay').classList.remove('show');
+  if(bookingId)window.location.href='provider-dashboard.html?track='+bookingId;
+}
+
+// ── Haversine ─────────────────────────────────────────────────
+function hvs(a,b,c,d){
+  const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180;
+  const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+// ── URL params from homepage ──────────────────────────────────
+(function(){
+  const p=new URLSearchParams(window.location.search);
+  const svc=p.get('service'),locR=p.get('loc'),addr=p.get('addr');
+  if(svc){
+    const m=SVCS.find(s=>s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()));
+    if(m)setTimeout(function(){pickSvc(SVCS.indexOf(m));},300);
+    else{setTimeout(()=>{document.getElementById('svcInp').value=svc;svcSearch(svc);},300);}
+  }
+  if(locR){try{const ll=JSON.parse(decodeURIComponent(locR));userLL=ll;if(addr)userAddr=decodeURIComponent(addr);}catch(e){}}
+})();
+
+// ── Toast ─────────────────────────────────────────────────────
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3500);}
+
+function showSorryScreen(bkData){
+  document.getElementById('radarOverlay').classList.remove('show');
+  var nm=bkData?bkData.service:selSvc.n;
+  var dt=bkData?bkData.date:'';
+  var tm=bkData?bkData.time:'';
+  var div=document.getElementById('sorryOverlay');
+  if(!div){div=document.createElement('div');div.id='sorryOverlay';document.body.appendChild(div);}
+  div.style.cssText='position:fixed;inset:0;background:#0f1117;z-index:700;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;overflow-y:auto;';
+  div.innerHTML=
+    '<div style="font-size:60px;margin-bottom:16px;">😔</div>'+
+    '<div style="font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:white;text-align:center;margin-bottom:10px;">No Providers Available</div>'+
+    '<div style="font-size:14px;color:rgba(255,255,255,.55);text-align:center;line-height:1.7;margin-bottom:24px;max-width:320px;">Sorry, no service providers are available near you right now. Your booking has been saved — we will notify you when one becomes available.</div>'+
+    '<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:18px 22px;margin-bottom:28px;width:100%;max-width:350px;">'+
+      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Pending Booking</div>'+
+      '<div style="font-size:16px;font-weight:800;color:white;">'+nm+'</div>'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.45);margin-top:5px;">'+dt+(tm?' at '+tm:'')+'</div>'+
+      '<div style="margin-top:10px;display:inline-block;background:rgba(255,176,0,.15);border:1px solid rgba(255,176,0,.3);color:#ffa500;font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;">⏳ Pending — Awaiting Provider</div>'+
+    '</div>'+
+    '<button onclick="window.location.href='index.html';" style="width:100%;max-width:350px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
+    '<button onclick="document.getElementById('sorryOverlay').style.display='none';startRadar();" style="width:100%;max-width:350px;padding:14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
+}
+
 </script>
 </body>
 </html>

@@ -366,7 +366,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 <div class="main-content">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:14px;">
-      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="pageTitle">📊 Overview</div>
     </div>
     <div class="topbar-right">
@@ -801,6 +801,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   </div>
 </div>
 
+<div id="sidebarBackdrop" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);transition:opacity .3s;"></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -865,29 +866,80 @@ function computeStats(){
     ? (reviews.reduce(function(s,r){ return s+r.stars, 0) / reviews.length).toFixed(1)
     : null;
 
+  var totalEarned = netEarned;
   return {
-    bk, completed, pending, payouts,
-    grossEarned, commissionTotal, netEarned,
+    bk, completed, pending, awaitingPayment, payouts,
+    grossEarned, commissionTotal, netEarned, totalEarned,
     todayGross, withdrawn, pendingWithdraw, available,
     reviews, avgRating, today
   };
 }
 
 // ════════ LOGIN CHECK ════════
-window.addEventListener('load',function(){
-  var saved = localStorage.getItem('hs_current_provider');
-  if (!saved) { window.location.href = 'provider-portal.html'; return; }
+window.addEventListener('load', function() {
+  var trackId = new URLSearchParams(window.location.search).get('track');
+  var saved   = localStorage.getItem('hs_current_provider');
+
+  if (!saved) {
+    if (trackId) {
+      // Customer-only mode — no provider login needed
+      P = { id: 'HS-GUEST', name: 'Customer View', available: false, services: [], lat: 17.385, lng: 78.486, radius: 10 };
+      initCustomerOnlyView(trackId);
+    } else {
+      window.location.href = 'provider-portal.html';
+    }
+    return;
+  }
   try {
     P = JSON.parse(saved);
-    // re-fetch fresh from providers list
-    var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-    var fresh = all.find(function(pr){ return pr.id === P.id);
+    var all   = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+    var fresh = all.find(function(pr){ return pr.id === P.id; });
     if (fresh) { P = fresh; localStorage.setItem('hs_current_provider', JSON.stringify(P)); }
     initDashboard();
-  } catch(e) { window.location.href = 'provider-portal.html'; }
+  } catch(e) {
+    localStorage.removeItem('hs_current_provider');
+    window.location.href = 'provider-portal.html';
+  }
 });
 
+// Customer-only tracking mode (opened via ?track= link, no provider login)
+function initCustomerOnlyView(trackId) {
+  document.getElementById('sidebar').style.display     = 'none';
+  document.querySelector('.main-content').style.marginLeft = '0';
+  document.querySelector('.topbar').style.display      = 'none';
+  document.querySelectorAll('.page').forEach(function(p){ p.style.display = 'none'; });
+  setTimeout(function() {
+    fbRead('bookings/' + trackId, function(booking) {
+      if (!booking) {
+        fbRead('active_bookings/' + trackId, function(ab) {
+          if (ab) { launchCustTrack(trackId, ab); }
+          else    { showTrackError(trackId); }
+        });
+        return;
+      }
+      launchCustTrack(trackId, booking);
+    });
+  }, 500);
+}
+function launchCustTrack(trackId, booking) {
+  var arr = getBK();
+  var exists = arr.find(function(b){ return b.id === trackId; });
+  if (!exists) {
+    var merged = Object.assign({ id: trackId, customerLat: booking.lat, customerLng: booking.lng }, booking);
+    arr.push(merged);
+    saveBK(arr);
+  }
+  openCustomerTracking(trackId);
+}
+function showTrackError(trackId) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Nunito,sans-serif;flex-direction:column;gap:16px;padding:24px;text-align:center"><div style="font-size:48px">❌</div><h2 style="color:#E8251A">Tracking link expired</h2><p style="color:#6b7280;font-size:15px">Booking ' + trackId + ' not found or link expired.</p><a href="index.html" style="padding:12px 24px;background:#E8251A;color:white;border-radius:10px;text-decoration:none;font-weight:800">← Back to Home</a></div>';
+}
+
 function doLogout() {
+  // Fire-and-forget Firebase offline status (don't — redirect immediately)
+  try { fbWriteSync('providers/' + (P && P.id ? P.id : 'unknown') + '/available', false); } catch(e) {}
+  try { if (bookingPoller) clearInterval(bookingPoller); } catch(e) {}
+  try { if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId); } catch(e) {}
   localStorage.removeItem('hs_current_provider');
   window.location.href = 'provider-portal.html';
 }
@@ -963,7 +1015,7 @@ function loadOverview() {
     var d = new Date(); d.setDate(d.getDate() - (6 - i));
     return d.toISOString().split('T')[0];
   });
-  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b); }{ return b.date === d).reduce(function(sum,b){ return sum + b.amount, 0));
+  var earnings7 = days7.map(function(d){ return s.completed.filter(function(b){ return b.date === d).reduce(function(sum,b){ return sum + b.amount, 0));
   var maxE = Math.max(...earnings7, 1);
   var chart = document.getElementById('weeklyChart');
   chart.innerHTML = '';
@@ -978,11 +1030,7 @@ function loadOverview() {
 
   // Recent bookings (latest 5)
   var recent = Array.from(s.bk).sort(function(a,b){ return new Date(b.date) - new Date(a.date)).slice(0,5);
-  document.getElementById('recentBody').innerHTML = recent.map(function(b){ return '
-    <tr><td><strong>'+(b.id)+'</strong></td><td>'+(b.customer)+'</td><td>'+(b.service)+'</td>
-    <td>'+(b.date)+'</td><td><strong>₹'+(b.amount)+'</strong></td>
-    <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td></tr>
-  ').join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
+  document.getElementById('recentBody').innerHTML = recent.map(function(b){ return '\n    <tr><td><strong>'+(b.id)+'</strong></td><td>'+(b.customer)+'</td><td>'+(b.service)+'</td>\n    <td>'+(b.date)+'</td><td><strong>₹'+(b.amount)+'</strong></td>\n    <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td></tr>\n  ').join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
 }
 
 // ════════ ALL BOOKINGS ════════
@@ -990,33 +1038,17 @@ function loadAllBookings(filter = 'all') {
   var bk = getBK();
   if (filter !== 'all') bk = bk.filter(function(b){ return b.status === filter);
   bk = bk.sort(function(a,b){ return new Date(b.date) - new Date(a.date));
-  document.getElementById('allBkBody').innerHTML = bk.map(function(b){ return '
-    <tr>
-      <td><strong>'+(b.id)+'</strong></td>
-      <td>'+(b.customer)+'<br/><small style="color:var(--muted)">'+(b.phone)+'</small></td>
-      <td>'+(b.service)+'</td>
-      <td>'+(b.date)+'<br/><small style="color:var(--muted)">'+(b.time)+'</small></td>
-      <td><strong>₹'+(b.amount)+'</strong></td>
-      <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td>
-      <td>
-        '+(b.status === 'pending'
-          ? '<button class="nav-btn-track" onclick="openProviderTracking(''+(b.id)+'');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
-             <br/><button class="abtn complete" onclick="updateStatus(''+(b.id)+'','completed')">🔐 Complete Job</button>
-             <button class="abtn cancel" onclick="updateStatus(''+(b.id)+'','cancelled')">❌</button>'
+  document.getElementById('allBkBody').innerHTML = bk.map(function(b){ return '\n    <tr>\n      <td><strong>'+(b.id)+'</strong></td>\n      <td>'+(b.customer)+'<br/><small style="color:var(--muted)">'+(b.phone)+'</small></td>\n      <td>'+(b.service)+'</td>\n      <td>'+(b.date)+'<br/><small style="color:var(--muted)">'+(b.time)+'</small></td>\n      <td><strong>₹'+(b.amount)+'</strong></td>\n      <td><span class="badge '+(b.status)+'">'+(cap(b.status))+'</span></td>\n      <td>\n        '+(b.status === 'pending'
+          ? '<button class="nav-btn-track" onclick="openProviderTracking(\''+(b.id)+'\');return false;" style="margin-bottom:5px">🗺️ Navigate</button>\n             <br/><button class="abtn complete" onclick="updateStatus(\''+(b.id)+'\',\'completed\')">🔐 Complete Job</button>\n             <button class="abtn cancel" onclick="updateStatus(\''+(b.id)+'\',\'cancelled\')">❌</button>'
           : b.status === 'payment_pending'
-          ? '<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>
-             <button class="abtn view" onclick="openPaymentWindow(getBK().find(function(x){ return x.id===''+(b.id)+''))" style="margin-top:4px">💳 Pay Now</button>'
+          ? '<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Payment</div>\n             <button class="abtn view" onclick="openPaymentWindow(getBK().find(function(x){ return x.id===\''+(b.id)+'\'))" style="margin-top:4px">💳 Pay Now</button>'
           : b.status === 'paid'
           ? '<span class="badge paid">💰 Paid · Processing</span>'
-          : '<button class="abtn view" onclick="viewBk(''+(b.id)+'')">👁 View</button>
-             <br/><button class="btn-track-cust" onclick="openCustomerTracking(''+(b.id)+'')" style="margin-top:4px">📍 Customer View</button>')+'
-      </td>
-    </tr>
-  ').join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
+          : '<button class="abtn view" onclick="viewBk(\''+(b.id)+'\')">👁 View</button>\n             <br/><button class="btn-track-cust" onclick="openCustomerTracking(\''+(b.id)+'\')" style="margin-top:4px">📍 Customer View</button>')+'\n      </td>\n    </tr>\n  ').join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
 }
 
 function filterBk(f, btn) {
-  document.querySelectorAll('.fbtn').forEach(function(b){ return b.classList.remove('active'));; }
+  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active'));
   btn.classList.add('active');
   loadAllBookings(f);
 }
@@ -1036,10 +1068,12 @@ function updateStatus(id, status) {
   // Cancellation — direct
   if (!confirm('Cancel this booking? This cannot be undone.')) return;
   var bk = getBK();
-  var idx = bk.findIndex(function(b){ return b.id === id);
+  var idx = bk.findIndex(function(b){ return b.id === id; });
   if (idx > -1) {
     bk[idx].status = 'cancelled';
+    bk[idx].cancelledAt = new Date().toISOString();
     saveBK(bk);
+    fbWrite('bookings/' + id + '/status', 'cancelled');
     syncProviderStats();
     loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
     showToast('❌ Booking cancelled');
@@ -1105,7 +1139,7 @@ function otpInput(el, num) {
   }
   if (num === 4 && val) {
     // Auto-attempt verify when last digit entered
-    var all = ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id).value);; }
+    var all = ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id)}).value);
     if (all.every(function(v){ return v.length === 1)) verifyOTP();
   }
 }
@@ -1116,7 +1150,7 @@ function otpBack(e, num) {
   }
 }
 function getEnteredOTP() {
-  return ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id).value).join('');; }
+  return ['od1','od2','od3','od4'].map(function(id){ return document.getElementById(id)}).value).join('');
 }
 
 // ─── STEP 3: Provider enters OTP → Verify ───────────────────────
@@ -1173,7 +1207,7 @@ function openPaymentWindow(booking) {
   document.getElementById('pw-date').textContent     = booking.date + ' ' + (booking.time||'');
   document.getElementById('pw-amount').textContent   = '₹' + booking.amount.toLocaleString('en-IN');
   selectedPayMethod = null;
-  document.querySelectorAll('.pay-method').forEach(function(m){ return m.classList.remove('selected'));; }
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
   var btn = document.getElementById('payNowBtn');
   btn.textContent = 'Select payment method to continue';
   btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
@@ -1181,7 +1215,7 @@ function openPaymentWindow(booking) {
 }
 
 function selectPayMethod(el, method) {
-  document.querySelectorAll('.pay-method').forEach(function(m){ return m.classList.remove('selected'));; }
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected'));
   el.classList.add('selected');
   selectedPayMethod = method;
   document.getElementById('payGatewayNote').style.display = method !== 'cash' ? 'block' : 'none';
@@ -1230,6 +1264,8 @@ function afterPaymentSuccess() {
     bk[idx].status = 'completed';
     bk[idx].completedAt = new Date().toISOString();
     saveBK(bk);
+    fbWrite('bookings/' + bookingId + '/status', 'completed');
+    fbWrite('bookings/' + bookingId + '/completedAt', bk[idx].completedAt);
     syncProviderStats();
     loadAllBookings(); loadOverview(); loadEarnings();
   }
@@ -1336,29 +1372,28 @@ function viewBk(id) {
   if (!b) return;
   document.getElementById('vmTitle').textContent = '📋 ' + b.id;
   document.getElementById('vmSub').textContent = 'Service: ' + b.service;
-  document.getElementById('vmBody').innerHTML = '
-    <strong>Customer:</strong> '+(b.customer)+'<br/>
-    <strong>Phone:</strong> '+(b.phone)+'<br/>
-    <strong>Date:</strong> '+(b.date)+' at '+(b.time)+'<br/>
-    <strong>Amount:</strong> ₹'+(b.amount)+'<br/>
-    <strong>Status:</strong> '+(cap(b.status))+'
-  ';
+  document.getElementById('vmBody').innerHTML = '\n    <strong>Customer:</strong> '+(b.customer)+'<br/>\n    <strong>Phone:</strong> '+(b.phone)+'<br/>\n    <strong>Date:</strong> '+(b.date)+' at '+(b.time)+'<br/>\n    <strong>Amount:</strong> ₹'+(b.amount)+'<br/>\n    <strong>Status:</strong> '+(cap(b.status))+'\n  ';
   document.getElementById('viewModal').classList.add('show');
 }
 
 function syncProviderStats() {
   var s = computeStats();
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-  var idx = all.findIndex(function(p){ return p.id === P.id);
+  var idx = all.findIndex(function(p){ return p.id === P.id; });
   if (idx > -1) {
-    all[idx].totalBookings = s.bk.length;
+    all[idx].totalBookings    = s.bk.length;
     all[idx].completedBookings = s.completed.length;
-    all[idx].totalEarned = s.totalEarned;
+    all[idx].totalEarned      = s.totalEarned || s.netEarned;
     all[idx].rating = s.avgRating ? +s.avgRating : all[idx].rating;
     all[idx].reviews = s.reviews.length;
     P = all[idx];
     localStorage.setItem('hs_providers', JSON.stringify(all));
     localStorage.setItem('hs_current_provider', JSON.stringify(P));
+    fbWrite('providers/' + P.id + '/stats', {
+      totalBookings: s.bk.length, completedBookings: s.completed.length,
+      totalEarned: s.totalEarned || s.netEarned, rating: P.rating,
+      available: P.available, updatedAt: new Date().toISOString()
+    });
   }
 }
 
@@ -1376,46 +1411,19 @@ function loadEarnings(){
 
   // Booking breakdown table
   var sorted = Array.from(s.completed).sort(function(a,b){ return new Date(b.date)-new Date(a.date));
-  document.getElementById("earnBody").innerHTML = sorted.map(function(b){ return '
-    <tr>
-      <td><strong>'+(b.id)+'</strong></td>
-      <td>'+(b.service)+'</td>
-      <td>'+(b.date)+'</td>
-      <td><strong>₹'+(b.amount)+'</strong></td>
-      <td style="color:var(--red);font-weight:800;">-₹'+(b._commAmt||0)+' <small style="color:var(--muted)">('+(b._commPct||12)+'%)</small></td>
-      <td style="color:var(--green);font-weight:900;">₹'+(b._provAmt||b.amount)+'</td>
-      <td><span class="badge completed">Credited</span></td>
-    </tr>
-  ').join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
+  document.getElementById("earnBody").innerHTML = sorted.map(function(b){ return '\n    <tr>\n      <td><strong>'+(b.id)+'</strong></td>\n      <td>'+(b.service)+'</td>\n      <td>'+(b.date)+'</td>\n      <td><strong>₹'+(b.amount)+'</strong></td>\n      <td style="color:var(--red);font-weight:800;">-₹'+(b._commAmt||0)+' <small style="color:var(--muted)">('+(b._commPct||12)+'%)</small></td>\n      <td style="color:var(--green);font-weight:900;">₹'+(b._provAmt||b.amount)+'</td>\n      <td><span class="badge completed">Credited</span></td>\n    </tr>\n  ').join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
 
   // Pending withdraw requests
   var pendingReqs = s.payouts.filter(function(p){ return p.status === "pending");
   document.getElementById("pendingWithdrawSection").style.display = pendingReqs.length ? "block" : "none";
-  document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(function(p){ return '
-    <tr>
-      <td><strong>'+(p.id)+'</strong></td>
-      <td style="color:var(--green);font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>
-      <td style="font-size:12px">'+(p.account)+' <small>('+(p.accountType)+')</small></td>
-      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>
-      <td><span class="badge pending">⏳ Pending Admin Approval</span></td>
-    </tr>
-  ').join("");
+  document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(function(p){ return '\n    <tr>\n      <td><strong>'+(p.id)+'</strong></td>\n      <td style="color:var(--green);font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>\n      <td style="font-size:12px">'+(p.account)+' <small>('+(p.accountType)+')</small></td>\n      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>\n      <td><span class="badge pending">⏳ Pending Admin Approval</span></td>\n    </tr>\n  ').join("");
 
   // Full withdrawal history
   var allPayouts = Array.from(s.payouts).sort(function(a,b){ return new Date(b.requestedAt)-new Date(a.requestedAt));
-  document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(function(p){ return '
-    <tr>
-      <td><strong>'+(p.id)+'</strong></td>
-      <td style="font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>
-      <td style="font-size:12px">'+(p.account)+'</td>
-      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>
-      <td style="font-size:12px">'+(p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—")+'</td>
-      <td><span class="badge '+(p.status)+'">'+(
+  document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(function(p){ return '\n    <tr>\n      <td><strong>'+(p.id)+'</strong></td>\n      <td style="font-weight:800;">₹'+(p.amount.toLocaleString("en-IN"))+'</td>\n      <td style="font-size:12px">'+(p.account)+'</td>\n      <td style="font-size:12px">'+(new Date(p.requestedAt).toLocaleDateString("en-IN"))+'</td>\n      <td style="font-size:12px">'+(p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—")+'</td>\n      <td><span class="badge '+(p.status)+'">'+(
         p.status==="approved" ? "✅ Paid" :
         p.status==="rejected" ? "❌ Rejected" : "⏳ Pending"
-      )+'</span></td>
-    </tr>
-  ').join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
+      )+'</span></td>\n    </tr>\n  ').join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
 }
 
 // ════════ PROFILE ════════
@@ -1437,10 +1445,7 @@ function loadProfile() {
   (P.services || []).forEach(function(s,i){
     var d = document.createElement('div');
     d.style.cssText = 'background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:14px;text-align:center;';
-    d.innerHTML = '<div style="font-size:26px;margin-bottom:5px">'+(s.icon)+'</div><div style="font-size:12px;font-weight:800;margin-bottom:8px">'+(s.name)+'</div>
-      <div style="position:relative"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--red);font-size:14px">₹</span>
-      <input type="number" id="sp_'+(i)+'" value="'+(s.price)+'" style="width:100%;padding:8px 8px 8px 22px;border:2px solid var(--border);border-radius:9px;font-family:\'Nunito\',sans-serif;font-size:15px;font-weight:800;outline:none;text-align:center;" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"/></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:700">per visit</div>';
+    d.innerHTML = '<div style="font-size:26px;margin-bottom:5px">'+(s.icon)+'</div><div style="font-size:12px;font-weight:800;margin-bottom:8px">'+(s.name)+'</div>\n      <div style="position:relative"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--red);font-size:14px">₹</span>\n      <input type="number" id="sp_'+(i)+'" value="'+(s.price)+'" style="width:100%;padding:8px 8px 8px 22px;border:2px solid var(--border);border-radius:9px;font-family:\'Nunito\',sans-serif;font-size:15px;font-weight:800;outline:none;text-align:center;" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"/></div>\n      <div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:700">per visit</div>';
     container.appendChild(d);
   });
 }
@@ -1507,14 +1512,14 @@ function loadAvailability() {
     var el = document.createElement('div');
     el.className = 'tslot' + (avail.slots.includes(slot) ? ' active' : '');
     el.textContent = slot;
-    el.onclick = function(){ el.classList.toggle('active'); };
+    el.onclick = function(){ el.classList.toggle('active');
     slotWrap.appendChild(el);
   });
 }
 
 function saveAvailability() {
-  var days = DAYS.map(function(_,i){ return  document.getElementById('day_' + i)?.classList.contains('on') ? i : null).filter(function(v){ return v !== null);
-  var slots = [...document.querySelectorAll('.tslot.active')].map(function(el){ return el.textContent);; }
+  var days = DAYS.map(function(_,i){ return document.getElementById('day_' + i)?.classList.contains('on') ? i : null).filter(function(v){ return v !== null);
+  var slots = [...document.querySelectorAll('.tslot.active')].map(function(el){return el.textContent;});
   var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
   var idx = all.findIndex(function(p){ return p.id === P.id);
   if (idx > -1) {
@@ -1532,7 +1537,7 @@ function initUpdateMap() {
   var lat = P.lat || 17.3850, lng = P.lng || 78.4867;
   newLat = lat; newLng = lng; newRadius = P.radius || 5;
   updateMap = L.map('updateMap').setView([lat, lng], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(updateMap);
+  L.tileLayer('https://{s:s}.tile.openstreetmap.org/{z:z}/{x:x}/{y:y}.png',{attribution:'© OSM',maxZoom:19}).addTo(updateMap);
   updateMarker = L.marker([lat, lng],{draggable:true,icon:L.divIcon({html:'<div style="font-size:34px;margin-top:-34px;margin-left:-13px;filter:drop-shadow(0 3px 8px rgba(232,37,26,0.5))">📍</div>',className:'',iconSize:[26,34],iconAnchor:[13,34]})}).addTo(updateMap);
   updateMarker.on('dragend',function(e){ var ll=e.target.getLatLng(); newLat=ll.lat; newLng=ll.lng; drawLocCircle(); reverseGeo(newLat,newLng); });
   updateMap.on('click',function(e){ newLat=e.latlng.lat; newLng=e.latlng.lng; updateMarker.setLatLng([newLat,newLng]); drawLocCircle(); reverseGeo(newLat,newLng); });
@@ -1621,14 +1626,7 @@ function loadRatings() {
 
   // reviews list
   document.getElementById('reviewsList').innerHTML = reviews.length
-    ? reviews.map(function(r){ return '<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <strong style="font-size:13px">'+(r.customer)+'</strong>
-          <span style="color:#f59e0b;font-size:13px">'+('★'.repeat(r.stars))+('☆'.repeat(5-r.stars))+'</span>
-        </div>
-        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">'+(r.text)+'</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:700">'+(r.date)+'</div>
-      </div>').join('')
+    ? reviews.map(function(r){ return '<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">\n        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">\n          <strong style="font-size:13px">'+(r.customer)+'</strong>\n          <span style="color:#f59e0b;font-size:13px">'+('★'.repeat(r.stars))+('☆'.repeat(5-r.stars))+'</span>\n        </div>\n        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">'+(r.text)+'</div>\n        <div style="font-size:11px;color:var(--muted);font-weight:700">'+(r.date)+'</div>\n      </div>').join('')
     : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px;font-weight:700">No reviews yet</div>';
 }
 
@@ -1636,29 +1634,25 @@ function loadRatings() {
 function loadNotifications() {
   var s = computeStats();
   var notifs = [];
-  s.pending.forEach(function(b){ return notifs.push(; }{type:'booking',icon:'📋',title:'Pending Booking',sub:(b.customer)+' booked '+(b.service)+' for '+(b.date)+' at '+(b.time),time:'Waiting for action',unread:true}));
-  (s.awaitingPayment||[]).forEach(function(b){ return notifs.push(; }{type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:(b.customer)+' · '+(b.service)+' · ₹'+(b.amount)+' — OTP verified, payment pending',time:'Action needed',unread:true}));
-  s.completed.slice(-3).forEach(function(b){ return notifs.push(; }{type:'payment',icon:'💰',title:'Payment Received',sub:'₹'+(b.amount)+' for '+(b.service)+' by '+(b.customer),time:b.date,unread:false}));
+  s.pending.forEach(function(b){notifs.push({type:'booking',icon:'📋',title:'Pending Booking',sub:(b.customer)+' booked '+(b.service)+' for '+(b.date)+' at '+(b.time),time:'Waiting for action',unread:true}));
+  (s.awaitingPayment||[]).forEach(function(b){notifs.push({type:'payment',icon:'💳',title:'Awaiting Customer Payment',sub:(b.customer)+' · '+(b.service)+' · ₹'+(b.amount)+' — OTP verified, payment pending',time:'Action needed',unread:true}));
+  s.completed.slice(-3).forEach(function(b){notifs.push({type:'payment',icon:'💰',title:'Payment Received',sub:'₹'+(b.amount)+' for '+(b.service)+' by '+(b.customer),time:b.date,unread:false}));
   if (s.reviews.length) notifs.push({type:'rating',icon:'⭐',title:s.reviews.length + ' Customer Review(s)',sub:'Check your Ratings page for feedback',time:'Recent',unread:false});
   notifs.push({type:'alert',icon:'💡',title:'Profile Tip',sub:'Complete your profile to get 40% more bookings!',time:'Always',unread:false});
 
   document.getElementById('notifBadge').textContent = notifs.filter(function(n){ return n.unread).length;
-  document.getElementById('notifList').innerHTML = notifs.map(function(n){ return '
-    <div class="notif-item '+(n.unread?'unread':'')+'">
-      <div class="notif-icon-wrap '+(n.type)+'">'+(n.icon)+'</div>
-      <div style="flex:1"><div class="notif-title">'+(n.title)+'</div><div class="notif-sub">'+(n.sub)+'</div><div class="notif-time">'+(n.time)+'</div></div>
-      '+(n.unread?'<div class="unread-dot"></div>':'')+'
-    </div>').join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
+  document.getElementById('notifList').innerHTML = notifs.map(function(n){ return '\n    <div class="notif-item '+(n.unread?'unread':'')+'">\n      <div class="notif-icon-wrap '+(n.type)+'">'+(n.icon)+'</div>\n      <div style="flex:1"><div class="notif-title">'+(n.title)+'</div><div class="notif-sub">'+(n.sub)+'</div><div class="notif-time">'+(n.time)+'</div></div>\n      '+(n.unread?'<div class="unread-dot"></div>':'')+'\n    </div>').join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
 }
 
 // ════════ AVAILABILITY TOGGLE ════════
 function toggleAvailability() {
   var isOn = document.getElementById('availToggle').checked;
   var all = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  var idx = all.findIndex(function(p){ return p.id===P.id);
-  if(idx>-1){all[idx].available=isOn;P=all[idx];localStorage.setItem('hs_providers',JSON.stringify(all));localStorage.setItem('hs_current_provider',JSON.stringify(P));}
+  var idx = all.findIndex(function(p){ return p.id === P.id; });
+  if (idx > -1) { all[idx].available = isOn; P = all[idx]; localStorage.setItem('hs_providers', JSON.stringify(all)); localStorage.setItem('hs_current_provider', JSON.stringify(P)); }
   updateAvailLabel();
-  showToast(isOn?'🟢 You are now AVAILABLE for bookings!':'🔴 You are now UNAVAILABLE');
+  fbWrite('providers/' + P.id + '/available', isOn);
+  showToast(isOn ? '🟢 You are now AVAILABLE for bookings!' : '🔴 You are now UNAVAILABLE');
 }
 function updateAvailLabel(){document.getElementById('availLabel').textContent=P.available!==false?'🟢 Available':'🔴 Unavailable';}
 
@@ -1699,16 +1693,55 @@ var seenBookingIds = {}; // prevent showing same booking twice
 
 function startBookingPoller() {
   if (bookingPoller) clearInterval(bookingPoller);
-  // Poll immediately, then every 5 seconds
+  // Announce presence to Firebase
+  if (P && P.id && P.id !== 'HS-GUEST') {
+    fbWrite('providers/' + P.id + '/online', {
+      available: P.available !== false,
+      lat: P.lat || null, lng: P.lng || null,
+      radius: P.radius || 10,
+      services: (P.services || []).map(function(s){ return s.name; }),
+      lastSeen: new Date().toISOString()
+    });
+  }
   checkForNewBookings();
   bookingPoller = setInterval(checkForNewBookings, 5000);
+  // Heartbeat every 60s
+  setInterval(function(){
+    if (P && P.id && P.id !== 'HS-GUEST' && P.available !== false)
+      fbWrite('providers/' + P.id + '/lastSeen', new Date().toISOString());
+  }, 60000);
 }
 
-function checkForNewBookings() {
+function checkForNewBookings(){
+  fbRead('active_bookings',function(data){
+    if(!data)return;
+    var provLat=P.lat||17.3850;
+    var provLng=P.lng||78.4867;
+    var provServices=(P.services||[]).map(function(s){return (s.name||'').toLowerCase();});
+    var provRadius=P.radius||10;
+    var keys=Object.keys(data);
+    for(var i=0;i<keys.length;i++){
+      var bk=data[keys[i]];
+      if(!bk||!bk.id)continue;
+      if(seenBookingIds[bk.id])continue;
+      if(bk.acceptedBy)continue;
+      if(bk.status!=='searching')continue;
+      if(!bk.lat||!bk.lng)continue;
+      var dist=haversineKm(provLat,provLng,bk.lat,bk.lng);
+      if(dist>provRadius)continue;
+      if(provServices.length>0){
+        var reqSvc=(bk.service||'').toLowerCase();
+        var ok=provServices.some(function(s){return reqSvc.includes(s.split(' ')[0])||s.includes(reqSvc.split(' ')[0]);});
+        if(!ok)continue;
+      }
+      seenBookingIds[bk.id]=true;
+      showRealBookingAlert(bk,dist);
+      break;
+    }
+  });
+}
+function processNewBookings(data) {
   try {
-    // Read all active bookings from Firebase
-    var data = fbRead('active_bookings');
-    if (!data) return;
 
     var provLat = P.lat || 17.3850;
     var provLng = P.lng || 78.4867;
@@ -1825,8 +1858,16 @@ function acceptNewBooking() {
   if (pendingBooking.fromFirebase && pendingBooking.fbKey) {
     fbWrite('active_bookings/' + pendingBooking.fbKey + '/acceptedBy', providerInfo);
     fbWrite('active_bookings/' + pendingBooking.fbKey + '/status', 'accepted');
-    // Also delete from notifications so other providers stop seeing it
     fbDelete('notifications/search_' + pendingBooking.fbKey);
+    // Write full booking to bookings/ so customer panel can track it
+    var fullBk = Object.assign({}, pendingBooking, {
+      status: 'confirmed',
+      providerId: P.id,
+      providerName: P.name,
+      acceptedAt: new Date().toISOString(),
+      customerId: pendingBooking.customerId || pendingBooking.fbKey
+    });
+    fbWrite('bookings/' + pendingBooking.fbKey, fullBk);
   }
 
   syncProviderStats();
@@ -1882,16 +1923,29 @@ function processWithdraw(){
   showToast("✅ Withdrawal request of ₹"+amt+" submitted! Admin will process within 24 hrs.");
 }
 
+// ════════ SIDEBAR HELPERS ════════
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var bd = document.getElementById('sidebarBackdrop');
+  var isOpen = sb.classList.toggle('open');
+  if (bd) bd.style.display = isOpen ? 'block' : 'none';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  var bd = document.getElementById('sidebarBackdrop');
+  if (bd) bd.style.display = 'none';
+}
+
 // ════════ NAV ════════
 var PAGE_TITLES={overview:'📊 Overview',bookings:'📋 My Bookings',earnings:'💰 Earnings',profile:'👤 My Profile',availability:'📅 Availability',location:'📍 Update Location',ratings:'⭐ Ratings',notifications:'🔔 Notifications'};
 function showPage(name){
-  document.querySelectorAll('.page').forEach(function(p){ return p.classList.remove('active'));; }
-  document.querySelectorAll('.nav-item').forEach(function(n){ return n.classList.remove('active'));; }
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');}));
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');}));
   document.getElementById('page-'+name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(function(n){if(n.textContent.toLowerCase().includes(name.split('-')[0]))n.classList.add('active');});
   document.getElementById('pageTitle').textContent=PAGE_TITLES[name]||name;
-  document.getElementById('sidebar').classList.remove('open');
-  if(name==='location')setTimeout(initUpdateMap,200);
+  closeSidebar();
+  if(name==='location') setTimeout(initUpdateMap, 200);
 }
 
 // ════════ UTILS ════════
@@ -1907,20 +1961,11 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 // ════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════
-// REAL-TIME SYNC ENGINE
-// PRIMARY  : localStorage + BroadcastChannel (same device, instant)
-// SECONDARY: Firebase Realtime DB (cross-device — configure below)
+// FIREBASE REALTIME DB — hamaraservice-s009
+// Uses REST API (no SDK needed), safe non-blocking calls
 // ══════════════════════════════════════════════════════════════
-
-// ── FIREBASE SETUP (cross-device tracking) ────────────────────
-// STEP 1: Go to https://console.firebase.google.com
-// STEP 2: Create project → Build → Realtime Database → Create database
-// STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
-// STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
-// STEP 5: Replace the URL below
-var FB_URL = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // ✅ LIVE
-var FB_URL_ALT = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // same
-var FB_ENABLED = true; // Firebase configured ✅
+var FB_URL     = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB_ENABLED = true;
 
 // BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
 var trackChannel = null;
@@ -1940,7 +1985,7 @@ function mkDestIcon(emoji){return L.divIcon({html:'<div style="position:relative
 
 // ── MATH ────────────────────────────────────────────────────────
 function calcDist(a,b,c,d){var R=6371,dL=(c-a)*Math.PI/180,dN=(d-b)*Math.PI/180,e=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)*Math.sin(dN/2);return R*2*Math.atan2(Math.sqrt(e),Math.sqrt(1-e));}
-function haversineKm(a,b,c,d){return calcDist(a,b,c,d);}
+function haversineKm(a,b,c,d){return calcDist(a, b:b, c:c, d);}
 function fmtD(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';}
 function fmtT(km){var m=Math.max(1,Math.round(km*3.5));return m<60?m+' min':(Math.floor(m/60)+'h '+(m%60)+'m');}
 
@@ -1956,108 +2001,41 @@ function getRoute(fromLat,fromLng,toLat,toLng){
     }
   }catch(e){console.warn('OSRM failed:',e);}
   // Fallback: straight line
-  return{coords:[[fromLat,fromLng],[toLat,toLng]],dist:calcDist(fromLat,fromLng,toLat,toLng),dur:calcDist(fromLat,fromLng,toLat,toLng)*4};
+  return{coords:[[fromLat, fromLng], [toLat, toLng]], dist:calcDist(fromLat, fromLng:fromLng, toLat:toLat, toLng), dur:calcDist(fromLat, fromLng:fromLng, toLat:toLat, toLng)*4};
 }
 
-// ── DUAL SYNC: localStorage + BroadcastChannel + Firebase ────────
-function fbWrite(path, data) {
-  // 1. localStorage (same device, instant, always works)
-  try { localStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data)); } catch(e) {}
-  // 2. BroadcastChannel (cross-tab on same device, instant)
-  try { if(trackChannel) trackChannel.postMessage({path:path, data:data}); } catch(e) {}
-  // 3. Firebase (cross-device)
-  if (FB_ENABLED) {
-    var urls = [FB_URL, FB_URL_ALT];
-    for (var i=0; i<urls.length; i++) {
-      try {
-        var resp = fetch(urls[i] + '/' + path + '.json', {
-          method:'PUT', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify(data), signal:AbortSignal.timeout(6000)
-        });
-        if (resp.ok) { console.log('Firebase write OK via', urls[i]); break; }
-      } catch(e) { console.warn('Firebase write failed for', urls[i], e.message); }
-    }
-  }
+// ── FIREBASE HELPERS — safe, non-blocking, callback-based ──────
+// fbWrite: fire-and-forget, never blocks UI
+function fbWrite(path,data){
+  var xhr=new XMLHttpRequest();
+  xhr.open('PUT','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=6000;
+  xhr.send(JSON.stringify(data));
+}
+function fbWriteSync(path, data) { fbWrite(path, data); }
+
+// fbRead: callback-based, never throws
+function fbRead(path,cb){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.timeout=6000;
+  xhr.onload=function(){try{cb(JSON.parse(xhr.responseText));}catch(e){cb(null);}};
+  xhr.onerror=xhr.ontimeout=function(){cb(null);};
+  xhr.send();
+}
+function fbReadAsync(path) {
+  return new Promise(function(resolve) {
+    fbRead(path, resolve);
+  });
 }
 
-function fbRead(path) {
-  // 1. Try Firebase (cross-device)
-  if (FB_ENABLED) {
-    var urls = [FB_URL, FB_URL_ALT];
-    for (var i=0; i<urls.length; i++) {
-      try {
-        var r = fetch(urls[i] + '/' + path + '.json', {signal:AbortSignal.timeout(5000)});
-        if (r.ok) {
-          var d = r.json();
-          // For booking data, return even if no .lat field
-          if (d !== null && d !== undefined) return d;
-        }
-      } catch(e) { console.warn('Firebase read failed for', urls[i]); }
-    }
-  }
-  // 2. Fallback: localStorage
-  try {
-    var raw = localStorage.getItem('hs_track_' + path.replace(/\//g,'_'));
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
+// fbDelete: fire-and-forget
+function fbDelete(path){
+  var xhr=new XMLHttpRequest();
+  xhr.open('DELETE','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/'+path+'.json',true);
+  xhr.timeout=5000;xhr.send();
 }
-
-function fbDelete(path) {
-  if (!FB_ENABLED) return;
-  try {
-    fetch(FB_URL + '/' + path + '.json', {method:'DELETE', signal:AbortSignal.timeout(5000)});
-  } catch(e) { console.warn('FB delete failed:', e.message); }
-}
-
-// Listen for BroadcastChannel messages (cross-tab same device)
-if (trackChannel) {
-  trackChannel.onmessage = function(ev) {
-    try {
-      var path = ev.data.path, data = ev.data.data;
-      localStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data));
-    } catch(e) {}
-  };
-}
-
-// ════════════════════════════════════════════════════════════════
-// PROVIDER TRACKING — Opens on provider device
-// Uses real device GPS, publishes to Firebase every 4s
-// ════════════════════════════════════════════════════════════════
-function openProviderTracking(bookingId){
-  var bk=getBK();
-  var booking=bk.find(function(b){return b.id===bookingId;});
-  if(!booking)return;
-  activeBookingId=bookingId;
-  activeBookingData=booking;
-
-  document.getElementById('provDrwCustName').textContent=booking.customer||'Customer';
-  document.getElementById('provDrwCustDetail').textContent=booking.service+' · '+booking.date+' '+(booking.time||'');
-  document.getElementById('provEarn').textContent='Rs '+(booking.amount-Math.round(booking.amount*.12)).toLocaleString('en-IN');
-  document.getElementById('provCallBtn').onclick=function(){window.open('tel:'+(booking.phone||''));};
-  document.getElementById('providerTrackingView').classList.add('show');
-  setGpsBanner('prov','searching','Acquiring GPS signal...');
-  updateProvSteps('searching');
-  // Show Firebase setup hint if not configured
-  var fbBanner = document.getElementById('fbSetupBanner');
-  if (fbBanner) fbBanner.style.display = 'block'; // show rules reminder until rules are published
-
-  setTimeout(function(){
-    if(!provMap){
-      provMap=L.map('provMap',{zoomControl:false}).setView([17.385,78.486],15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(provMap);
-      L.control.zoom({position:'bottomright'}).addTo(provMap);
-    }
-    // Customer destination pin
-    var cLat=booking.customerLat, cLng=booking.customerLng;
-    if(cLat&&cLng){
-      if(provDestMarker)provMap.removeLayer(provDestMarker);
-      provDestMarker=L.marker([cLat,cLng],{icon:mkDestIcon('🏠')}).addTo(provMap).bindPopup('<b>'+(booking.customer||'Customer')+'</b><br/>'+(booking.service||'')+'<br/>Destination');
-      provMap.setView([cLat,cLng],13);
-    }
-    startRealGPS(bookingId,cLat,cLng);
-  },200);
-}
-
 function startRealGPS(bookingId,destLat,destLng){
   if(!navigator.geolocation){
     setGpsBanner('prov','error','GPS not supported on this device');
@@ -2087,10 +2065,9 @@ function startRealGPS(bookingId,destLat,destLng){
       }
 
       // Get real road route
-      if(destLat&&destLng){
-        var route=getRoute(lat,lng,destLat,destLng);
+      if(destLat&&destLng){var route=getRoute(lat, lng:lng, destLat:destLat, destLng);
         if(provRoutePolyline)provMap.removeLayer(provRoutePolyline);
-        provRoutePolyline=L.polyline(route.coords,{color:'#1A73E8',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(provMap);
+        provRoutePolyline=L.polyline(route.coords, {color:'#1A73E8', weight:6, opacity:.85, lineJoin:'round', lineCap:'round'}).addTo(provMap);
         provMap.fitBounds([[lat,lng],[destLat,destLng]],{padding:[80,80],maxZoom:16});
 
         var d=route.dist;
@@ -2120,7 +2097,7 @@ function startRealGPS(bookingId,destLat,destLng){
       setGpsBanner('prov','error',msgs[err.code]||'GPS error: '+err.message);
       document.getElementById('provTrkTitle').textContent = err.code===1 ? 'Allow Location Access' : 'GPS Signal Weak';
       document.getElementById('provTrkSub').textContent = msgs[err.code]||'GPS error';
-      if(err.code!==1) setTimeout(function(){startRealGPS(bookingId,destLat,destLng);},6000);
+      if(err.code!==1) setTimeout(function(){startRealGPS(bookingId, destLat:destLat, destLng);},6000);
       // Show manual instructions on permission denied
       if(err.code===1){
         showToast('⚠️ GPS denied — go to browser Settings → Site permissions → Location → Allow for '+window.location.hostname);
@@ -2181,7 +2158,7 @@ function openCustomerTracking(bookingId){
   setTimeout(function(){
     if(!custMap2){
       custMap2=L.map('custMap',{zoomControl:false}).setView([17.385,78.486],14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(custMap2);
+      L.tileLayer('https://{s:s}.tile.openstreetmap.org/{z:z}/{x:x}/{y:y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(custMap2);
       L.control.zoom({position:'bottomright'}).addTo(custMap2);
     }
     var cLat=booking.customerLat, cLng=booking.customerLng;
@@ -2198,56 +2175,49 @@ function startFirebasePoll(bookingId,custLat,custLng){
   if(custPollTimer)clearInterval(custPollTimer);
 
   function poll(){
-    if(!document.getElementById('customerTrackingView').classList.contains('show')){clearInterval(custPollTimer);return;}
-
-    // PRIMARY: Read from Firebase (cross-device, real-time)
-    var data=fbRead('tracking/'+bookingId+'/provider');
-
-    // FALLBACK: Same device demo — read from memory
-    if((!data||!data.lat)&&myRealLat){data={lat:myRealLat,lng:myRealLng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8};}
-
-    if(!data||!data.lat){
-      setGpsBanner('cust','searching','Waiting for provider GPS...');
-      document.getElementById('custTrkTitle').textContent='Connecting to provider...';
-      updateCustSteps('waiting');
-      return;
+    if(!document.getElementById('customerTrackingView').classList.contains('show')){
+      clearInterval(custPollTimer); return;
     }
-
-    var pLat=data.lat, pLng=data.lng;
-    var age=Date.now()-(data.ts||0);
-    var fresh=age<15000;
-    setGpsBanner('cust',fresh?'live':'searching',fresh?'Live GPS · Updated '+Math.round(age/1000)+'s ago':'Last seen '+Math.round(age/1000)+'s ago — reconnecting');
-
-    // Place / animate provider marker
-    if(!custProvMarker){
-      custProvMarker=L.marker([pLat,pLng],{icon:mkIcon('👷','linear-gradient(135deg,#E8251A,#FF6B00)')}).addTo(custMap2).bindPopup('<b>'+(data.name||P.name)+'</b><br/>On the way!');
-    } else {
-      custProvMarker.setLatLng([pLat,pLng]);
-    }
-
-    // Real road route
-    if(custLat&&custLng){
-      var route=getRoute(pLat,pLng,custLat,custLng);
-      if(custRoutePolyline)custMap2.removeLayer(custRoutePolyline);
-      custRoutePolyline=L.polyline(route.coords,{color:'#E8251A',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(custMap2);
-      custMap2.fitBounds([[pLat,pLng],[custLat,custLng]],{padding:[80,80],maxZoom:16});
-
-      var d=route.dist;
-      document.getElementById('custDist').textContent=fmtD(d);
-      document.getElementById('custEtaVal').textContent=fmtT(d);
-      document.getElementById('custTrkEta').textContent=fmtT(d);
-      document.getElementById('custDrwSub').textContent=(data.name||P.name)+' is '+fmtD(d)+' away';
-      document.getElementById('custTrkSub').textContent=fmtD(d)+' via road · Live GPS';
-
-      if(d<0.08){
-        document.getElementById('custTrkTitle').textContent='Professional has arrived!';
-        document.getElementById('custTrkDot').className='trk-dot orange';
-        updateCustSteps('arrived');
-      } else {
-        document.getElementById('custTrkTitle').textContent='Professional on the way';
-        updateCustSteps('enroute');
+    fbRead('tracking/'+bookingId+'/provider', function(data){
+      // Fallback: same-device GPS memory
+      if((!data||!data.lat)&&myRealLat){ data={lat:myRealLat,lng:myRealLng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8}; }
+      if(!data||!data.lat){
+        setGpsBanner('cust','searching','Waiting for provider GPS...');
+        document.getElementById('custTrkTitle').textContent='Connecting to provider...';
+        updateCustSteps('waiting');
+        return;
       }
-    }
+      var pLat=data.lat, pLng=data.lng;
+      var age=Date.now()-(data.ts||0);
+      var fresh=age<15000;
+      setGpsBanner('cust',fresh?'live':'searching',fresh?'Live GPS · Updated '+Math.round(age/1000)+'s ago':'Reconnecting...');
+      if(!custProvMarker){
+        custProvMarker=L.marker([pLat,pLng],{icon:mkIcon('👷','linear-gradient(135deg,#E8251A,#FF6B00)')}).addTo(custMap2).bindPopup('<b>'+(data.name||P.name)+'</b><br/>On the way!');
+      } else {
+        custProvMarker.setLatLng([pLat,pLng]);
+      }
+      if(custLat&&custLng){
+        getRoute(pLat,pLng,custLat,custLng).then(function(route){
+          if(custRoutePolyline)custMap2.removeLayer(custRoutePolyline);
+          custRoutePolyline=L.polyline(route.coords,{color:'#E8251A',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}).addTo(custMap2);
+          custMap2.fitBounds([[pLat,pLng],[custLat,custLng]],{padding:[80,80],maxZoom:16});
+          var d=route.dist;
+          document.getElementById('custDist').textContent=fmtD(d);
+          document.getElementById('custEtaVal').textContent=fmtT(d);
+          document.getElementById('custTrkEta').textContent=fmtT(d);
+          document.getElementById('custDrwSub').textContent=(data.name||P.name)+' is '+fmtD(d)+' away';
+          document.getElementById('custTrkSub').textContent=fmtD(d)+' via road · Live GPS';
+          if(d<0.08){
+            document.getElementById('custTrkTitle').textContent='Professional has arrived!';
+            document.getElementById('custTrkDot').className='trk-dot orange';
+            updateCustSteps('arrived');
+          } else {
+            document.getElementById('custTrkTitle').textContent='Professional on the way';
+            updateCustSteps('enroute');
+          }
+        });
+      }
+    });
   }
 
   poll();
