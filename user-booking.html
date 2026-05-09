@@ -1018,13 +1018,7 @@ function runRange(idx){
     fbWrite('bookings/'+bookingId, bkPending);
     fbWrite('active_bookings/'+bookingId+'/status','pending_no_provider');
 
-    // Save to customer booking history in localStorage
-    var allBk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
-    allBk=allBk.filter(function(b){return b.id!==bookingId;});
-    allBk.unshift(bkPending);
-    localStorage.setItem('hs_customer_bookings',JSON.stringify(allBk));
-
-    // Show sorry screen
+    // Show sorry screen (it handles localStorage saving)
     showSorryScreen(bkPending);
     return;
   }
@@ -1590,71 +1584,41 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 
 
 function showSorryScreen(bk){
-  // Force hide radar overlay immediately
+  // Transform the radar overlay into the sorry screen (same z-index, same position)
   var ro=document.getElementById('radarOverlay');
-  if(ro){ ro.classList.remove('show'); ro.style.display='none'; }
-  var po=document.getElementById('provOverlay');
-  if(po){ po.classList.remove('show'); po.style.display='none'; }
-
-  // Remove any existing sorry screen
-  var old=document.getElementById('sorryScreen');
-  if(old && old.parentNode){ old.parentNode.removeChild(old); }
-
-  var el=document.createElement('div');
-  el.id='sorryScreen';
-  el.style.position='fixed';
-  el.style.top='0';
-  el.style.left='0';
-  el.style.right='0';
-  el.style.bottom='0';
-  el.style.background='#0f1117';
-  el.style.zIndex='9999';
-  el.style.display='flex';
-  el.style.flexDirection='column';
-  el.style.alignItems='center';
-  el.style.justifyContent='center';
-  el.style.padding='28px';
-  el.style.overflowY='auto';
-  el.style.boxSizing='border-box';
-
   var svcName=bk?(bk.service||''):(selSvc?selSvc.n:'');
-  var bkDate =bk?(bk.date||''):'';
+  var bkDate =bk?(bk.date||''):(document.getElementById('bookDate')?document.getElementById('bookDate').value:'');
   var bkTime =bk?(bk.time||''):'';
 
-  el.innerHTML=
-    '<div style="font-size:56px;margin-bottom:18px;">&#x1F614;</div>'+
-    '<div style="font-family:Sora,sans-serif;font-size:21px;font-weight:800;color:white;text-align:center;margin-bottom:12px;">No Providers Available</div>'+
-    '<div style="font-size:14px;color:rgba(255,255,255,.6);text-align:center;line-height:1.75;margin-bottom:28px;max-width:320px;">'+
-      'We searched up to 20 km and found no available providers for <strong style="color:white;">'+svcName+'</strong> right now.<br/><br/>'+
-      'Your booking is saved as <strong style="color:#ffa500;">Pending</strong>. You will be notified when a provider becomes available.'+
+  // Save pending booking to localStorage
+  var allBk=JSON.parse(localStorage.getItem('hs_customer_bookings')||'[]');
+  allBk=allBk.filter(function(b){return b.id!==bookingId;});
+  if(bk) allBk.unshift(bk);
+  localStorage.setItem('hs_customer_bookings',JSON.stringify(allBk));
+
+  if(!ro){ window.location.href='index.html'; return; }
+
+  // Replace radar content with sorry content (keeps same overlay visible)
+  ro.innerHTML=
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;box-sizing:border-box;">'+
+    '<div style="font-size:64px;margin-bottom:20px;">&#x1F614;</div>'+
+    '<div style="font-family:Sora,sans-serif;font-size:24px;font-weight:800;color:white;text-align:center;margin-bottom:14px;">No Providers Available</div>'+
+    '<div style="font-size:15px;color:rgba(255,255,255,.65);text-align:center;line-height:1.75;margin-bottom:28px;max-width:340px;">'+
+      'We searched up to 20&nbsp;km and found no providers for <strong style="color:white;">'+svcName+'</strong> right now.<br/><br/>'+
+      'Your booking has been saved as <strong style="color:#ffa500;">Pending</strong>. We will notify you when a provider becomes available nearby.'+
     '</div>'+
-    '<div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:18px 22px;margin-bottom:28px;width:100%;max-width:360px;">'+
-      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Booking Saved</div>'+
-      '<div style="font-size:16px;font-weight:800;color:white;margin-bottom:5px;">'+svcName+'</div>'+
-      '<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:12px;">'+bkDate+(bkTime?' at '+bkTime:'')+'</div>'+
-      '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.35);color:#ffa500;font-size:12px;font-weight:700;padding:5px 13px;border-radius:100px;">'+
-        '<span style="width:6px;height:6px;border-radius:50%;background:#ffa500;flex-shrink:0;display:inline-block;"></span>'+
+    '<div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px 24px;margin-bottom:32px;width:100%;max-width:380px;">'+
+      '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;">&#x23F3; Pending Booking</div>'+
+      '<div style="font-size:17px;font-weight:800;color:white;margin-bottom:6px;">'+svcName+'</div>'+
+      (bkDate?'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:14px;">'+bkDate+(bkTime?' at '+bkTime:'')+'</div>':'')+
+      '<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,165,0,.18);border:1px solid rgba(255,165,0,.4);color:#ffb020;font-size:13px;font-weight:700;padding:7px 16px;border-radius:100px;">'+
+        '<span style="width:8px;height:8px;border-radius:50%;background:#ffb020;flex-shrink:0;display:inline-block;"></span>'+
         'Pending &#x2014; Awaiting Provider'+
-      '</span>'+
+      '</div>'+
     '</div>'+
-    '<button id="sorryHomeBtn" style="width:100%;max-width:360px;padding:15px;background:#E8251A;color:white;border:none;border-radius:12px;font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Back to Home</button>'+
-    '<button id="sorryRetryBtn" style="width:100%;max-width:360px;padding:14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Try Again</button>';
-
-  document.body.appendChild(el);
-
-  document.getElementById('sorryHomeBtn').onclick=function(){
-    window.location.href='index.html';
-  };
-  document.getElementById('sorryRetryBtn').onclick=function(){
-    el.style.display='none';
-    var rad=document.getElementById('radarOverlay');
-    rad.style.display='';
-    rad.classList.add('show');
-    document.getElementById('radarLog').innerHTML='';
-    document.getElementById('blipsG').innerHTML='';
-    radarActive=true;
-    runRange(0);
-  };
+    '<button onclick="window.location.href='index.html';" style="width:100%;max-width:380px;padding:16px;background:#E8251A;color:white;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px;letter-spacing:-.2px;">Back to Home</button>'+
+    '<button onclick="location.reload();" style="width:100%;max-width:380px;padding:15px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.25);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Try Again</button>'+
+    '</div>';
 }
 
 // ── Watch pending bookings — notify when provider accepts ──────
