@@ -344,7 +344,7 @@ function doLogin(){
   if(!email||!pass){showErr('Please enter your email and password');return;}
   if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showErr('Please enter a valid email address');return;}
   var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  var found=providers.find(function(p){ return p.email&&p.email.toLowerCase()===email&&p.password===pass);
+  var found=providers.find(function(p){ return p.email&&p.email.toLowerCase()===email&&p.password===pass; });
   if(!found&&email==='demo@hamaraservice.in'&&pass==='demo123'){found=createDemo(providers);}
   if(!found){showErr('Email or password not found. Please register first.');return;}
   localStorage.setItem('hs_current_provider',JSON.stringify(found));
@@ -357,7 +357,7 @@ function showErr(msg){var e=document.getElementById('loginErr');e.textContent='�
 
 function createDemo(providers){
   var demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
-  var idx=providers.findIndex(function(p){ return p.id==='HS-PRO-DEMO');
+  var idx=providers.findIndex(function(p){ return p.id==='HS-PRO-DEMO'; });
   if(idx===-1)providers.push(demo);else providers[idx]=demo;
   localStorage.setItem('hs_providers',JSON.stringify(providers));
   return demo;
@@ -368,8 +368,8 @@ var currentStep=1,regMap=null,regMarker=null,regCircle=null,regLat=null,regLng=n
 function nextStep(from){if(!validateStep(from))return;if(from===3)buildSummary();goToStep(from+1);}
 function prevStep(from){goToStep(from-1);}
 function goToStep(n){
-  document.querySelectorAll('.form-card').forEach(function(c){ return c.classList.remove('active'));; }
-  document.getElementById('step'+n)?.classList.add('active');
+  document.querySelectorAll('.form-card').forEach(function(c){ c.classList.remove('active'); });
+  var _el=document.getElementById('step'+n); if(_el) _el.classList.add('active');
   currentStep=n;
   for(var i=1;i<=4;i++){
     var d=document.getElementById('sd'+i);
@@ -394,7 +394,7 @@ function validateStep(n){
     if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
     if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
     var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-    if(providers.find(function(p){ return p.email&&p.email.toLowerCase()===email.toLowerCase())){showToast('⚠️ Email already registered. Please login.');return false;}
+    if(providers.find(function(p){ return p.email&&p.email.toLowerCase()===email.toLowerCase(); })){showToast('⚠️ Email already registered. Please login.');return false;}
     return true;
   }
   if(n===2){if(getSelectedServices().length===0){showToast('⚠️ Select at least one service');return false;}return true;}
@@ -415,7 +415,7 @@ function buildSvcGrid(){
 }
 
 function getSelectedServices(){
-  return[...document.querySelectorAll('.svc-chip.selected')].map(function(c){ return (; }{name:c.dataset.name,icon:c.dataset.icon,price:parseInt(c.querySelector('.svc-price-input').value)||499}));
+  var chips=document.querySelectorAll('.svc-chip.selected'); var arr=[]; Array.from(chips).forEach(function(ch){ arr.push({name:ch.dataset.name,icon:ch.dataset.icon,price:parseInt(ch.querySelector('.svc-price-input').value)||499}); }); return arr;
 }
 
 function initMap(){
@@ -455,7 +455,7 @@ function searchLoc(){
       if(!res.length){showToast('❌ Location not found');return;}
       regLat=+res[0].lat;regLng=+res[0].lon;
       regMap.setView([regLat,regLng],14);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
-    }).catch(function(){showToast('❌ Search failed'}));
+    }).catch(function(){showToast('Search failed');});
 }
 
 function useGPS(){
@@ -465,7 +465,7 @@ function useGPS(){
     regLat=pos.coords.latitude;regLng=pos.coords.longitude;
     regMap.setView([regLat,regLng],15);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
     showToast('✅ Location detected!');
-  },function(){showToast('GPS failed. Click on map instead.'));
+  },function(){showToast('GPS failed. Click on map instead.');});
 }
 
 function reverseGeocode(lat,lng){
@@ -487,11 +487,15 @@ function buildSummary(){
     ['Login Email',document.getElementById('r_email').value||'—'],
     ['Experience',document.getElementById('r_exp').value],
     ['ID Proof',document.getElementById('r_idtype').value+': '+document.getElementById('r_idnum').value],
-    ['Services',svcs.map(function(s){ return s.icon+' '+s.name+' ₹'+s.price).join(' | ')]; },
-    ['Location',regAddress||(regLat?.toFixed(4))+', '+(regLng?.toFixed(4))],
+    ['Services',svcs.map(function(s){ return s.icon+' '+s.name+' ₹'+s.price; }).join(' | ')],
+    ['Location',regAddress||((regLat?regLat.toFixed(4):'?')+', '+(regLng?regLng.toFixed(4):'?'))],
     ['Service Radius',regRadius+' km'],
   ];
-  document.getElementById('summaryBox').innerHTML=rows.map(function(row){var l=row[0],v=row[1];return '<div class="summary-row"><span class="summary-label">'+(l)+'</span><span class="summary-value">'+(v)+'</span></div>').join('');
+  var summaryHTML='';
+  rows.forEach(function(row){
+    summaryHTML+='<div class="summary-row"><span class="summary-label">'+row[0]+'</span><span class="summary-value">'+row[1]+'</span></div>';
+  });
+  document.getElementById('summaryBox').innerHTML=summaryHTML;
 }
 
 function submitRegistration(){
@@ -504,9 +508,9 @@ function submitRegistration(){
   var id='HS-PRO-'+namePart+phonePart;
   // Check if already registered
   var existingProvs=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-  if(existingProvs.find(function(p){ return p.id===id)){showToast('⚠️ Provider already registered with this name & mobile');return;}
+  if(existingProvs.find(function(p){ return p.id===id; })){showToast('⚠️ Provider already registered with this name & mobile');return;}
   var provider={
-    id,
+    id:id,
     name:rawName,
     phone:rawPhone,
     password:rawPass,
@@ -531,7 +535,7 @@ function submitRegistration(){
   localStorage.setItem('hs_providers',JSON.stringify(providers));
   localStorage.setItem('hs_current_provider',JSON.stringify(provider));
   saveProviderToFirebase(provider);
-  document.querySelectorAll('.form-card').forEach(function(c){ return c.classList.remove('active'));; }
+  document.querySelectorAll('.form-card').forEach(function(c){ c.classList.remove('active'); });
   document.getElementById('stepSuccess').classList.add('active');
   document.getElementById('generatedId').textContent=id;
   window.scrollTo({top:0,behavior:'smooth'});
