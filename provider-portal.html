@@ -348,6 +348,7 @@ function doLogin(){
   if(!found&&email==='demo@hamaraservice.in'&&pass==='demo123'){found=createDemo(providers);}
   if(!found){showErr('Email or password not found. Please register first.');return;}
   localStorage.setItem('hs_current_provider',JSON.stringify(found));
+  sessionStorage.setItem('hs_fresh_login','1');
   showToast('✅ Login successful! Redirecting...');
   syncProviderFromFirebase();
   setTimeout(function(){window.location.href='provider-dashboard.html';},800);
@@ -639,8 +640,17 @@ function fillDemo(){
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3200);}
 
 // Auto-redirect if already logged in
-var existing=localStorage.getItem('hs_current_provider');
-if(existing){try{JSON.parse(existing);window.location.href='provider-dashboard.html';}catch(e){localStorage.removeItem('hs_current_provider');}}
+// Auto-redirect if already logged in (but not if we just came from dashboard)
+var _fromDash = window.location.search.indexOf('logout') > -1 || document.referrer.indexOf('provider-dashboard') > -1;
+if(!_fromDash){
+  var existing=localStorage.getItem('hs_current_provider');
+  if(existing){
+    try{
+      var _p=JSON.parse(existing);
+      if(_p && _p.id && _p.email) window.location.href='provider-dashboard.html';
+    }catch(e){localStorage.removeItem('hs_current_provider');}
+  }
+}
 </script>
 </body>
 </html>

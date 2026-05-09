@@ -901,13 +901,29 @@ window.addEventListener('load', function() {
   }
   try {
     P = JSON.parse(saved);
-    var all   = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-    var fresh = all.find(function(pr){ return pr.id === P.id; });
-    if (fresh) { P = fresh; localStorage.setItem('hs_current_provider', JSON.stringify(P)); }
-    initDashboard();
   } catch(e) {
     localStorage.removeItem('hs_current_provider');
     window.location.href = 'provider-portal.html';
+    return;
+  }
+  if (!P || !P.id) {
+    localStorage.removeItem('hs_current_provider');
+    window.location.href = 'provider-portal.html';
+    return;
+  }
+  // Refresh from hs_providers list if available
+  try {
+    var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+    var fresh = all.find(function(pr){ return pr.id === P.id; });
+    if (fresh) { P = fresh; localStorage.setItem('hs_current_provider', JSON.stringify(P)); }
+  } catch(e2) { /* ignore, use P as-is */ }
+  // Init dashboard — wrap each section so one failure doesn't kill the whole page
+  sessionStorage.removeItem('hs_fresh_login'); // clear flag
+  try { initDashboard(); } catch(e3) {
+    console.error('initDashboard error:', e3.message, e3.stack);
+    // Don't redirect on crash - show page with basic info
+    try { document.getElementById('sb_name').textContent = P.name || 'Provider'; } catch(x){}
+    try { document.getElementById('sb_id').textContent   = P.id   || ''; } catch(x){}
   }
 });
 
