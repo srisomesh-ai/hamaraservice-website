@@ -891,40 +891,46 @@ window.addEventListener('load', function() {
 
   if (!saved) {
     if (trackId) {
-      // Customer-only mode — no provider login needed
-      P = { id: 'HS-GUEST', name: 'Customer View', available: false, services: [], lat: 17.385, lng: 78.486, radius: 10 };
+      P = { id:'HS-GUEST', name:'Customer View', available:false, services:[], lat:17.385, lng:78.486, radius:10 };
       initCustomerOnlyView(trackId);
     } else {
       window.location.href = 'provider-portal.html';
     }
     return;
   }
-  try {
-    P = JSON.parse(saved);
-  } catch(e) {
+
+  try { P = JSON.parse(saved); } catch(e) {
     localStorage.removeItem('hs_current_provider');
     window.location.href = 'provider-portal.html';
     return;
   }
+
   if (!P || !P.id) {
     localStorage.removeItem('hs_current_provider');
     window.location.href = 'provider-portal.html';
     return;
   }
-  // Refresh from hs_providers list if available
+
+  // Refresh P from hs_providers
   try {
-    var all = JSON.parse(localStorage.getItem('hs_providers') || '[]');
-    var fresh = all.find(function(pr){ return pr.id === P.id; });
+    var allP = JSON.parse(localStorage.getItem('hs_providers') || '[]');
+    var fresh = allP.find(function(pr){ return pr.id === P.id; });
     if (fresh) { P = fresh; localStorage.setItem('hs_current_provider', JSON.stringify(P)); }
-  } catch(e2) { /* ignore, use P as-is */ }
-  // Init dashboard — wrap each section so one failure doesn't kill the whole page
-  sessionStorage.removeItem('hs_fresh_login'); // clear flag
-  try { initDashboard(); } catch(e3) {
-    console.error('initDashboard error:', e3.message, e3.stack);
-    // Don't redirect on crash - show page with basic info
-    try { document.getElementById('sb_name').textContent = P.name || 'Provider'; } catch(x){}
-    try { document.getElementById('sb_id').textContent   = P.id   || ''; } catch(x){}
-  }
+  } catch(e2) {}
+
+  // ── APPROVAL GATE: check status before showing dashboard ─────────────────
+  checkApprovalStatus(P.id, function(status) {
+    var pStatus = status || P.status || 'pending';
+    if (pStatus !== 'approved') {
+      showPendingApprovalScreen(P, pStatus);
+      return;
+    }
+    // Approved — init the dashboard
+    try { initDashboard(); } catch(e3) {
+      console.error('initDashboard error:', e3.message || e3);
+      try { document.getElementById('sb_name').textContent = P.name || 'Provider'; } catch(x){}
+    }
+  });
 });
 
 // Customer-only tracking mode (opened via ?track= link, no provider login)
@@ -2361,6 +2367,106 @@ function openProviderTracking(bookingId) {
       '<strong>Status:</strong> ' + (bk.status || '') +
       '</div>';
   }
+}
+
+
+// ── Approval check — reads from Firebase then localStorage ─────────────────
+function checkApprovalStatus(providerId, cb){
+  // Try Firebase first
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/'+providerId+'/status.json',true);
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    try{
+      var fbStatus=JSON.parse(xhr.responseText);
+      // If Firebase says approved, update localStorage too
+      if(fbStatus==='approved'){
+        var all=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+        var idx=all.findIndex(function(p){return p.id===providerId;});
+        if(idx>-1){all[idx].status='approved';localStorage.setItem('hs_providers',JSON.stringify(all));}
+        if(P && P.id===providerId){ P.status='approved'; localStorage.setItem('hs_current_provider',JSON.stringify(P)); }
+      }
+      cb(fbStatus||null);
+    }catch(e){
+      // Fallback to localStorage
+      var all2=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+      var prov=all2.find(function(p){return p.id===providerId;});
+      cb(prov?prov.status:null);
+    }
+  };
+  xhr.onerror=xhr.ontimeout=function(){
+    // No network — use localStorage
+    var all3=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+    var prov3=all3.find(function(p){return p.id===providerId;});
+    cb(prov3?prov3.status:null);
+  };
+  xhr.send();
+}
+
+function showPendingApprovalScreen(prov, status){
+  // Hide main content, show waiting screen
+  var main=document.querySelector('.main-content');
+  var sidebar=document.getElementById('sidebar');
+  var topbar=document.querySelector('.topbar');
+  if(main) main.style.display='none';
+  if(sidebar) sidebar.style.display='none';
+  if(topbar) topbar.style.display='none';
+
+  var isSuspended = (status==='suspended');
+  var scr=document.createElement('div');
+  scr.id='approvalGate';
+  scr.style.cssText='position:fixed;inset:0;background:#f7f8fc;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;font-family:DM Sans,sans-serif;z-index:9999;';
+
+  var html='';
+  html+='<div style="max-width:400px;width:100%;text-align:center;">';
+  html+='<div style="font-size:64px;margin-bottom:20px;">'+(isSuspended?'🚫':'⏳')+'</div>';
+  html+='<h2 style="font-family:Sora,sans-serif;color:#0f1117;margin-bottom:10px;font-size:22px;">'+(isSuspended?'Account Suspended':'Waiting for Approval')+'</h2>';
+  if(isSuspended){
+    html+='<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:20px;">Your account has been suspended. Please contact the admin for clarification.</p>';
+  } else {
+    html+='<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:20px;">Hello <strong style="color:#0f1117;">'+(prov.name||'Provider')+'</strong>,<br/>Your registration is under review by our admin team.<br/>You will get full access once approved.</p>';
+  }
+  html+='<div style="background:white;border:2px solid rgba(232,37,26,.2);border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,.06);">';
+  html+='<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Contact Admin</div>';
+  html+='<a href="tel:8985849710" style="font-size:28px;font-weight:800;color:#E8251A;text-decoration:none;display:block;margin-bottom:4px;">&#x1F4DE; 8985849710</a>';
+  html+='<div style="font-size:13px;color:#6b7280;">Call or WhatsApp for faster approval</div>';
+  html+='</div>';
+  html+='<div style="background:white;border-radius:12px;padding:14px 16px;margin-bottom:20px;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.05);">';
+  html+='<div style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Your Provider ID</div>';
+  html+='<div style="font-size:18px;font-weight:800;color:#6c4ff8;">'+(prov.id||'—')+'</div>';
+  html+='</div>';
+  if(!isSuspended){
+    html+='<button id="reCheckBtn" style="width:100%;padding:14px;background:#E8251A;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Check Approval Status</button>';
+  }
+  html+='<button id="logoutFromGateBtn" style="width:100%;padding:13px;background:white;border:1.5px solid #eaedf2;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;color:#6b7280;">Log Out</button>';
+  html+='</div>';
+  scr.innerHTML=html;
+  document.body.appendChild(scr);
+
+  // Wire buttons
+  var rechk=document.getElementById('reCheckBtn');
+  if(rechk) rechk.onclick=function(){
+    rechk.textContent='Checking...'; rechk.disabled=true;
+    checkApprovalStatus(prov.id, function(newStatus){
+      if(newStatus==='approved'){
+        P.status='approved';
+        localStorage.setItem('hs_current_provider',JSON.stringify(P));
+        scr.parentNode && scr.parentNode.removeChild(scr);
+        if(main) main.style.display='';
+        if(sidebar) sidebar.style.display='';
+        if(topbar) topbar.style.display='';
+        try { initDashboard(); } catch(e){}
+      } else {
+        rechk.textContent='Check Approval Status'; rechk.disabled=false;
+        showToast('Not approved yet. Contact 8985849710');
+      }
+    });
+  };
+  var lo=document.getElementById('logoutFromGateBtn');
+  if(lo) lo.onclick=function(){
+    localStorage.removeItem('hs_current_provider');
+    window.location.href='provider-portal.html';
+  };
 }
 
 </script>

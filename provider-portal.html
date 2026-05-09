@@ -347,6 +347,16 @@ function doLogin(){
   var found=providers.find(function(p){ return p.email&&p.email.toLowerCase()===email&&p.password===pass; });
   if(!found&&email==='demo@hamaraservice.in'&&pass==='demo123'){found=createDemo(providers);}
   if(!found){showErr('Email or password not found. Please register first.');return;}
+  // Check approval status
+  var provStatus = found.status || 'pending';
+  if(provStatus === 'pending'){
+    showWaitingScreen(found);
+    return;
+  }
+  if(provStatus === 'suspended'){
+    showErr('Your account has been suspended. Contact admin: 8985849710');
+    return;
+  }
   localStorage.setItem('hs_current_provider',JSON.stringify(found));
   sessionStorage.setItem('hs_fresh_login','1');
   showToast('✅ Login successful! Redirecting...');
@@ -533,12 +543,42 @@ function submitRegistration(){
   };
   var providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
   providers.push(provider);
+  // Set status as pending — requires admin approval
+  provider.status = 'pending';
+  provider.appliedAt = new Date().toISOString();
   localStorage.setItem('hs_providers',JSON.stringify(providers));
-  localStorage.setItem('hs_current_provider',JSON.stringify(provider));
+  // Do NOT set hs_current_provider — provider must wait for approval
   saveProviderToFirebase(provider);
+  // Show pending approval screen
   document.querySelectorAll('.form-card').forEach(function(c){ c.classList.remove('active'); });
-  document.getElementById('stepSuccess').classList.add('active');
-  document.getElementById('generatedId').textContent=id;
+  var succ = document.getElementById('stepSuccess');
+  if(succ){
+    succ.classList.add('active');
+    var gi = document.getElementById('generatedId');
+    if(gi) gi.textContent = id;
+    // Replace success content with pending message
+    succ.innerHTML =
+      '<div style="text-align:center;padding:32px 20px;">'+
+      '<div style="font-size:64px;margin-bottom:20px;">⏳</div>'+
+      '<h2 style="color:var(--red);font-family:Sora,sans-serif;margin-bottom:12px;">Registration Submitted!</h2>'+
+      '<p style="color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:20px;">'+
+        'Your application has been received.<br/>'+
+        '<strong style="color:var(--ink);">Waiting for Admin Approval.</strong><br/><br/>'+
+        'You will be able to log in once your account is approved.<br/>'+
+        'For faster approval or queries, contact:'+
+      '</p>'+
+      '<div style="background:var(--bg);border:2px solid var(--red);border-radius:14px;padding:18px;margin-bottom:24px;">'+
+        '<div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;">CONTACT ADMIN</div>'+
+        '<a href="tel:8985849710" style="font-size:24px;font-weight:800;color:var(--red);text-decoration:none;">📞 8985849710</a>'+
+      '</div>'+
+      '<div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:24px;text-align:left;">'+
+        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Your Provider ID</div>'+
+        '<div style="font-size:18px;font-weight:800;color:var(--purple);">'+id+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-top:4px;">Save this ID - needed to log in after approval</div>'+
+      '</div>'+
+      '<a href="provider-portal.html" style="display:inline-block;padding:12px 28px;background:var(--red);color:white;border-radius:10px;font-weight:700;text-decoration:none;font-family:DM Sans,sans-serif;">Back to Login</a>'+
+      '</div>';
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -651,6 +691,53 @@ if(!_fromDash){
     }catch(e){localStorage.removeItem('hs_current_provider');}
   }
 }
+
+function showWaitingScreen(prov){
+  var panelLogin = document.getElementById('panelLogin');
+  var panelReg   = document.getElementById('panelRegister');
+  if(panelLogin) panelLogin.style.display = 'none';
+  if(panelReg)   panelReg.style.display   = 'none';
+
+  var scr = document.getElementById('waitingApprovalScreen');
+  if(!scr){
+    scr = document.createElement('div');
+    scr.id = 'waitingApprovalScreen';
+    var card = document.querySelector('.auth-card') || document.querySelector('.auth-modal-box') || document.body;
+    card.appendChild(scr);
+  }
+  scr.style.cssText = 'padding:28px 20px;text-align:center;';
+
+  var html = '';
+  html += '<div style="font-size:56px;margin-bottom:16px;">&#x23F3;</div>';
+  html += '<h2 style="color:#E8251A;font-family:Sora,sans-serif;margin-bottom:10px;">Waiting for Approval</h2>';
+  html += '<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:18px;">';
+  html += 'Hello <strong style="color:#0f1117;">' + (prov.name||'Provider') + '</strong>,<br/>';
+  html += 'Your registration is under review.<br/>';
+  html += 'You will get access once the admin approves your account.';
+  html += '</p>';
+  html += '<div style="background:#fff5f5;border:2px solid rgba(232,37,26,.2);border-radius:14px;padding:16px;margin-bottom:16px;">';
+  html += '<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">For faster approval, contact Admin</div>';
+  html += '<a href="tel:8985849710" style="font-size:26px;font-weight:800;color:#E8251A;text-decoration:none;display:block;margin-bottom:4px;">&#x1F4DE; 8985849710</a>';
+  html += '<div style="font-size:13px;color:#6b7280;">Call or WhatsApp</div>';
+  html += '</div>';
+  html += '<div style="background:#f7f8fc;border-radius:12px;padding:12px 16px;margin-bottom:18px;text-align:left;">';
+  html += '<div style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Your Provider ID</div>';
+  html += '<div style="font-size:16px;font-weight:800;color:#6c4ff8;">' + (prov.id||'—') + '</div>';
+  html += '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Save this ID — needed to log in after approval</div>';
+  html += '</div>';
+  html += '<button id="checkAgainBtn" style="width:100%;padding:12px;background:#E8251A;color:white;border:none;border-radius:10px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">Check Again</button>';
+  html += '<button id="backToLoginBtn" style="width:100%;padding:11px;background:#f7f8fc;border:1.5px solid #eaedf2;border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;">Back to Login</button>';
+  scr.innerHTML = html;
+
+  var chk = document.getElementById('checkAgainBtn');
+  if(chk) chk.onclick = function(){ window.location.reload(); };
+  var back = document.getElementById('backToLoginBtn');
+  if(back) back.onclick = function(){
+    scr.style.display = 'none';
+    if(panelLogin) panelLogin.style.display = 'block';
+  };
+}
+
 </script>
 </body>
 </html>

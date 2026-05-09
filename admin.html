@@ -838,9 +838,24 @@ document.getElementById("af-all").addEventListener("click",function(){
   document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("all");});
 
 function quickApprove(id){
-  var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
-  if(idx>-1){all[idx].status="approved";all[idx].suspended=false;saveProviders(all);}
-  refreshAll();showToast("Provider "+id+" approved!");
+  var all=getProviders();
+  var idx=all.findIndex(function(p){return p.id===id;});
+  if(idx>-1){
+    all[idx].status="approved";
+    all[idx].suspended=false;
+    all[idx].approvedAt=new Date().toISOString();
+    saveProviders(all);
+    // Write to Firebase so provider can log in from any device
+    fbDB.ref('providers/'+id+'/status').set('approved').catch(function(){});
+    fbDB.ref('providers/'+id+'/approvedAt').set(new Date().toISOString()).catch(function(){});
+    // Also try XHR fallback for Firebase REST API
+    var xhr=new XMLHttpRequest();
+    xhr.open('PATCH','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/'+id+'.json',true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.send(JSON.stringify({status:'approved',approvedAt:new Date().toISOString()}));
+  }
+  refreshAll();
+  showToast("✅ Provider "+id+" approved! They can now log in.");
 }
 function quickReject(id){
   if(!confirm("Reject and remove this provider permanently?"))return;
@@ -849,7 +864,13 @@ function quickReject(id){
 }
 function suspendProvider(id){
   var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
-  if(idx>-1){all[idx].status="suspended";all[idx].suspended=true;saveProviders(all);}
+  if(idx>-1){
+    all[idx].status="suspended";all[idx].suspended=true;saveProviders(all);
+    var xhr=new XMLHttpRequest();
+    xhr.open('PATCH','https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/'+id+'.json',true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.send(JSON.stringify({status:'suspended'}));
+  }
   refreshAll();showToast("Provider suspended");
 }
 function markReview(id){
