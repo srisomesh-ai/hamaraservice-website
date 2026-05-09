@@ -1126,7 +1126,7 @@ function hvs(a,b,c,d){
   var p=new URLSearchParams(window.location.search);
   var svc=p.get('service'),locR=p.get('loc'),addr=p.get('addr');
   if(svc){
-    var m=SVCS.find(function(s){ return s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()));
+    var m=SVCS.find(function(s){ return s.n.toLowerCase()===svc.toLowerCase()||s.n.toLowerCase().includes(svc.toLowerCase()); });
     if(m)setTimeout(function(){pickSvc(SVCS.indexOf(m));},300);
     else{setTimeout(function(){document.getElementById('svcInp').value=svc;svcSearch(svc);},300);}
   }
