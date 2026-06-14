@@ -616,23 +616,36 @@ function saveProviders(p){localStorage.setItem("hs_providers",JSON.stringify(p))
 function getCustomers(){try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}}
 function getPenalties(){try{return JSON.parse(localStorage.getItem("hs_penalties")||"[]");}catch(e){return[];}}
 function savePenalties(p){localStorage.setItem("hs_penalties",JSON.stringify(p));}
-function getPayouts(){try{return JSON.parse(localStorage.getItem("hs_payouts")||"[]");}catch(e){return[];}}
+function getPayouts(){
+  if(window._fbPayouts&&window._fbPayouts.length>0)return window._fbPayouts;
+  try{return JSON.parse(localStorage.getItem("hs_payouts")||"[]");}catch(e){return[];}
+}
 function savePayouts(p){localStorage.setItem("hs_payouts",JSON.stringify(p));}
 function getAllOrders(){
-  var providers=getProviders();
+  // Read from in-memory Firebase bookings (loaded at startup)
+  return window._fbBookings || [];
+}
+
+function _buildOrders(rawBookings){
   var catalog=getCatalog();
   var all=[];
-  providers.forEach(function(p){
-    var bk=[];
-    try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
-    bk.forEach(function(b){
-      var svc=catalog.find(function(s){return s.name===b.service;});
-      var commPct=svc?svc.commission:15;
-      var commAmt=Math.round(b.amount*(commPct/100));
-      all.push(Object.assign({},b,{providerName:p.name,providerId:p.id,commissionAmt:commAmt,commissionPct:commPct}));
-    });
+  Object.keys(rawBookings||{}).forEach(function(key){
+    var b=rawBookings[key];
+    if(!b||!b.service)return;
+    // Normalise amount field — app writes amountPaid or priceVal or price
+    var amt=Number(b.amountPaid||b.priceVal||b.price||0);
+    var svc=catalog.find(function(s){return s.name===b.service;});
+    var commPct=svc?svc.commission:15;
+    var commAmt=Math.round(amt*(commPct/100));
+    all.push(Object.assign({},b,{
+      id:key,
+      amount:amt,
+      commissionAmt:commAmt,
+      commissionPct:commPct,
+      providerName:b.providerName||b.acceptedBy&&b.acceptedBy.name||'',
+    }));
   });
-  return all.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  window._fbBookings=all.sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');});
 }
 function cap(s){if(!s)return"";return s.charAt(0).toUpperCase()+s.slice(1);}
 function fmt(n){return n.toLocaleString("en-IN");}
@@ -645,7 +658,27 @@ function closeModal(id){document.getElementById(id).classList.remove("show");}
 
 // ====== LOGIN ======
 window.addEventListener("load",function(){
-  if(localStorage.getItem("hs_admin_session")==="1"){
+  // Load bookings from Firebase at startup
+function _loadFirebaseBookings(){
+  if(typeof fbDB==='undefined')return;
+  fbDB.ref('bookings').on('value',function(snap){
+    _buildOrders(snap.val()||{});
+    // Refresh current page
+    if(document.getElementById('page-orders')&&document.getElementById('page-orders').classList.contains('active'))loadOrders();
+    if(document.getElementById('page-dashboard')&&document.getElementById('page-dashboard').classList.contains('active'))loadDashboard();
+    if(document.getElementById('page-analytics')&&document.getElementById('page-analytics').classList.contains('active'))loadAnalytics();
+    if(document.getElementById('page-payments')&&document.getElementById('page-payments').classList.contains('active'))loadPayments();
+  });
+  // Also load payout requests from Firebase
+  fbDB.ref('payout_requests').on('value',function(snap){
+    var raw=snap.val()||{};
+    var payouts=Object.keys(raw).map(function(k){return Object.assign({},raw[k],{id:k});});
+    window._fbPayouts=payouts;
+    localStorage.setItem('hs_payouts',JSON.stringify(payouts));
+  });
+}
+
+if(localStorage.getItem("hs_admin_session")==="1"){
     document.getElementById("loginScreen").style.display="none";
     document.getElementById("app").style.display="block";
     initAdmin();
@@ -658,6 +691,7 @@ document.getElementById("loginBtn").addEventListener("click",function(){
   var creds=getAdminCreds();
   if(u===creds.user && p===creds.pass){
     localStorage.setItem("hs_admin_session","1");
+        _loadFirebaseBookings();
     document.getElementById("loginScreen").style.display="none";
     document.getElementById("app").style.display="block";
     initAdmin();
