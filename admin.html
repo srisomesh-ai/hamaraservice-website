@@ -681,6 +681,7 @@ function _loadFirebaseBookings(){
 if(localStorage.getItem("hs_admin_session")==="1"){
     document.getElementById("loginScreen").style.display="none";
     document.getElementById("app").style.display="block";
+    _loadFirebaseBookings();
     initAdmin();
   }
 });
