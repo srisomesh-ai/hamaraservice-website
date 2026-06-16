@@ -787,8 +787,11 @@ fbAuth.onAuthStateChanged(async fbUser => {
     const afterLogin = sessionStorage.getItem('hs_after_login');
     if (afterLogin) {
       sessionStorage.removeItem('hs_after_login');
-      window.location.replace(afterLogin);
-      return;
+      // Only redirect if it won't create a loop (not back to login)
+      if (!afterLogin.includes('login')) {
+        window.location.replace(afterLogin);
+        return;
+      }
     }
     await loadUserData(fbUser);
     startBookingListener(fbUser.uid);
