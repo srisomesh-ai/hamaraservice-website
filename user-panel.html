@@ -971,7 +971,12 @@ async function loadUserData(fbUser) {
         provider: fbUser.providerData[0]?.providerId || 'email',
         registeredAt: new Date().toISOString(), wallet: 0
       };
-      await fbDB.ref('customers/' + fbUser.uid).set(profile);
+      // Write via REST with auth token to ensure it works
+      try {
+        const token = await fbUser.getIdToken();
+        const dbUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/' + fbUser.uid + '.json?auth=' + token;
+        await fetch(dbUrl, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(profile) });
+      } catch(we) { console.warn('Profile write error:', we.message); }
     }
     clearTimeout(_loadTimeout);
     currentProfile = profile;
