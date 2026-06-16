@@ -799,16 +799,9 @@ fbAuth.onAuthStateChanged(async fbUser => {
       if (btn) switchTab(btn, true);
     }
   } else {
-    // Firebase fires null FIRST before restoring the session from storage.
-    // Wait 2s before showing gate — if user is logged in, the real callback
-    // fires within milliseconds and calls loadUserData instead.
-    setTimeout(function() {
-      if (!currentUser) {
-        currentProfile = null;
-        allBookings = [];
-        showGate();
-      }
-    }, 2000);
+    currentUser = currentProfile = null;
+    allBookings = [];
+    showGate();
   }
 });
 
