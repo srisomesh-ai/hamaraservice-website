@@ -1311,14 +1311,17 @@ function initiateOTPCompletion(bookingId) {
     bookingId: bookingId,
     service: booking.service,
     customer: booking.customer || 'Customer',
+    customerId: booking.customerId || booking.uid || '',
     providerName: P.name,
     generatedAt: Date.now(),
-    status: 'waiting' // → 'verified' once provider enters correct code
+    status: 'waiting'
   });
 
-  // Update booking status in Firebase too
+  // Update status on BOTH paths so user-panel listeners fire
   fbWrite('active_bookings/' + bookingId + '/status', 'otp_sent');
   fbWrite('active_bookings/' + bookingId + '/otpSentAt', Date.now());
+  fbWrite('bookings/' + bookingId + '/status', 'otp_sent');
+  fbWrite('bookings/' + bookingId + '/otpSentAt', Date.now());
 
   // Show the provider entry modal — ask customer to read their code
   document.getElementById('otpBookingInfo').textContent =
@@ -1391,6 +1394,8 @@ function verifyOTP() {
   fbWrite('job_otp/' + pendingCompleteId + '/verifiedAt', Date.now());
   fbWrite('active_bookings/' + pendingCompleteId + '/status', 'payment_pending');
   fbWrite('active_bookings/' + pendingCompleteId + '/otpVerifiedAt', Date.now());
+  fbWrite('bookings/' + pendingCompleteId + '/status', 'payment_pending');
+  fbWrite('bookings/' + pendingCompleteId + '/otpVerifiedAt', Date.now());
 
   currentRatingBookingId = pendingCompleteId;
   pendingCompleteId = null;
