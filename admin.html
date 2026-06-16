@@ -611,9 +611,9 @@ function getCatalog(){
   return DEFAULT_CATALOG;
 }
 function saveCatalog(c){localStorage.setItem("hs_catalog",JSON.stringify(c));}
-function getProviders(){try{return JSON.parse(localStorage.getItem("hs_providers")||"[]");}catch(e){return[];}}
+function getProviders(){if(window._fbProviders&&window._fbProviders.length>0)return window._fbProviders;try{return JSON.parse(localStorage.getItem("hs_providers")||"[]");}catch(e){return[];}}
 function saveProviders(p){localStorage.setItem("hs_providers",JSON.stringify(p));}
-function getCustomers(){try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}}
+function getCustomers(){if(window._fbCustomers&&window._fbCustomers.length>0)return window._fbCustomers;try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}}
 function getPenalties(){try{return JSON.parse(localStorage.getItem("hs_penalties")||"[]");}catch(e){return[];}}
 function savePenalties(p){localStorage.setItem("hs_penalties",JSON.stringify(p));}
 function getPayouts(){
