@@ -657,13 +657,9 @@ fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
 var _inProgress = false;
 
 fbAuth.onAuthStateChanged(function(u) {
-  if (u && !_inProgress) {
-    // Already signed in → go to panel
-    window.location.replace('user-panel.html');
-  } else {
-    // Not signed in, or currently registering → show the form
-    document.getElementById('loadOverlay').classList.add('gone');
-  }
+  // Never auto-redirect — just show the form.
+  // User is redirected manually after login/register success.
+  document.getElementById('loadOverlay').classList.add('gone');
 });
 
 
