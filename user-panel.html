@@ -1031,14 +1031,29 @@ async function loadUserData(fbUser) {
   } catch(e) {
     clearTimeout(_loadTimeout);
     console.warn('loadUserData:', e);
-    loadFallbackView(currentProfile || {});
+    // If we have a Firebase user, build a minimal profile from it
+    // Never pass empty {} — that causes showGate() to fire
+    var fallback = currentProfile || (currentUser ? {
+      uid: currentUser.uid,
+      id: '',
+      name: currentUser.displayName || '',
+      email: currentUser.email || '',
+      phone: '', city: '', photoURL: currentUser.photoURL || ''
+    } : null);
+    if (fallback && fallback.uid) {
+      loadFallbackView(fallback);
+    } else {
+      showGate();
+    }
   }
 }
 
 function loadFallbackView(profile) {
-  // Safety check: never load data if we have no UID (would show wrong user's data)
+  // Safety check: never load data if we have no UID
   if (!profile || (!profile.uid && !profile.id)) {
-    showGate(); return;
+    // Only show gate if genuinely not logged in
+    if (!currentUser) { showGate(); }
+    return;
   }
   currentProfile = profile;
   renderProfile(profile);
