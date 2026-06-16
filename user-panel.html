@@ -781,6 +781,7 @@ const HISTORY_ST = ['completed','cancelled','rejected'];
 
 // ── AUTH STATE ─────────────────────────────────
 fbAuth.onAuthStateChanged(async fbUser => {
+  console.log("HS_AUTH fired:", fbUser ? fbUser.email : "NULL");
   if (fbUser) {
     currentUser = fbUser;
     // Check if user came from booking page — redirect back after login
@@ -790,6 +791,7 @@ fbAuth.onAuthStateChanged(async fbUser => {
       // Only redirect if it won't create a loop (not back to login)
       if (!afterLogin.includes('login')) {
         window.location.replace(afterLogin);
+  console.log("HS_AUTH: redirecting to afterLogin=", afterLogin);
         return;
       }
     }
