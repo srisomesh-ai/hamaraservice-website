@@ -812,7 +812,18 @@ fbAuth.onAuthStateChanged(async fbUser => {
 
 
 function showGate() {
-  console.log('HS_AUTH: showGate() called — stack:', new Error().stack.split('\n').slice(1,4).join(' | '));
+  var stack = new Error().stack || '';
+  var caller = stack.split('\n').slice(1,5).join(' | ');
+  console.error('HS_AUTH showGate called from:', caller);
+  // Show debug info on screen so it doesnt disappear
+  var dbg = document.getElementById('hs_debug');
+  if (!dbg) {
+    dbg = document.createElement('div');
+    dbg.id = 'hs_debug';
+    dbg.style = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#ff0;color:#000;font-size:12px;padding:10px;font-family:monospace;white-space:pre-wrap;';
+    document.body.appendChild(dbg);
+  }
+  dbg.textContent = 'showGate() called at: ' + new Date().toISOString() + '\nCaller: ' + caller + '\ncurrentUser: ' + (window.currentUser ? window.currentUser.email : 'NULL');
   var ov = document.getElementById('loadingOverlay');
   if (ov) ov.classList.add('hidden');
   document.getElementById('authGate').style.display = 'flex';
