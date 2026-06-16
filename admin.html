@@ -661,20 +661,58 @@ window.addEventListener("load",function(){
   // Load bookings from Firebase at startup
 function _loadFirebaseBookings(){
   if(typeof fbDB==='undefined')return;
+  // Load bookings
   fbDB.ref('bookings').on('value',function(snap){
     _buildOrders(snap.val()||{});
-    // Refresh current page
-    if(document.getElementById('page-orders')&&document.getElementById('page-orders').classList.contains('active'))loadOrders();
+    if(document.getElementById('page-orders')&&document.getElementById('page-orders').classList.contains('active'))loadOrders(null,null);
     if(document.getElementById('page-dashboard')&&document.getElementById('page-dashboard').classList.contains('active'))loadDashboard();
     if(document.getElementById('page-analytics')&&document.getElementById('page-analytics').classList.contains('active'))loadAnalytics();
-    if(document.getElementById('page-payments')&&document.getElementById('page-payments').classList.contains('active'))loadPayments();
+    if(document.getElementById('page-payments')&&document.getElementById('page-payments').classList.contains('active'))loadPayments('pending');
   });
-  // Also load payout requests from Firebase
+  // Load payout requests
   fbDB.ref('payout_requests').on('value',function(snap){
     var raw=snap.val()||{};
     var payouts=Object.keys(raw).map(function(k){return Object.assign({},raw[k],{id:k});});
     window._fbPayouts=payouts;
     localStorage.setItem('hs_payouts',JSON.stringify(payouts));
+  });
+  // Load providers from Firebase
+  fbDB.ref('providers').on('value',function(snap){
+    var raw=snap.val()||{};
+    var providers=Object.keys(raw).map(function(k){
+      var p=raw[k];
+      return Object.assign({},p,{id:k,
+        name:p.name||p.fullName||p.providerName||'Unknown',
+        phone:p.phone||p.mobile||'',
+        status:p.status||'pending',
+        totalEarned:p.totalEarned||0,
+        totalBookings:p.totalBookings||p.totalJobs||0,
+        rating:p.rating||5,
+        withdrawnEarned:p.withdrawnEarned||0,
+        available:p.available||false
+      });
+    });
+    window._fbProviders=providers;
+    localStorage.setItem('hs_providers',JSON.stringify(providers));
+    if(document.getElementById('page-approvals')&&document.getElementById('page-approvals').classList.contains('active'))loadApprovals('pending');
+    if(document.getElementById('page-providers')&&document.getElementById('page-providers').classList.contains('active'))loadProviders(null,null);
+    loadDashboard();
+  });
+  // Load customers from Firebase
+  fbDB.ref('customers').on('value',function(snap){
+    var raw=snap.val()||{};
+    var customers=Object.keys(raw).map(function(k){
+      var c=raw[k];
+      return Object.assign({},c,{id:k,
+        name:c.name||c.fullName||c.displayName||'Unknown',
+        phone:c.phone||c.mobile||'',
+        email:c.email||''
+      });
+    });
+    window._fbCustomers=customers;
+    localStorage.setItem('hs_customers',JSON.stringify(customers));
+    if(document.getElementById('page-customers')&&document.getElementById('page-customers').classList.contains('active'))loadCustomers(null);
+    loadDashboard();
   });
 }
 
