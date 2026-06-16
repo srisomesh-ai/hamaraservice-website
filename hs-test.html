@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HS Test Panel</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+  body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+  .box { background: white; border-radius: 12px; padding: 24px; max-width: 400px; margin: 40px auto; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  h2 { color: #1B6B7A; margin-top: 0; }
+  .status { padding: 12px; border-radius: 8px; margin: 10px 0; font-weight: bold; }
+  .green { background: #d1fae5; color: #065f46; }
+  .red   { background: #fee2e2; color: #991b1b; }
+  .blue  { background: #dbeafe; color: #1e40af; }
+  .log   { background: #f8f8f8; border-radius: 8px; padding: 12px; font-size: 12px; font-family: monospace; margin-top: 16px; max-height: 300px; overflow-y: auto; }
+  .log div { padding: 2px 0; border-bottom: 1px solid #eee; }
+  a.btn  { display: block; text-align: center; background: #1B6B7A; color: white; padding: 12px; border-radius: 8px; text-decoration: none; margin-top: 16px; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>🔍 HamaraService Auth Test</h2>
+  <div id="status" class="status blue">Checking Firebase session...</div>
+  <div id="userinfo" style="display:none;margin:10px 0;font-size:14px;"></div>
+  <div class="log" id="log"></div>
+  <a class="btn" href="login.html" id="loginBtn" style="display:none">Go to Login →</a>
+  <a class="btn" href="user-panel.html" id="panelBtn" style="display:none">Go to User Panel →</a>
+</div>
+
+<script>
+var log = document.getElementById('log');
+function addLog(msg, color) {
+  var d = document.createElement('div');
+  d.textContent = new Date().toISOString().substr(11,8) + ' ' + msg;
+  if (color) d.style.color = color;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+addLog('Firebase initializing...');
+
+firebase.initializeApp({
+  apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:        "hamaraservice-s009.firebaseapp.com",
+  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "hamaraservice-s009",
+  storageBucket:     "hamaraservice-s009.firebasestorage.app",
+  messagingSenderId: "1064274729048",
+  appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var auth = firebase.auth();
+
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
+  addLog('Persistence: LOCAL ✓', 'green');
+}).catch(function(e) {
+  addLog('Persistence error: ' + e.message, 'red');
+});
+
+addLog('Waiting for onAuthStateChanged...');
+
+var callCount = 0;
+auth.onAuthStateChanged(function(user) {
+  callCount++;
+  if (user) {
+    addLog('CALL #' + callCount + ': USER = ' + user.email, 'green');
+    document.getElementById('status').className = 'status green';
+    document.getElementById('status').textContent = '✅ Logged in as: ' + user.email;
+    document.getElementById('userinfo').style.display = 'block';
+    document.getElementById('userinfo').textContent = 'UID: ' + user.uid;
+    document.getElementById('panelBtn').style.display = 'block';
+    document.getElementById('loginBtn').style.display = 'none';
+    
+    // Check Firebase DB
+    addLog('Reading customers/' + user.uid + ' from DB...');
+    firebase.database().ref('customers/' + user.uid).once('value')
+      .then(function(snap) {
+        if (snap.exists()) {
+          addLog('DB: customer record EXISTS ✓', 'green');
+          var p = snap.val();
+          addLog('Name: ' + p.name + ' | City: ' + p.city, 'green');
+        } else {
+          addLog('DB: customer record NOT FOUND', 'red');
+        }
+      })
+      .catch(function(e) {
+        addLog('DB ERROR: ' + e.message, 'red');
+      });
+      
+  } else {
+    addLog('CALL #' + callCount + ': NULL (no user)', 'red');
+    if (callCount === 1) {
+      addLog('This is normal - Firebase restoring session...', 'blue');
+    } else {
+      addLog('Still no user after ' + callCount + ' calls - genuinely logged out', 'red');
+      document.getElementById('status').className = 'status red';
+      document.getElementById('status').textContent = '❌ Not logged in';
+      document.getElementById('loginBtn').style.display = 'block';
+    }
+  }
+});
+
+setTimeout(function() {
+  addLog('--- 1s check: currentUser = ' + (auth.currentUser ? auth.currentUser.email : 'NULL'));
+}, 1000);
+setTimeout(function() {
+  addLog('--- 3s check: currentUser = ' + (auth.currentUser ? auth.currentUser.email : 'NULL'));
+}, 3000);
+</script>
+</body>
+</html>
