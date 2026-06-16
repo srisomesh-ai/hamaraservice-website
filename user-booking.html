@@ -485,9 +485,14 @@ fbAuthInst.onAuthStateChanged(function(fbUser) {
       xhr.send();
     }
   } else {
-    currentUid = null; currentCust = null;
-    sessionStorage.setItem('hs_pending_booking', window.location.pathname.replace('/','') + window.location.search);
-    window.location.replace('login.html');
+    // Firebase fires null first before restoring session.
+    // Wait to confirm user is genuinely not logged in before redirecting.
+    setTimeout(function() {
+      if (!currentUid) {
+        sessionStorage.setItem('hs_after_login', 'user-booking.html' + window.location.search);
+        window.location.replace('login.html');
+      }
+    }, 2000);
   }
 });
 
