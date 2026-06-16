@@ -780,50 +780,42 @@ const ACTIVE_ST  = ['confirmed','pending','active','searching','accepted','assig
 const HISTORY_ST = ['completed','cancelled','rejected'];
 
 // ── AUTH STATE ─────────────────────────────────
+// Using a flag to prevent showing gate on Firebase's premature null callback
+var _authReady = false;
+
 fbAuth.onAuthStateChanged(async fbUser => {
-  console.log("HS_AUTH fired:", fbUser ? fbUser.email : "NULL");
   if (fbUser) {
+    _authReady = true;
     currentUser = fbUser;
-    // Check if user came from booking page — redirect back after login
     const afterLogin = sessionStorage.getItem('hs_after_login');
-    if (afterLogin) {
+    if (afterLogin && !afterLogin.includes('login')) {
       sessionStorage.removeItem('hs_after_login');
-      // Only redirect if it won't create a loop (not back to login)
-      if (!afterLogin.includes('login')) {
-        window.location.replace(afterLogin);
-  console.log("HS_AUTH: redirecting to afterLogin=", afterLogin);
-        return;
-      }
+      window.location.replace(afterLogin);
+      return;
     }
+    sessionStorage.removeItem('hs_after_login');
     await loadUserData(fbUser);
     startBookingListener(fbUser.uid);
-    // After login/register, open the tab from URL param
     const urlTab = new URLSearchParams(window.location.search).get('tab');
     if (urlTab && ['bookings','history','profile'].includes(urlTab)) {
       const btn = document.querySelector(`.tab-btn[data-tab="${urlTab}"]`);
       if (btn) switchTab(btn, true);
     }
   } else {
-    currentUser = currentProfile = null;
-    allBookings = [];
-    showGate();
+    // Firebase fires null first before restoring session.
+    // Only show gate after we are sure no user is coming.
+    setTimeout(function() {
+      if (!_authReady && !currentUser) {
+        currentProfile = null;
+        allBookings = [];
+        showGate();
+      }
+    }, 3000);
   }
 });
 
 
 function showGate() {
-  var stack = new Error().stack || '';
-  var caller = stack.split('\n').slice(1,5).join(' | ');
-  console.error('HS_AUTH showGate called from:', caller);
-  // Show debug info on screen so it doesnt disappear
-  var dbg = document.getElementById('hs_debug');
-  if (!dbg) {
-    dbg = document.createElement('div');
-    dbg.id = 'hs_debug';
-    dbg.style = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#ff0;color:#000;font-size:12px;padding:10px;font-family:monospace;white-space:pre-wrap;';
-    document.body.appendChild(dbg);
-  }
-  dbg.textContent = 'showGate() called at: ' + new Date().toISOString() + '\nCaller: ' + caller + '\ncurrentUser: ' + (window.currentUser ? window.currentUser.email : 'NULL');
   var ov = document.getElementById('loadingOverlay');
   if (ov) ov.classList.add('hidden');
   document.getElementById('authGate').style.display = 'flex';
@@ -1045,17 +1037,15 @@ async function loadUserData(fbUser) {
     }).catch(()=>{});
   } catch(e) {
     clearTimeout(_loadTimeout);
-    console.error('HS_AUTH: loadUserData CATCH ERROR:', e.message, e.code);
-    // If we have a Firebase user, build a minimal profile from it
-    // Never pass empty {} — that causes showGate() to fire
-    var fallback = currentProfile || (currentUser ? {
-      uid: currentUser.uid,
-      id: '',
-      name: currentUser.displayName || '',
-      email: currentUser.email || '',
-      phone: '', city: '', photoURL: currentUser.photoURL || ''
-    } : null);
-    if (fallback && fallback.uid) {
+    console.warn('loadUserData error:', e.message);
+    if (currentUser) {
+      var fallback = currentProfile || {
+        uid: currentUser.uid,
+        id: 'HS-CU-' + currentUser.uid.slice(-6).toUpperCase(),
+        name: currentUser.displayName || '',
+        email: currentUser.email || '',
+        phone: '', city: '', photoURL: currentUser.photoURL || ''
+      };
       loadFallbackView(fallback);
     } else {
       showGate();
