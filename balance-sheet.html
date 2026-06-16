@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Balance Sheet — HamaraService Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--brand:#E8651A;--brand2:#c9510f;--brand-light:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-light:#e6f4f6;--red:#E8651A;--red-light:#fff3eb;--green:#2ecc71;--green-light:#e8f8f0;--green-dark:#27ae60;--yellow:#f59e0b;--yellow-light:#fffbeb;--blue:#1A73E8;--blue-light:#e8f0fd;--purple:#7c3aed;--purple-light:#f3f0ff;--pink:#e91e8c;--bg:#f0f7f9;--white:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e8f0;--sidebar-w:256px;--radius:14px;--shadow:0 2px 16px rgba(0,0,0,.08);--shadow-lg:0 8px 32px rgba(0,0,0,.14);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);font-size:14px;overflow-x:hidden;}
+
+/* Layout */
+.dash-wrap{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#0d3d47,#1B6B7A);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100;}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.10);}
+.sb-logo-text{font-family:"Sora",sans-serif;font-size:18px;font-weight:800;color:white;display:flex;align-items:center;gap:9px;}
+.sb-logo-ic{width:32px;height:32px;background:linear-gradient(135deg,var(--brand),var(--brand2));border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:15px;flex-shrink:0;}
+.sb-badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;letter-spacing:.8px;margin:6px 0 0 41px;display:inline-block;}
+.sb-nav{flex:1;padding:10px;}
+.nav-sec{font-size:9px;font-weight:900;color:rgba(255,255,255,.28);letter-spacing:1.5px;text-transform:uppercase;padding:12px 8px 5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;cursor:pointer;transition:all .2s;margin-bottom:2px;color:rgba(255,255,255,.58);font-size:13px;font-weight:700;text-decoration:none;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:white;}
+.nav-item.active{background:linear-gradient(135deg,var(--brand),var(--brand2));color:white;box-shadow:0 2px 10px rgba(232,101,26,.4);}
+.nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.sb-footer{padding:13px 18px;border-top:1px solid rgba(255,255,255,.08);}
+.live-pill{display:flex;align-items:center;gap:6px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.3);border-radius:20px;padding:6px 12px;color:rgba(255,255,255,.8);font-size:11px;font-weight:700;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#2ecc71;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.main-content{margin-left:var(--sidebar-w);flex:1;}
+.topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.topbar-title{font-family:"Sora",sans-serif;font-size:20px;font-weight:800;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.sync-chip{background:var(--teal-light);color:var(--teal);font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;font-family:"Nunito",sans-serif;}
+
+.page{padding:24px;}
+
+/* Summary cards */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{background:white;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:2px solid var(--border);position:relative;overflow:hidden;transition:all .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.green::before{background:var(--green);}
+.stat-card.orange::before{background:var(--brand);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.purple::before{background:var(--purple);}
+.stat-card.red::before{background:var(--red);}
+.stat-icon{font-size:26px;margin-bottom:8px;}
+.stat-num{font-family:"Sora",sans-serif;font-size:22px;font-weight:800;margin-bottom:2px;}
+.stat-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.stat-card.green .stat-num{color:var(--green-dark);}
+.stat-card.orange .stat-num{color:var(--brand);}
+.stat-card.blue .stat-num{color:var(--blue);}
+.stat-card.purple .stat-num{color:var(--purple);}
+.stat-card.red .stat-num{color:#e53e3e;}
+
+/* Section */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.sec-title{font-family:"Sora",sans-serif;font-size:18px;font-weight:800;}
+.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);overflow:hidden;}
+
+/* Filters */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);}
+.filter-group{display:flex;align-items:center;gap:6px;}
+.filter-label{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+select.f,input.f{padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:"DM Sans",sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border .2s;}
+select.f:focus,input.f:focus{border-color:var(--teal);}
+.btn{padding:8px 16px;border-radius:9px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
+.btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:white;box-shadow:0 2px 8px rgba(232,101,26,.3);}
+.btn.primary:hover{transform:translateY(-1px);}
+.btn.ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+.btn.ghost:hover{color:var(--text);border-color:var(--text);}
+.btn.teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:white;}
+
+/* Table */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 14px;text-align:left;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;background:var(--bg);border-bottom:2px solid var(--border);white-space:nowrap;}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+tr:hover td{background:#fafeff;}
+tr:last-child td{border-bottom:none;}
+
+/* Badges */
+.badge{padding:3px 9px;border-radius:18px;font-size:11px;font-weight:800;display:inline-block;white-space:nowrap;}
+.badge.completed,.badge.approved{background:var(--green-light);color:var(--green-dark);}
+.badge.pending{background:var(--yellow-light);color:#92400e;}
+.badge.rejected{background:var(--red-light);color:var(--brand);}
+.type-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;font-family:"Nunito",sans-serif;white-space:nowrap;}
+.type-payment{background:var(--green-light);color:var(--green-dark);}
+.type-withdrawal_request{background:var(--yellow-light);color:#92400e;}
+.type-withdrawal_approved{background:var(--blue-light);color:var(--blue);}
+.type-withdrawal_rejected{background:var(--red-light);color:var(--brand);}
+.amount-cr{color:var(--green-dark);font-weight:800;}
+.amount-dr{color:var(--brand);font-weight:800;}
+.balance-pos{color:var(--green-dark);font-weight:800;}
+.balance-neg{color:#e53e3e;font-weight:800;}
+.mono{font-family:"Nunito",sans-serif;font-size:12px;}
+
+/* Empty / Loading */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-icon{font-size:44px;margin-bottom:12px;}
+.empty-title{font-family:"Sora",sans-serif;font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.loading-wrap{display:flex;align-items:center;justify-content:center;gap:12px;padding:60px;color:var(--muted);font-weight:700;}
+.spinner{width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);}
+  .main-content{margin-left:0;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .filters{flex-direction:column;align-items:stretch;}
+}
+</style>
+</head>
+<body>
+<div class="dash-wrap">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-text">
+        <div class="sb-logo-ic">🏠</div> HamaraService
+      </div>
+      <span class="sb-badge">ADMIN PANEL</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-sec">Navigation</div>
+      <a class="nav-item" href="admin.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-item" href="admin.html"><span class="nav-icon">📋</span> Bookings</a>
+      <a class="nav-item" href="admin.html"><span class="nav-icon">👷</span> Providers</a>
+      <a class="nav-item" href="admin.html"><span class="nav-icon">💳</span> Payments</a>
+      <a class="nav-item active" href="balance-sheet.html"><span class="nav-icon">📒</span> Balance Sheet</a>
+    </nav>
+    <div class="sb-footer">
+      <div class="live-pill">
+        <div class="live-dot"></div>
+        <span id="syncTime">Connecting...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">📒 Balance Sheet</div>
+      <div class="topbar-right">
+        <span class="sync-chip" id="syncChip">⏳ Syncing...</span>
+        <button class="btn teal" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="page">
+      <!-- Summary Cards -->
+      <div class="stats-grid" id="summaryCards">
+        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-num" id="s-gmv">₹0</div><div class="stat-label">Total GMV</div><div class="stat-sub">All customer payments</div></div>
+        <div class="stat-card purple"><div class="stat-icon">🏢</div><div class="stat-num" id="s-comm">₹0</div><div class="stat-label">Platform Commission</div><div class="stat-sub">HamaraService earnings</div></div>
+        <div class="stat-card blue"><div class="stat-icon">👷</div><div class="stat-num" id="s-net">₹0</div><div class="stat-label">Provider Earnings</div><div class="stat-sub">Net credited to wallets</div></div>
+        <div class="stat-card orange"><div class="stat-icon">📤</div><div class="stat-num" id="s-wd">₹0</div><div class="stat-label">Total Withdrawn</div><div class="stat-sub">Approved payouts</div></div>
+        <div class="stat-card red"><div class="stat-icon">💼</div><div class="stat-num" id="s-bal">₹0</div><div class="stat-label">Outstanding Balance</div><div class="stat-sub">Remaining in wallets</div></div>
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="sec-header">
+        <div class="sec-title">Transaction Ledger</div>
+        <span id="entryCount" style="font-size:12px;color:var(--muted);font-weight:700;">0 entries</span>
+      </div>
+
+      <div class="card">
+        <!-- Filters -->
+        <div class="filters">
+          <div class="filter-group">
+            <span class="filter-label">Provider</span>
+            <select class="f" id="filterProvider" onchange="renderTable()">
+              <option value="">All Providers</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Type</span>
+            <select class="f" id="filterType" onchange="renderTable()">
+              <option value="">All Types</option>
+              <option value="payment">Payments</option>
+              <option value="withdrawal_request">Withdrawal Requests</option>
+              <option value="withdrawal_approved">Approved</option>
+              <option value="withdrawal_rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">From</span>
+            <input type="date" class="f" id="filterFrom" onchange="renderTable()"/>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">To</span>
+            <input type="date" class="f" id="filterTo" onchange="renderTable()"/>
+          </div>
+          <button class="btn ghost" onclick="clearFilters()">✕ Clear</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <div class="loading-wrap" id="loadingState">
+            <div class="spinner"></div> Loading balance sheet from Firebase...
+          </div>
+          <table id="bsTable" style="display:none">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Type</th>
+                <th>Provider</th>
+                <th>Service / Ref</th>
+                <th>Gross Amount</th>
+                <th>Commission</th>
+                <th>Net Earning</th>
+                <th>Withdrawal</th>
+                <th>Wallet Balance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bsBody"></tbody>
+          </table>
+          <div class="empty-state" id="emptyState" style="display:none">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">No Entries Found</div>
+            <div style="font-size:13px;color:var(--muted)">Transactions will appear here as payments and withdrawals occur.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+var FB_CFG = {
+  apiKey:"AIzaSyBrVmvGGNUBvdHRbFJsGsRnSGRftnJJ3oA",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",
+  storageBucket:"hamaraservice-s009.appspot.com",
+  messagingSenderId:"1064274729048",
+  appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+};
+if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+var db = firebase.database();
+
+var _all = [];
+
+function fmt(n){ return Number(n||0).toLocaleString('en-IN'); }
+function fmtDt(iso){
+  if (!iso) return '—';
+  var d = new Date(iso);
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+    +' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+
+// Live listener
+db.ref('hs_balance_sheet').on('value', function(snap) {
+  _all = [];
+  if (snap.exists()) snap.forEach(function(c){ var v=c.val(); if(v&&v.id) _all.push(v); });
+  _all.sort(function(a,b){ return new Date(a.createdAt||0)-new Date(b.createdAt||0); });
+  updateProviderFilter();
+  updateSummary();
+  renderTable();
+  document.getElementById('loadingState').style.display = 'none';
+  var now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('syncTime').textContent = 'Live · '+now;
+  document.getElementById('syncChip').textContent = '✅ Synced '+now;
+  document.getElementById('syncChip').style.background = 'var(--green-light)';
+  document.getElementById('syncChip').style.color = 'var(--green-dark)';
+}, function(e){
+  document.getElementById('loadingState').innerHTML =
+    '<span style="color:var(--brand)">⚠ Firebase error: '+e.message+'</span>';
+});
+
+function updateProviderFilter(){
+  var sel = document.getElementById('filterProvider'), cur = sel.value;
+  var pm = {};
+  _all.forEach(function(e){ if(e.providerId) pm[e.providerId]=e.providerName||e.providerId; });
+  sel.innerHTML = '<option value="">All Providers</option>';
+  Object.keys(pm).sort().forEach(function(id){
+    var o = document.createElement('option');
+    o.value=id; o.textContent=pm[id]; if(id===cur) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function getFiltered(){
+  var pf=document.getElementById('filterProvider').value;
+  var tf=document.getElementById('filterType').value;
+  var df=document.getElementById('filterFrom').value;
+  var dt=document.getElementById('filterTo').value;
+  return _all.filter(function(e){
+    if(pf && e.providerId!==pf) return false;
+    if(tf && e.type!==tf) return false;
+    if(df && (e.createdAt||'') < df) return false;
+    if(dt && (e.createdAt||'') > dt+'T23:59:59') return false;
+    return true;
+  });
+}
+
+function updateSummary(){
+  var entries=getFiltered(), gmv=0, comm=0, net=0, wd=0;
+  entries.forEach(function(e){
+    if(e.type==='payment'){ gmv+=e.grossAmount||0; comm+=e.commission||0; net+=e.netEarning||0; }
+    if(e.type==='withdrawal_approved') wd+=e.amount||0;
+  });
+  document.getElementById('s-gmv').textContent  = '₹'+fmt(gmv);
+  document.getElementById('s-comm').textContent = '₹'+fmt(comm);
+  document.getElementById('s-net').textContent  = '₹'+fmt(net);
+  document.getElementById('s-wd').textContent   = '₹'+fmt(wd);
+  document.getElementById('s-bal').textContent  = '₹'+fmt(Math.max(net-wd,0));
+}
+
+function renderTable(){
+  updateSummary();
+  var entries = getFiltered();
+  document.getElementById('entryCount').textContent = entries.length + ' entries';
+
+  // Compute running wallet balance per provider
+  var runBal = {};
+  _all.forEach(function(e){
+    var pid=e.providerId; if(!pid) return;
+    if(!runBal[pid]) runBal[pid]=0;
+    if(e.type==='payment') runBal[pid]+=(e.netEarning||0);
+    if(e.type==='withdrawal_approved') runBal[pid]-=(e.amount||0);
+    e._runBal = runBal[pid];
+  });
+
+  var TYPE_LABELS = {
+    payment:'💰 Payment',
+    withdrawal_request:'⏳ Withdraw Req',
+    withdrawal_approved:'✅ WD Approved',
+    withdrawal_rejected:'❌ WD Rejected'
+  };
+
+  if (!entries.length) {
+    document.getElementById('bsTable').style.display='none';
+    document.getElementById('emptyState').style.display='block';
+    return;
+  }
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('bsTable').style.display='table';
+
+  document.getElementById('bsBody').innerHTML = entries.map(function(e){
+    var isPay = e.type==='payment';
+    var balCls = (e._runBal||0)>=0 ? 'balance-pos' : 'balance-neg';
+    return '<tr>'
+      +'<td class="mono">'+fmtDt(e.createdAt)+'</td>'
+      +'<td><span class="type-chip type-'+e.type+'">'+(TYPE_LABELS[e.type]||e.type)+'</span></td>'
+      +'<td><strong>'+(e.providerName||'—')+'</strong><br/>'
+        +'<span style="font-size:11px;color:var(--muted)">'+(e.providerId||'')+'</span></td>'
+      +'<td style="font-size:12px;color:var(--muted)">'+(e.service||e.bookingId||e.refId||'—')+'</td>'
+      +'<td class="amount-cr">'+(isPay?'₹'+fmt(e.grossAmount):'—')+'</td>'
+      +'<td style="color:var(--purple);font-weight:700">'+(isPay?'₹'+fmt(e.commission):'—')+'</td>'
+      +'<td class="amount-cr">'+(isPay?'₹'+fmt(e.netEarning):'—')+'</td>'
+      +'<td class="amount-dr">'+(!isPay?'₹'+fmt(e.amount):'—')+'</td>'
+      +'<td class="'+balCls+'">₹'+fmt(e._runBal||0)+'</td>'
+      +'<td><span class="badge '+(e.status||'pending')+'">'
+        +cap(e.status==='withdrawal_approved'?'approved':e.status==='withdrawal_rejected'?'rejected':e.status||'')
+        +'</span></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function clearFilters(){
+  ['filterProvider','filterType','filterFrom','filterTo'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  renderTable();
+}
+
+function exportCSV(){
+  var entries = getFiltered();
+  var rows = [['Date','Type','Provider','ProviderID','Service/Ref','GrossAmount','Commission','NetEarning','WithdrawAmount','WalletBalance','Status']];
+  entries.forEach(function(e){
+    rows.push([
+      fmtDt(e.createdAt), e.type, e.providerName||'', e.providerId||'',
+      e.service||e.bookingId||e.refId||'',
+      e.type==='payment'?e.grossAmount:'',
+      e.type==='payment'?e.commission:'',
+      e.type==='payment'?e.netEarning:'',
+      e.type!=='payment'?e.amount:'',
+      e._runBal||0, e.status||''
+    ]);
+  });
+  var csv = rows.map(function(r){
+    return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');
+  }).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='balance-sheet-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

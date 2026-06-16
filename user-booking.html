@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>Book a Service — HamaraService</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+
+  <style>
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand-bg:#fff3eb;--brand-border:rgba(232,101,26,.18);
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-bg:#e8f4f6;--teal-border:rgba(27,107,122,.18);
+  --ink:#0d1b21;--ink2:#2d4a54;--muted:#5f7b85;
+  --line:#dde8eb;--bg:#f2f7f9;--white:#fff;
+  --green:#00956a;--green-bg:#eaf8f2;--green-border:rgba(0,149,106,.18);
+  --blue:#1B4FFF;--blue-bg:#eef2ff;
+  --yellow:#d97706;--yellow-bg:#fffbeb;
+  --r:12px;--r2:18px;--r3:24px;
+  --sh:0 2px 12px rgba(0,0,0,.07);
+  --sh2:0 8px 28px rgba(0,0,0,.10);
+  --sh3:0 24px 60px rgba(0,0,0,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1px solid var(--line);height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-box{width:32px;height:32px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-box svg{width:18px;height:18px;fill:white;}
+.logo-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:var(--ink);}
+.logo-name span{color:var(--brand);}
+.header-back{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:9px;border:1.5px solid var(--line);}
+
+.steps-bar{background:var(--white);border-bottom:1px solid var(--line);padding:14px 20px;}
+.steps{display:flex;align-items:center;max-width:600px;margin:0 auto;}
+.step{display:flex;align-items:center;gap:7px;flex:1;}
+.step-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--muted);background:var(--white);flex-shrink:0;transition:all .3s;}
+.step.done .step-dot{background:var(--green);border-color:var(--green);color:white;}
+.step.active .step-dot{background:var(--brand);border-color:var(--brand);color:white;box-shadow:0 0 0 4px var(--brand-bg);}
+.step-label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.step.active .step-label{color:var(--brand);}
+.step.done .step-label{color:var(--green);}
+.step-line{flex:1;height:2px;background:var(--line);margin:0 6px;transition:background .3s;min-width:8px;}
+
+.main{max-width:600px;margin:0 auto;padding:20px 20px 100px;}
+
+.card{background:var(--white);border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:visible;}
+.card-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;border-radius:var(--r2) var(--r2) 0 0;}
+.card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.card-icon.red{background:var(--brand-bg);}
+.card-icon.green{background:var(--green-bg);}
+.card-icon.blue{background:var(--blue-bg);}
+.card-icon.yellow{background:var(--yellow-bg);}
+.card-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:var(--ink);}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.card-body{padding:16px 18px;}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;position:relative;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
+.field input,.field select{padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .18s,box-shadow .18s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--brand);background:var(--white);box-shadow:0 0 0 4px var(--brand-bg);}
+.field input::placeholder{color:var(--muted);font-weight:400;}
+.field .hint{font-size:11px;color:var(--muted);margin-top:3px;}
+
+.svc-search-wrap{position:relative;z-index:500;}
+.svc-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+.svc-search-inp{padding-left:42px !important;}
+.svc-drop{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--white);border:2px solid var(--brand);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:9999;max-height:280px;overflow-y:auto;}
+.svc-drop-item{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .15s;}
+.svc-drop-item:last-child{border:none;}
+.svc-drop-item:hover,.svc-drop-item:active{background:var(--brand-bg);}
+.sdi-emoji{font-size:22px;flex-shrink:0;}
+.sdi-name{font-size:14px;font-weight:700;color:var(--ink);}
+.sdi-price{font-size:12px;font-weight:600;color:var(--green);margin-top:1px;}
+.sdi-arrow{font-size:14px;color:var(--brand);font-weight:800;flex-shrink:0;}
+
+.sel-svc-pill{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:var(--r);margin-bottom:0;}
+.ssp-emoji{font-size:24px;}
+.ssp-info{flex:1;}
+.ssp-name{font-size:15px;font-weight:700;color:var(--green);}
+.ssp-price{font-size:12px;font-weight:600;color:var(--muted);margin-top:2px;}
+.ssp-change{font-size:12px;font-weight:700;color:var(--brand);cursor:pointer;padding:4px 8px;border-radius:6px;flex-shrink:0;}
+.ssp-change:active{background:var(--brand-bg);}
+
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);}
+.summary-row:last-child{border:none;padding-bottom:0;}
+.sr-label{font-size:13px;color:var(--muted);font-weight:600;}
+.sr-val{font-size:14px;font-weight:700;color:var(--ink);text-align:right;max-width:60%;}
+.sr-val.price{font-size:18px;color:var(--brand);font-family:'Sora',sans-serif;}
+
+.gps-block{border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;}
+#miniMap{height:200px;background:#e8f0f8;}
+.gps-actions{padding:12px 14px;display:flex;gap:8px;align-items:center;background:var(--white);}
+.gps-btn{display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .18s;}
+.gps-btn.primary{background:var(--brand);color:white;flex:1;justify-content:center;}
+.gps-btn.primary:active{background:var(--brand2);}
+.gps-btn.ghost{background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);}
+.gps-addr{padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink2);background:var(--bg);border-top:1px solid var(--line);line-height:1.5;min-height:42px;display:flex;align-items:center;gap:8px;}
+.gps-addr svg{color:var(--brand);flex-shrink:0;}
+.gps-accuracy{font-size:11px;color:var(--green);font-weight:700;margin-left:auto;flex-shrink:0;}
+
+.cta-btn{width:100%;padding:16px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px;box-shadow:0 4px 16px rgba(27,107,122,.3);display:flex;align-items:center;justify-content:center;gap:10px;}
+.cta-btn:hover{background:var(--brand2);}
+.cta-btn:active{transform:scale(.98);}
+.cta-btn:disabled{background:var(--muted);box-shadow:none;cursor:not-allowed;transform:none;}
+
+/* ════ RADAR OVERLAY ════ */
+.radar-overlay{display:none;position:fixed;inset:0;z-index:500;background:#080c14;flex-direction:column;align-items:center;overflow-y:auto;}
+.radar-overlay.show{display:flex;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.radar-header{width:100%;padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0;background:rgba(255,255,255,.03);}
+.radar-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:white;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.radar-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:white;}
+.radar-sub-text{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;}
+
+.radar-wrap{position:relative;width:260px;height:260px;margin:24px auto 0;flex-shrink:0;}
+.radar-svg{width:100%;height:100%;}
+.radar-sweep{transform-origin:50% 50%;animation:sweep 2.5s linear infinite;}
+@keyframes sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.radar-km{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;color:white;text-align:center;margin-top:14px;}
+.radar-km-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-top:4px;padding:0 20px;}
+
+.radar-log{width:100%;max-width:480px;padding:0 20px;margin-top:18px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.rlog{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;display:flex;align-items:flex-start;gap:10px;animation:logIn .3s ease;}
+@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.rlog-ic{font-size:16px;flex-shrink:0;margin-top:1px;}
+.rlog-txt{font-size:13px;font-weight:500;color:rgba(255,255,255,.75);flex:1;line-height:1.5;}
+.rlog-txt strong{color:white;font-weight:700;}
+.rlog-ts{font-size:10px;color:rgba(255,255,255,.35);flex-shrink:0;white-space:nowrap;margin-top:2px;}
+.rlog.success{background:rgba(0,149,106,.15);border-color:rgba(0,149,106,.3);}
+.rlog.warn{background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.25);}
+
+.radar-cancel{margin:20px auto 32px;padding:12px 32px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);border-radius:100px;color:rgba(255,255,255,.65);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.radar-cancel:hover{background:rgba(255,255,255,.14);color:white;}
+
+/* ════ PROVIDER CARD ════ */
+.prov-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(8,12,20,.85);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center;}
+.prov-overlay.show{display:flex;animation:fadeIn .3s ease;}
+.prov-card{background:var(--white);border-radius:var(--r3) var(--r3) 0 0;width:100%;max-width:480px;padding:0 0 32px;animation:slideUp .4s cubic-bezier(.16,1,.3,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pc-drag{width:40px;height:4px;background:var(--line);border-radius:2px;margin:14px auto 0;}
+.pc-head{padding:16px 22px 14px;border-bottom:1px solid var(--line);}
+.pc-tag{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;margin-bottom:10px;}
+.pc-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);}
+.pc-body{padding:18px 22px;}
+.pc-pro-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.pc-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#ff6b3d);display:flex;align-items:center;justify-content:center;font-size:26px;color:white;flex-shrink:0;border:3px solid var(--white);box-shadow:0 4px 16px rgba(27,107,122,.25);}
+.pc-name{font-size:17px;font-weight:800;color:var(--ink);}
+.pc-stars{color:var(--yellow);font-size:14px;letter-spacing:.5px;}
+.pc-rating{font-size:13px;font-weight:700;color:var(--ink2);margin-left:4px;}
+.pc-jobs{font-size:12px;color:var(--muted);margin-left:4px;}
+.pc-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.pc-badge{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+.pc-badge.v{background:var(--green-bg);color:var(--green);}
+.pc-badge.c{background:var(--blue-bg);color:var(--blue);}
+.pc-eta-box{background:var(--bg);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.pc-eta-num{font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:var(--brand);}
+.pc-eta-lbl{font-size:12px;color:var(--muted);margin-top:2px;}
+.pc-dist{font-size:13px;font-weight:700;color:var(--ink2);}
+.pc-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pc-btn{padding:14px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s;}
+.pc-btn.confirm{background:var(--green);color:white;}
+.pc-btn.confirm:active{background:#007a58;}
+.pc-btn.track{background:var(--blue-bg);color:var(--blue);border:1.5px solid rgba(27,79,255,.2);}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 22px;border-radius:100px;font-size:14px;font-weight:500;z-index:9999;display:none;box-shadow:var(--sh3);white-space:nowrap;max-width:90vw;text-align:center;}
+
+@keyframes blip{0%,100%{opacity:1;r:5}50%{opacity:.5;r:8}}
+
+/* ── Choose Service button ─────────────────────────────────── */
+.choose-svc-btn{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:14px 18px;border:2px solid var(--brand);border-radius:var(--r);
+  background:var(--brand-bg,#fff3eb);color:var(--brand);text-decoration:none;
+  font-size:15px;font-weight:700;transition:all .2s;}
+.choose-svc-btn:hover{background:var(--brand);color:#fff;
+  box-shadow:0 4px 16px rgba(232,101,26,.3);}
+.choose-svc-icon{font-size:20px;flex-shrink:0;}
+.choose-svc-text{flex:1;}
+.choose-svc-arrow{font-size:18px;transition:transform .2s;}
+.choose-svc-btn:hover .choose-svc-arrow{transform:translateX(4px);}
+.choose-svc-btn.selected{background:var(--teal,#1B6B7A);border-color:var(--teal,#1B6B7A);color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="header-back" href="index.html">← Home</a>
+</header>
+
+<div class="steps-bar">
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="s1"><div class="step-dot" id="sd1">1</div><div class="step-label">Details</div></div>
+    <div class="step-line" id="sl1"></div>
+    <div class="step" id="s2"><div class="step-dot" id="sd2">2</div><div class="step-label">Location</div></div>
+    <div class="step-line" id="sl2"></div>
+    <div class="step" id="s3"><div class="step-dot" id="sd3">3</div><div class="step-label">Searching</div></div>
+    <div class="step-line" id="sl3"></div>
+    <div class="step" id="s4"><div class="step-dot" id="sd4">4</div><div class="step-label">Confirmed</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <div class="card" style="overflow:visible;">
+      <div class="card-head">
+        <div class="card-icon red">🔍</div>
+        <div><div class="card-title">Select Service</div><div class="card-sub">Type to search — e.g. Plumber, AC repair…</div></div>
+      </div>
+      <div class="card-body">
+        <div class="sel-svc-pill" id="selPill" style="display:none;">
+          <span id="pilEm" style="font-size:24px;"></span>
+          <div class="ssp-info"><div class="ssp-name" id="pilName"></div><div class="ssp-price" id="pilPrice"></div></div>
+          <span class="ssp-change" onclick="clearSvc()">✏️ Change</span>
+        </div>
+        <div id="inlineSummary" style="display:none;margin-top:14px;background:#e6f4f6;border-radius:12px;padding:14px 16px;"><div style="font-size:11px;font-weight:800;color:#1B6B7A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Your Booking</div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:13px;color:#666;">Service</span><span style="font-size:13px;font-weight:700;" id="sumSvc">—</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:13px;color:#666;">Price</span><span style="font-size:15px;font-weight:900;color:#1B6B7A;font-family:'Sora',sans-serif;" id="sumPrice">—</span></div><div style="display:flex;justify-content:space-between;"><span style="font-size:13px;color:#666;">Date &amp; Time</span><span style="font-size:13px;font-weight:700;" id="sumDT">—</span></div><div id="sumChoices" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(27,107,122,.15);"><div style="font-size:11px;font-weight:800;color:#1B6B7A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">Selected</div><div id="sumChoicesList" style="display:flex;flex-wrap:wrap;gap:5px;"></div></div></div>
+        <div id="svcSearchWrap" class="field">
+          <label>What service do you need?</label>
+          <a href="index.html#services" id="chooseSvcBtn" class="choose-svc-btn">
+            <span class="choose-svc-icon">🔍</span>
+            <span id="chooseSvcText" class="choose-svc-text">Choose a Service</span>
+            <span class="choose-svc-arrow">→</span>
+          </a>
+          <input type="hidden" id="svcInp" value=""/>
+          <span class="hint">Select a service from our catalogue</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon blue">👤</div>
+        <div><div class="card-title">Your Details</div><div class="card-sub">Name, mobile, date and time</div></div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="custName" placeholder="Enter your full name"/>
+        </div>
+        <div class="field">
+          <label>Mobile Number</label>
+          <input type="tel" id="custPhone" placeholder="10-digit mobile" maxlength="10" inputmode="numeric"/>
+        </div>
+        <!-- Hidden — auto-filled from profile -->
+        <input type="hidden" id="custName"/>
+        <input type="hidden" id="custPhone"/>
+        <div class="field">
+          <label>Preferred Date</label>
+          <input type="date" id="bookDate" onchange="updateSummary()"/>
+        </div>
+        <div class="time-row">
+          <div class="field">
+            <label>Hour</label>
+            <select id="bookHour" onchange="updateSummary()"></select>
+          </div>
+          <div class="field">
+            <label>Minute</label>
+            <select id="bookMinute" onchange="updateSummary()">
+              <option value="00">00</option>
+              <option value="15">15</option>
+              <option value="30">30</option>
+              <option value="45">45</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <button class="cta-btn" onclick="goStep2()">Continue — Confirm Location →</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" style="display:none;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon green">📍</div>
+        <div><div class="card-title">Confirm Your Location</div><div class="card-sub">Used to find professionals near you. Not shared publicly.</div></div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="gps-block">
+          <div id="miniMap"></div>
+          <div class="gps-addr" id="gpsAddr">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+            <span id="gpsAddrTxt">Tap "Use My GPS" to detect location</span>
+            <span class="gps-accuracy" id="gpsAcc" style="display:none;"></span>
+          </div>
+          <div class="gps-actions">
+            <button class="gps-btn primary" onclick="getGPS()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+              Use My GPS
+            </button>
+            <button class="gps-btn ghost" onclick="toggleLocSearch()">🔍 Search</button>
+          </div>
+        </div>
+        <div id="locSearchBar" style="display:none;padding:12px 14px;border-top:1px solid var(--line);">
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="locQ" placeholder="Type area, street or city…" style="flex:1;padding:10px 13px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLocSearch()"/>
+            <button onclick="doLocSearch()" style="padding:10px 16px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-weight:700;cursor:pointer;font-family:'DM Sans';font-size:13px;">Go</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;font-size:13px;color:var(--green);font-weight:600;display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:18px;flex-shrink:0;">🔒</span>
+      Your location is only shared with the professional after they accept your booking request.
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="cta-btn" onclick="goStep1()" style="background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);box-shadow:none;flex:0 0 auto;width:auto;padding:16px 18px;">← Back</button>
+      <button class="cta-btn" id="findBtn" onclick="startRadar()" disabled>
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        Find Nearest Professional
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- RADAR OVERLAY -->
+<div class="radar-overlay" id="radarOverlay">
+  <div class="radar-header">
+    <button class="radar-back" onclick="cancelRadar()">←</button>
+    <div>
+      <div class="radar-title">Searching for Professionals</div>
+      <div class="radar-sub-text" id="radarSubTxt">Initialising radar…</div>
+    </div>
+  </div>
+
+  <div class="radar-wrap">
+    <svg class="radar-svg" viewBox="0 0 260 260">
+      <defs>
+        <radialGradient id="rg"><stop offset="0%" stop-color="#00ff88" stop-opacity=".06"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0"/></radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <circle cx="130" cy="130" r="18"  fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="40"  fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="62"  fill="none" stroke="rgba(0,255,136,.12)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="84"  fill="none" stroke="rgba(0,255,136,.10)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="106" fill="none" stroke="rgba(0,255,136,.08)" stroke-width="1"/>
+      <circle cx="130" cy="130" r="122" fill="none" stroke="rgba(0,255,136,.06)" stroke-width="1"/>
+      <line x1="130" y1="8" x2="130" y2="252" stroke="rgba(0,255,136,.07)" stroke-width="1"/>
+      <line x1="8" y1="130" x2="252" y2="130" stroke="rgba(0,255,136,.07)" stroke-width="1"/>
+      <!-- Active range ring -->
+      <circle id="activeRing" cx="130" cy="130" r="40" fill="url(#rg)" stroke="#00ff88" stroke-width="2" stroke-dasharray="5 3" opacity=".7"/>
+      <!-- Sweep -->
+      <g class="radar-sweep">
+        <path d="M130,130 L130,8 A122,122 0 0,1 196,37 Z" fill="rgba(0,255,136,.07)" opacity=".9"/>
+      </g>
+      <!-- You dot -->
+      <circle cx="130" cy="130" r="5" fill="#1B6B7A" filter="url(#glow)"/>
+      <circle cx="130" cy="130" r="9" fill="none" stroke="rgba(27,107,122,.4)" stroke-width="1.5"/>
+      <!-- Blips -->
+      <g id="blipsG"></g>
+    </svg>
+    <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:rgba(0,255,136,.6);letter-spacing:1.5px;white-space:nowrap;" id="ringLbl">1 KM</div>
+  </div>
+
+  <div class="radar-km" id="radarKm">1 km</div>
+  <div class="radar-km-sub" id="radarKmSub">Scanning within 1 km of your location…</div>
+
+  <div class="radar-log" id="radarLog"></div>
+  <button class="radar-cancel" onclick="cancelRadar()">✕ Cancel Search</button>
+</div>
+
+<!-- PROVIDER CARD -->
+<div class="prov-overlay" id="provOverlay">
+  <div class="prov-card">
+    <div class="pc-drag"></div>
+    <div class="pc-head">
+      <div class="pc-tag">✓ Professional Found &amp; Accepted</div>
+      <div class="pc-title">Your professional is on the way!</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-pro-row">
+        <div class="pc-av">👷</div>
+        <div>
+          <div class="pc-name" id="pcName">Professional</div>
+          <div style="display:flex;align-items:center;margin-top:4px;">
+            <span class="pc-stars" id="pcStars">★★★★★</span>
+            <span class="pc-rating" id="pcRating">4.8</span>
+            <span class="pc-jobs" id="pcJobs">· 312 jobs</span>
+          </div>
+          <div class="pc-badges">
+            <span class="pc-badge v">✅ Aadhaar Verified</span>
+            <span class="pc-badge c">🎓 Certified</span>
+          </div>
+        </div>
+      </div>
+      <div class="pc-eta-box">
+        <span style="font-size:28px;">🕐</span>
+        <div>
+          <div class="pc-eta-num" id="pcETA">12 min</div>
+          <div class="pc-eta-lbl">Estimated arrival time</div>
+          <div class="pc-dist" id="pcDist"></div>
+        </div>
+      </div>
+      <div class="pc-btns">
+        <button class="pc-btn confirm" onclick="confirmBooking()">✅ Confirm Booking</button>
+        <button class="pc-btn track" onclick="openTracking()">🗺️ Track Live</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <script>
+// ── Firebase init ─────────────────────────────────────────────────────────────
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:        "hamaraservice-s009.firebaseapp.com",
+  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "hamaraservice-s009",
+  storageBucket:     "hamaraservice-s009.firebasestorage.app",
+  messagingSenderId: "1064274729048",
+  appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+};
+if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+var fbAuthInst = firebase.auth();
+
+// Current authenticated user UID — set once auth resolves
+var currentUid  = null;
+var currentCust = null; // customer profile from UID-keyed cache
+
+fbAuthInst.onAuthStateChanged(function(fbUser) {
+  if (fbUser) {
+    currentUid = fbUser.uid;
+    // Try localStorage first (fast)
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem('hs_profile_' + fbUser.uid) || 'null'); } catch(e) {}
+
+    function fillFields(profile) {
+      currentCust = profile;
+      var nameEl  = document.getElementById('custName');
+      var phoneEl = document.getElementById('custPhone');
+      // Always fill name — prefer profile name over displayName
+      var name  = profile.name  || fbUser.displayName || '';
+      var phone = profile.phone || '';
+      if(nameEl)nameEl.value=name;
+      if(phoneEl&&phone)phoneEl.value=phone;
+      setTimeout(function(){if(typeof updateSummary==='function')updateSummary();},50);
+    }
+
+    if (cached && cached.name && cached.name.indexOf('@') === -1) {
+      // Good cached profile with a real name (not email)
+      fillFields(cached);
+    } else {
+      // Fetch fresh from Firebase DB
+      var dbUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/' + fbUser.uid + '.json';
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', dbUrl, true); xhr.timeout = 5000;
+      xhr.onload = function() {
+        try {
+          var p = JSON.parse(xhr.responseText);
+          if (p && p.uid) {
+            try { localStorage.setItem('hs_profile_' + fbUser.uid, JSON.stringify(p)); } catch(e) {}
+            fillFields(p);
+          } else {
+            fillFields({ uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' });
+          }
+        } catch(e) {}
+      };
+      xhr.onerror = xhr.ontimeout = function() {
+        fillFields({ uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' });
+      };
+      xhr.send();
+    }
+  } else {
+    currentUid = null; currentCust = null;
+    sessionStorage.setItem('hs_pending_booking', window.location.pathname.replace('/','') + window.location.search);
+    window.location.replace('login.html');
+  }
+});
+
+// ── MASTER SERVICE CATALOG — must stay in sync across index, user-booking, provider-register, admin ──
+
+function _getStoragePrice(){
+  var _o=null;
+  try{var _r=sessionStorage.getItem('hs_service_options')||localStorage.getItem('hs_service_options');if(_r)_o=JSON.parse(_r);}catch(e){}
+  if(!_o)return(window.selSvc&&window.selSvc._actualPrice>0)?window.selSvc._actualPrice:0;
+  var _p=parseInt(_o.price);if(_p>0)return _p;
+  if(_o.selections&&typeof _o.selections==='object'){var _t=0,_s=_o.selections;if(_s.bhk&&_s.bhk.price)_t+=parseInt(_s.bhk.price)||0;if(_s.extras)_s.extras.forEach(function(e){_t+=parseInt(e.price)||0;});if(_s.condition&&_s.condition.price)_t+=parseInt(_s.condition.price)||0;if(_t>0)return _t;}
+  return(window.selSvc&&window.selSvc._actualPrice>0)?window.selSvc._actualPrice:0;
+}
+
+
+function buildChoices(opts) {
+  if (!opts) return [];
+  var chips = [];
+  function fmt(label, price) {
+    var s = label ? String(label).trim() : '';
+    if (price && parseInt(price) > 0) s += (s ? ' — ' : '') + '₹' + parseInt(price).toLocaleString('en-IN');
+    if (s) chips.push(s);
+  }
+
+  // House Maid, Deep Cleaning, Haircut, Massage — standard summary array
+  if (opts.summary && opts.summary.length > 0) {
+    opts.summary.forEach(function(s){ if (s && String(s).trim()) chips.push(String(s).trim()); });
+    return chips;
+  }
+
+  // Cook
+  if (opts.cookSvc) {
+    var c1 = {breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',twotime:'2 meals/day',fullday:'Full day cooking',party:'Party cooking',tiffin:'Tiffin service',monthly:'Monthly'};
+    fmt(c1[opts.cookSvc] || opts.cookSvc, opts.cookBase);
+    if (opts.dayCount > 1) fmt(opts.dayCount + ' days');
+    if (opts.memberExtra > 0) fmt('Extra members', opts.memberExtra);
+    if (opts.styleExtra > 0) fmt('Style extra', opts.styleExtra);
+    return chips;
+  }
+
+  // Driver
+  if (opts.vehicle && opts.serviceType) {
+    var v = opts.vehicle.charAt(0).toUpperCase() + opts.vehicle.slice(1);
+    var c2 = {local:'Local trip',fullday:'Full day',outstation:'Outstation',monthly:'Monthly',event:'Event / Function'};
+    fmt(v + ' • ' + (c2[opts.serviceType] || opts.serviceType));
+    if (opts.dayCount > 1) fmt(opts.dayCount + ' days');
+    return chips;
+  }
+
+  // Laundry (services = Array)
+  if (opts.services && Array.isArray(opts.services) && opts.services.length > 0) {
+    var c3 = {wash:'Machine wash',iron:'Ironing',dry:'Dry clean',fold:'Folding',handwash:'Hand wash'};
+    opts.services.forEach(function(s) {
+      var cnt = opts.counts && opts.counts[s] ? ' × ' + opts.counts[s] + ' items' : '';
+      chips.push((c3[s] || s) + cnt);
+    });
+    if (opts.addons && opts.addons.length > 0) opts.addons.forEach(function(a){ fmt(a); });
+    return chips;
+  }
+
+  // Sofa / Carpet (services = Object)
+  if (opts.services && typeof opts.services === 'object' && !Array.isArray(opts.services)) {
+    var c4 = {sofa:'Sofa cleaning',carpet:'Carpet cleaning',mattress:'Mattress shampooing',rug:'Rug cleaning'};
+    Object.keys(opts.services).forEach(function(k) {
+      var p = opts.services[k] && opts.services[k].price ? opts.services[k].price : 0;
+      var cnt = opts.services[k] && opts.services[k].count > 1 ? ' × ' + opts.services[k].count : '';
+      fmt((c4[k] || k) + cnt, p);
+    });
+    if (opts.stainExtra > 0) fmt('Stain treatment', opts.stainExtra);
+    return chips;
+  }
+
+  // Car / Bike Wash
+  if (opts.vehicle && opts.count) {
+    var vw = opts.vehicle === 'bike' ? 'Bike' : 'Car';
+    if (opts.carType) vw += ' (' + opts.carType + ')';
+    fmt(vw + ' × ' + opts.count);
+    return chips;
+  }
+
+  // Elderly Care
+  if (opts.careType) {
+    var c5 = {companion:'Companion care (4 hrs)',personal:'Personal care',fullday:'Full day care (8 hrs)',nightcare:'Night care',hospital:'Hospital attendant',monthly:'Monthly plan'};
+    fmt(c5[opts.careType] || opts.careType, opts.carePrice);
+    if (opts.dayCount > 1) fmt(opts.dayCount + ' days');
+    if (opts.addons && opts.addons.length > 0) opts.addons.forEach(function(a){ fmt(a); });
+    return chips;
+  }
+
+  // Bathroom Cleaning
+  if (opts.bathrooms) {
+    fmt(opts.bathrooms + ' bathroom' + (opts.bathrooms > 1 ? 's' : ''));
+    var c6 = {regular:'Regular condition',moderate:'Moderately dirty',dirty:'Very dirty',renovation:'Post-renovation'};
+    if (opts.condition) fmt(c6[opts.condition] || opts.condition);
+    if (opts.addons && opts.addons.length > 0) opts.addons.forEach(function(a){ fmt(a); });
+    return chips;
+  }
+
+  // Visit-only — show price as single chip
+  if (opts.price && parseInt(opts.price) > 0) {
+    fmt('₹' + parseInt(opts.price).toLocaleString('en-IN'));
+  }
+  return chips;
+}
+
+var SVCS = [
+  // ── Home Cleaning ──────────────────────────────────────────────────────────
+  {e:'🧹',n:'House Maid',              p:'₹499',  pv:499,  url:'svc-house-maid.html',        kw:['maid','house','clean','sweep','mop','broom'],svcId:'SVC001'},
+  {e:'🧽',n:'Deep Cleaning',           p:'₹999',  pv:999,  url:'svc-deep-cleaning.html',      kw:['deep','full','house','thorough','clean','scrub'],svcId:'SVC002'},
+  {e:'🚿',n:'Bathroom Cleaning',       p:'₹399',  pv:399,  url:'svc-bathroom-cleaning.html',  kw:['bathroom','toilet','washroom','bath','tiles'],svcId:'SVC003'},
+  {e:'🍳',n:'Kitchen Cleaning',        p:'₹699',  pv:699,  url:'svc-kitchen-cleaning.html',   kw:['kitchen','cook','dirty','clean','chimney','sink'],svcId:'SVC004'},
+  {e:'🛋️',n:'Sofa / Carpet Cleaning', p:'₹599',  pv:599,  url:'svc-sofa-carpet-cleaning.html',kw:['sofa','carpet','couch','upholstery','fabric'],svcId:'SVC005'},
+  {e:'👔',n:'Laundry / Ironing',       p:'₹199',  pv:199,  url:'svc-laundry-ironing.html',    kw:['laundry','washing','iron','clothes','press','fold'],svcId:'SVC006'},
+  // ── Home Services ──────────────────────────────────────────────────────────
+  {e:'❄️',n:'AC Cleaning & Repair',   p:'₹399',  pv:399,  url:'svc-ac-service.html',         kw:['ac','air condition','cool','filter','repair','service'],svcId:'SVC007'},
+  {e:'🫙',n:'Home Appliance Repair',   p:'₹299',  pv:299,  url:'svc-appliance-repair.html',   kw:['appliance','fridge','washing machine','tv','repair'],svcId:'SVC009'},
+  {e:'💧',n:'Water Purifier Service',  p:'₹299',  pv:299,  url:'svc-water-purifier.html',     kw:['water','purifier','filter','ro','service'],svcId:'SVC010'},
+  {e:'🔧',n:'Plumber',                p:'₹199',  pv:199,  url:'svc-plumber.html',             kw:['plumber','pipe','tap','water','leak','drain','flush'],svcId:'SVC011'},
+  {e:'⚡',n:'Electrician',            p:'₹199',  pv:199,  url:'svc-electrician.html',         kw:['electrician','electric','wiring','switch','fan','light'],svcId:'SVC012'},
+  {e:'🪚',n:'Carpenter',              p:'₹249',  pv:249,  url:'svc-carpenter.html',           kw:['carpenter','furniture','wood','door','window','repair'],svcId:'SVC013'},
+  {e:'🎨',n:'Painter',               p:'₹999',  pv:999,  url:'svc-painter.html',             kw:['painter','paint','wall','colour','whitewash'],svcId:'SVC014'},
+  {e:'📷',n:'CCTV Installation',      p:'₹499',  pv:499,  url:'svc-cctv.html',               kw:['cctv','camera','security','surveillance','install'],svcId:'SVC015'},
+  {e:'☀️',n:'Solar Panel Cleaning',   p:'₹299',  pv:299,  url:'svc-solar-panel.html',        kw:['solar','panel','clean','energy'],svcId:'SVC016'},
+  // ── Vehicle ────────────────────────────────────────────────────────────────
+  {e:'🚗',n:'Car / Bike Wash',        p:'₹299',  pv:299,  url:'svc-car-wash.html',           kw:['car','bike','wash','clean','vehicle','auto'],svcId:'SVC017'},
+  {e:'🔧',n:'Car & Bike Mechanic',    p:'₹299',  pv:299,  url:'svc-car-mechanic.html',           kw:['mechanic','car','bike','repair','service','engine','4 wheeler','2 wheeler'],svcId:'SVC019'},
+  // ── Pest & Cleaning ────────────────────────────────────────────────────────
+  {e:'🐛',n:'Pest Control',           p:'₹799',  pv:799,  url:'svc-pest-control.html',       kw:['pest','cockroach','rat','termite','mosquito','spray'],svcId:'SVC021'},
+  // ── Personal & Lifestyle ───────────────────────────────────────────────────
+  {e:'🍱',n:'Cook / Cooking Person',  p:'₹299',  pv:299,  url:'svc-cook.html',               kw:['cook','chef','food','meal','tiffin','cooking'],svcId:'SVC022'},
+  {e:'✂️',n:'Haircut (Men)',          p:'₹249',  pv:249,  url:'svc-haircut-men.html',        kw:['haircut','hair','barber','men','trim','shave'],svcId:'SVC023'},
+  {e:'💇',n:'Haircut (Women)',        p:'₹349',  pv:349,  url:'svc-haircut-women.html',      kw:['haircut','hair','women','parlour','beauty','trim'],svcId:'SVC024'},
+  {e:'💆',n:'Full Body Massage',      p:'₹799',  pv:799,  url:'svc-massage.html',            kw:['massage','body','relaxation','spa','stress'],svcId:'SVC025'},
+  {e:'💪',n:'Gym / Fitness Trainer',  p:'₹599',  pv:599,  url:'svc-fitness-trainer.html',    kw:['gym','fitness','trainer','workout','exercise','yoga'],svcId:'SVC026'},
+  // ── Health ─────────────────────────────────────────────────────────────────
+  {e:'👨‍⚕️',n:'Doctor Visit',          p:'₹499',  pv:499,  url:'svc-doctor-visit.html',      kw:['doctor','physician','visit','medical','health','clinic'],svcId:'SVC027'},
+  {e:'💉',n:'Nurse Visit',            p:'₹399',  pv:399,  url:'svc-nurse-visit.html',        kw:['nurse','nursing','injection','care','medical'],svcId:'SVC028'},
+  {e:'🧪',n:'Lab Test Collection',    p:'₹99',   pv:99,  url:'svc-lab-test.html',           kw:['lab','test','blood','sample','collection','pathology'],svcId:'SVC029'},
+  // ── Care Services ──────────────────────────────────────────────────────────
+  {e:'👶',n:'Babysitter / Nanny',     p:'₹399',  pv:399,  url:'svc-babysitter.html',         kw:['baby','nanny','sitter','child','kids','care'],svcId:'SVC030'},
+  {e:'🧓',n:'Elderly Care',           p:'₹799',  pv:799,  url:'svc-elderly-care.html',       kw:['elderly','senior','old','care','companion'],svcId:'SVC031'},
+  // ── Outdoor & Other ────────────────────────────────────────────────────────
+  {e:'🌱',n:'Gardener',              p:'₹399',  pv:399,  url:'svc-gardener.html',            kw:['gardener','garden','plant','lawn','tree','pruning'],svcId:'SVC032'},
+  {e:'🚙',n:'Driver',               p:'₹499',  pv:499,  url:'svc-driver.html',              kw:['driver','cab','chauffeur','car','transport'],svcId:'SVC033'},
+  {e:'💂',n:'Security Guard & Bouncers',p:'₹699',pv:699,  url:'svc-security-guard.html',     kw:['security','guard','bouncer','watchman','protect'],svcId:'SVC034'},
+];
+
+// ── Sync prices from Firebase hs_service_prices ─────────────────────────────
+// Keeps user-booking.html prices in sync with hs-prices.html admin tool
+(function syncSVCSPrices() {
+  var FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json';
+
+  // ID → service name map (fallback when Firebase entry has no name field)
+  var ID_MAP = {
+    'SVC001':'House Maid',           'SVC002':'Deep Cleaning',
+    'SVC003':'Bathroom Cleaning',    'SVC004':'Kitchen Cleaning',
+    'SVC005':'Sofa / Carpet Cleaning','SVC006':'Laundry / Ironing',
+    'SVC007':'AC Cleaning & Repair', 'SVC008':'Home Appliance Repair',
+    'SVC009':'Water Purifier Service','SVC010':'Plumber',
+    'SVC011':'Electrician',          'SVC012':'Carpenter',
+    'SVC013':'Painter',              'SVC014':'CCTV Installation',
+    'SVC015':'Solar Panel Cleaning', 'SVC016':'Car / Bike Wash',
+    'SVC017':'Car & Bike Mechanic',  'SVC018':'Pest Control',
+    'SVC019':'Cook / Cooking Person','SVC020':'Haircut (Men)',
+    'SVC021':'Haircut (Women)',      'SVC022':'Gym / Fitness Trainer',
+    'SVC023':'Full Body Massage',    'SVC024':'Doctor Visit',
+    'SVC025':'Nurse Visit',          'SVC026':'Lab Test Collection',
+    'SVC027':'Babysitter / Nanny',   'SVC028':'Elderly Care',
+    'SVC029':'Gardener',             'SVC030':'Driver',
+    'SVC031':'Security Guard & Bouncers',
+    'SVC032':'Gardener',             'SVC033':'Driver',
+    'SVC034':'Security Guard & Bouncers'
+  };
+
+  // Explicit map: Firebase name (lowercase) -> SVCS names it applies to
+  var NAME_MAP = {
+    'laundry & ironing':         ['laundry / ironing'],
+    'ac cleaning & repair':      ['ac cleaning & repair'],
+    'solar panel service':       ['solar panel cleaning'],
+    'car / bike wash':           ['car / bike wash'],
+    'car & bike mechanic':       ['car & bike mechanic'],
+    'doctor visit at home':      ['doctor visit'],
+    'nurse visit at home':       ['nurse visit'],
+    'driver service':            ['driver'],
+    'security guard & bouncers': ['security guard & bouncers']
+  };
+
+  function findSVCS(fbName) {
+    var fl = fbName.toLowerCase().trim();
+    var exact = SVCS.find(function(s){ return s.n.toLowerCase().trim() === fl; });
+    if (exact) return [exact];
+    var mapped = NAME_MAP[fl];
+    if (mapped) {
+      return SVCS.filter(function(s){ return mapped.indexOf(s.n.toLowerCase().trim()) !== -1; });
+    }
+    // Fuzzy: key words of Firebase name all appear in SVCS name
+    var words = fl.split(/[\s\/&,]+/).filter(function(w){ return w.length > 3; });
+    return words.length ? SVCS.filter(function(s){
+      var sl = s.n.toLowerCase();
+      return words.every(function(w){ return sl.indexOf(w) !== -1; });
+    }) : [];
+  }
+
+  function applyPrice(svc,price){
+    svc.pv=price;svc.p='₹'+price.toLocaleString('en-IN');
+    var sp=_getStoragePrice();
+    if(!svc._priceFromOpts&&sp===0){svc._actualPrice=price;svc._actualPriceStr=svc.p;}
+    if(window.selSvc&&window.selSvc.n===svc.n){
+      window.selSvc.pv=price;window.selSvc.p=svc.p;
+      if(!window.selSvc._priceFromOpts&&sp===0){window.selSvc._actualPrice=price;window.selSvc._actualPriceStr=svc.p;}
+      var pp=document.getElementById('pilPrice');// price removed from pill — shown in booking summary only
+      if(typeof updateSummary==='function')updateSummary();
+    }
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', FB + '?_=' + Date.now(), true);
+  xhr.timeout = 6000;
+  xhr.onload = function() {
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (!data || typeof data !== 'object') return;
+      Object.keys(data).forEach(function(svcId) {
+        var p = data[svcId]; if (!p || p.base == null) return;
+        var price = parseInt(p.base); if (!price || price <= 0) return;
+        // Get name from Firebase data OR fall back to ID map (for old entries without name field)
+        var fbName = (p.name || '').trim();
+        if (!fbName) fbName = ID_MAP[svcId] || '';
+        if (!fbName) return;
+        findSVCS(fbName).forEach(function(svc){ applyPrice(svc, price); });
+      });
+    } catch(e) {}
+  };
+  xhr.send();
+})();
+
+'use strict_not_really'; // ES5 only
+
+
+// ── Firebase ─────────────────────────────────────────────────────────────────
+var FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+function fbWrite(path, data) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('PUT', FB + '/' + path + '.json', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 6000;
+  xhr.send(JSON.stringify(data));
+}
+
+function fbDelete(path) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('DELETE', FB + '/' + path + '.json', true);
+  xhr.timeout = 5000;
+  xhr.send();
+}
+
+function fbRead(path, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', FB + '/' + path + '.json', true);
+  xhr.timeout = 6000;
+  xhr.onload = function() {
+    try { cb(JSON.parse(xhr.responseText)); } catch(e) { cb(null); }
+  };
+  xhr.onerror = xhr.ontimeout = function() { cb(null); };
+  xhr.send();
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+var selSvc = null;
+var userLL = null;
+var userAddr = '';
+var miniMap = null;
+var miniMarker = null;
+var bookingId = null;
+var radarActive = false;
+var pollTimer = null;
+var curRange = 0;
+
+var RANGES  = [1, 3, 5, 10, 15, 20];
+var RING_R  = [18, 40, 62, 84, 106, 122];
+
+// ── Steps ────────────────────────────────────────────────────────────────────
+function setStep(n) {
+  [1,2,3,4].forEach(function(i) {
+    var s = document.getElementById('s'+i);
+    var d = document.getElementById('sd'+i);
+    if (!s || !d) return;
+    s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    d.textContent = i < n ? '✓' : i === 4 ? '✓' : String(i);
+    var l = document.getElementById('sl'+i);
+    if (l) l.style.background = i < n ? 'var(--green)' : 'var(--line)';
+  });
+}
+
+function goStep1() {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step1').style.display = 'block';
+  setStep(1);
+  window.scrollTo(0,0);
+}
+
+function goStep2() {
+  // Validate step 1
+  if (!selSvc) { showToast('Please select a service'); return; }
+  var nm = (document.getElementById('custName').value||'').trim() || (currentUser&&currentUser.displayName) || 'Customer';
+  var ph = (document.getElementById('custPhone').value||'').trim() || '';
+  var dt = document.getElementById('bookDate').value;
+  if (!nm) { showToast('Enter your full name'); return; }
+  if (!/^\d{10}$/.test(ph)) { showToast('Enter valid 10-digit mobile'); return; }
+  if (!dt) { showToast('Select a date'); return; }
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  setStep(2);
+  window.scrollTo(0,0);
+  setTimeout(initMap, 250);
+  setTimeout(getGPS, 600);
+}
+
+// ── Service search ───────────────────────────────────────────────────────────
+function svcSearch(q) {
+  var drop = document.getElementById('svcDrop');
+  if (!q || !q.trim()) { drop.style.display = 'none'; return; }
+  var lq = q.toLowerCase().trim();
+  var res = SVCS.filter(function(s) {
+    return s.n.toLowerCase().includes(lq) ||
+           s.kw.some(function(k) { return k.includes(lq); });
+  }).slice(0, 8);
+  if (!res.length) {
+    drop.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--muted);">No services found for "' + q + '"</div>';
+    drop.style.display = 'block';
+    return;
+  }
+  drop.innerHTML = res.map(function(s) {
+    return '<div class="svc-drop-item" onclick="pickSvc(' + SVCS.indexOf(s) + ')">' +
+      '<span class="sdi-emoji">' + s.e + '</span>' +
+      '<div class="sdi-info"><div class="sdi-name">' + hl(s.n, q) + '</div><div class="sdi-price">' + s.p + '</div></div>' +
+      '<span class="sdi-arrow">→</span></div>';
+  }).join('');
+  drop.style.display = 'block';
+}
+
+function hl(text, q) {
+  var i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return text;
+  return text.slice(0,i) + '<strong>' + text.slice(i, i+q.length) + '</strong>' + text.slice(i+q.length);
+}
+
+function pickFirst() {
+  var f = document.getElementById('svcDrop').querySelector('.svc-drop-item');
+  if (f) f.click();
+}
+
+function pickSvc(idx) {
+  selSvc = SVCS[idx];
+  if (!selSvc) return;
+  var _sd=document.getElementById('svcDrop');         if(_sd)_sd.style.display='none';
+  var _si=document.getElementById('svcInp');           if(_si)_si.value='';
+  var _sw=document.getElementById('svcSearchWrap');    if(_sw)_sw.style.display='none';
+  var _pe=document.getElementById('pilEm');            if(_pe)_pe.textContent=selSvc.e||'';
+  var _pn=document.getElementById('pilName');          if(_pn)_pn.textContent=selSvc.n||'';
+  var _pp=document.getElementById('pilPrice');         if(_pp)_pp.textContent='';
+  var _pl=document.getElementById('selPill');          if(_pl)_pl.style.display='flex';
+  updateSummary();
+  setTimeout(function(){if(typeof updateSummary==='function')updateSummary();},600);
+  if(typeof showToast==='function')showToast('✅ '+selSvc.n+' selected');
+}
+
+function clearSvc() {
+  selSvc = null;
+  document.getElementById('selPill').style.display = 'none';
+  document.getElementById('svcSearchWrap').style.display = 'block';
+  document.getElementById('svcInp').value = '';
+  document.getElementById('svcInp').focus();
+  var _il=document.getElementById('inlineSummary');if(_il)_il.style.display='none';
+}
+
+// ── Form setup ───────────────────────────────────────────────────────────────
+(function() {
+  var tom = new Date(); tom.setDate(tom.getDate() + 1);
+  document.getElementById('bookDate').value = tom.toISOString().split('T')[0];
+  document.getElementById('bookDate').min = new Date().toISOString().split('T')[0];
+  var hs = document.getElementById('bookHour');
+  for (var h = 6; h <= 21; h++) {
+    var lbl = h < 12 ? h + ' AM' : h === 12 ? '12 PM' : (h-12) + ' PM';
+    hs.innerHTML += '<option value="' + (h<10?'0'+h:h) + '">' + lbl + '</option>';
+  }
+  hs.value = '09';
+})();
+
+function updateSummary(){
+  if(!selSvc)return;
+  var isl=document.getElementById('inlineSummary');if(isl)isl.style.display='block';
+  var _sw=document.getElementById('svcSearchWrap');if(_sw)_sw.style.display='none';
+  var _pilEl=document.getElementById('selPill');if(_pilEl&&_pilEl.style.display==='none')_pilEl.style.display='flex';
+  var el=document.getElementById('sumSvc');if(el)el.textContent=selSvc.n;
+  // Price: only show user-selected price — never show catalog index price
+  var pe=document.getElementById('sumPrice');
+  if(pe){
+    var _sp=_getStoragePrice();
+    if(_sp>0){ pe.textContent='₹'+_sp.toLocaleString('en-IN'); pe.style.color=''; }
+    else { pe.textContent='—'; pe.style.color='#888'; }
+  }
+  // Date & time
+  var dt=(document.getElementById('bookDate')||{}).value||'';
+  var hr=(document.getElementById('bookHour')||{}).value||'09';
+  var mn=(document.getElementById('bookMinute')||{}).value||'00';
+  var de=document.getElementById('sumDT');if(de)de.textContent=dt?dt+' at '+hr+':'+mn:'—';
+  // Sub-subcategory chips — smart builder handles all service types
+  var _oRaw=null;
+  try{var _r=sessionStorage.getItem('hs_service_options')||localStorage.getItem('hs_service_options');if(_r)_oRaw=JSON.parse(_r);}catch(e){}
+  var _choices=document.getElementById('sumChoices');
+  var _list=document.getElementById('sumChoicesList');
+  if(_choices&&_list){
+    var _cc=buildChoices(_oRaw);
+    if(_cc.length>0){
+      _list.innerHTML=_cc.map(function(s){
+        // Support both "A > B > C" breadcrumb and "A — B — ₹Price" legacy formats
+        var sep = String(s).indexOf(' > ') !== -1 ? ' > ' : ' — ';
+        var parts = String(s).split(sep);
+        var inner = parts.map(function(p,i){
+          p = p.trim();
+          if (!p) return '';
+          // Price part (legacy format)
+          if (p.charAt(0)==='₹' || p.charAt(0)==='R') return '<b style="color:#1B6B7A;">'+p+'</b>';
+          // Sub-parts (2nd onwards) — slightly muted
+          if (i > 0) return '<span style="color:#555;">'+p+'</span>';
+          // First part (service category)
+          return '<span>'+p+'</span>';
+        }).filter(Boolean).join('<span style="color:#aaa;margin:0 2px;">›</span>');
+        return '<div style="display:inline-flex;align-items:center;gap:2px;padding:4px 10px;background:white;border:1px solid #1B6B7A;border-radius:100px;font-size:12px;font-weight:600;color:#1B6B7A;margin:2px;">✓ '+inner+'</div>';
+      }).join('');
+      _choices.style.display='block';
+    } else { _choices.style.display='none'; }
+  }
+}
+
+['custName','custPhone','bookDate','bookHour','bookMinute'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) { el.addEventListener('input', updateSummary); el.addEventListener('change', updateSummary); }
+});
+
+document.addEventListener('click', function(e) {
+  var inp = document.getElementById('svcInp');
+  var drop = document.getElementById('svcDrop');
+  if (inp && drop && !inp.contains(e.target) && !drop.contains(e.target)) drop.style.display = 'none';
+});
+
+// ── Map & GPS ────────────────────────────────────────────────────────────────
+function initMap() {
+  if (miniMap) { miniMap.invalidateSize(); return; }
+  miniMap = L.map('miniMap', {zoomControl:true, attributionControl:false}).setView([17.385, 78.486], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(miniMap);
+  miniMap.on('click', function(e) { pin(e.latlng.lat, e.latlng.lng); revGeo(e.latlng.lat, e.latlng.lng); });
+}
+
+function pin(lat, lng) {
+  if (miniMarker) miniMap.removeLayer(miniMarker);
+  var ic = L.divIcon({html:'<div style="width:28px;height:28px;background:#1B6B7A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(27,107,122,.4);"></div>', className:'', iconSize:[28,28], iconAnchor:[14,28]});
+  miniMarker = L.marker([lat,lng], {icon:ic, draggable:true}).addTo(miniMap);
+  miniMarker.on('dragend', function(e) { var ll=e.target.getLatLng(); pin(ll.lat,ll.lng); revGeo(ll.lat,ll.lng); });
+  miniMap.panTo([lat, lng]);
+  userLL = {lat:lat, lng:lng};
+  document.getElementById('findBtn').disabled = false;
+}
+
+function revGeo(lat, lng) {
+  document.getElementById('gpsAddrTxt').textContent = 'Fetching address...';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json', true);
+  xhr.setRequestHeader('Accept-Language', 'en');
+  xhr.timeout = 8000;
+  xhr.onload = function() {
+    try {
+      var d = JSON.parse(xhr.responseText);
+      var a = d.address || {};
+      userAddr = [a.road, a.suburb||a.neighbourhood, a.city||a.town||a.state_district, a.state].filter(Boolean).join(', ') || d.display_name || (lat.toFixed(4)+', '+lng.toFixed(4));
+      document.getElementById('gpsAddrTxt').textContent = userAddr;
+    } catch(e) { userAddr = lat.toFixed(4)+', '+lng.toFixed(4); document.getElementById('gpsAddrTxt').textContent = userAddr; }
+  };
+  xhr.onerror = xhr.ontimeout = function() { userAddr = lat.toFixed(4)+', '+lng.toFixed(4); document.getElementById('gpsAddrTxt').textContent = userAddr; };
+  xhr.send();
+}
+
+function getGPS() {
+  if (!navigator.geolocation) { showToast('GPS not available'); return; }
+  document.getElementById('gpsAddrTxt').textContent = 'Detecting your location...';
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude, lng = pos.coords.longitude;
+    pin(lat, lng);
+    miniMap.setView([lat,lng], 16);
+    revGeo(lat, lng);
+    var acc = Math.round(pos.coords.accuracy);
+    document.getElementById('gpsAcc').textContent = '±'+acc+'m';
+    document.getElementById('gpsAcc').style.display = 'block';
+    showToast('📍 Location detected');
+  }, function() {
+    showToast('Could not get GPS — tap map to set location');
+    document.getElementById('gpsAddrTxt').textContent = 'Tap on map to set location';
+  }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
+}
+
+function toggleLocSearch() {
+  var b = document.getElementById('locSearchBar');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+  if (b.style.display === 'block') document.getElementById('locQ').focus();
+}
+
+function doLocSearch() {
+  var q = document.getElementById('locQ').value.trim();
+  if (!q) return;
+  document.getElementById('gpsAddrTxt').textContent = 'Searching...';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1&countrycodes=in', true);
+  xhr.timeout = 8000;
+  xhr.onload = function() {
+    try {
+      var res = JSON.parse(xhr.responseText);
+      if (!res.length) { showToast('Location not found'); return; }
+      var lat = parseFloat(res[0].lat), lng = parseFloat(res[0].lon);
+      pin(lat, lng); miniMap.setView([lat,lng], 15); revGeo(lat, lng);
+      document.getElementById('locSearchBar').style.display = 'none';
+    } catch(e) { showToast('Search failed'); }
+  };
+  xhr.onerror = xhr.ontimeout = function() { showToast('Search failed'); };
+  xhr.send();
+}
+
+// ── RADAR SEARCH ─────────────────────────────────────────────────────────────
+function startRadar() {
+  if (!userLL) { showToast('Please confirm your location first'); return; }
+
+  bookingId = 'HS-BK-' + Date.now().toString(36).toUpperCase();
+  var custName = document.getElementById('custName').value.trim();
+  var custPhone= document.getElementById('custPhone').value.trim();
+  var bkDate   = document.getElementById('bookDate').value;
+  var bkHour   = document.getElementById('bookHour').value;
+  var bkMin    = document.getElementById('bookMinute').value;
+  var bkTime   = bkHour + ':' + bkMin;
+
+  var bkData = {
+    id:         bookingId,
+    customerId: currentUid  || '',
+    service:    selSvc.n,
+    emoji:      selSvc.e || '',
+    price:      (_getStoragePrice()>0?'₹'+_getStoragePrice().toLocaleString('en-IN'):selSvc.p),
+    priceVal:   (_getStoragePrice()||selSvc.pv),
+    amount:     (_getStoragePrice()||selSvc.pv),
+    summary:    (function(){ try{ var o=JSON.parse(localStorage.getItem('hs_service_options')||'{}'); return o.summary||[]; }catch(e){return [];} })(),
+    customer:   custName,
+    phone:      custPhone,
+    date:       bkDate,
+    time:       bkTime,
+    lat:        userLL.lat,
+    lng:        userLL.lng,
+    address:    userAddr,
+    status:     'searching',
+    acceptedBy: null,
+    range:      RANGES[0],
+    createdAt:  new Date().toISOString()
+  };
+
+  fbWrite('bookings/' + bookingId, bkData);
+  fbWrite('active_bookings/' + bookingId, bkData);
+
+  radarActive = true;
+  curRange = 0;
+
+  // Show radar overlay
+  var ro = document.getElementById('radarOverlay');
+  ro.style.display = '';  // clear any inline display override
+  ro.innerHTML = getRadarHTML();  // always start with clean radar HTML
+  ro.classList.add('show');
+
+  setStep(3);
+  rlog('🚀', 'Searching for <strong>' + selSvc.n + '</strong> professionals...', '');
+  runRange(0);
+}
+
+// ── Radar HTML template (always fresh) ───────────────────────────────────────
+function getRadarHTML() {
+  return '<div class="radar-header">' +
+    '<button class="radar-back" onclick="cancelRadar()">←</button>' +
+    '<div><div class="radar-title">Searching for Professionals</div>' +
+    '<div class="radar-sub-text" id="radarSubTxt">Starting radar...</div></div>' +
+    '</div>' +
+    '<div class="radar-wrap">' +
+    '<svg class="radar-svg" viewBox="0 0 260 260">' +
+    '<defs><radialGradient id="rg"><stop offset="0%" stop-color="#00ff88" stop-opacity=".06"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0"/></radialGradient>' +
+    '<filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' +
+    '<circle cx="130" cy="130" r="18"  fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/>' +
+    '<circle cx="130" cy="130" r="40"  fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/>' +
+    '<circle cx="130" cy="130" r="62"  fill="none" stroke="rgba(0,255,136,.12)" stroke-width="1"/>' +
+    '<circle cx="130" cy="130" r="84"  fill="none" stroke="rgba(0,255,136,.10)" stroke-width="1"/>' +
+    '<circle cx="130" cy="130" r="106" fill="none" stroke="rgba(0,255,136,.08)" stroke-width="1"/>' +
+    '<circle cx="130" cy="130" r="122" fill="none" stroke="rgba(0,255,136,.06)" stroke-width="1"/>' +
+    '<line x1="130" y1="8" x2="130" y2="252" stroke="rgba(0,255,136,.07)" stroke-width="1"/>' +
+    '<line x1="8" y1="130" x2="252" y2="130" stroke="rgba(0,255,136,.07)" stroke-width="1"/>' +
+    '<circle id="activeRing" cx="130" cy="130" r="40" fill="url(#rg)" stroke="#00ff88" stroke-width="2" stroke-dasharray="5 3" opacity=".7"/>' +
+    '<g class="radar-sweep"><path d="M130,130 L130,8 A122,122 0 0,1 196,37 Z" fill="rgba(0,255,136,.07)" opacity=".9"/></g>' +
+    '<circle cx="130" cy="130" r="5" fill="#1B6B7A" filter="url(#glow)"/>' +
+    '<circle cx="130" cy="130" r="9" fill="none" stroke="rgba(27,107,122,.4)" stroke-width="1.5"/>' +
+    '<g id="blipsG"></g>' +
+    '</svg>' +
+    '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-family:Sora,sans-serif;font-size:11px;font-weight:800;color:rgba(0,255,136,.6);letter-spacing:1.5px;white-space:nowrap;" id="ringLbl">1 KM</div>' +
+    '</div>' +
+    '<div class="radar-km" id="radarKm">1 km</div>' +
+    '<div class="radar-km-sub" id="radarKmSub">Scanning within 1 km...</div>' +
+    '<div class="radar-log" id="radarLog"></div>' +
+    '<button class="radar-cancel" onclick="cancelRadar()">✕ Cancel Search</button>';
+}
+
+// ── Range search ─────────────────────────────────────────────────────────────
+function runRange(idx) {
+  if (!radarActive) return;
+
+  // ── ALL RANGES EXHAUSTED — show sorry + save pending ──────────────────────
+  if (idx >= RANGES.length) {
+    radarActive = false;
+    clearTimeout(pollTimer);
+
+    var bkDate  = document.getElementById('bookDate').value;
+    var bkTime  = document.getElementById('bookHour').value + ':' + document.getElementById('bookMinute').value;
+    var custName= document.getElementById('custName').value.trim();
+    var custPhone=document.getElementById('custPhone').value.trim();
+
+    var pending = {
+      id:            bookingId,
+      customerId:    currentUid || '',
+      service:       selSvc.n,
+      emoji:         selSvc.e || '',
+      price:         (_getStoragePrice()>0?'₹'+_getStoragePrice().toLocaleString('en-IN'):selSvc.p),
+      priceVal:      (_getStoragePrice()||selSvc.pv),
+      amount:        (_getStoragePrice()||selSvc.pv),
+      date:          bkDate,
+      time:          bkTime,
+      customer:      custName,
+      phone:         custPhone,
+      address:       userAddr,
+      lat:           userLL.lat,
+      lng:           userLL.lng,
+      status:        'pending',
+      pendingReason: 'no_provider_available',
+      createdAt:     new Date().toISOString()
+    };
+
+    // Save to Firebase — user-panel reads from here via customerId query
+    fbWrite('bookings/' + bookingId, pending);
+    fbWrite('active_bookings/' + bookingId + '/status', 'pending_no_provider');
+
+    // Show sorry screen inside the radar overlay
+    showSorryScreen(pending);
+    return;
+  }
+
+  curRange = idx;
+  var km = RANGES[idx];
+
+  // Update radar UI elements (they exist because getRadarHTML() was called)
+  document.getElementById('radarKm').textContent = km + ' km';
+  document.getElementById('radarKmSub').textContent = 'Scanning within ' + km + ' km of your location...';
+  document.getElementById('radarSubTxt').textContent = 'Range: ' + km + ' km';
+  document.getElementById('ringLbl').textContent = km + ' KM';
+  document.getElementById('activeRing').setAttribute('r', String(RING_R[idx]));
+
+  if (idx === 0) {
+    rlog('📡', 'Radar active — scanning <strong>' + km + ' km</strong> radius', '');
+  } else {
+    rlog('↔️', 'Expanding to <strong>' + km + ' km</strong> — no response within ' + RANGES[idx-1] + ' km', 'warn');
+  }
+
+  // Count providers from Firebase (works across all devices)
+  var reqSvcName = (selSvc ? selSvc.n : '').toLowerCase();
+
+  function countAndBlip(allProvs) {
+    var inRange = allProvs.filter(function(p) {
+      if (!p.lat || !p.lng) return false;
+      if (hvs(userLL.lat, userLL.lng, p.lat, p.lng) > km) return false;
+      if (p.available === false) return false;
+      if (p.status && p.status !== 'approved') return false;
+      if (!p.services || p.services.length === 0) return false;
+      return p.services.some(function(s){ return (s.name || '').toLowerCase() === reqSvcName; });
+    });
+    if (inRange.length === 0) {
+      rlog('📡', 'No providers found within <strong>' + km + ' km</strong> — continuing search...', '');
+    } else {
+      rlog('👥', '<strong>' + inRange.length + '</strong> provider' + (inRange.length===1?'':'s') + ' within ' + km + ' km — sending alert', 'success');
+    }
+    for (var bi = 0; bi < Math.min(inRange.length, 6); bi++) addBlip(idx);
+  }
+
+  // Try Firebase first, fallback to localStorage
+  var xhr2 = new XMLHttpRequest();
+  xhr2.open('GET', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers.json', true);
+  xhr2.timeout = 5000;
+  xhr2.onload = function() {
+    try {
+      var data = JSON.parse(xhr2.responseText);
+      var provs = data && typeof data === 'object' ? Object.values(data).filter(function(p){return p&&p.id;}) : [];
+      if (provs.length > 0) {
+        // Update local cache
+        localStorage.setItem('hs_providers', JSON.stringify(provs));
+        countAndBlip(provs);
+      } else { countAndBlip([]); }
+    } catch(e) { countAndBlip([]); }
+  };
+  xhr2.onerror = xhr2.ontimeout = function() { countAndBlip([]); /*firebase offline*/ 
+    countAndBlip(JSON.parse(localStorage.getItem('hs_providers')||'[]'));
+  };
+  xhr2.send();
+
+  // Write to Firebase — provider dashboards poll this
+  fbWrite('active_bookings/' + bookingId + '/range', km);
+  fbWrite('active_bookings/' + bookingId + '/status', 'searching');
+  fbWrite('active_bookings/' + bookingId + '/updatedAt', Date.now());
+  fbWrite('notifications/search_' + bookingId, {
+    bookingId: bookingId,
+    service:   selSvc.n,
+    lat:       userLL.lat,
+    lng:       userLL.lng,
+    range:     km,
+    ts:        Date.now(),
+    status:    'searching'
+  });
+
+  // Poll Firebase every 3s (real timestamps)
+  var rangeStart = Date.now();
+  clearTimeout(pollTimer);
+
+  function doPoll() {
+    if (!radarActive) return;
+    var elapsed = Date.now() - rangeStart;
+
+    fbRead('active_bookings/' + bookingId, function(req) {
+      if (!radarActive) return;
+
+      if (req && req.acceptedBy) {
+        clearTimeout(pollTimer);
+        provAccepted(req.acceptedBy);
+        return;
+      }
+
+      if (elapsed >= 18000) {
+        runRange(idx + 1);
+        return;
+      }
+
+      pollTimer = setTimeout(doPoll, 3000);
+    });
+  }
+
+  pollTimer = setTimeout(doPoll, 3000);
+}
+
+// ── Sorry screen — replaces radar content when no provider found ──────────────
+function showSorryScreen(bk) {
+  var ro = document.getElementById('radarOverlay');
+  if (!ro) return;
+
+  // Replace radar content with sorry screen
+  ro.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'min-height:100vh;padding:32px;box-sizing:border-box;text-align:center;">' +
+
+    '<div style="font-size:64px;margin-bottom:20px;">&#x1F614;</div>' +
+
+    '<div style="font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:white;margin-bottom:12px;">' +
+    'No Providers Available</div>' +
+
+    '<div style="font-size:14px;color:rgba(255,255,255,.6);line-height:1.8;margin-bottom:28px;max-width:320px;">' +
+    'We searched up to 20&nbsp;km and found no available providers for ' +
+    '<strong style="color:white;">' + (bk ? bk.service : '') + '</strong> right now.<br/><br/>' +
+    'Your booking is saved as <strong style="color:#ffa500;">Pending</strong>. ' +
+    'You will be notified when a provider becomes available.' +
+    '</div>' +
+
+    '<div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);' +
+    'border-radius:16px;padding:20px 24px;margin-bottom:28px;width:100%;max-width:360px;text-align:left;">' +
+    '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;' +
+    'letter-spacing:1.2px;margin-bottom:10px;">&#x23F3; Pending Booking</div>' +
+    '<div style="font-size:17px;font-weight:800;color:white;margin-bottom:5px;">' + (bk ? bk.service : '') + '</div>' +
+    '<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:14px;">' +
+    (bk ? bk.date : '') + (bk && bk.time ? ' at ' + bk.time : '') + '</div>' +
+    '<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,165,0,.18);' +
+    'border:1px solid rgba(255,165,0,.4);color:#ffb020;font-size:13px;font-weight:700;' +
+    'padding:7px 16px;border-radius:100px;">' +
+    '<span style="width:8px;height:8px;border-radius:50%;background:#ffb020;display:inline-block;"></span>' +
+    'Pending &#x2014; Awaiting Provider</div>' +
+    '</div>' +
+
+    '<button onclick="window.location.href=\'index.html\';" ' +
+    'style="width:100%;max-width:360px;padding:16px;background:#1B6B7A;color:white;border:none;' +
+    'border-radius:14px;font-family:DM Sans,sans-serif;font-size:16px;font-weight:700;cursor:pointer;' +
+    'margin-bottom:12px;">&#x2190; Back to Home</button>' +
+
+    '<button onclick="location.reload();" ' +
+    'style="width:100%;max-width:360px;padding:15px;background:rgba(255,255,255,.1);' +
+    'color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.25);border-radius:14px;' +
+    'font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Try Again</button>' +
+
+    '</div>';
+}
+
+// ── Radar helpers ─────────────────────────────────────────────────────────────
+function addBlip(rangeIdx) {
+  var g = document.getElementById('blipsG');
+  if (!g) return;
+  var angle = Math.random() * 2 * Math.PI;
+  var maxR = RING_R[rangeIdx] * 0.85;
+  var minR = rangeIdx === 0 ? 8 : RING_R[rangeIdx] * 0.3;
+  var r = minR + Math.random() * (maxR - minR);
+  var x = 130 + r * Math.cos(angle);
+  var y = 130 + r * Math.sin(angle);
+  var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', x.toFixed(1));
+  c.setAttribute('cy', y.toFixed(1));
+  c.setAttribute('r', '5');
+  c.setAttribute('fill', '#00ff88');
+  c.setAttribute('opacity', '0.85');
+  g.appendChild(c);
+}
+
+function rlog(icon, text, type) {
+  var log = document.getElementById('radarLog');
+  if (!log) return;
+  var now = new Date();
+  var ts = (now.getHours()<10?'0':'')+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes()+':'+(now.getSeconds()<10?'0':'')+now.getSeconds();
+  var div = document.createElement('div');
+  div.className = 'rlog' + (type ? ' ' + type : '');
+  div.innerHTML = '<span class="rlog-ic">' + icon + '</span>' +
+                  '<span class="rlog-txt">' + text + '</span>' +
+                  '<span class="rlog-ts">' + ts + '</span>';
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── Cancel radar ──────────────────────────────────────────────────────────────
+function cancelRadar() {
+  showCancelConfirm(function(confirmed) {
+    if (!confirmed) return;
+    radarActive = false;
+    clearTimeout(pollTimer);
+    if (bookingId) {
+      fbDelete('active_bookings/' + bookingId);
+      fbDelete('notifications/search_' + bookingId);
+    }
+    var ro = document.getElementById('radarOverlay');
+    ro.classList.remove('show');
+    ro.style.display = 'none';
+    bookingId = null;
+    setStep(2);
+  });
+}
+
+function showCancelConfirm(cb) {
+  var ex = document.getElementById('cancelConfirmModal');
+  if (ex) ex.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'cancelConfirmModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;backdrop-filter:blur(4px);';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1a1f2e;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:30px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6);';
+
+  var icon = document.createElement('div');
+  icon.style.cssText = 'font-size:42px;margin-bottom:14px;';
+  icon.textContent = '🔍';
+
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;';
+  title.textContent = 'Cancel Search?';
+
+  var desc = document.createElement('div');
+  desc.style.cssText = 'font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px;';
+  desc.textContent = 'We are still looking for a professional near you. Are you sure you want to stop the search?';
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:10px;';
+
+  var keepBtn = document.createElement('button');
+  keepBtn.style.cssText = 'flex:1;padding:13px 8px;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;';
+  keepBtn.textContent = 'Keep Searching';
+  keepBtn.onclick = function() { modal.remove(); cb(false); };
+
+  var stopBtn = document.createElement('button');
+  stopBtn.style.cssText = 'flex:1;padding:13px 8px;border-radius:12px;border:none;background:#e03131;color:#fff;font-size:13px;font-weight:700;cursor:pointer;';
+  stopBtn.textContent = 'Yes, Cancel';
+  stopBtn.onclick = function() { modal.remove(); cb(true); };
+
+  row.appendChild(keepBtn);
+  row.appendChild(stopBtn);
+  box.appendChild(icon);
+  box.appendChild(title);
+  box.appendChild(desc);
+  box.appendChild(row);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+// ── Provider accepted ─────────────────────────────────────────────────────────
+function provAccepted(data) {
+  radarActive = false;
+  clearTimeout(pollTimer);
+  var ro = document.getElementById('radarOverlay');
+  ro.classList.remove('show');
+  ro.style.display = 'none';
+
+  var p = (typeof data === 'string') ? JSON.parse(data) : (data || {});
+  var dist = (p.lat && userLL) ? hvs(userLL.lat, userLL.lng, p.lat, p.lng).toFixed(1) : '2.0';
+  var eta = Math.max(3, Math.round(parseFloat(dist) * 4 + 2));
+
+  document.getElementById('pcName').textContent    = p.name || 'Professional';
+  document.getElementById('pcRating').textContent  = p.rating ? Number(p.rating).toFixed(1) : '4.8';
+  document.getElementById('pcJobs').textContent    = p.totalJobs ? '· ' + p.totalJobs + ' jobs' : '';
+  document.getElementById('pcETA').textContent     = eta + ' min';
+  document.getElementById('pcDist').textContent    = dist + ' km away';
+  document.getElementById('provOverlay').classList.add('show');
+  setStep(4);
+}
+
+function confirmBooking() {
+  document.getElementById('provOverlay').classList.remove('show');
+  if (bookingId) {
+    fbWrite('bookings/' + bookingId + '/status', 'confirmed');
+    fbWrite('active_bookings/' + bookingId + '/status', 'confirmed');
+    var bkData = {
+      id:         bookingId,
+      customerId: currentUid || '',
+      service:    selSvc.n,
+      emoji:      selSvc.e || '',
+      price:      (_getStoragePrice()>0?'₹'+_getStoragePrice().toLocaleString('en-IN'):selSvc.p),
+      priceVal:   (_getStoragePrice()||selSvc.pv),
+      amount:     (_getStoragePrice()||selSvc.pv),
+      date:       document.getElementById('bookDate').value,
+      time:       document.getElementById('bookHour').value + ':' + document.getElementById('bookMinute').value,
+      customer:   document.getElementById('custName').value.trim(),
+      phone:      document.getElementById('custPhone').value.trim(),
+      address:    userAddr,
+      status:     'confirmed',
+      createdAt:  new Date().toISOString()
+    };
+    // Write full confirmed booking to Firebase — user-panel.html listens via customerId
+    fbWrite('bookings/' + bookingId, bkData);
+  }
+  showToast('✅ Booking confirmed! Professional is on the way.');
+  setTimeout(function() { window.location.href = 'user-panel.html'; }, 1800);
+}
+
+function openTracking() {
+  document.getElementById('provOverlay').classList.remove('show');
+  if (bookingId) window.location.href = 'provider-dashboard.html?track=' + bookingId;
+}
+
+// ── Watch pending bookings — notify when provider accepts ────────────────────
+function watchPendingBookings() {
+  // Read from UID-keyed cache if available, fall back to nothing (no shared key)
+  if (!currentUid) return;
+  var cached = [];
+  try { cached = JSON.parse(localStorage.getItem('hs_bk_' + currentUid) || '[]'); } catch(e) {}
+  var pending = cached.filter(function(b) { return b.status === 'pending' || b.status === 'searching'; });
+  if (!pending.length) return;
+
+  pending.forEach(function(bk) {
+    fbRead('bookings/' + bk.id, function(data) {
+      if (!data) return;
+      if (data.status === 'accepted' || data.status === 'confirmed' ||
+          (data.acceptedBy && data.acceptedBy.name)) {
+        // Show notification banner
+        showProviderFoundBanner(bk, data);
+      }
+    });
+  });
+}
+
+function showProviderFoundBanner(bk, data) {
+  if (document.getElementById('provFoundBanner')) return;
+  var pName = (data.acceptedBy && data.acceptedBy.name) ? data.acceptedBy.name : 'A provider';
+  var banner = document.createElement('div');
+  banner.id = 'provFoundBanner';
+  banner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#00956a;color:white;padding:14px 20px;border-radius:14px;box-shadow:0 8px 32px rgba(0,149,106,.4);z-index:9999;max-width:360px;width:90%;font-family:DM Sans,sans-serif;';
+  banner.innerHTML =
+    '<div style="font-size:13px;font-weight:800;margin-bottom:5px;">✅ Provider Found for Your Pending Booking!</div>' +
+    '<div style="font-size:13px;color:rgba(255,255,255,.85);">' + pName + ' accepted your <strong>' + bk.service + '</strong> booking.</div>' +
+    '<div style="display:flex;gap:8px;margin-top:12px;">' +
+    '<button onclick="window.location.href=\'index.html\';" style="flex:1;padding:9px;background:white;color:#00956a;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;font-size:13px;">View Booking</button>' +
+    '<button onclick="this.parentNode.parentNode.style.display=\'none\';" style="padding:9px 14px;background:rgba(255,255,255,.2);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;font-size:13px;">Dismiss</button>' +
+    '</div>';
+  document.body.appendChild(banner);
+  setTimeout(function() { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 15000);
+}
+
+// Run pending watcher on load + every 30s
+watchPendingBookings();
+setInterval(watchPendingBookings, 30000);
+
+// ── URL params — pre-fill from homepage ──────────────────────────────────────
+(function() {
+  // Read saved booking options from service page (has subcategory price + summary)
+  var opts = null;
+  try {
+    var raw = localStorage.getItem('hs_service_options') || sessionStorage.getItem('hs_service_options');
+    if (raw) opts = JSON.parse(raw);
+  } catch(e) {}
+  // Aggressively clear stale opts — if URL has a service param, stored service must match it
+  (function(){
+    var _urlSvc = new URLSearchParams(window.location.search).get('service');
+    if (!_urlSvc) return; // no URL param — keep opts as is
+    if (!opts || !opts.service) return; // nothing stored — nothing to clear
+    // Decode URL param for comparison
+    var _u = decodeURIComponent(_urlSvc).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    var _o = (opts.service||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    // Extract meaningful words (skip generic words)
+    var _skip = ['home','with','from','at','and','for','the','repair','service','services','visit','care','work','cleaning'];
+    function _keys(s){ return s.split(' ').filter(function(w){ return w.length>2 && _skip.indexOf(w)===-1; }); }
+    var _uk = _keys(_u);
+    var _ok = _keys(_o);
+    // Must share at least one meaningful keyword — if not, clear
+    // If either has no meaningful keywords (e.g. "AC Service"), fall back to full string match
+    var _shared = _uk.length === 0 || _ok.length === 0
+      ? (_u === _o ? [1] : [])
+      : _uk.filter(function(w){ return _ok.indexOf(w) !== -1; });
+    if (_shared.length === 0) {
+      localStorage.removeItem('hs_service_options');
+      sessionStorage.removeItem('hs_service_options');
+      opts = null;
+    }
+  })();
+  // Show summary immediately if we already have a stored service selection
+  if (opts && opts.service) {
+    var _isl = document.getElementById('inlineSummary');
+    var _pe  = document.getElementById('sumSvc');
+    if (_isl) _isl.style.display = 'block';
+    if (_pe)  _pe.textContent = opts.service;
+    var _pp = document.getElementById('sumPrice');
+    if (_pp) {
+      var _ip = parseInt(opts.price||'0');
+      if(_ip>0){_pp.textContent='₹'+_ip.toLocaleString('en-IN');_pp.style.color='';}
+      else{_pp.textContent='—';_pp.style.color='#888';}
+    }
+    // Show subcategory chips immediately
+    var _icl=document.getElementById('sumChoicesList');
+    var _icw=document.getElementById('sumChoices');
+    if(_icl&&_icw){
+      var _icc=buildChoices(opts);
+      if(_icc.length>0){
+        _icl.innerHTML=_icc.map(function(s){
+          var sep=String(s).indexOf(' > ')!==-1?' > ':' — ';
+          var parts=String(s).split(sep);
+          var inner=parts.map(function(p,i){p=p.trim();if(!p)return'';if(p.charAt(0)==='₹')return'<b style="color:#1B6B7A;">'+p+'</b>';if(i>0)return'<span style="color:#555;">'+p+'</span>';return'<span>'+p+'</span>';}).filter(Boolean).join('<span style="color:#aaa;margin:0 2px;">›</span>');
+          return'<div style="display:inline-flex;align-items:center;gap:2px;padding:4px 10px;background:white;border:1px solid #1B6B7A;border-radius:100px;font-size:12px;font-weight:600;color:#1B6B7A;margin:2px;">✓ '+inner+'</div>';
+        }).join('');
+        _icw.style.display='block';
+      } else { _icw.style.display='none'; }
+    }
+    var _dt = (document.getElementById('bookDate')||{}).value || '';
+    var _hr = (document.getElementById('bookHour')||{}).value || '09';
+    var _mn = (document.getElementById('bookMinute')||{}).value || '00';
+    var _de = document.getElementById('sumDT');
+    if (_de) _de.textContent = _dt ? _dt + ' at ' + _hr + ':' + _mn : '—';
+    // Show service pill too
+    var _selPill = document.getElementById('selPill');
+    if (_selPill) _selPill.style.display = 'flex';
+    var _pilName = document.getElementById('pilName');
+    if (_pilName) _pilName.textContent = opts.service;
+    var _svcWrap = document.getElementById('svcSearchWrap');
+    if (_svcWrap) _svcWrap.style.display = 'none';
+  }
+
+  var p        = new URLSearchParams(window.location.search);
+  var urlSvc   = p.get('service');
+  // URL param always wins — opts only used when it matches the URL service
+  // This prevents stale localStorage from a previous booking overriding the current one
+  if(opts&&urlSvc&&opts.service){
+    // Same shared-keyword check as init block
+    var _sk2=['home','with','from','at','and','for','the','repair','service','services','visit','care','work','cleaning'];
+    function _k2(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').filter(function(w){return w.length>2&&_sk2.indexOf(w)===-1;});}
+    var _u2=_k2(urlSvc),_o2=_k2(opts.service);
+    var _sh2=_u2.length===0||_o2.length===0?((urlSvc.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim())===(opts.service.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim())?[1]:[]):_u2.filter(function(w){return _o2.indexOf(w)!==-1;});
+    if(_sh2.length===0)opts=null;
+  }
+  var svc = urlSvc || (opts && opts.service);
+
+  if (svc) {
+    // Normalize: replace & / / with space, strip extra spaces
+    function normSvc(str) {
+      return str.toLowerCase().replace(/[&\/,]+/g,' ').replace(/\s+/g,' ').trim();
+    }
+    var svcNorm = normSvc(svc);
+
+    // 1. Exact match
+    var m = SVCS.find(function(s){ return s.n.toLowerCase() === svc.toLowerCase(); });
+    // 2. Normalized match (handles & vs / etc.)
+    if (!m) m = SVCS.find(function(s){ return normSvc(s.n) === svcNorm; });
+    // 3. Keyword match
+    if (!m) m = SVCS.find(function(s){
+      return s.kw && s.kw.some(function(k){ return normSvc(k) === svcNorm || k.toLowerCase() === svc.toLowerCase(); });
+    });
+    // 4. Name starts with or contains the search term (min 4 chars)
+    // IMPORTANT: use first MEANINGFUL word (>3 chars, not a stop word) to avoid "home" matching everything
+    var _mStop = ['home','with','from','at','and','for','the','service','services','care','work'];
+    function _mFirst(s){ var ws=normSvc(s).split(' ').filter(function(w){return w.length>3&&_mStop.indexOf(w)===-1;}); return ws[0]||''; }
+    if (!m && svc.length >= 4) m = SVCS.find(function(s){
+      var fw = _mFirst(s.n);
+      return s.n.toLowerCase().includes(svc.toLowerCase()) || (fw && svc.toLowerCase().includes(fw));
+    });
+    // 5. Normalized partial match
+    if (!m && svcNorm.length >= 4) m = SVCS.find(function(s){
+      var fw = _mFirst(s.n);
+      return normSvc(s.n).includes(svcNorm) || (fw && svcNorm.includes(fw));
+    });
+    setTimeout(function() {
+      if (m) {
+        pickSvc(SVCS.indexOf(m));
+      } else {
+        var inp = document.getElementById('svcInp');
+        if (inp) { inp.value = svc; svcSearch(svc); }
+      }
+      // After pickSvc sets default price, override with actual subcategory price from opts
+      if (opts && opts.price && parseInt(opts.price) > 0) {
+        var actualPrice = parseInt(opts.price);
+        // Override selSvc price with actual calculated price from service page
+        if (window.selSvc) {
+          window.selSvc._actualPrice=actualPrice;
+          window.selSvc._actualPriceStr='₹'+actualPrice.toLocaleString('en-IN');
+          window.selSvc._priceFromOpts=true;
+          updateSummary();
+        }
+        // Update the price display pill
+        // price not shown in pill — displayed in booking summary only
+        // Show ALL selections as chips (summary + BHK/size from selections)
+        var allChips = [];
+
+        // Add all summary chips (these come from service page selections)
+        if (opts.summary && opts.summary.length > 0) {
+          opts.summary.forEach(function(s){ if(s && s.trim()) allChips.push(s); });
+        }
+
+        // Add size/BHK/home selections that may not be in summary
+        if (opts.selections && typeof opts.selections === 'object') {
+          var sizeKeys = ['bhk','size','homeSize','home_size','rooms','area'];
+          sizeKeys.forEach(function(k) {
+            var v = opts.selections[k];
+            if (!v) return;
+            var vStr = (typeof v === 'object') ? (v.label||v.val||'') : String(v);
+            if (!vStr || !vStr.trim()) return;
+            // Only add if not already visible in chips
+            var vLow = vStr.toLowerCase();
+            var already = allChips.some(function(c){
+              return c.toLowerCase().replace(/[^a-z0-9 ]/g,'').indexOf(vLow.replace(/[^a-z0-9 ]/g,'')) !== -1;
+            });
+            if (!already) allChips.push(vStr);
+          });
+        }
+
+        if (allChips.length > 0) {
+          var summaryEl = document.getElementById('optsSummary');
+          if (!summaryEl) {
+            summaryEl = document.createElement('div');
+            summaryEl.id = 'optsSummary';
+            summaryEl.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;';
+            var pill = document.getElementById('selPill');
+            if (pill) pill.parentNode.insertBefore(summaryEl, pill.nextSibling);
+          }
+          summaryEl.innerHTML = allChips.map(function(s) {
+            var sep = String(s).indexOf(' > ') !== -1 ? ' > ' : ' — ';
+            var parts = String(s).replace(/\s*\(₹[\d,]+\)\s*$/, '').trim().split(sep);
+            var inner = parts.map(function(p, i) {
+              p = p.trim(); if (!p) return '';
+              if (i > 0) return '<span style="color:#555;">' + p + '</span>';
+              return '<span>' + p + '</span>';
+            }).filter(Boolean).join('<span style="color:#aaa;margin:0 2px;">›</span>');
+            return '<span style="display:inline-flex;align-items:center;gap:2px;padding:4px 10px;background:#e6f4f6;border:1px solid #1B6B7A;border-radius:100px;font-size:11px;font-weight:700;color:#1B6B7A;">✓ ' + inner + '</span>';
+          }).join('');
+        }
+      }
+    }, 50);
+  }
+})();
+
+// ── Haversine ─────────────────────────────────────────────────────────────────
+function hvs(a, b, c, d) {
+  var R = 6371, dL = (c-a)*Math.PI/180, dG = (d-b)*Math.PI/180;
+  var x = Math.sin(dL/2)*Math.sin(dL/2) + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)*Math.sin(dG/2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._t);
+  t._t = setTimeout(function() { t.style.display = 'none'; }, 3500);
+}
+</script>
+
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var svc = params.get('service');
+  if (svc) {
+    var inp = document.getElementById('svcInp');
+    var txt = document.getElementById('chooseSvcText');
+    var btn = document.getElementById('chooseSvcBtn');
+    if (inp) inp.value = decodeURIComponent(svc);
+    if (txt) txt.textContent = decodeURIComponent(svc);
+    if (btn) { btn.classList.add('selected'); btn.href = 'index.html#services'; }
+  }
+})();
+</script>
+</body>
+</html>

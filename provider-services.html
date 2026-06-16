@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>My Services — HamaraService</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f5f6fa;color:#1a1a1a;padding-bottom:80px;}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(135deg,#1a0a08,#2d1010);
+  display:flex;align-items:center;padding:0 14px;gap:10px;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.back-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;}
+.tb-title{color:#fff;font-size:16px;font-weight:800;flex:1;}
+.sel-badge{background:rgba(255,255,255,.15);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;}
+.wrap{padding:68px 12px 14px;max-width:540px;margin:0 auto;}
+.tip{background:#fffbea;border:1.5px solid #f0c000;border-radius:11px;padding:10px 13px;font-size:12px;font-weight:700;color:#7a5c00;margin-bottom:14px;}
+.svc-group{background:#fff;border-radius:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;}
+.svc-hdr{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;border-bottom:1.5px solid #f3f4f6;}
+.svc-ico{font-size:24px;width:34px;text-align:center;}
+.svc-meta{flex:1;}
+.svc-title{font-size:14px;font-weight:900;}
+.svc-sub{font-size:11px;color:#999;font-weight:700;margin-top:1px;}
+.svc-right{display:flex;align-items:center;gap:8px;}
+.cnt{min-width:22px;height:22px;padding:0 6px;border-radius:20px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.cnt.has{background:#E8251A;color:#fff;}
+.cnt.zero{background:#eee;color:#888;}
+.chev{font-size:15px;color:#bbb;transition:transform .2s;display:inline-block;}
+.chev.open{transform:rotate(90deg);}
+.task-list{display:none;padding:0 10px 10px;}
+.task-list.open{display:block;}
+.task-block{margin-top:12px;}
+.task-hdr{font-size:11px;font-weight:900;color:#E8251A;text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;padding-bottom:4px;border-bottom:1.5px solid #fde;display:flex;align-items:center;justify-content:space-between;}
+.sel-all{font-size:10px;font-weight:800;color:#E8251A;cursor:pointer;text-transform:none;letter-spacing:0;padding:2px 8px;border:1px solid #fcc;border-radius:10px;}
+.var-row{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:9px;cursor:pointer;border:1.5px solid #f0f0f0;margin-bottom:5px;background:#fafafa;}
+.var-row.on{background:#fff5f5;border-color:#E8251A;}
+.cb{width:20px;height:20px;border:2px solid #ddd;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cb.on{background:#E8251A;border-color:#E8251A;}
+.cb.on::after{content:'✓';color:#fff;font-size:12px;font-weight:900;}
+.var-info{flex:1;min-width:0;}
+.var-lbl{font-size:13px;font-weight:800;}
+.var-desc{font-size:10px;color:#aaa;font-weight:700;margin-top:1px;}
+.var-price{font-size:13px;font-weight:900;color:#E8251A;white-space:nowrap;}
+.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #eee;padding:12px 14px;box-shadow:0 -4px 16px rgba(0,0,0,.08);}
+.save-btn{width:100%;padding:14px;background:#E8251A;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:900;cursor:pointer;}
+.toast{position:fixed;top:66px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 20px;border-radius:20px;font-size:13px;font-weight:800;z-index:999;display:none;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="back-btn" onclick="goBack()">&#8592;</button>
+  <div class="tb-title">My Services &amp; Job Types</div>
+  <div class="sel-badge" id="totalBadge">0 selected</div>
+</div>
+<div class="wrap">
+  <div class="tip">&#9432; Select every job type and size you can handle. Prices are set by admin.</div>
+  <div id="dbgBox" style="display:none;background:#1a1a1a;color:#0f0;font-size:11px;padding:12px;border-radius:10px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;max-height:300px;overflow-y:auto;"></div>
+  <button onclick="showDebug()" style="width:100%;padding:8px;background:#555;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;margin-bottom:12px;">&#128269; Debug: Show Firebase Price Data</button>
+  <div id="svcList"></div>
+</div>
+<div class="footer"><button class="save-btn" onclick="saveServices()">&#10003; Save My Services</button></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var FB_DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+var P=null, selected={};
+// adminPrices[svcId][optionLabel] = price  (matches hs_service_prices structure)
+var adminPrices={};
+function getAdminPrice(svcId, label){
+  return adminPrices[svcId] && adminPrices[svcId][label] != null
+    ? adminPrices[svcId][label] : null;
+}
+
+// Base prices from HS_CATALOG
+var BASE={SVC001:499,SVC002:999,SVC003:399,SVC004:699,SVC005:599,SVC006:299,
+          SVC007:399,SVC009:599,SVC010:499,SVC011:499,SVC012:499,SVC013:599,
+          SVC014:699,SVC015:899,SVC016:699,SVC017:149,SVC019:299,SVC021:799,
+          SVC022:799,SVC023:199,SVC024:349,SVC025:999,SVC026:999,SVC027:699,
+          SVC028:399,SVC029:199,SVC030:599,SVC031:799,SVC032:399,SVC033:699,SVC034:899};
+
+// Helper: get price — checks hs_service_prices[svcId][label] first
+function P$(svcId, label, base, mult){
+  var ap = getAdminPrice(svcId, label);
+  if(ap != null) return ap;
+  return Math.round((base||0)*(mult||1)/10)*10 || base || 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALL 31 SERVICES — tasks & variants matching SVC booking pages
+// key = Firebase hs_service_prices lookup key
+// ═══════════════════════════════════════════════════════════════════════════
+function buildServices(){
+var B=BASE;
+return [
+// ── HOME CLEANING ──────────────────────────────────────────────────────────
+{id:'SVC001',icon:'🧹',name:'House Maid',cat:'Home Cleaning',tasks:[
+  {n:'Home Size (Sweeping & Mopping)',variants:[
+    {key:'SVC001_1bhk',lbl:'1 BHK',desc:'1 hall + 1 bedroom',p:P$('SVC001','1 BHK',B.SVC001,1)},
+    {key:'SVC001_2bhk',lbl:'2 BHK',desc:'2 bedrooms + hall',p:P$('SVC001','2 BHK',B.SVC001,1.3)},
+    {key:'SVC001_3bhk',lbl:'3 BHK',desc:'3 bedrooms + hall',p:P$('SVC001','3 BHK',B.SVC001,1.6)},
+    {key:'SVC001_4bhk',lbl:'4 BHK',desc:'4 bedrooms + hall',p:P$('SVC001','4 BHK',B.SVC001,2.0)},
+    {key:'SVC001_5bhk',lbl:'5 BHK+',desc:'Large home / villa',p:P$('SVC001','5 BHK+',B.SVC001,2.5)},
+  ]},
+  {n:'Task Type',variants:[
+    {key:'SVC001_sweep',lbl:'Sweeping & Mopping',desc:'All rooms floor clean',p:P$('SVC001','Sweeping & Mopping',150,1)},
+    {key:'SVC001_dust',lbl:'Dusting',desc:'Fans, furniture, windows',p:P$('SVC001','Dusting',100,1)},
+    {key:'SVC001_dishes',lbl:'Dishwashing',desc:'Utensils & kitchen',p:P$('SVC001','Dishwashing',120,1)},
+    {key:'SVC001_fold',lbl:'Folding Clothes',desc:'Sort, fold & arrange',p:P$('SVC001','Folding Clothes',80,1)},
+    {key:'SVC001_laundry',lbl:'Laundry Washing',desc:'Hand or machine wash',p:P$('SVC001','Laundry Washing',150,1)},
+    {key:'SVC001_cook',lbl:'Basic Cooking',desc:'Simple meals',p:P$('SVC001','Basic Cooking',200,1)},
+    {key:'SVC001_waste',lbl:'Waste Disposal',desc:'Collect & dispose waste',p:P$('SVC001','Waste Disposal',50,1)},
+  ]},
+  {n:'Dishwashing — Occasion',variants:[
+    {key:'SVC001_dish_daily',lbl:'Daily Home',desc:'Regular household',p:P$('SVC001','Daily Home',120,1)},
+    {key:'SVC001_dish_small',lbl:'Small Gathering',desc:'Up to 15 people',p:P$('SVC001','Small Gathering',200,1)},
+    {key:'SVC001_dish_large',lbl:'Large Gathering',desc:'16–40 people',p:P$('SVC001','Large Gathering',350,1)},
+    {key:'SVC001_dish_event',lbl:'Event / Function',desc:'40+ people',p:P$('SVC001','Event / Function',500,1)},
+  ]},
+]},
+{id:'SVC002',icon:'🧽',name:'Deep Cleaning',cat:'Home Cleaning',tasks:[
+  {n:'Home Size',variants:[
+    {key:'SVC002_1bhk',lbl:'1 BHK',desc:'4–5 hrs, 2 professionals',p:P$('SVC002','1 BHK',B.SVC002,1)},
+    {key:'SVC002_2bhk',lbl:'2 BHK',desc:'5–6 hrs, 2–3 professionals',p:P$('SVC002','2 BHK',B.SVC002,1.3)},
+    {key:'SVC002_3bhk',lbl:'3 BHK',desc:'6–8 hrs, 3 professionals',p:P$('SVC002','3 BHK',B.SVC002,1.6)},
+    {key:'SVC002_4bhk',lbl:'4 BHK',desc:'8+ hrs, 3–4 professionals',p:P$('SVC002','4 BHK',B.SVC002,2.0)},
+    {key:'SVC002_rooms',lbl:'Individual Rooms',desc:'Price per room',p:P$('SVC002','Individual Rooms',400,1)},
+  ]},
+  {n:'Focus Areas',variants:[
+    {key:'SVC002_kitchen',lbl:'Kitchen Deep Clean',desc:'Chimney, stove, tiles, sink',p:P$('SVC002','Kitchen Deep Clean',699,1)},
+    {key:'SVC002_bathroom',lbl:'All Bathrooms',desc:'Tiles, fixtures, descaling',p:P$('SVC002','All Bathrooms',399,1)},
+    {key:'SVC002_sofa',lbl:'Sofa & Mattress Vacuum',desc:'Deep vacuum & deodorize',p:P$('SVC002','Sofa & Mattress Vacuum',299,1)},
+    {key:'SVC002_ac',lbl:'AC Filter Cleaning',desc:'Filter wash & coil clean',p:P$('SVC002','AC Filter Cleaning',299,1)},
+    {key:'SVC002_balcony',lbl:'Balcony / Terrace',desc:'Full scrub & clear',p:P$('SVC002','Balcony / Terrace',199,1)},
+    {key:'SVC002_windows',lbl:'Windows & Grills',desc:'Glass & frame cleaning',p:P$('SVC002','Windows & Grills',299,1)},
+  ]},
+]},
+{id:'SVC003',icon:'🚿',name:'Bathroom Cleaning',cat:'Home Cleaning',tasks:[
+  {n:'Number of Bathrooms',variants:[
+    {key:'SVC003_1bath',lbl:'1 Bathroom',desc:'Full deep clean',p:P$('SVC003','1 Bathroom',B.SVC003,1)},
+    {key:'SVC003_2bath',lbl:'2 Bathrooms',desc:'Both fully cleaned',p:P$('SVC003','2 Bathrooms',B.SVC003,1.7)},
+    {key:'SVC003_3bath',lbl:'3 Bathrooms',desc:'All three cleaned',p:P$('SVC003','3 Bathrooms',B.SVC003,2.3)},
+    {key:'SVC003_4bath',lbl:'4+ Bathrooms',desc:'Four or more',p:P$('SVC003','4+ Bathrooms',B.SVC003,3.0)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC003_basic',lbl:'Basic Clean',desc:'Toilet, floor, wash basin',p:P$('SVC003','Basic Clean',B.SVC003,0.7)},
+    {key:'SVC003_deep',lbl:'Deep Clean',desc:'Tiles, descaling, grout',p:P$('SVC003','Deep Clean',B.SVC003,1)},
+    {key:'SVC003_premium',lbl:'Premium Clean',desc:'Deep + glass + exhaust fan',p:P$('SVC003','Premium Clean',B.SVC003,1.4)},
+  ]},
+]},
+{id:'SVC004',icon:'🍳',name:'Kitchen Cleaning',cat:'Home Cleaning',tasks:[
+  {n:'Kitchen Size',variants:[
+    {key:'SVC004_small',lbl:'Small Kitchen',desc:'Up to 80 sq ft',p:P$('SVC004','Small Kitchen',B.SVC004,0.8)},
+    {key:'SVC004_medium',lbl:'Medium Kitchen',desc:'80–150 sq ft',p:P$('SVC004','Medium Kitchen',B.SVC004,1)},
+    {key:'SVC004_large',lbl:'Large Kitchen',desc:'150+ sq ft / modular',p:P$('SVC004','Large Kitchen',B.SVC004,1.5)},
+  ]},
+  {n:'Focus Areas',variants:[
+    {key:'SVC004_chimney',lbl:'Chimney / Hood',desc:'Grease trap & filters',p:P$('SVC004','Chimney / Hood',499,1)},
+    {key:'SVC004_stove',lbl:'Stove & Counter',desc:'Degreasing & polish',p:P$('SVC004','Stove & Counter',299,1)},
+    {key:'SVC004_tiles',lbl:'Wall Tiles',desc:'Tile scrub & polish',p:P$('SVC004','Wall Tiles',249,1)},
+    {key:'SVC004_sink',lbl:'Sink & Drain',desc:'Deep clean & unblock',p:P$('SVC004','Sink & Drain',199,1)},
+    {key:'SVC004_cabinets',lbl:'Cabinets Inside',desc:'Interior wipe down',p:P$('SVC004','Cabinets Inside',249,1)},
+  ]},
+]},
+{id:'SVC005',icon:'🛋️',name:'Sofa / Carpet Cleaning',cat:'Home Cleaning',tasks:[
+  {n:'Sofa Size',variants:[
+    {key:'SVC005_1seat',lbl:'1-Seater',desc:'Single chair / armchair',p:P$('SVC005','1-Seater',299,1)},
+    {key:'SVC005_2seat',lbl:'2-Seater',desc:'Loveseat / small sofa',p:P$('SVC005','2-Seater',499,1)},
+    {key:'SVC005_3seat',lbl:'3-Seater',desc:'Standard sofa',p:P$('SVC005','3-Seater',B.SVC005,1)},
+    {key:'SVC005_lshape',lbl:'L-Shape',desc:'Corner / L-shape sofa',p:P$('SVC005','L-Shape',999,1)},
+    {key:'SVC005_5seat',lbl:'5-Seater',desc:'Large sectional',p:P$('SVC005','5-Seater',1199,1)},
+  ]},
+  {n:'Carpet Size',variants:[
+    {key:'SVC005_carp_sm',lbl:'Small Carpet',desc:'Up to 4x6 ft',p:P$('SVC005','Small Carpet',399,1)},
+    {key:'SVC005_carp_md',lbl:'Medium Carpet',desc:'4x8 to 6x9 ft',p:P$('SVC005','Medium Carpet',599,1)},
+    {key:'SVC005_carp_lg',lbl:'Large Carpet',desc:'8x10 ft and above',p:P$('SVC005','Large Carpet',799,1)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC005_shampoo',lbl:'Shampoo Wash',desc:'Deep foam clean',p:P$('SVC005','Shampoo Wash',B.SVC005,1)},
+    {key:'SVC005_dry',lbl:'Dry Clean',desc:'Dry foam treatment',p:P$('SVC005','Dry Clean',B.SVC005,1.3)},
+    {key:'SVC005_stain',lbl:'Stain Removal',desc:'Targeted stain treatment',p:P$('SVC005','Stain Removal',350,1)},
+  ]},
+]},
+{id:'SVC006',icon:'👔',name:'Laundry / Ironing',cat:'Home Cleaning',tasks:[
+  {n:'Service Type',variants:[
+    {key:'SVC006_wash',lbl:'Wash Only',desc:'Machine or hand wash',p:P$('SVC006','Wash Only',B.SVC006,0.8)},
+    {key:'SVC006_iron',lbl:'Ironing Only',desc:'Steam iron & fold',p:P$('SVC006','Ironing Only',B.SVC006,0.7)},
+    {key:'SVC006_both',lbl:'Wash + Iron',desc:'Full laundry service',p:P$('SVC006','Wash + Iron',B.SVC006,1)},
+    {key:'SVC006_dryclean',lbl:'Dry Clean',desc:'Delicate & special items',p:P$('SVC006','Dry Clean',500,1)},
+  ]},
+  {n:'Load Size',variants:[
+    {key:'SVC006_small',lbl:'Small Load',desc:'Up to 3 KG',p:P$('SVC006','Small Load',B.SVC006,0.8)},
+    {key:'SVC006_medium',lbl:'Medium Load',desc:'3–6 KG',p:P$('SVC006','Medium Load',B.SVC006,1)},
+    {key:'SVC006_large',lbl:'Large Load',desc:'6–10 KG',p:P$('SVC006','Large Load',B.SVC006,1.5)},
+    {key:'SVC006_bulk',lbl:'Bulk / Weekly',desc:'Full week household',p:P$('SVC006','Bulk / Weekly',500,1)},
+  ]},
+]},
+// ── APPLIANCE CARE ─────────────────────────────────────────────────────────
+{id:'SVC007',icon:'❄️',name:'AC Cleaning & Repair',cat:'Appliance Care',tasks:[
+  {n:'AC Type',variants:[
+    {key:'SVC007_split',lbl:'Split AC',desc:'1–2 Ton split unit',p:P$('SVC007','Split AC',799,1)},
+    {key:'SVC007_window',lbl:'Window AC',desc:'Window mounted',p:P$('SVC007','Window AC',599,1)},
+    {key:'SVC007_cassette',lbl:'Cassette AC',desc:'Ceiling cassette',p:P$('SVC007','Cassette AC',1199,1)},
+    {key:'SVC007_portable',lbl:'Portable AC',desc:'Portable unit',p:P$('SVC007','Portable AC',499,1)},
+    {key:'SVC007_central',lbl:'Central AC',desc:'Ducted / central system',p:P$('SVC007','Central AC',1999,1)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC007_clean',lbl:'Deep Cleaning',desc:'Filter, coil, drain',p:P$('SVC007','Deep Cleaning',B.SVC007,1)},
+    {key:'SVC007_repair',lbl:'Repair',desc:'Fault diagnosis & fix',p:P$('SVC007','Repair',599,1)},
+    {key:'SVC007_gas',lbl:'Gas Refill',desc:'Refrigerant top-up',p:P$('SVC007','Gas Refill',599,1)},
+    {key:'SVC007_install',lbl:'Installation',desc:'New unit wall mount',p:P$('SVC007','Installation',999,1)},
+    {key:'SVC007_remove',lbl:'Removal / Uninstall',desc:'Dismount & pack',p:P$('SVC007','Removal / Uninstall',499,1)},
+  ]},
+]},
+{id:'SVC009',icon:'🫙',name:'Home Appliance Repair',cat:'Appliance Care',tasks:[
+  {n:'Appliance Type',variants:[
+    {key:'SVC009_washer',lbl:'Washing Machine',desc:'All brands & types',p:P$('SVC009','Washing Machine',B.SVC009,1)},
+    {key:'SVC009_fridge',lbl:'Refrigerator',desc:'Single / double door',p:P$('SVC009','Refrigerator',B.SVC009,1)},
+    {key:'SVC009_micro',lbl:'Microwave',desc:'All models',p:P$('SVC009','Microwave',499,1)},
+    {key:'SVC009_geyser',lbl:'Geyser / Water Heater',desc:'Electric & gas',p:P$('SVC009','Geyser / Water Heater',499,1)},
+    {key:'SVC009_tv',lbl:'TV / LED',desc:'Any screen size',p:P$('SVC009','TV / LED',599,1)},
+    {key:'SVC009_dishwash',lbl:'Dishwasher',desc:'Built-in or freestanding',p:P$('SVC009','Dishwasher',599,1)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC009_diag',lbl:'Diagnosis Visit',desc:'Fault finding only',p:P$('SVC009','Diagnosis Visit',299,1)},
+    {key:'SVC009_repair',lbl:'Repair & Fix',desc:'Full repair service',p:P$('SVC009','Repair & Fix',B.SVC009,1)},
+    {key:'SVC009_install',lbl:'New Installation',desc:'Setup & fitting',p:P$('SVC009','New Installation',699,1)},
+  ]},
+]},
+{id:'SVC010',icon:'💧',name:'Water Purifier Service',cat:'Appliance Care',tasks:[
+  {n:'Service Type',variants:[
+    {key:'SVC010_service',lbl:'Annual Service',desc:'Filter & membrane check',p:P$('SVC010','Annual Service',B.SVC010,1)},
+    {key:'SVC010_filter',lbl:'Filter Change',desc:'Pre & post filter',p:P$('SVC010','Filter Change',B.SVC010,0.8)},
+    {key:'SVC010_membrane',lbl:'RO Membrane Change',desc:'Membrane replacement',p:P$('SVC010','RO Membrane Change',B.SVC010,1.5)},
+    {key:'SVC010_repair',lbl:'Repair / Leak Fix',desc:'Motor, valves, pipe',p:P$('SVC010','Repair / Leak Fix',399,1)},
+    {key:'SVC010_install',lbl:'New Installation',desc:'Wall mount & plumbing',p:P$('SVC010','New Installation',799,1)},
+  ]},
+  {n:'RO Type',variants:[
+    {key:'SVC010_under',lbl:'Under-Sink RO',desc:'Hidden under-counter',p:P$('SVC010','Under-Sink RO',B.SVC010,1)},
+    {key:'SVC010_wall',lbl:'Wall-Mounted RO',desc:'Standard wall unit',p:P$('SVC010','Wall-Mounted RO',B.SVC010,0.9)},
+    {key:'SVC010_gravity',lbl:'Gravity / UF Filter',desc:'Non-electric filter',p:P$('SVC010','Gravity / UF Filter',299,1)},
+  ]},
+]},
+// ── REPAIRS ────────────────────────────────────────────────────────────────
+{id:'SVC011',icon:'🔧',name:'Plumber',cat:'Repairs',tasks:[
+  {n:'Job Type',variants:[
+    {key:'SVC011_tap',lbl:'Tap / Faucet Repair',desc:'Leaking or dripping tap',p:P$('SVC011','Tap / Faucet Repair',B.SVC011,0.5)},
+    {key:'SVC011_pipe',lbl:'Pipe Leak / Burst',desc:'Joint or pipe repair',p:P$('SVC011','Pipe Leak / Burst',B.SVC011,0.8)},
+    {key:'SVC011_toilet',lbl:'Toilet / Flush Repair',desc:'Flush, cistern, blockage',p:P$('SVC011','Toilet / Flush Repair',B.SVC011,0.7)},
+    {key:'SVC011_drain',lbl:'Drain Unblocking',desc:'Kitchen / bathroom drain',p:P$('SVC011','Drain Unblocking',B.SVC011,0.6)},
+    {key:'SVC011_geyser',lbl:'Water Heater Plumbing',desc:'Inlet, outlet, pipe',p:P$('SVC011','Water Heater Plumbing',B.SVC011,1)},
+    {key:'SVC011_new',lbl:'New Pipe / Point',desc:'New water point fitting',p:P$('SVC011','New Pipe / Point',699,1)},
+    {key:'SVC011_overhead',lbl:'Overhead Tank',desc:'Tank clean & float fix',p:P$('SVC011','Overhead Tank',799,1)},
+  ]},
+]},
+{id:'SVC012',icon:'⚡',name:'Electrician',cat:'Repairs',tasks:[
+  {n:'Job Type',variants:[
+    {key:'SVC012_switch',lbl:'Switch / Socket',desc:'Repair or replacement',p:P$('SVC012','Switch / Socket',199,1)},
+    {key:'SVC012_fan',lbl:'Fan Install / Repair',desc:'Ceiling or exhaust fan',p:P$('SVC012','Fan Install / Repair',299,1)},
+    {key:'SVC012_light',lbl:'Light / Fitting',desc:'Tube, LED, downlight',p:P$('SVC012','Light / Fitting',199,1)},
+    {key:'SVC012_wiring',lbl:'New Wiring Point',desc:'New plug or light point',p:P$('SVC012','New Wiring Point',399,1)},
+    {key:'SVC012_mcb',lbl:'MCB / DB Work',desc:'Trip fix, new MCB',p:P$('SVC012','MCB / DB Work',B.SVC012,1)},
+    {key:'SVC012_inverter',lbl:'Inverter / UPS',desc:'Battery, inverter repair',p:P$('SVC012','Inverter / UPS',499,1)},
+    {key:'SVC012_rewire',lbl:'Room Rewiring',desc:'Full room new wiring',p:P$('SVC012','Room Rewiring',799,1)},
+  ]},
+]},
+{id:'SVC013',icon:'🪚',name:'Carpenter',cat:'Repairs',tasks:[
+  {n:'Job Type',variants:[
+    {key:'SVC013_door',lbl:'Door / Window Repair',desc:'Hinge, lock, frame fix',p:P$('SVC013','Door / Window Repair',B.SVC013,0.7)},
+    {key:'SVC013_furniture',lbl:'Furniture Repair',desc:'Chair, table, wardrobe',p:P$('SVC013','Furniture Repair',B.SVC013,0.8)},
+    {key:'SVC013_assembly',lbl:'Furniture Assembly',desc:'Flatpack or new piece',p:P$('SVC013','Furniture Assembly',B.SVC013,1)},
+    {key:'SVC013_shelf',lbl:'Shelf / Rack',desc:'Wall shelves & racks',p:P$('SVC013','Shelf / Rack',499,1)},
+    {key:'SVC013_bed',lbl:'Bed / Cot Repair',desc:'Frame, legs, slats',p:P$('SVC013','Bed / Cot Repair',499,1)},
+    {key:'SVC013_kitchen',lbl:'Kitchen Cabinet',desc:'Hinges, handles, board',p:P$('SVC013','Kitchen Cabinet',699,1)},
+  ]},
+]},
+{id:'SVC014',icon:'🎨',name:'Painter',cat:'Repairs',tasks:[
+  {n:'Area Size',variants:[
+    {key:'SVC014_room',lbl:'Single Room',desc:'One room — 2 coats',p:P$('SVC014','Single Room',B.SVC014,1)},
+    {key:'SVC014_2room',lbl:'2 Rooms',desc:'Two rooms full',p:P$('SVC014','2 Rooms',B.SVC014,1.8)},
+    {key:'SVC014_flat1',lbl:'Full 1 BHK',desc:'All rooms + hall',p:P$('SVC014','Full 1 BHK',2499,1)},
+    {key:'SVC014_flat2',lbl:'Full 2 BHK',desc:'All rooms + hall',p:P$('SVC014','Full 2 BHK',3999,1)},
+    {key:'SVC014_flat3',lbl:'Full 3 BHK',desc:'All rooms + hall',p:P$('SVC014','Full 3 BHK',5499,1)},
+  ]},
+  {n:'Paint Type',variants:[
+    {key:'SVC014_emulsion',lbl:'Emulsion Paint',desc:'Standard interior',p:P$('SVC014','Emulsion Paint',B.SVC014,1)},
+    {key:'SVC014_texture',lbl:'Texture Paint',desc:'Design / texture wall',p:P$('SVC014','Texture Paint',B.SVC014,2)},
+    {key:'SVC014_exterior',lbl:'Exterior Paint',desc:'Weather coat outside',p:P$('SVC014','Exterior Paint',B.SVC014,1.5)},
+    {key:'SVC014_touch',lbl:'Touch-Up',desc:'Patches & repairs only',p:P$('SVC014','Touch-Up',299,1)},
+  ]},
+]},
+{id:'SVC015',icon:'📷',name:'CCTV Installation',cat:'Repairs',tasks:[
+  {n:'Number of Cameras',variants:[
+    {key:'SVC015_1cam',lbl:'1 Camera',desc:'Single camera install',p:P$('SVC015','1 Camera',B.SVC015,1)},
+    {key:'SVC015_2cam',lbl:'2 Cameras',desc:'Two camera setup',p:P$('SVC015','2 Cameras',B.SVC015,1.8)},
+    {key:'SVC015_4cam',lbl:'4 Cameras',desc:'Full home 4-cam',p:P$('SVC015','4 Cameras',B.SVC015,3.2)},
+    {key:'SVC015_8cam',lbl:'8 Cameras',desc:'Large property',p:P$('SVC015','8 Cameras',B.SVC015,6)},
+  ]},
+  {n:'Camera Type',variants:[
+    {key:'SVC015_bullet',lbl:'Bullet / Dome',desc:'Standard CCTV',p:P$('SVC015','Bullet / Dome',B.SVC015,1)},
+    {key:'SVC015_wifi',lbl:'WiFi Camera',desc:'Wireless IP camera',p:P$('SVC015','WiFi Camera',999,1)},
+    {key:'SVC015_dvr',lbl:'DVR / NVR Setup',desc:'Recorder & monitor',p:P$('SVC015','DVR / NVR Setup',1499,1)},
+  ]},
+]},
+{id:'SVC016',icon:'☀️',name:'Solar Panel Cleaning',cat:'Repairs',tasks:[
+  {n:'Number of Panels',variants:[
+    {key:'SVC016_1to4',lbl:'1–4 Panels',desc:'Small rooftop system',p:P$('SVC016','1–4 Panels',B.SVC016,1)},
+    {key:'SVC016_5to10',lbl:'5–10 Panels',desc:'Medium system',p:P$('SVC016','5–10 Panels',B.SVC016,1.8)},
+    {key:'SVC016_11to20',lbl:'11–20 Panels',desc:'Large home system',p:P$('SVC016','11–20 Panels',B.SVC016,3)},
+    {key:'SVC016_20plus',lbl:'20+ Panels',desc:'Commercial / large',p:P$('SVC016','20+ Panels',B.SVC016,5)},
+  ]},
+]},
+// ── VEHICLE CARE ───────────────────────────────────────────────────────────
+{id:'SVC017',icon:'🚗',name:'Car / Bike Wash',cat:'Vehicle Care',tasks:[
+  {n:'Vehicle Type',variants:[
+    {key:'SVC017_bike',lbl:'Two-Wheeler / Bike',desc:'Bike / scooter full wash',p:P$('SVC017','Two-Wheeler / Bike',B.SVC017,1)},
+    {key:'SVC017_hatch',lbl:'Hatchback',desc:'Small car exterior + interior',p:P$('SVC017','Hatchback',299,1)},
+    {key:'SVC017_sedan',lbl:'Sedan / SUV',desc:'Medium car full wash',p:P$('SVC017','Sedan / SUV',399,1)},
+    {key:'SVC017_suv',lbl:'Large SUV / MUV',desc:'Large vehicle full wash',p:P$('SVC017','Large SUV / MUV',499,1)},
+  ]},
+  {n:'Wash Type',variants:[
+    {key:'SVC017_ext',lbl:'Exterior Only',desc:'Body, glass, tyres',p:P$('SVC017','Exterior Only',149,1)},
+    {key:'SVC017_int',lbl:'Interior Only',desc:'Vacuum, wipe, dashboard',p:P$('SVC017','Interior Only',199,1)},
+    {key:'SVC017_full',lbl:'Full Wash',desc:'Exterior + interior',p:P$('SVC017','Full Wash',349,1)},
+    {key:'SVC017_detail',lbl:'Detailing',desc:'Polish + deep clean',p:P$('SVC017','Detailing',1499,1)},
+  ]},
+]},
+{id:'SVC019',icon:'🔩',name:'Car & Bike Mechanic',cat:'Vehicle Care',tasks:[
+  {n:'Vehicle Type',variants:[
+    {key:'SVC019_bike',lbl:'Two-Wheeler',desc:'Bike / scooter',p:P$('SVC019','Two-Wheeler',B.SVC019,1)},
+    {key:'SVC019_car',lbl:'Car / Hatchback',desc:'Petrol / diesel car',p:P$('SVC019','Car / Hatchback',599,1)},
+    {key:'SVC019_suv',lbl:'SUV / MUV',desc:'Large vehicle',p:P$('SVC019','SUV / MUV',699,1)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC019_oil',lbl:'Oil & Filter Change',desc:'Engine oil + filter',p:P$('SVC019','Oil & Filter Change',699,1)},
+    {key:'SVC019_brake',lbl:'Brake Service',desc:'Pad check & replace',p:P$('SVC019','Brake Service',599,1)},
+    {key:'SVC019_battery',lbl:'Battery Jump / Replace',desc:'Jump start or new',p:P$('SVC019','Battery Jump / Replace',499,1)},
+    {key:'SVC019_tyre',lbl:'Tyre Change / Puncture',desc:'Swap or repair',p:P$('SVC019','Tyre Change / Puncture',299,1)},
+    {key:'SVC019_general',lbl:'General Checkup',desc:'Full vehicle check',p:P$('SVC019','General Checkup',B.SVC019,1)},
+  ]},
+]},
+// ── OTHER SERVICES ─────────────────────────────────────────────────────────
+{id:'SVC021',icon:'🐛',name:'Pest Control',cat:'Pest Control',tasks:[
+  {n:'Home Size',variants:[
+    {key:'SVC021_1bhk',lbl:'1 BHK',desc:'Full flat treatment',p:P$('SVC021','1 BHK',B.SVC021,1)},
+    {key:'SVC021_2bhk',lbl:'2 BHK',desc:'Full flat treatment',p:P$('SVC021','2 BHK',B.SVC021,1.4)},
+    {key:'SVC021_3bhk',lbl:'3 BHK',desc:'Full flat treatment',p:P$('SVC021','3 BHK',B.SVC021,1.8)},
+    {key:'SVC021_villa',lbl:'Bungalow / Villa',desc:'Large property',p:P$('SVC021','Bungalow / Villa',B.SVC021,2.5)},
+  ]},
+  {n:'Pest Type',variants:[
+    {key:'SVC021_cockroach',lbl:'Cockroach',desc:'Gel + spray treatment',p:P$('SVC021','Cockroach',B.SVC021,1)},
+    {key:'SVC021_rodent',lbl:'Rodent / Rat',desc:'Traps & bait',p:P$('SVC021','Rodent / Rat',999,1)},
+    {key:'SVC021_termite',lbl:'Termite',desc:'Anti-termite treatment',p:P$('SVC021','Termite',1499,1)},
+    {key:'SVC021_mosquito',lbl:'Mosquito / Flies',desc:'Fogging & spray',p:P$('SVC021','Mosquito / Flies',799,1)},
+    {key:'SVC021_bedbug',lbl:'Bedbug',desc:'Chemical treatment',p:P$('SVC021','Bedbug',1199,1)},
+  ]},
+]},
+{id:'SVC022',icon:'🍱',name:'Cook / Cooking Person',cat:'Cooking',tasks:[
+  {n:'Meals Per Day',variants:[
+    {key:'SVC022_break',lbl:'Breakfast Only',desc:'Morning meal',p:P$('SVC022','Breakfast Only',199,1)},
+    {key:'SVC022_lunch',lbl:'Lunch Only',desc:'Afternoon meal',p:P$('SVC022','Lunch Only',249,1)},
+    {key:'SVC022_dinner',lbl:'Dinner Only',desc:'Evening meal',p:P$('SVC022','Dinner Only',249,1)},
+    {key:'SVC022_2meal',lbl:'2 Meals/Day',desc:'Any two meals',p:P$('SVC022','2 Meals/Day',399,1)},
+    {key:'SVC022_full',lbl:'Full Day (3 Meals)',desc:'Breakfast + lunch + dinner',p:P$('SVC022','Full Day (3 Meals)',B.SVC022,1)},
+  ]},
+  {n:'Engagement Type',variants:[
+    {key:'SVC022_daily',lbl:'Daily Visit',desc:'Single day',p:P$('SVC022','Daily Visit',B.SVC022,1)},
+    {key:'SVC022_weekly',lbl:'Weekly (7 days)',desc:'Full week',p:P$('SVC022','Weekly (7 days)',B.SVC022,6.5)},
+    {key:'SVC022_monthly',lbl:'Monthly',desc:'30 days',p:P$('SVC022','Monthly',14999,1)},
+  ]},
+]},
+{id:'SVC023',icon:'✂️',name:'Haircut (Men)',cat:'Beauty & Wellness',tasks:[
+  {n:'Service Type',variants:[
+    {key:'SVC023_cut',lbl:'Haircut',desc:'Cut & style at home',p:P$('SVC023','Haircut',B.SVC023,1)},
+    {key:'SVC023_beard',lbl:'Beard Trim / Shave',desc:'Beard shaping',p:P$('SVC023','Beard Trim / Shave',149,1)},
+    {key:'SVC023_both',lbl:'Hair + Beard',desc:'Cut & beard combo',p:P$('SVC023','Hair + Beard',299,1)},
+    {key:'SVC023_kids',lbl:'Kids Haircut',desc:'Children up to 12',p:P$('SVC023','Kids Haircut',149,1)},
+  ]},
+]},
+{id:'SVC024',icon:'💇',name:'Haircut (Women)',cat:'Beauty & Wellness',tasks:[
+  {n:'Service Type',variants:[
+    {key:'SVC024_cut',lbl:'Hair Cut',desc:'Wash, cut & dry',p:P$('SVC024','Hair Cut',B.SVC024,1)},
+    {key:'SVC024_blowdry',lbl:'Cut + Blow Dry',desc:'Cut & blowdry styling',p:P$('SVC024','Cut + Blow Dry',499,1)},
+    {key:'SVC024_colour',lbl:'Hair Colour',desc:'Root touch or full',p:P$('SVC024','Hair Colour',999,1)},
+    {key:'SVC024_spa',lbl:'Hair Spa',desc:'Deep conditioning',p:P$('SVC024','Hair Spa',699,1)},
+  ]},
+]},
+{id:'SVC025',icon:'💆',name:'Full Body Massage',cat:'Beauty & Wellness',tasks:[
+  {n:'Duration',variants:[
+    {key:'SVC025_30min',lbl:'30 Minutes',desc:'Quick relaxation',p:P$('SVC025','30 Minutes',499,1)},
+    {key:'SVC025_60min',lbl:'60 Minutes',desc:'Full body massage',p:P$('SVC025','60 Minutes',B.SVC025,1)},
+    {key:'SVC025_90min',lbl:'90 Minutes',desc:'Deep tissue / extended',p:P$('SVC025','90 Minutes',1299,1)},
+  ]},
+  {n:'Massage Type',variants:[
+    {key:'SVC025_relax',lbl:'Relaxation',desc:'Swedish / relaxing',p:P$('SVC025','Relaxation',B.SVC025,1)},
+    {key:'SVC025_deep',lbl:'Deep Tissue',desc:'Muscle knot relief',p:P$('SVC025','Deep Tissue',1199,1)},
+    {key:'SVC025_sports',lbl:'Sports Massage',desc:'Post-workout recovery',p:P$('SVC025','Sports Massage',1199,1)},
+  ]},
+]},
+{id:'SVC026',icon:'💪',name:'Gym / Fitness Trainer',cat:'Beauty & Wellness',tasks:[
+  {n:'Session Package',variants:[
+    {key:'SVC026_single',lbl:'Single Session',desc:'1 hour workout',p:P$('SVC026','Single Session',699,1)},
+    {key:'SVC026_weekly',lbl:'Weekly (5 sessions)',desc:'Mon–Fri',p:P$('SVC026','Weekly (5 sessions)',2499,1)},
+    {key:'SVC026_monthly',lbl:'Monthly (20 sessions)',desc:'Daily weekday',p:P$('SVC026','Monthly (20 sessions)',B.SVC026,9)},
+  ]},
+  {n:'Specialty',variants:[
+    {key:'SVC026_weight',lbl:'Weight Loss',desc:'Fat burn program',p:P$('SVC026','Weight Loss',B.SVC026,1)},
+    {key:'SVC026_muscle',lbl:'Muscle Building',desc:'Strength training',p:P$('SVC026','Muscle Building',B.SVC026,1)},
+    {key:'SVC026_yoga',lbl:'Yoga',desc:'Yoga & stretching',p:P$('SVC026','Yoga',799,1)},
+    {key:'SVC026_senior',lbl:'Senior Fitness',desc:'Low-impact for elderly',p:P$('SVC026','Senior Fitness',799,1)},
+  ]},
+]},
+{id:'SVC027',icon:'👨‍⚕️',name:'Doctor Visit',cat:'Medical',tasks:[
+  {n:'Specialty',variants:[
+    {key:'SVC027_gp',lbl:'General Physician',desc:'GP consultation',p:P$('SVC027','General Physician',B.SVC027,1)},
+    {key:'SVC027_paed',lbl:'Paediatrician',desc:'Child specialist',p:P$('SVC027','Paediatrician',799,1)},
+    {key:'SVC027_senior',lbl:'Senior / Geriatric',desc:'Elderly specialist',p:P$('SVC027','Senior / Geriatric',799,1)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC027_consult',lbl:'Consultation',desc:'Examination & advice',p:P$('SVC027','Consultation',B.SVC027,1)},
+    {key:'SVC027_followup',lbl:'Follow-Up',desc:'Review visit',p:P$('SVC027','Follow-Up',499,1)},
+    {key:'SVC027_emergency',lbl:'Emergency Visit',desc:'Urgent same-day',p:P$('SVC027','Emergency Visit',999,1)},
+  ]},
+]},
+{id:'SVC028',icon:'💉',name:'Nurse Visit',cat:'Medical',tasks:[
+  {n:'Service Type',variants:[
+    {key:'SVC028_injection',lbl:'Injection',desc:'IM / IV injection',p:P$('SVC028','Injection',B.SVC028,0.8)},
+    {key:'SVC028_dressing',lbl:'Wound Dressing',desc:'Clean & dress wound',p:P$('SVC028','Wound Dressing',B.SVC028,0.9)},
+    {key:'SVC028_iv',lbl:'IV Drip Setup',desc:'IV line & drip',p:P$('SVC028','IV Drip Setup',499,1)},
+    {key:'SVC028_vitals',lbl:'Vitals Check',desc:'BP, sugar, temp, SpO2',p:P$('SVC028','Vitals Check',249,1)},
+    {key:'SVC028_catheter',lbl:'Catheter Care',desc:'Urinary catheter',p:P$('SVC028','Catheter Care',599,1)},
+  ]},
+]},
+{id:'SVC029',icon:'🧪',name:'Lab Test Collection',cat:'Medical',tasks:[
+  {n:'Sample Type',variants:[
+    {key:'SVC029_blood',lbl:'Blood Sample',desc:'Venepuncture',p:P$('SVC029','Blood Sample',B.SVC029,1)},
+    {key:'SVC029_urine',lbl:'Urine Sample',desc:'Collection kit',p:P$('SVC029','Urine Sample',149,1)},
+    {key:'SVC029_stool',lbl:'Stool Sample',desc:'Collection kit',p:P$('SVC029','Stool Sample',149,1)},
+    {key:'SVC029_package',lbl:'Health Package',desc:'Multi-test bundle',p:P$('SVC029','Health Package',399,1)},
+  ]},
+]},
+{id:'SVC030',icon:'👶',name:'Babysitter / Nanny',cat:'Care Services',tasks:[
+  {n:'Duration',variants:[
+    {key:'SVC030_2hr',lbl:'2 Hours',desc:'Short care session',p:P$('SVC030','2 Hours',249,1)},
+    {key:'SVC030_4hr',lbl:'4 Hours (Half Day)',desc:'Half-day care',p:P$('SVC030','4 Hours (Half Day)',449,1)},
+    {key:'SVC030_8hr',lbl:'Full Day (8 hrs)',desc:'Full day care',p:P$('SVC030','Full Day (8 hrs)',B.SVC030,1)},
+    {key:'SVC030_night',lbl:'Night Care',desc:'8 PM – 8 AM',p:P$('SVC030','Night Care',999,1)},
+  ]},
+  {n:'Child Age Group',variants:[
+    {key:'SVC030_infant',lbl:'Infant (0–2 yrs)',desc:'Baby specialist',p:P$('SVC030','Infant (0–2 yrs)',B.SVC030,1.2)},
+    {key:'SVC030_toddler',lbl:'Toddler (2–5 yrs)',desc:'Toddler care',p:P$('SVC030','Toddler (2–5 yrs)',B.SVC030,1)},
+    {key:'SVC030_child',lbl:'Child (5–12 yrs)',desc:'School-age care',p:P$('SVC030','Child (5–12 yrs)',499,1)},
+  ]},
+]},
+{id:'SVC031',icon:'🧓',name:'Elderly Care',cat:'Care Services',tasks:[
+  {n:'Duration',variants:[
+    {key:'SVC031_4hr',lbl:'4 Hours',desc:'Morning / evening shift',p:P$('SVC031','4 Hours',499,1)},
+    {key:'SVC031_8hr',lbl:'Full Day (8 hrs)',desc:'Full day with meals',p:P$('SVC031','Full Day (8 hrs)',B.SVC031,1)},
+    {key:'SVC031_12hr',lbl:'12 Hours',desc:'Day + evening cover',p:P$('SVC031','12 Hours',1199,1)},
+    {key:'SVC031_livein',lbl:'Live-In (Monthly)',desc:'Residential full care',p:P$('SVC031','Live-In (Monthly)',18999,1)},
+  ]},
+]},
+{id:'SVC032',icon:'🌱',name:'Gardener',cat:'Outdoor',tasks:[
+  {n:'Garden Size',variants:[
+    {key:'SVC032_small',lbl:'Small Garden',desc:'Up to 200 sq ft',p:P$('SVC032','Small Garden',B.SVC032,1)},
+    {key:'SVC032_medium',lbl:'Medium Garden',desc:'200–500 sq ft',p:P$('SVC032','Medium Garden',B.SVC032,1.5)},
+    {key:'SVC032_large',lbl:'Large Garden',desc:'500+ sq ft / villa',p:P$('SVC032','Large Garden',B.SVC032,2.5)},
+  ]},
+  {n:'Service Type',variants:[
+    {key:'SVC032_mow',lbl:'Lawn Mowing',desc:'Grass cut & edge trim',p:P$('SVC032','Lawn Mowing',B.SVC032,1)},
+    {key:'SVC032_trim',lbl:'Plant / Hedge Trim',desc:'Pruning & shaping',p:P$('SVC032','Plant / Hedge Trim',299,1)},
+    {key:'SVC032_weed',lbl:'Weeding',desc:'Weed removal & clearing',p:P$('SVC032','Weeding',299,1)},
+    {key:'SVC032_full',lbl:'Full Maintenance',desc:'Mow + trim + weed + water',p:P$('SVC032','Full Maintenance',699,1)},
+  ]},
+]},
+{id:'SVC033',icon:'🚙',name:'Driver',cat:'Outdoor',tasks:[
+  {n:'Trip Type',variants:[
+    {key:'SVC033_local',lbl:'Local Errands',desc:'Within city, short trips',p:P$('SVC033','Local Errands',499,1)},
+    {key:'SVC033_halfday',lbl:'Half Day (4 hrs)',desc:'4 hours city driving',p:P$('SVC033','Half Day (4 hrs)',B.SVC033,1)},
+    {key:'SVC033_fullday',lbl:'Full Day (8 hrs)',desc:'8 hours any destination',p:P$('SVC033','Full Day (8 hrs)',1199,1)},
+    {key:'SVC033_outstation',lbl:'Outstation',desc:'Outside city travel',p:P$('SVC033','Outstation',1999,1)},
+    {key:'SVC033_airport',lbl:'Airport Transfer',desc:'Drop or pick-up',p:P$('SVC033','Airport Transfer',799,1)},
+  ]},
+]},
+{id:'SVC034',icon:'💂',name:'Security Guard & Bouncers',cat:'Security',tasks:[
+  {n:'Duration',variants:[
+    {key:'SVC034_8hr',lbl:'8-Hour Shift',desc:'Day or night shift',p:P$('SVC034','8-Hour Shift',B.SVC034,1)},
+    {key:'SVC034_12hr',lbl:'12-Hour Shift',desc:'Extended shift',p:P$('SVC034','12-Hour Shift',1299,1)},
+    {key:'SVC034_24hr',lbl:'24-Hour / Residential',desc:'Round-the-clock',p:P$('SVC034','24-Hour / Residential',1999,1)},
+  ]},
+  {n:'Assignment Type',variants:[
+    {key:'SVC034_resident',lbl:'Residential Gate',desc:'Apartment / society',p:P$('SVC034','Residential Gate',B.SVC034,1)},
+    {key:'SVC034_event',lbl:'Event Security',desc:'Functions & parties',p:P$('SVC034','Event Security',1199,1)},
+    {key:'SVC034_bouncer',lbl:'Bouncer',desc:'Pub, club, VIP event',p:P$('SVC034','Bouncer',1499,1)},
+    {key:'SVC034_office',lbl:'Office / Shop',desc:'Commercial premises',p:P$('SVC034','Office / Shop',999,1)},
+  ]},
+]},
+];
+}
+
+var SERVICES=[];
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function toast(msg,dur){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},dur||3000);}
+function goBack(){window.location.href='provider-dashboard.html';}
+function totalSel(){return Object.values(selected).filter(Boolean).length;}
+function updateBadge(){document.getElementById('totalBadge').textContent=totalSel()+' selected';}
+
+function toggleVar(key){
+  selected[key]=!selected[key];
+  var row=document.getElementById('r_'+key),cb=document.getElementById('c_'+key);
+  if(row)row.className='var-row'+(selected[key]?' on':'');
+  if(cb)cb.className='cb'+(selected[key]?' on':'');
+  SERVICES.forEach(function(g){
+    var found=false;
+    g.tasks.forEach(function(t){t.variants.forEach(function(v){if(v.key===key)found=true;});});
+    if(found){
+      var cnt=0;g.tasks.forEach(function(t){t.variants.forEach(function(v){if(selected[v.key])cnt++;});});
+      var b=document.getElementById('cnt_'+g.id);
+      if(b){b.textContent=cnt;b.className='cnt '+(cnt>0?'has':'zero');}
+    }
+  });
+  updateBadge();
+}
+
+function selAll(gid,tid){
+  var g=SERVICES.find(function(x){return x.id===gid;});if(!g)return;
+  var t=g.tasks.find(function(x){return x.n===tid;});if(!t)return;
+  var allOn=t.variants.every(function(v){return selected[v.key];});
+  t.variants.forEach(function(v){
+    selected[v.key]=!allOn;
+    var row=document.getElementById('r_'+v.key),cb=document.getElementById('c_'+v.key);
+    if(row)row.className='var-row'+(selected[v.key]?' on':'');
+    if(cb)cb.className='cb'+(selected[v.key]?' on':'');
+  });
+  var cnt=0;g.tasks.forEach(function(t2){t2.variants.forEach(function(v){if(selected[v.key])cnt++;});});
+  var b=document.getElementById('cnt_'+g.id);
+  if(b){b.textContent=cnt;b.className='cnt '+(cnt>0?'has':'zero');}
+  updateBadge();
+}
+
+function toggleGroup(id){
+  var l=document.getElementById('tl_'+id),c=document.getElementById('ch_'+id);
+  if(!l)return;var o=l.classList.contains('open');
+  l.classList.toggle('open',!o);if(c)c.classList.toggle('open',!o);
+}
+
+function render(){
+  var html='';
+  SERVICES.forEach(function(g){
+    var cnt=0,total=0;
+    g.tasks.forEach(function(t){t.variants.forEach(function(v){total++;if(selected[v.key])cnt++;});});
+    html+='<div class="svc-group">'
+      +'<div class="svc-hdr" onclick="toggleGroup(\''+g.id+'\')">'
+      +'<div class="svc-ico">'+g.icon+'</div>'
+      +'<div class="svc-meta"><div class="svc-title">'+g.name+'</div>'
+      +'<div class="svc-sub">'+g.cat+' &middot; '+total+' job types</div></div>'
+      +'<div class="svc-right">'
+      +'<span class="cnt '+(cnt>0?'has':'zero')+'" id="cnt_'+g.id+'">'+cnt+'</span>'
+      +'<span class="chev" id="ch_'+g.id+'">&#9654;</span>'
+      +'</div></div>'
+      +'<div class="task-list" id="tl_'+g.id+'">';
+    g.tasks.forEach(function(t){
+      var tid=t.n.replace(/[^a-z0-9]/gi,'_');
+      html+='<div class="task-block">'
+        +'<div class="task-hdr">'+t.n
+        +'<span class="sel-all" onclick="selAll(\''+g.id+'\',\''+t.n.replace(/'/g,"\\'")+'\')">'
+        +'Select all</span></div>';
+      t.variants.forEach(function(v){
+        var on=!!selected[v.key];
+        html+='<div class="var-row'+(on?' on':'')+'" id="r_'+v.key+'" onclick="toggleVar(\''+v.key+'\')">'
+          +'<div class="cb'+(on?' on':'')+'" id="c_'+v.key+'"></div>'
+          +'<div class="var-info"><div class="var-lbl">'+v.lbl+'</div>'
+          +(v.desc?'<div class="var-desc">'+v.desc+'</div>':'')
+          +'</div><div class="var-price">&#8377;'+v.p+'</div></div>';
+      });
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  document.getElementById('svcList').innerHTML=html;
+  updateBadge();
+}
+
+function refreshPrices(){
+  // Re-build services with updated admin prices then re-render
+  SERVICES=buildServices();
+  render();
+}
+
+function saveServices(){
+  var services=[];
+  SERVICES.forEach(function(g){
+    g.tasks.forEach(function(t){
+      t.variants.forEach(function(v){
+        if(selected[v.key]){
+          services.push({key:v.key,name:g.name,mainService:g.name,taskName:t.n,
+            icon:g.icon,cat:g.cat,subcategory:t.n,jobType:v.lbl,
+            description:v.desc||'',price:v.p,userPrice:v.p,status:'active'});
+        }
+      });
+    });
+  });
+  P.services=services;
+  localStorage.setItem('hs_current_provider',JSON.stringify(P));
+  try{var all=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+    var i=all.findIndex(function(p){return p.id===P.id;});
+    if(i>-1)all[i].services=services;else all.push(P);
+    localStorage.setItem('hs_providers',JSON.stringify(all));
+  }catch(e){}
+  fetch(FB_DB+'/providers/'+P.id+'/services.json',{method:'PUT',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify(services)})
+    .then(function(){toast('&#10003; Saved — '+services.length+' job types',2000);setTimeout(goBack,2000);})
+    .catch(function(){toast('&#10003; Saved locally',2000);setTimeout(goBack,2000);});
+}
+
+function showDebug(){
+  var box=document.getElementById('dbgBox');
+  box.style.display='block';
+  box.textContent='Fetching hs_service_prices...';
+  fetch(FB_DB+'/hs_service_prices.json?_='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      box.textContent='RAW hs_service_prices:\n'+JSON.stringify(d,null,2);
+    })
+    .catch(function(e){box.textContent='ERROR: '+e.message;});
+}
+function init(){
+  try{P=JSON.parse(localStorage.getItem('hs_current_provider')||'null');}catch(e){}
+  if(!P||!P.id){window.location.href='provider-portal.html';return;}
+  (P.services||[]).forEach(function(s){if(s.key)selected[s.key]=true;});
+  // Render immediately with hardcoded defaults
+  SERVICES=buildServices();
+  render();
+  // Fetch catalog.json (admin's price source) to get real userPrice per service
+  fetch('catalog.json?_='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(catalog){
+      if(!Array.isArray(catalog)) return;
+      catalog.forEach(function(s){
+        if(s.id && (s.userPrice||s.defaultPrice||s.price)){
+          BASE[s.id]=Number(s.userPrice||s.defaultPrice||s.price);
+        }
+      });
+      // Also fetch hs_service_prices for any direct variant price overrides
+      return fetch(FB_DB+'/hs_service_prices.json')
+        .then(function(r2){return r2.json();})
+        .then(function(prices){
+          if(prices&&typeof prices==='object'){
+            // hs_service_prices structure: {SVC001: {base:499, "1 BHK":3, "2 BHK":149, commission:10}, ...}
+            Object.keys(prices).forEach(function(svcId){
+              var v=prices[svcId];
+              if(!v||typeof v!=='object') return;
+              adminPrices[svcId]={};
+              Object.keys(v).forEach(function(label){
+                if(typeof v[label]==='number'){
+                  if(label==='base'){
+                    // base overrides the catalog base price
+                    BASE[svcId]=v[label];
+                  } else if(label!=='commission'&&label!=='commAmt'&&label!=='providerEarns'){
+                    // option label price: "1 BHK", "2 BHK", "Daily Home" etc.
+                    adminPrices[svcId][label]=v[label];
+                  }
+                }
+              });
+            });
+          }
+        }).catch(function(){});
+    })
+    .catch(function(){})
+    .finally(function(){
+      // Re-build with real prices and re-render
+      SERVICES=buildServices();
+      render();
+    });
+}
+init();
+</script>
+</body>
+</html>

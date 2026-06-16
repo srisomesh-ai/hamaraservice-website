@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Plumber – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{--brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;--ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;--line:#e2e8f0;--bg:#f0f7f9;--green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;--r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+.ksvc-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.ksvc-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.ksvc-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.ksvc-check{font-size:20px;flex-shrink:0;color:var(--muted);width:24px;text-align:center;}
+.ksvc-chip.active .ksvc-check{color:var(--brand);}
+.ksvc-info{flex:1;}
+.ksvc-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ksvc-chip.active .ksvc-name{color:var(--brand);}
+.ksvc-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.ksvc-price{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--teal);flex-shrink:0;}
+.ksvc-chip.active .ksvc-price{color:var(--brand);}
+.price-bar{background:linear-gradient(135deg,#0d3d47,var(--teal));border-radius:14px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;}
+.pb-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.pb-price{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.pb-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.35;}
+.pb-btn{padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.pb-btn:hover:not(:disabled){background:var(--brand2);}
+@media(max-width:480px){.price-bar{flex-direction:column;align-items:flex-start;gap:12px;}.pb-price{font-size:24px;}.pb-btn{width:100%;text-align:center;}}
+.accordion-item{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px;}
+.accordion-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:white;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--ink);transition:background .15s;text-align:left;gap:10px;}
+.accordion-trigger:hover{background:var(--bg);}
+.accordion-trigger.open{background:var(--teal-soft);color:var(--teal);}
+.acc-icon{font-size:18px;flex-shrink:0;}
+.acc-arr{font-size:14px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+.accordion-trigger.open .acc-arr{transform:rotate(180deg);color:var(--teal);}
+.accordion-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.accordion-body.open{max-height:600px;}
+.acc-items{padding:4px 16px 14px;}
+.acc-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);}
+.acc-item:last-child{border:none;}
+.acc-check{color:var(--green);font-size:13px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.acc-text{font-size:13px;color:var(--ink2);line-height:1.45;}
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:44px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:220px;padding-top:7px;}
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;text-decoration:none;display:block;transition:all .2s;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">🪠</div>
+    <div>
+      <div class="hero-cat">Home Services</div>
+      <div class="hero-name">Plumber</div>
+      <div class="hero-tagline">Leaks, blockages, tap repairs &amp; new fittings — fixed at home</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ 30 min – 3 hrs</div>
+        <div class="pill green">✅ Verified Plumber</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">from ₹199</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+<!-- About -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">📋</div><div class="card-title">About This Service</div></div>
+  <div class="card-body">
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;">A verified plumber arrives with tools, fittings, and everything needed to fix most plumbing issues on the spot. From a dripping tap to a blocked drain or a new bathroom fitting — select the work you need below for an instant price estimate.</p>
+  </div>
+</div>
+
+<!-- Calculator -->
+<div class="card" id="calcCard">
+  <div class="card-head"><div class="card-icon">🪠</div><div class="card-title">What Do You Need Help With?</div></div>
+  <div class="card-body" style="padding-top:0;">
+
+    <!-- Sticky bar -->
+    <div style="position:sticky;top:60px;z-index:100;background:linear-gradient(135deg,#0d3d47,var(--teal));margin:0 -20px 16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Estimated Total</div>
+        <div id="stickyPrice" style="font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:white;line-height:1;">…</div>
+        <div id="stickyNote" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Price loading…</div>
+      </div>
+      <button id="stickyBookBtn" onclick="bookNow()" disabled style="padding:10px 18px;background:var(--brand);color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;opacity:.4;white-space:nowrap;transition:all .2s;">Book Now →</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Visit fee is included. Select the work needed — for plumber prep only.</p>
+
+    <!-- Visit Required — always selected, gives the price -->
+    <div class="ksvc-chip active" id="chip-visit" style="margin-bottom:16px;cursor:default;">
+      <div class="ksvc-check" style="color:var(--brand);">●</div>
+      <div class="ksvc-info">
+        <div class="ksvc-name">🏠 Plumber Visit Required</div>
+        <div class="ksvc-desc">Visit &amp; inspection · Verified plumber · Tools &amp; sealant included · 7-day guarantee</div>
+      </div>
+      <div class="ksvc-price" id="visitPriceDisplay" style="color:var(--brand);">…</div>
+    </div>
+
+    <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Select Work Needed</div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <div class="ksvc-chip" data-svc="leak" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-leak">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">💧 Tap / Pipe Leaking</div>
+          <div class="ksvc-desc">Dripping tap · Leaking pipe joint · Overhead tank overflow · Water hammer noise</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="blockage" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-blockage">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🚫 Blocked Drain / Pipeline</div>
+          <div class="ksvc-desc">Kitchen drain blocked · Bathroom drain slow · Toilet blocked · Drain rod clearing</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="toilet" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-toilet">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🚽 Toilet / Flush Tank Repair</div>
+          <div class="ksvc-desc">Flush not working · Continuous running · Float valve issue · Cistern leaking · Seat repair</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="tapfit" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-tapfit">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🔧 Tap / Faucet Replacement</div>
+          <div class="ksvc-desc">Old tap removed · New tap fitted · Washer &amp; cartridge replacement · Mixer tap fitting</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="shower" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-shower">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🚿 Shower / Geyser Pipe Connection</div>
+          <div class="ksvc-desc">Shower head fitting · Geyser pipe connection · Shower mixer · Overhead shower installation</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="washbasin" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-washbasin">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🪣 Wash Basin / Sink Installation</div>
+          <div class="ksvc-desc">New basin fitting · P-trap installation · Drain pipe connection · Overflow fitting</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="motor" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-motor">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">⚙️ Water Motor / Pump Issue</div>
+          <div class="ksvc-desc">Motor not starting · Low pressure · Noisy pump · Suction pipe issue · Starter problem</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="tank" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-tank">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🏗️ Overhead / Underground Tank Issue</div>
+          <div class="ksvc-desc">Tank not filling · Overflow issue · Ball valve repair · Tank pipe connection</div>
+        </div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="pressure" onclick="toggleSvc(this)">
+        <div class="ksvc-check" id="chk-pressure">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">📉 Low Water Pressure</div>
+          <div class="ksvc-desc">Pressure check · Valve inspection · Filter or blockage diagnosis · Pipe size assessment</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- What's Included -->
+<div class="card" id="includedCard">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" style="padding-top:12px;">
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">💧</span> Tap / Pipe Leaking</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Leak source identification</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Tap washer or O-ring replacement</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Pipe joint sealing with teflon / sealant</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Valve and stopcock check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Post-fix leak test</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">🚫</span> Blocked Drain</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Blockage location identified</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Manual rod clearing or drain tool used</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">P-trap and U-bend cleaned</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Water flow tested after clearing</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">🚽</span> Toilet / Flush Tank Repair</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Flush mechanism inspection</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Float valve adjustment or replacement</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Flush handle and chain repair</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Cistern seal and inlet pipe check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Flush performance test</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">🔧</span> Tap / Faucet Replacement</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Old tap or faucet removal</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">New tap fitting and sealing</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Washer and cartridge replacement</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Water flow and leak test after fitting</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">🚿</span> Shower / Geyser Connection</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Shower head or geyser pipe connection</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Inlet and outlet pipe fitting</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Shower mixer or diverter fitting</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Leak test and flow check</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">🪣</span> Wash Basin / Sink</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Basin mounting and sealing</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">P-trap and drain pipe connection</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Water inlet tap fitting</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Overflow and drain test</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">⚙️</span> Water Motor / Pump</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Motor starting and pressure check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Suction pipe and foot valve inspection</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Starter and capacitor check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Pipe connection and seal check</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">🏗️</span> Tank Issue</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Ball valve / float valve check and repair</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Inlet and outlet pipe connection check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Overflow pipe inspection</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Tank filling and shut-off test</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)"><span><span class="acc-icon">📉</span> Low Water Pressure</span><span class="acc-arr">▾</span></button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Inlet valve and stopcock check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Filter or aerator blockage check</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Pipe diameter and flow assessment</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Pressure booster recommendation if needed</span></div>
+      </div></div>
+    </div>
+
+    <!-- Not included -->
+    <div style="margin-top:14px;padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+      <div style="font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">What's Not Included</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Cost of pipes, taps, fittings, or hardware (priced separately)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Breaking or cutting of walls / tiles (civil work)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Underground pipe laying or concealed plumbing</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Motor rewinding or electrical motor repair</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Sewage line or septic tank work</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⚡</div><div class="card-title">How Plumbing Service Works</div></div>
+  <div class="card-body">
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Booking</div><div class="step-desc">Select the work needed and your preferred date and time. Plumber confirmed quickly.</div></div></div>
+      <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Plumber Arrives</div><div class="step-desc">Verified plumber arrives with tools, common fittings, teflon tape, sealant, and drain tools.</div></div></div>
+      <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Inspection &amp; Diagnosis</div><div class="step-desc">Issue inspected — leak source, blockage point, or fitting requirement identified clearly.</div></div></div>
+      <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Repair / Installation</div><div class="step-desc">Work done on the spot. Any additional parts needed are confirmed with you before use.</div></div></div>
+      <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Test &amp; Handover</div><div class="step-desc">Water flow, pressure, and leak-free operation confirmed before the plumber leaves.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Benefits -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💡</div><div class="card-title">Benefits of Professional Plumbing Service</div></div>
+  <div class="card-body">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Stops water waste immediately</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">A dripping tap wastes hundreds of litres a month — a quick fix saves water and lowers your bill.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Prevents water damage</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Unrepaired leaks damage walls, floors, and furniture — early repair avoids costly damage.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Fixed the right way — first time</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Experienced plumbers use the correct fittings and techniques — no temporary fixes.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Doorstep service — no hassle</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Plumber comes to you with all tools — no need to find parts or make multiple trips to a hardware store.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Transparent pricing</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Parts cost confirmed before use — no surprise bills after the work is done.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Hygiene and safety maintained</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Blocked drains and toilet faults are hygiene hazards — fast professional fixes keep your home safe.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.5</div><div class="rating-stars">★★★★★</div><div class="rating-count">3,600 reviews</div></div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:70%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:20%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:7%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQs -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" style="padding-top:6px;">
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Does the plumber bring pipes and fittings?<span class="faq-arr">›</span></div><div class="faq-a">Plumbers carry common fittings, washers, O-rings, and sealants. For taps, pipes, or hardware, cost is confirmed before purchasing — you can also provide your own.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How quickly can a plumber arrive?<span class="faq-arr">›</span></div><div class="faq-a">Same-day or next-day booking is usually available. For emergencies, you can mention urgency in your booking and we will try to schedule the earliest available slot.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can the plumber fix an underground or concealed pipe?<span class="faq-arr">›</span></div><div class="faq-a">Concealed and underground pipe work requires wall breaking which is civil work — not included in standard plumbing service. The plumber can identify the issue and advise on next steps.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is there a call-out or visit charge?<span class="faq-arr">›</span></div><div class="faq-a">The visit and inspection charge is included in the service fee selected. No separate call-out charge is added.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book a plumber to install new bathroom fittings?<span class="faq-arr">›</span></div><div class="faq-a">Yes — select "Wash Basin / Sink Installation" or "Tap Replacement" for fitting work. If you have multiple fittings to install, select all relevant services when booking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What if the plumber cannot fix the issue in one visit?<span class="faq-arr">›</span></div><div class="faq-a">If additional parts need to be sourced, the plumber will inform you and schedule a return visit. No extra labour charge for the follow-up if within 7 days.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is the work guaranteed?<span class="faq-arr">›</span></div><div class="faq-a">Yes — all repair work carries a 7-day guarantee. If the same issue recurs within 7 days due to workmanship, the plumber revisits at no extra charge.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can the plumber also fix a water motor?<span class="faq-arr">›</span></div><div class="faq-a">Yes — select "Water Motor / Pump Issue". The plumber checks the motor, starter, and suction pipes. Motor rewinding or electrical repair requires a separate electrician visit.</div></div>
+  </div>
+</div>
+
+<!-- Similar -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body">
+    <div class="sim-grid">
+      <a class="sim-card" href="svc-electrician.html"><div class="sim-icon">⚡</div><div class="sim-name">Electrician</div><div class="sim-price">from ₹199</div></a>
+      <a class="sim-card" href="svc-water-purifier.html"><div class="sim-icon">💧</div><div class="sim-name">Water Purifier</div><div class="sim-price">from ₹399</div></a>
+      <a class="sim-card" href="svc-bathroom-cleaning.html"><div class="sim-icon">🚿</div><div class="sim-name">Bathroom Cleaning</div><div class="sim-price">from ₹299</div></a>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">… <sub>estimated</sub></div>
+      <div class="book-note-sm">Updates as you select</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">30 min – 3 hrs</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.5 (3,600 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
+    </div>
+    <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Select Work &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Verified plumber</div>
+      <div class="book-trust-item">🔒 Pay after service</div>
+      <div class="book-trust-item">🛠 Tools &amp; sealant included</div>
+      <div class="book-trust-item">💯 Transparent pricing</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">… <sub>estimated</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.5 · 3,600 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var selected = {};
+var VISIT_PRICE = 0;
+
+function toggleSvc(el) {
+  var svc = el.dataset.svc;
+  var chk = document.getElementById('chk-' + svc);
+  if (el.classList.contains('active')) {
+    el.classList.remove('active');
+    delete selected[svc];
+    if (chk) chk.textContent = '☐';
+  } else {
+    el.classList.add('active');
+    selected[svc] = 1;
+    if (chk) chk.textContent = '☑';
+  }
+  // Chips are informational only — no price change
+}
+
+function updatePrice() {
+  var fmt = VISIT_PRICE > 0 ? '₹' + VISIT_PRICE.toLocaleString('en-IN') : '…';
+  var note = VISIT_PRICE > 0 ? 'Plumber visit fee' : 'Price loading…';
+  var enabled = VISIT_PRICE > 0;
+  var vd = document.getElementById('visitPriceDisplay');
+  if (vd) vd.textContent = VISIT_PRICE > 0 ? '₹' + VISIT_PRICE.toLocaleString('en-IN') : '…';
+  ['stickyPrice','totalPrice'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=fmt; });
+  ['stickyNote','priceNote'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=note; });
+  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>estimated</sub>';
+  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>estimated</sub>';
+  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid){
+    var b=document.getElementById(bid); if(!b) return;
+    b.disabled=!enabled; b.style.opacity=enabled?'1':'0.4'; b.style.cursor=enabled?'pointer':'not-allowed';
+  });
+}
+
+updatePrice();
+
+function toggleAcc(btn) {
+  var body=btn.nextElementSibling, isOpen=btn.classList.contains('open');
+  document.querySelectorAll('.accordion-trigger.open').forEach(function(b){ b.classList.remove('open'); b.nextElementSibling.classList.remove('open'); });
+  if(!isOpen){ btn.classList.add('open'); body.classList.add('open'); }
+}
+
+function bookNow() {
+  if (VISIT_PRICE === 0) { showToast('⚠️ Price still loading, please wait'); return; }
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ service:'Plumber', services: Object.keys(selected), price: String(VISIT_PRICE), icon:'🔧', summary: Object.keys(selected).map(function(k){ return 'Plumber > '+k; }) }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=Plumber';
+  if (user) { window.location.href = url; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+}
+
+function showToast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; }, 3000);
+}
+
+firebase.auth().onAuthStateChanged(function(u) {
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC010) ──────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var _PATH='hs_service_prices/SVC011';
+  var _tok='';
+
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+
+  function applyPrices(d){
+    if(!d || d.error) return;
+    var p = 0;
+    // Priority order: visit.visit → visit.price → svc.visit → base
+    if(d.visit && d.visit.visit !== undefined) p = parseInt(d.visit.visit);
+    else if(d.visit && d.visit.price !== undefined) p = parseInt(d.visit.price);
+    else if(d.svc && d.svc.visit !== undefined) p = parseInt(d.svc.visit);
+    else if(d.base !== undefined) p = parseInt(d.base);
+    if(p > 0){ VISIT_PRICE = p; }
+    if(d.base !== undefined){
+      document.querySelectorAll('.pill').forEach(function(pl){
+        if(pl.textContent.indexOf('from')>=0 && pl.textContent.indexOf('₹')>=0)
+          pl.textContent = 'from ₹'+parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+    if(typeof updatePrice==='function') updatePrice();
+  }
+  function load(){
+    getToken(function(tok){
+      var url=_DB+'/'+_PATH+'.json'+(tok?'?auth='+tok:'');
+      var x=new XMLHttpRequest();
+      x.open('GET',url,true);x.timeout=6000;
+      x.onload=function(){try{var d=JSON.parse(x.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      x.onerror=function(){};
+      x.send();
+    });
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){load();if(typeof updatePrice==='function')updatePrice();});}else{load();if(typeof updatePrice==='function')updatePrice();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+</script>
+</body>
+</html>

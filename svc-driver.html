@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Driver Service – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{--brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;--ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;--line:#e2e8f0;--bg:#f0f7f9;--green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;--r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+/* Vehicle type toggle */
+.vtype-btn{flex:1;padding:14px 10px;border:2px solid var(--line);border-radius:14px;background:white;text-align:center;cursor:pointer;transition:all .18s;}
+.vtype-btn.active{border-color:var(--brand);background:var(--brand-soft);}
+/* Service chips */
+.ksvc-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.ksvc-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.ksvc-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.ksvc-check{font-size:20px;flex-shrink:0;color:var(--muted);width:24px;text-align:center;}
+.ksvc-chip.active .ksvc-check{color:var(--brand);}
+.ksvc-info{flex:1;}
+.ksvc-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ksvc-chip.active .ksvc-name{color:var(--brand);}
+.ksvc-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.ksvc-price{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--teal);flex-shrink:0;text-align:right;}
+.ksvc-chip.active .ksvc-price{color:var(--brand);}
+/* Calc chips */
+.calc-chip{padding:7px 14px;border:1.5px solid var(--line);border-radius:100px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);background:white;transition:all .15s;user-select:none;white-space:nowrap;}
+.calc-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
+.calc-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;}
+/* Counters */
+.cnt-btn{width:40px;height:40px;border:2px solid var(--line);background:white;font-size:22px;cursor:pointer;color:var(--teal);}
+.cnt-btn.left{border-radius:10px 0 0 10px;}
+.cnt-btn.right{border-radius:0 10px 10px 0;}
+.cnt-val{min-width:48px;height:40px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:800;}
+/* Price bar */
+.price-bar{background:linear-gradient(135deg,#0d3d47,var(--teal));border-radius:14px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;}
+.pb-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.pb-price{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.pb-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.35;}
+.pb-btn{padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.pb-btn:hover:not(:disabled){background:var(--brand2);}
+@media(max-width:480px){.price-bar{flex-direction:column;align-items:flex-start;gap:12px;}.pb-price{font-size:24px;}.pb-btn{width:100%;text-align:center;}}
+/* Steps */
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:44px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:220px;padding-top:7px;}
+/* Similar */
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;text-decoration:none;display:block;transition:all .2s;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+/* Ratings */
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+/* Booking card */
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">🚗</div>
+    <div>
+      <div class="hero-cat">Outdoor Services</div>
+      <div class="hero-name">Driver Service</div>
+      <div class="hero-tagline">Verified drivers for car, tempo, truck &amp; more — hourly or full day</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ Hourly / Full Day</div>
+        <div class="pill green">✅ Verified &amp; Licensed</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">from ₹299</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+<!-- About -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">📋</div><div class="card-title">About This Service</div></div>
+  <div class="card-body">
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;">A verified, licensed driver arrives at your location to drive your vehicle — car, auto, tempo, truck, or bus. Whether you need a driver for errands, a long trip, shifting goods, or a regular daily schedule — select your vehicle type and service below for an instant price estimate.</p>
+  </div>
+</div>
+
+<!-- Calculator -->
+<div class="card" id="calcCard">
+  <div class="card-head"><div class="card-icon">🚗</div><div class="card-title">Select Vehicle &amp; Service Type</div></div>
+  <div class="card-body" style="padding-top:0;">
+
+    <!-- Sticky bar -->
+    <div style="position:sticky;top:60px;z-index:100;background:linear-gradient(135deg,#0d3d47,var(--teal));margin:0 -20px 16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Estimated Total</div>
+        <div id="stickyPrice" style="font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:white;line-height:1;">…</div>
+        <div id="stickyNote" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Select vehicle &amp; service below</div>
+      </div>
+      <button id="stickyBookBtn" onclick="bookNow()" disabled style="padding:10px 18px;background:var(--brand);color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;opacity:.4;white-space:nowrap;transition:all .2s;">Book Now →</button>
+    </div>
+
+    <!-- Step 1: Vehicle Type -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Step 1 — Vehicle Type</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="vehicleChips">
+        <div class="vtype-btn" data-vehicle="car" onclick="selectVehicle(this)" style="cursor:pointer;">
+          <div style="font-size:26px;margin-bottom:4px;">🚗</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">Car</div>
+          <div style="font-size:10px;color:var(--muted);">from ₹299</div>
+        </div>
+        <div class="vtype-btn" data-vehicle="auto" onclick="selectVehicle(this)" style="cursor:pointer;">
+          <div style="font-size:26px;margin-bottom:4px;">🛺</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">Auto</div>
+          <div style="font-size:10px;color:var(--muted);">from ₹199</div>
+        </div>
+        <div class="vtype-btn" data-vehicle="tempo" onclick="selectVehicle(this)" style="cursor:pointer;">
+          <div style="font-size:26px;margin-bottom:4px;">🚐</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">Tempo / Van</div>
+          <div style="font-size:10px;color:var(--muted);">from ₹499</div>
+        </div>
+        <div class="vtype-btn" data-vehicle="truck" onclick="selectVehicle(this)" style="cursor:pointer;">
+          <div style="font-size:26px;margin-bottom:4px;">🚛</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">Truck / Lorry</div>
+          <div style="font-size:10px;color:var(--muted);">from ₹799</div>
+        </div>
+        <div class="vtype-btn" data-vehicle="bus" onclick="selectVehicle(this)" style="cursor:pointer;">
+          <div style="font-size:26px;margin-bottom:4px;">🚌</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">Bus / Minibus</div>
+          <div style="font-size:10px;color:var(--muted);">from ₹999</div>
+        </div>
+        <div class="vtype-btn" data-vehicle="tractor" onclick="selectVehicle(this)" style="cursor:pointer;">
+          <div style="font-size:26px;margin-bottom:4px;">🚜</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">Tractor</div>
+          <div style="font-size:10px;color:var(--muted);">from ₹599</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Service type (shown after vehicle selected) -->
+    <div id="serviceSection" style="display:none;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Step 2 — Service Type</div>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="serviceChips"></div>
+    </div>
+
+    <!-- Step 3: Duration (shown after service selected) -->
+    <div id="durationSection" style="display:none;margin-top:16px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Step 3 — Duration</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;" id="durationChips">
+        <div class="calc-chip active" data-dur="4hr" data-mult="1" onclick="selectDur(this)">4 Hours</div>
+        <div class="calc-chip" data-dur="8hr" data-mult="2" onclick="selectDur(this)">8 Hours (Full Day)</div>
+        <div class="calc-chip" data-dur="outstation" data-mult="3" onclick="selectDur(this)">Outstation (per day)</div>
+      </div>
+      <div id="durDays" style="display:none;margin-top:12px;">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Number of Days</div>
+        <div style="display:flex;align-items:center;gap:0;">
+          <button class="cnt-btn left" onclick="changeDays(-1)">−</button>
+          <div class="cnt-val" id="dayCount">1</div>
+          <button class="cnt-btn right" onclick="changeDays(1)">+</button>
+          <span style="font-size:12px;color:var(--muted);margin-left:12px;">day(s)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Note -->
+    <div style="margin-top:14px;padding:10px 14px;background:var(--teal-soft);border-radius:10px;border:1.5px solid var(--teal);font-size:12px;color:var(--teal);font-weight:600;">
+      ℹ️ Driver brings only their licence &amp; skill — fuel, toll, and parking are paid by you. Outstation trips include driver allowance.
+    </div>
+
+    <!-- Price bar -->
+    <div class="price-bar">
+      <div>
+        <div class="pb-label">Estimated Total</div>
+        <div class="pb-price" id="totalPrice">₹0</div>
+        <div class="pb-note" id="priceNote">Select vehicle &amp; service above</div>
+      </div>
+      <button class="pb-btn" id="bookNowBtn" onclick="bookNow()" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- What's Included -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" style="padding-top:12px;">
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Verified, licensed driver with valid DL for vehicle type</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Driving your own vehicle — driver operates your car / truck</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Local trips, errands, airport drops, event duty as required</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Goods shifting and goods vehicle driving (tempo / truck)</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Night duty available (extra charges apply)</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Outstation and long-distance trips (per day rate)</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Monthly / recurring driver arrangement available</span></div>
+    </div>
+
+    <div style="padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+      <div style="font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">What's Not Included</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Fuel, petrol, diesel costs (paid by you)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Toll, parking, and state entry fees</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Vehicle itself (driver drives your vehicle)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Loading / unloading of goods (driver drives only)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Vehicle maintenance or repairs during trip</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⚡</div><div class="card-title">How Driver Service Works</div></div>
+  <div class="card-body">
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Booking</div><div class="step-desc">Select vehicle type, service type, and duration. Share your pickup location and trip details.</div></div></div>
+      <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Driver Assigned</div><div class="step-desc">A verified driver with the correct licence for your vehicle type is matched and confirmed.</div></div></div>
+      <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Driver Arrives</div><div class="step-desc">Driver arrives at your location on time. Vehicle documents and licence checked at start.</div></div></div>
+      <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Trip / Duty</div><div class="step-desc">Driver operates your vehicle safely for the agreed duration — local, outstation, or goods movement.</div></div></div>
+      <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Handover</div><div class="step-desc">Vehicle returned to you safely at end of duty. Payment processed after service completion.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Benefits -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💡</div><div class="card-title">Benefits of Professional Driver Service</div></div>
+  <div class="card-body">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Stress-free travel</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Sit back and relax — no parking stress, no traffic fatigue, especially on long trips.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Licensed for your vehicle type</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Car, LMV, HMV, tempo, truck — driver holds the correct licence for your specific vehicle.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Perfect for elderly and medical travel</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Safe, patient driver for hospital visits, elderly parents, and medical appointments.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Goods shifting made easy</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Need a truck or tempo driven for your move? Book a commercial driver without the hassle of finding one.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Verified and background-checked</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">All drivers are police-verified — you can trust them with your vehicle and family.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Flexible — hourly, full day, or monthly</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Book for a few hours or set up a monthly driver arrangement for your daily commute.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.6</div><div class="rating-stars">★★★★★</div><div class="rating-count">2,200 reviews</div></div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:73%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:18%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:6%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQs -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" style="padding-top:6px;">
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Does the driver bring the vehicle?<span class="faq-arr">›</span></div><div class="faq-a">No — this is a driver-only service. The driver comes to your location and drives your own vehicle. Fuel, toll, and parking are your responsibility.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is the driver licensed for my vehicle?<span class="faq-arr">›</span></div><div class="faq-a">Yes — drivers are matched based on your vehicle type. Car drivers hold LMV licence; truck and tempo drivers hold HMV / commercial vehicle licence.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book a driver for an outstation trip?<span class="faq-arr">›</span></div><div class="faq-a">Yes — select "Outstation" as the duration. Outstation rates include a driver daily allowance. For multi-day trips, select the number of days needed.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book a monthly regular driver?<span class="faq-arr">›</span></div><div class="faq-a">Yes — after your first booking, you can set up a monthly driver arrangement. Contact us directly for monthly pricing and scheduling.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book a truck driver for goods shifting?<span class="faq-arr">›</span></div><div class="faq-a">Yes — select "Truck / Lorry" as the vehicle type. The driver will drive your goods vehicle. Loading and unloading is not included — book separate labour if needed.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is the driver available for night duty?<span class="faq-arr">›</span></div><div class="faq-a">Yes — night duty is available with an additional night allowance charge. Mention night duty timing in your booking notes.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Are the drivers police verified?<span class="faq-arr">›</span></div><div class="faq-a">Yes — all drivers are background-checked and police-verified before onboarding. You can request verification documents at booking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What if the driver doesn't show up?<span class="faq-arr">›</span></div><div class="faq-a">We have a replacement guarantee — if a driver cannot report on time, a replacement is arranged immediately. You are notified proactively.</div></div>
+  </div>
+</div>
+
+<!-- Similar -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body">
+    <div class="sim-grid">
+      <a class="sim-card" href="svc-security-guard.html"><div class="sim-icon">💂</div><div class="sim-name">Security Guard</div><div class="sim-price">from ₹899</div></a>
+      <a class="sim-card" href="svc-house-maid.html"><div class="sim-icon">🧹</div><div class="sim-name">House Maid</div><div class="sim-price">from ₹99</div></a>
+      <a class="sim-card" href="svc-car-wash.html"><div class="sim-icon">🚗</div><div class="sim-name">Car / Bike Wash</div><div class="sim-price">from ₹149</div></a>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">₹0 <sub>select vehicle</sub></div>
+      <div class="book-note-sm">Updates as you select</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">Hourly / Full Day</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.6 (2,200 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
+    </div>
+    <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Select Vehicle &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Licensed &amp; verified driver</div>
+      <div class="book-trust-item">🔒 Pay after service</div>
+      <div class="book-trust-item">🔁 Replacement guarantee</div>
+      <div class="book-trust-item">🚗 All vehicle types</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">₹0 <sub>select vehicle</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.6 · 2,200 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+// ── Vehicle → service sub-categories ────────────────────────────────────
+var VEHICLE_SERVICES = {
+  car: [
+    { key:'local',      name:'🏙️ Local / City Trips',         desc:'Airport drop · Hospital · Errands · Shopping · Events',  price:299 },
+    { key:'fullday',    name:'☀️ Full Day Driver (8 hrs)',      desc:'Dedicated driver for full day — unlimited trips in city', price:699 },
+    { key:'outstation', name:'🛣️ Outstation / Long Trip',       desc:'Inter-city travel · Pilgrimages · Holidays · Per day',   price:999 },
+    { key:'monthly',    name:'📅 Monthly Regular Driver',       desc:'Daily commute · Office & back · Fixed schedule',          price:8999 },
+    { key:'event',      name:'🎉 Event / Wedding Driver',       desc:'Wedding duty · Functions · VIP guest vehicle duty',       price:799 }
+  ],
+  auto: [
+    { key:'local',      name:'🏙️ Local Auto Driving',          desc:'City trips · Goods delivery · Patient transport',         price:199 },
+    { key:'fullday',    name:'☀️ Full Day Auto Driver',         desc:'Dedicated auto driver for 8 hours',                      price:499 },
+    { key:'monthly',    name:'📅 Monthly Auto Driver',          desc:'Regular runs · Shop delivery · Daily schedule',           price:5999 }
+  ],
+  tempo: [
+    { key:'shifting',   name:'📦 Goods Shifting / Moving',      desc:'Home shifting · Shop stock · Warehouse delivery',         price:699 },
+    { key:'local',      name:'🏙️ Local Tempo Driving',          desc:'City goods delivery · Market runs · Multiple drops',      price:499 },
+    { key:'outstation', name:'🛣️ Outstation Tempo Trip',        desc:'Inter-city goods movement · Per day rate',                price:1299 },
+    { key:'fullday',    name:'☀️ Full Day Tempo Driver',         desc:'Dedicated tempo driver for 8 hours',                     price:999 }
+  ],
+  truck: [
+    { key:'shifting',   name:'🏠 House / Office Shifting',      desc:'Full truck for home or office relocation',                price:1299 },
+    { key:'goods',      name:'📦 Goods Transport',               desc:'Factory · Warehouse · Market · Long haul driving',       price:999 },
+    { key:'outstation', name:'🛣️ Outstation Truck Trip',        desc:'State or inter-city goods movement · Per day rate',       price:1799 },
+    { key:'fullday',    name:'☀️ Full Day Truck Driver',         desc:'Dedicated truck driver for 8+ hours',                    price:1499 }
+  ],
+  bus: [
+    { key:'event',      name:'🎉 Event / Function Bus Driver',  desc:'Wedding bus · School trip · Group outing',               price:1299 },
+    { key:'staff',      name:'👔 Staff Pickup & Drop',           desc:'Office staff transport · Factory pickup route',           price:999 },
+    { key:'outstation', name:'🛣️ Outstation Bus Trip',          desc:'Pilgrimage · Tourism · Group travel · Per day rate',      price:1999 },
+    { key:'fullday',    name:'☀️ Full Day Bus Driver',           desc:'Dedicated bus driver for full day',                      price:1699 }
+  ],
+  tractor: [
+    { key:'farm',       name:'🌾 Farm / Agricultural Work',      desc:'Field ploughing · Crop transport · Farm operations',     price:799 },
+    { key:'goods',      name:'📦 Goods / Material Transport',    desc:'Sand · Bricks · Construction material · Local',          price:699 },
+    { key:'fullday',    name:'☀️ Full Day Tractor Driver',       desc:'Dedicated tractor driver for 8+ hours',                  price:999 }
+  ]
+};
+
+var selectedVehicle = null;
+var selectedService = null;
+var selectedServicePrice = 0;
+var durMultiplier = 1;
+var dayCount = 1;
+var _driverTotal = 0; // global so bookNow can read calculated total
+
+function selectVehicle(el) {
+  document.querySelectorAll('#vehicleChips .vtype-btn').forEach(function(c){
+    c.style.borderColor = 'var(--line)';
+    c.style.background = 'white';
+    c.querySelector('div:nth-child(2)').style.color = 'var(--ink)';
+  });
+  el.style.borderColor = 'var(--brand)';
+  el.style.background = 'var(--brand-soft)';
+  el.querySelector('div:nth-child(2)').style.color = 'var(--brand)';
+  selectedVehicle = el.dataset.vehicle;
+  selectedService = null;
+  selectedServicePrice = 0;
+  buildServiceChips();
+  document.getElementById('serviceSection').style.display = 'block';
+  document.getElementById('durationSection').style.display = 'none';
+  updatePrice();
+}
+
+function buildServiceChips() {
+  var svcs = VEHICLE_SERVICES[selectedVehicle] || [];
+  var html = svcs.map(function(s){
+    return '<div class="ksvc-chip" data-svc="'+s.key+'" data-price="'+s.price+'" onclick="selectService(this)">' +
+      '<div class="ksvc-check" id="schk-'+s.key+'">○</div>' +
+      '<div class="ksvc-info"><div class="ksvc-name">'+s.name+'</div><div class="ksvc-desc">'+s.desc+'</div></div>' +
+      '<div class="ksvc-price">₹'+s.price.toLocaleString('en-IN')+'<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">base</span></div>' +
+      '</div>';
+  }).join('');
+  document.getElementById('serviceChips').innerHTML = html;
+}
+
+function selectService(el) {
+  document.querySelectorAll('#serviceChips .ksvc-chip').forEach(function(c){
+    c.classList.remove('active');
+    var chk = c.querySelector('.ksvc-check');
+    if(chk) chk.textContent = '○';
+  });
+  el.classList.add('active');
+  var chk = el.querySelector('.ksvc-check');
+  if(chk) chk.textContent = '●';
+  selectedService = el.dataset.svc;
+  selectedServicePrice = parseInt(el.dataset.price) || 0;
+  // Show duration section — hide for monthly
+  var durSec = document.getElementById('durationSection');
+  if(selectedService === 'monthly') {
+    durSec.style.display = 'none';
+    durMultiplier = 1; dayCount = 1;
+  } else {
+    durSec.style.display = 'block';
+  }
+  updatePrice();
+}
+
+function selectDur(el) {
+  document.querySelectorAll('#durationChips .calc-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  durMultiplier = parseInt(el.dataset.mult) || 1;
+  var isDays = el.dataset.dur === 'outstation';
+  document.getElementById('durDays').style.display = isDays ? 'block' : 'none';
+  if(!isDays) dayCount = 1;
+  updatePrice();
+}
+
+function changeDays(delta) {
+  dayCount = Math.max(1, Math.min(30, dayCount + delta));
+  document.getElementById('dayCount').textContent = dayCount;
+  updatePrice();
+}
+
+function updatePrice() {
+  if(!selectedVehicle || !selectedService) {
+    setUI('₹0', false, 'Select vehicle & service above');
+    return;
+  }
+  var isMonthly = selectedService === 'monthly';
+  var isOutstation = document.querySelector('#durationChips .calc-chip.active') &&
+    document.querySelector('#durationChips .calc-chip.active').dataset.dur === 'outstation';
+  var total;
+  if(isMonthly) {
+    total = selectedServicePrice;
+  } else if(isOutstation) {
+    total = selectedServicePrice * durMultiplier * dayCount;
+  } else {
+    total = selectedServicePrice * durMultiplier;
+  }
+  _driverTotal = total;
+  var fmt = '₹' + total.toLocaleString('en-IN');
+  var dur = isMonthly ? 'per month' :
+    isOutstation ? dayCount+' day'+(dayCount>1?'s':'')+' outstation' :
+    (durMultiplier === 1 ? '4 hours' : '8 hours full day');
+  var note = selectedVehicle + ' driver · ' + dur;
+  setUI(fmt, true, note);
+}
+
+function setUI(fmt, enabled, note) {
+  ['stickyPrice','totalPrice'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=fmt; });
+  ['stickyNote','priceNote'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=note; });
+  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>estimated</sub>';
+  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>estimated</sub>';
+  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid){
+    var b=document.getElementById(bid); if(!b) return;
+    b.disabled=!enabled; b.style.opacity=enabled?'1':'0.4'; b.style.cursor=enabled?'pointer':'not-allowed';
+  });
+}
+
+function bookNow() {
+  if(!selectedVehicle || !selectedService) {
+    showToast('⚠️ Please select vehicle and service type');
+    document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  var dVh={car:'Car',bike:'Bike',auto:'Auto',tractor:'Tractor',truck:'Truck'};
+  var dTr={local:'Local trip',fullday:'Full day',outstation:'Outstation',monthly:'Monthly',event:'Event / Function',farm:'Farm work',goods:'Goods transport'};
+  var _dSum = ['Driver > ' + (dVh[selectedVehicle]||selectedVehicle) + ' > ' + (dTr[selectedService]||selectedService)];
+  if(dayCount>1) _dSum.push('Driver > ' + dayCount + ' days');
+  sessionStorage.setItem('hs_service_options', JSON.stringify({
+    service:'Driver', svcId:'SVC033', icon:'🚙',
+    price: String(_driverTotal > 0 ? _driverTotal : selectedServicePrice),
+    summary: _dSum
+  }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=Driver';
+  if(user){ window.location.href=url; }
+  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
+}
+
+function showToast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; }, 3000);
+}
+
+firebase.auth().onAuthStateChanged(function(u) {
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC033) ────────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+  function applyPrices(d){
+    if(!d||d.error) return;
+    ['car','auto','tempo','truck','bus','tractor'].forEach(function(vt){
+      if(!d[vt]) return;
+      var svcs=VEHICLE_SERVICES[vt];if(!svcs) return;
+      svcs.forEach(function(s){if(d[vt][s.key]!==undefined) s.price=d[vt][s.key];});
+    });
+    if(typeof renderServices==='function') renderServices();
+    if(d.base){
+      document.querySelectorAll('.pill').forEach(function(p){
+        if(p.textContent.indexOf('from')>=0&&p.textContent.indexOf('₹')>=0)
+          p.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+    if(typeof updatePrice==='function') updatePrice();
+  }
+  function load(){
+    getToken(function(tok){
+      var url=_DB+'/hs_service_prices/SVC033.json'+(tok?'?auth='+tok:'');
+      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
+      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      xhr.onerror=function(){};xhr.send();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Gardener – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>var VISIT_PRICE = 0;
+
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+window.SVC_CONFIG = {
+  name:"Gardener", icon:"🌱", cat:"Outdoor",
+  price:399, unit:"per visit", minHours:1, duration:"1–3 hours",
+  teamSize:"1 gardener", equipment:"Gardener brings basic hand tools",
+  tagline:"Garden maintenance at your home or terrace",
+  desc:"A gardener visits with their own basic gardening tools — pruning shears, hand trowel, rake, and watering can. They maintain your existing garden, trim plants, weed beds, and keep your outdoor space looking fresh.",
+  includes:["Plant pruning & shaping","Weeding garden beds","Lawn mowing (if you have a mower)","Watering plants","Dead plant removal","General garden tidying"],
+  excludes:["Plants or seeds (you buy them)","Potting soil or fertiliser (you provide)","Lawn mower (gardener brings hand tools only)","Landscaping or new garden design"],
+  steps:[
+    {t:"Assessment",d:"Gardener checks your garden and agrees on tasks for the session."},
+    {t:"Pruning & weeding",d:"Plants pruned, dead leaves removed, and weeds cleared."},
+    {t:"Watering",d:"All plants watered using your water source and their watering can."},
+    {t:"Clean-up",d:"Garden debris bagged and cleared. Tools packed."}
+  ],
+  faqs:[
+    {q:"Does gardener bring tools?",a:"Yes. Basic hand tools — shears, trowel, rake, and watering can — are brought by the gardener."},
+    {q:"Should I provide plants or soil?",a:"Yes. If new plants or soil top-up is needed, you arrange it. The gardener maintains what's there."},
+    {q:"Can they advise on plant care?",a:"Yes. Gardeners are happy to advise on what your plants need."}
+  ],
+  rating:4.6, ratingCount:750, before:"🌿", after:"🌱",
+  similar:[
+    {name:"Pest Control",icon:"🐛",price:799,page:"svc-pest-control.html"},
+    {name:"House Maid",icon:"🧹",price:499,page:"svc-house-maid.html"}
+  ],
+  subcategory:[
+    {id:"area",      label:"Garden / terrace size",type:"chips", single:true,  req:true, opts:["Small (up to 10 pots)","Medium (11–30 pots)","Large (30+ pots or lawn)","Terrace garden","In-house garden bed","Mix of all"]},
+    {id:"tasks",     label:"Tasks needed",         type:"chips", single:false, req:true, opts:["Pruning & shaping","Weeding","Watering","Repotting","Lawn mowing","Dead plant removal"]},
+    {id:"frequency", label:"How often?",           type:"chips", single:true,            opts:["One time","Weekly","Fortnightly","Monthly"]}
+  ]
+};
+
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var _PATH='hs_service_prices/SVC032';
+  var _tok='';
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');};};
+    x.onerror=function(){cb('');};
+    x.send('{}');
+  }
+  function applyPrices(d){
+    if(!d||d.error) return;
+    var p=0;
+    if(d.visit&&d.visit.visit!==undefined) p=parseInt(d.visit.visit);
+    else if(d.visit&&d.visit.price!==undefined) p=parseInt(d.visit.price);
+    else if(d.base!==undefined) p=parseInt(d.base);
+    if(p>0){
+      if(typeof VISIT_PRICE!=='undefined') VISIT_PRICE=p;
+      // Update SVC_CONFIG so service-base renders correct price
+      if(window.SVC_CONFIG) window.SVC_CONFIG.price = p;
+      // Call service-base updatePriceDisplays if available
+      if(typeof updatePriceDisplays==='function') updatePriceDisplays();
+      var vd=document.getElementById('visitPriceDisplay');
+      if(vd) vd.innerHTML='Visit fee: <b>₹'+p.toLocaleString('en-IN')+'</b>';
+      ['stickyPrice','totalPrice','visitPrice','calcTotalPrice'].forEach(function(id){
+        var el=document.getElementById(id); if(el) el.textContent='₹'+p.toLocaleString('en-IN');
+      });
+      document.querySelectorAll('.pill').forEach(function(pl){
+        if(pl.textContent.indexOf('from')>=0&&pl.textContent.indexOf('₹')>=0)
+          pl.textContent='from ₹'+p.toLocaleString('en-IN');
+      });
+      if(typeof updatePrice==='function') updatePrice();
+      if(typeof updateTotal==='function') updateTotal();
+    }
+  }
+  function load(){
+    getToken(function(tok){
+      var url=_DB+'/'+_PATH+'.json'+(tok?'?auth='+tok:'');
+      var x=new XMLHttpRequest();x.open('GET',url,true);x.timeout=6000;
+      x.onload=function(){try{var d=JSON.parse(x.responseText);if(d&&!d.error)applyPrices(d);}catch(e){};};
+      x.onerror=function(){};x.send();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}else{load();}
+  setInterval(load,30000);
+})();
+</script>
+<script src="service-base.js" defer>
+
+// ── Fetch live prices from Firebase ──
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var _PATH='hs_service_prices/SVC032';
+  var _tok='';
+
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+
+  function applyPrices(d){
+    if(!d || d.error) return;
+    var g=d['svc']||{};
+    // Patch PRICES dict
+    if(typeof PRICES!=='undefined'){
+      Object.keys(g).forEach(function(k){
+        if(PRICES[k]!==undefined) PRICES[k]=g[k];
+      });
+    }
+    document.querySelectorAll('.ksvc-chip[data-svc]').forEach(function(c){
+      var k=c.dataset.svc; if(g[k]===undefined) return;
+      c.dataset.price=g[k];
+      var pe=c.querySelector('.ksvc-price');
+      if(pe){var sp=pe.querySelector('span');pe.innerHTML='₹'+parseInt(g[k]).toLocaleString('en-IN')+(sp?sp.outerHTML:'');}
+    });
+    if(d.base!==undefined){
+      document.querySelectorAll('.pill').forEach(function(p){
+        if(p.textContent.indexOf('from')>=0&&p.textContent.indexOf('₹')>=0)
+          p.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+    // Recalc if anything selected
+    if(typeof updatePrice==='function') updatePrice();
+    if(typeof updateAll==='function') updateAll();
+  }
+
+  function load(){
+    getToken(function(tok){
+      var url=_DB+'/'+_PATH+'.json'+(tok?'?auth='+tok:'');
+      var x=new XMLHttpRequest();
+      x.open('GET',url,true);x.timeout=6000;
+      x.onload=function(){try{var d=JSON.parse(x.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      x.onerror=function(){};
+      x.send();
+    });
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+
+</script>
+</head>
+<body></body>
+</html>

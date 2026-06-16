@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Car Mechanic – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;
+  --line:#e2e8f0;--bg:#f0f7f9;--white:#fff;
+  --green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;
+  --r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+
+/* HERO */
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+
+/* LAYOUT */
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+
+/* CARD */
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+
+/* ABOUT */
+.about-text{font-size:14px;color:var(--ink2);line-height:1.75;}
+
+/* ACCORDION - What's Included */
+.accordion-item{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px;}
+.accordion-trigger{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;background:white;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--ink);
+  transition:background .15s;text-align:left;gap:10px;
+}
+.accordion-trigger:hover{background:var(--bg);}
+.accordion-trigger.open{background:var(--teal-soft);color:var(--teal);}
+.acc-icon{font-size:18px;flex-shrink:0;}
+.acc-arr{font-size:14px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+.accordion-trigger.open .acc-arr{transform:rotate(180deg);color:var(--teal);}
+.accordion-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.accordion-body.open{max-height:500px;}
+.acc-items{padding:4px 16px 14px;}
+.acc-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);}
+.acc-item:last-child{border:none;}
+.acc-check{color:var(--green);font-size:13px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.acc-text{font-size:13px;color:var(--ink2);line-height:1.45;}
+
+/* Not included */
+.excl-wrap{margin-top:14px;padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;}
+.excl-title{font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+.excl-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#7f1d1d;padding:3px 0;}
+.excl-x{font-weight:800;flex-shrink:0;}
+
+/* PRICE CALCULATOR */
+.calc-intro{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.calc-section{margin-bottom:18px;}
+.calc-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px;display:flex;align-items:center;gap:4px;}
+.calc-req{color:var(--brand);}
+
+/* Chips — compact, no price shown */
+.calc-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.calc-chip{
+  padding:7px 14px;
+  border:1.5px solid var(--line);
+  border-radius:100px;
+  cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;
+  color:var(--ink2);background:white;
+  transition:all .15s;
+  user-select:none;white-space:nowrap;
+}
+.calc-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
+.calc-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;}
+
+
+
+
+/* PROVIDER TYPE */
+.prov-option{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:16px;border:2px solid var(--line);
+  border-radius:14px;cursor:pointer;transition:all .18s;
+  background:white;
+}
+.prov-option:hover{border-color:var(--teal);background:var(--teal-soft);}
+.prov-option.active{border-color:var(--brand);background:var(--brand-soft);}
+.prov-radio{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--line);flex-shrink:0;margin-top:2px;
+  transition:all .15s;position:relative;
+}
+.prov-option.active .prov-radio{
+  border-color:var(--brand);background:var(--brand);
+}
+.prov-option.active .prov-radio::after{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:8px;height:8px;border-radius:50%;background:white;
+}
+.prov-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.prov-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.prov-option.active .prov-title{color:var(--brand);}
+
+/* STEPS */
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:46px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* BEFORE/AFTER */
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ba-card{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--line);}
+.ba-label{padding:6px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;}
+.ba-label.before{background:#fee2e2;color:#c53030;}
+.ba-label.after{background:var(--green-soft);color:#27ae60;}
+.ba-img{width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg);}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:200px;padding-top:7px;}
+
+/* SIMILAR */
+.sim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;display:block;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+
+/* RATINGS */
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+
+/* DESKTOP BOOKING CARD */
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+
+/* MOBILE BAR */
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+
+/* Provider option spacing */
+.prov-option{display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.prov-option:hover{border-color:var(--teal);background:var(--teal-soft);}
+.prov-option.active{border-color:var(--brand);background:var(--brand-soft);}
+.prov-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;margin-top:2px;transition:all .15s;position:relative;}
+.prov-option.active .prov-radio{border-color:var(--brand);background:var(--brand);}
+.prov-option.active .prov-radio::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:white;}
+.prov-info .prov-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.prov-info .prov-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.prov-option.active .prov-title{color:var(--brand);}
+</style>
+</head>
+<body>
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">🔧</div>
+    <div>
+      <div class="hero-cat">Vehicle Care</div>
+      <div class="hero-name">Car Mechanic</div>
+      <div class="hero-tagline">Car service & repairs at your home or parking spot</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ 1–3 hours</div>
+        <div class="pill green">✅ Verified Pro</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">from ₹599</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+
+
+
+
+<!-- Price Calculator -->
+<div class="card" id="calcCard">
+  <div class="card-head"><div class="card-icon">🧮</div><div class="card-title">Select Your Requirements &amp; See Price</div></div>
+  <div class="card-body" style="padding-top:0;">
+    <!-- Sticky price bar -->
+    <div id="stickyBar" style="position:sticky;top:60px;z-index:100;background:linear-gradient(135deg,#0d3d47,var(--teal));margin:0 -20px 16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Estimated Total</div>
+        <div id="stickyPrice" style="font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:white;line-height:1;">…</div>
+        <div id="stickyNote" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Select options below</div>
+      </div>
+      <button id="stickyBookBtn" onclick="bookNow()" disabled style="padding:10px 18px;background:var(--brand);color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;opacity:.4;white-space:nowrap;transition:all .2s;">Book Now →</button>
+    </div>
+    <p class="calc-intro">Tap to select — estimated total updates automatically.</p>
+
+<div class="calc-section">
+<div class="calc-label">SERVICE NEEDED</div>
+<div class="calc-chips">
+<div class="calc-chip" data-group="service" data-val="engine_oil_change" data-price="0" onclick="chipClick(this)">Engine oil change</div>
+<div class="calc-chip" data-group="service" data-val="oil_filter_change" data-price="0" onclick="chipClick(this)">Oil filter change</div>
+<div class="calc-chip" data-group="service" data-val="air_filter_check" data-price="0" onclick="chipClick(this)">Air filter check</div>
+<div class="calc-chip" data-group="service" data-val="battery_check" data-price="0" onclick="chipClick(this)">Battery check</div>
+<div class="calc-chip" data-group="service" data-val="brake_inspection" data-price="0" onclick="chipClick(this)">Brake inspection</div>
+<div class="calc-chip" data-group="service" data-val="tyre_pressure_check" data-price="0" onclick="chipClick(this)">Tyre pressure check</div>
+<div class="calc-chip" data-group="service" data-val="full_service__all_ab" data-price="0" onclick="chipClick(this)">Full service (all above)</div>
+</div>
+</div>
+
+<div class="calc-section">
+<div class="calc-label">CAR BRAND</div>
+<select id="sel-carbrand" onchange="selectChange('carbrand',this.value)" style="padding:9px 12px;border:2px solid var(--line);border-radius:11px;font-size:14px;background:var(--bg);width:100%;max-width:280px;outline:none;"><option value="Not sure">Not sure</option><option value="Maruti Suzuki">Maruti Suzuki</option><option value="Hyundai">Hyundai</option><option value="Tata">Tata</option><option value="Mahindra">Mahindra</option><option value="Honda">Honda</option><option value="Toyota">Toyota</option><option value="Kia">Kia</option><option value="MG">MG</option><option value="Volkswagen">Volkswagen</option><option value="Other">Other</option></select>
+</div>
+
+<div class="calc-section">
+<div class="calc-label">FUEL TYPE</div>
+<div class="calc-chips">
+<div class="calc-chip" data-group="fuel" data-val="petrol" data-price="0" onclick="chipClick(this)">Petrol</div>
+<div class="calc-chip" data-group="fuel" data-val="diesel" data-price="0" onclick="chipClick(this)">Diesel</div>
+<div class="calc-chip" data-group="fuel" data-val="cng" data-price="0" onclick="chipClick(this)">CNG</div>
+<div class="calc-chip" data-group="fuel" data-val="electric" data-price="0" onclick="chipClick(this)">Electric</div>
+<div class="calc-chip" data-group="fuel" data-val="hybrid" data-price="0" onclick="chipClick(this)">Hybrid</div>
+</div>
+</div>
+
+<div class="price-bar">
+  <div><div class="pb-label">Estimated Total</div><div class="pb-price" id="totalPrice">₹0</div><div class="pb-note" id="priceNote">Select options above</div></div>
+  <button id="bookNowBtn" onclick="bookNow()" disabled style="padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:not-allowed;opacity:.4;white-space:nowrap;flex-shrink:0;transition:all .2s;">Book Now →</button>
+</div>
+  </div>
+</div>
+
+<!-- What's Included -->
+<div class="card" id="includedCard">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" style="padding-top:12px;">
+    
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">🔍</span> General Car Inspection</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Complete vehicle inspection</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Engine performance diagnosis</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Battery and electrical system check</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Brake and suspension inspection</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Fluid level checking</span></div></div></div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">⚙️</span> Engine & Mechanical Repairs</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Engine troubleshooting</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Oil leakage repair</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Belt and filter replacement</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Cooling system inspection</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Starter motor and alternator checking</span></div></div></div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">🛞</span> Brake & Suspension Services</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Brake pad inspection/replacement</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Brake oil checking</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Suspension and shock absorber inspection</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Steering issue diagnosis</span></div></div></div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">⚡</span> Battery & Electrical Services</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Battery testing and replacement support</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Wiring inspection</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Fuse and light repair</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Starter and charging system diagnosis</span></div></div></div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">📊</span> Basic AC performance check</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Cooling fan inspection</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Radiator and coolant checking</span></div></div></div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">📅</span> Periodic Maintenance</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Engine oil replacement support</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Air filter and oil filter checking</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">General service support</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Vehicle health checkup</span></div></div></div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">✅</span> Final Testing</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items"><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Test drive (if required)</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Safety and performance verification</span></div><div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Repair quality inspection</span></div></div></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+  
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.6</div><div class="rating-stars">★★★★★</div><div class="rating-count">940 reviews</div></div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:75%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:17%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:5%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" style="padding-top:6px;"><div class="faq-item" id="faq0"><div class="faq-q" onclick="tFaq(0)">Does the mechanic bring tools?<span class="faq-arr">›</span></div><div class="faq-a">Yes. All service tools and diagnostic equipment are brought. Oil and parts charged at MRP.</div></div>
+<div class="faq-item" id="faq1"><div class="faq-q" onclick="tFaq(1)">Can full service be done at home?<span class="faq-arr">›</span></div><div class="faq-a">Yes. Complete A-B-C service covering oil, filters, brakes, and fluids — at your parking spot.</div></div>
+<div class="faq-item" id="faq2"><div class="faq-q" onclick="tFaq(2)">Is towing included if the car breaks down?<span class="faq-arr">›</span></div><div class="faq-a">Towing is generally charged separately unless included in a roadside assistance plan.</div></div>
+<div class="faq-item" id="faq3"><div class="faq-q" onclick="tFaq(3)">How often should cars be serviced?<span class="faq-arr">›</span></div><div class="faq-a">Typically every 5,000–10,000 km or as recommended by the manufacturer.</div></div>
+<div class="faq-item" id="faq4"><div class="faq-q" onclick="tFaq(4)">Is there warranty on repairs?<span class="faq-arr">›</span></div><div class="faq-a">Most providers offer limited warranty on repairs and replaced spare parts.</div></div>
+</div>
+</div>
+
+<!-- Similar Services -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body"><div class="sim-grid">
+    <a class="sim-card" href="svc-car-wash.html"><div class="sim-icon">🚗</div><div class="sim-name">Car Wash</div><div class="sim-price">from ₹499</div></a>
+<a class="sim-card" href="svc-bike-wash.html"><div class="sim-icon">🏍️</div><div class="sim-name">Bike Wash</div><div class="sim-price">from ₹199</div></a>
+<a class="sim-card" href="svc-bike-mechanic.html"><div class="sim-icon">🛵</div><div class="sim-name">Bike Mechanic</div><div class="sim-price">from ₹299</div></a>
+
+  </div></div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">₹0 <sub>select options</sub></div>
+      <div class="book-note-sm">Updates as you select</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">1–3 hours</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.6 (940)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
+    </div>
+    <button class="scroll-btn" onclick="scrollToCalc()">Select Options &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Background-verified professional</div>
+      <div class="book-trust-item">🔒 Pay after service</div>
+      <div class="book-trust-item">🔄 Free reschedule (2hrs notice)</div>
+      <div class="book-trust-item">⭐ Satisfaction guaranteed</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<!-- Mobile sticky bar -->
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">₹0 <sub>select options</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.6 · 940 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var sel = {};
+var steppers = {};
+var SINGLE = ["service", "fuel"];
+var BASE_PRICE = 599;
+var providerType = null;
+var HAS_PROV = false;
+
+// Init steppers into sel
+Object.keys(steppers).forEach(function(id) {
+  var s = steppers[id];
+  sel[id] = { val: s.val, price: s.val * s.pricePerUnit };
+});
+
+function selectProvType(type) {
+  providerType = type;
+  ['with','without'].forEach(function(t) {
+    var el = document.getElementById('prov-' + t);
+    if(el) el.classList[t === type ? 'add' : 'remove']('active');
+  });
+  var cc = document.getElementById('calcCard');
+  if(cc) { cc.style.display = 'block'; setTimeout(function(){cc.scrollIntoView({behavior:'smooth',block:'start'});},100); }
+  if(type === 'without') {
+    var inc = document.getElementById('includedCard');
+    if(inc) inc.style.opacity = '0.5';
+  } else {
+    var inc = document.getElementById('includedCard');
+    if(inc) inc.style.opacity = '1';
+  }
+  updatePrice();
+}
+
+function chipClick(el) {
+  var grp = el.dataset.group, val = el.dataset.val, price = parseInt(el.dataset.price)||0;
+  var chips = el.parentElement.querySelectorAll('.calc-chip');
+  if(SINGLE.indexOf(grp) > -1) {
+    chips.forEach(function(c){c.classList.remove('active');});
+    el.classList.add('active');
+    sel[grp] = { val: val, price: price };
+  } else {
+    if(el.classList.contains('active')) {
+      el.classList.remove('active');
+      if(!Array.isArray(sel[grp])) sel[grp] = [];
+      sel[grp] = sel[grp].filter(function(s){return s.val !== val;});
+    } else {
+      el.classList.add('active');
+      if(!Array.isArray(sel[grp])) sel[grp] = [];
+      sel[grp].push({val:val, price:price});
+    }
+  }
+  updatePrice();
+}
+
+function stepChange(id, delta, min, max, pp) {
+  var cur = steppers[id] ? steppers[id].val : min;
+  cur = Math.max(min, Math.min(max, cur + delta));
+  steppers[id] = { val: cur, pricePerUnit: pp };
+  var el = document.getElementById('sv-' + id); if(el) el.textContent = cur;
+  sel[id] = { val: cur, price: cur * pp };
+  updatePrice();
+}
+
+function selectChange(id, val) { sel[id] = { val: val, price: 0 }; }
+
+function updatePrice() {
+  var total = 0, parts = [], hasVal = false;
+
+  Object.keys(sel).forEach(function(id) {
+    var s = sel[id];
+    if(!s) return;
+    if(Array.isArray(s)) {
+      s.forEach(function(item) {
+        if(item && item.price > 0) { total += item.price; parts.push('+₹' + item.price.toLocaleString('en-IN')); }
+        if(item && item.val) hasVal = true;
+      });
+    } else if(s.val !== undefined && s.val !== null && s.val !== '') {
+      if(s.price > 0) { total += s.price; parts.push('₹' + s.price.toLocaleString('en-IN')); }
+      hasVal = true;
+    }
+  });
+
+  if(!hasVal) { setPrice(0, false, 'Select options below'); return; }
+  if(total === 0 && hasVal) { total = BASE_PRICE; parts = ['₹' + BASE_PRICE.toLocaleString('en-IN')]; }
+  if(providerType === 'without') { total = Math.round(total * 0.75); parts.push('(-25% labour only)'); }
+
+  setPrice(total, true, parts.join(' + '));
+}
+
+function setPrice(total, enabled, note) {
+  var fmt = total > 0 ? '₹' + total.toLocaleString('en-IN') : '₹0';
+  var el;
+  el = document.getElementById('stickyPrice'); if(el) el.textContent = fmt;
+  el = document.getElementById('stickyNote');  if(el) el.textContent = note || 'Select options below';
+  el = document.getElementById('totalPrice');  if(el) el.textContent = fmt;
+  el = document.getElementById('priceNote');   if(el) el.textContent = note || '';
+  el = document.getElementById('desktopPrice'); if(el) el.innerHTML = fmt + ' <sub>estimated</sub>';
+  el = document.getElementById('mobPrice');    if(el) el.innerHTML = fmt + ' <sub>estimated</sub>';
+  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid) {
+    var b = document.getElementById(bid); if(!b) return;
+    b.disabled = !enabled;
+    b.style.opacity = enabled ? '1' : '0.4';
+    b.style.cursor  = enabled ? 'pointer' : 'not-allowed';
+  });
+}
+
+
+function toggleAcc(btn){
+  var body=btn.nextElementSibling,isOpen=btn.classList.contains('open');
+  document.querySelectorAll('.accordion-trigger.open').forEach(function(b){b.classList.remove('open');b.nextElementSibling.classList.remove('open');});
+  if(!isOpen){btn.classList.add('open');body.classList.add('open');}
+}
+function tFaq(i){var el=document.getElementById('faq'+i);if(el)el.classList.toggle('open');}
+function scrollToCalc(){document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
+
+
+function bookNow() {
+  if(HAS_PROV && !providerType) {
+    showToast('⚠️ Please choose a service type first');
+    var pc = document.getElementById('providerTypeCard');
+    if(pc) pc.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  var hasVal = false;
+  Object.keys(sel).forEach(function(id) {
+    var s = sel[id];
+    if(Array.isArray(s) && s.length > 0) hasVal = true;
+    else if(s && s.val !== undefined && s.val !== null && s.val !== '') hasVal = true;
+  });
+  if(!hasVal) {
+    showToast('⚠️ Please select at least one option');
+    document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  sessionStorage.setItem('hs_service_options', JSON.stringify({
+    service: 'Car Mechanic', providerType: providerType, selections: sel,
+    icon: "🔧",
+    price: (document.getElementById("totalPrice")||{textContent:""}).textContent.replace(/[^0-9]/g,""),
+    summary: (function(){ var _s=[]; document.querySelectorAll('#calcCard .calc-chip.active,[data-group].active').forEach(function(c){ var t=c.childNodes[0]&&c.childNodes[0].textContent?c.childNodes[0].textContent.trim():c.textContent.trim(); if(t) _s.push('Car Mechanic > '+t); }); return _s; })()
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  }));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url  = 'user-booking.html?service=' + encodeURIComponent('Car Mechanic');
+  if(user) { window.location.href = url; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+}
+
+firebase.auth().onAuthStateChanged(function(u) {
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC017C) ────────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  function getToken(cb){if(_tok){cb(_tok);return;}var x=new XMLHttpRequest();x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);x.setRequestHeader('Content-Type','application/json');x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};x.onerror=function(){cb('');};x.send(JSON.stringify({returnSecureToken:true}));}
+  function applyPrices(d){
+    if(!d||d.error) return;
+    var carP=0, bikeP=0;
+    if(d.visit){
+      if(d.visit.car!==undefined)  carP=parseInt(d.visit.car);
+      if(d.visit.bike!==undefined) bikeP=parseInt(d.visit.bike);
+    }
+    if(d.base!==undefined) carP=carP||parseInt(d.base);
+    // Update displayed prices
+    if(carP>0){
+      var cp=document.getElementById('carVisitPrice'); if(cp) cp.textContent='₹'+carP.toLocaleString('en-IN');
+    }
+    if(bikeP>0){
+      var bp=document.getElementById('bikeVisitPrice'); if(bp) bp.textContent='₹'+bikeP.toLocaleString('en-IN');
+    }
+    if(d.base!==undefined) document.querySelectorAll('.pill').forEach(function(pl){
+      if(pl.textContent.indexOf('from')>=0&&pl.textContent.indexOf('₹')>=0)
+        pl.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
+    });
+    if(typeof VISIT_PRICE!=='undefined'&&carP>0) VISIT_PRICE=carP;
+    if(typeof updatePrice==='function') updatePrice();
+  }  function load(){getToken(function(tok){var url=_DB+'/hs_service_prices/SVC019.json'+(tok?'?auth='+tok:'');var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};xhr.onerror=function(){};xhr.send();});}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+/script>
+</body>
+</html>

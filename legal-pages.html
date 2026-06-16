@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Legal Pages – HamaraService</title>
+<style>
+/* ── Tokens matching hamaraservice.com ───────────────────── */
+:root{
+  --brand:#E8651A;--brand2:#c9510f;
+  --teal:#1B6B7A; --teal2:#134f5c;
+  --ink:#1a1a2e;  --ink2:#2d3748; --muted:#718096;
+  --bg:#f0f7f9;   --white:#fff;
+  --line:#e2e8f0;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+
+/* ── Header ─────────────────────────────────────────────── */
+.site-header{background:var(--teal);color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px}
+.site-header .logo{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.site-header .logo span{color:var(--brand)}
+.site-header a{color:rgba(255,255,255,.7);text-decoration:none;font-size:13px;margin-left:auto}
+
+/* ── Page nav ───────────────────────────────────────────── */
+.page-nav{background:var(--white);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 24px;overflow-x:auto}
+.page-nav a{display:block;padding:14px 16px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s}
+.page-nav a.active,.page-nav a:hover{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* ── Main layout ────────────────────────────────────────── */
+.main{max-width:860px;margin:0 auto;padding:32px 20px 80px}
+.section{display:none}
+.section.active{display:block}
+
+/* ── Page header ────────────────────────────────────────── */
+.page-head{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border-radius:var(--r);padding:32px;margin-bottom:28px}
+.page-head h1{font-size:26px;font-weight:800;margin-bottom:6px}
+.page-head p{opacity:.8;font-size:14px}
+.page-head .badge{display:inline-block;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:100px;font-size:12px;font-weight:700;margin-top:12px}
+
+/* ── Content ─────────────────────────────────────────────── */
+.card{background:var(--white);border-radius:var(--r);padding:28px;margin-bottom:20px;border:1px solid var(--line)}
+h2{font-size:17px;font-weight:700;color:var(--teal);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+h2::before{content:'';display:block;width:4px;height:18px;background:var(--brand);border-radius:2px;flex-shrink:0}
+h3{font-size:15px;font-weight:700;color:var(--ink);margin:16px 0 8px}
+p{font-size:14px;color:var(--ink2);margin-bottom:10px}
+ul,ol{padding-left:20px;margin-bottom:10px}
+li{font-size:14px;color:var(--ink2);margin-bottom:6px}
+.highlight{background:var(--bg);border-left:4px solid var(--brand);padding:14px 16px;border-radius:0 var(--r) var(--r) 0;margin:16px 0}
+.highlight p{margin:0;font-size:13px}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+.contact-item{background:var(--bg);border-radius:var(--r);padding:16px;border:1px solid var(--line)}
+.contact-item .icon{font-size:24px;margin-bottom:8px}
+.contact-item .label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+.contact-item .value{font-size:14px;font-weight:600;color:var(--ink);margin-top:4px}
+.contact-item a{color:var(--teal);text-decoration:none}
+.updated{font-size:12px;color:var(--muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">Hamara<span>Service</span></div>
+  <a href="index.html">← Back to Home</a>
+</header>
+
+<nav class="page-nav">
+  <a href="#" class="active" onclick="show('refund',this)">Refund Policy</a>
+  <a href="#" onclick="show('privacy',this)">Privacy Policy</a>
+  <a href="#" onclick="show('terms',this)">Terms & Conditions</a>
+  <a href="#" onclick="show('contact',this)">Contact Us</a>
+</nav>
+
+<div class="main">
+
+<!-- ═══ REFUND POLICY ═══════════════════════════════════════════════════ -->
+<section id="refund" class="section active">
+  <div class="page-head">
+    <h1>💳 Refund Policy</h1>
+    <p>Our commitment to fair and transparent refunds</p>
+    <span class="badge">Effective: June 2025</span>
+  </div>
+
+  <div class="card">
+    <h2>Overview</h2>
+    <p>At HamaraService, we are committed to ensuring complete customer satisfaction. This Refund Policy outlines the circumstances under which refunds are provided for services booked through our platform.</p>
+    <div class="highlight">
+      <p>📞 For urgent refund queries, contact us at <strong>support@hamaraservice.com</strong> or call <strong>+91 98765 43210</strong> — we respond within 4 business hours.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Eligible Refund Scenarios</h2>
+    <h3>✅ Full Refund (100%)</h3>
+    <ul>
+      <li>Service provider did not show up within 60 minutes of the scheduled time</li>
+      <li>Booking cancelled at least <strong>24 hours before</strong> the scheduled service time</li>
+      <li>Service could not be completed due to a fault on the provider's side</li>
+      <li>Duplicate payment made for the same booking</li>
+      <li>Technical error resulting in incorrect charge</li>
+    </ul>
+
+    <h3>⚠️ Partial Refund (50%)</h3>
+    <ul>
+      <li>Booking cancelled <strong>less than 24 hours</strong> but more than 2 hours before the service</li>
+      <li>Service partially completed due to unforeseen circumstances</li>
+      <li>Quality of service was below the agreed standard (verified by our team)</li>
+    </ul>
+
+    <h3>❌ No Refund</h3>
+    <ul>
+      <li>Service successfully completed and accepted by the customer</li>
+      <li>Cancellation made <strong>less than 2 hours</strong> before service time</li>
+      <li>Customer was unavailable at the time of service without prior notice</li>
+      <li>Refund requested more than 7 days after the service date</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Refund Timeline</h2>
+    <ul>
+      <li><strong>Initiation:</strong> Within 24–48 hours of approval</li>
+      <li><strong>UPI / Wallets:</strong> 1–3 business days</li>
+      <li><strong>Credit / Debit Cards:</strong> 5–7 business days</li>
+      <li><strong>Net Banking:</strong> 5–7 business days</li>
+    </ul>
+    <p>Refunds are processed to the original payment method only.</p>
+  </div>
+
+  <div class="card">
+    <h2>How to Request a Refund</h2>
+    <ol>
+      <li>Log in to your HamaraService account</li>
+      <li>Go to <strong>My Bookings</strong> and select the relevant booking</li>
+      <li>Tap <strong>Request Refund</strong> and describe your issue</li>
+      <li>Our team will review and respond within 24 business hours</li>
+    </ol>
+    <p>Alternatively, email <a href="mailto:support@hamaraservice.com" style="color:var(--teal)">support@hamaraservice.com</a> with your Booking ID and a brief description.</p>
+  </div>
+
+  <p class="updated">Last updated: 1 June 2025 &nbsp;·&nbsp; HamaraService, Visakhapatnam, Andhra Pradesh</p>
+</section>
+
+<!-- ═══ PRIVACY POLICY ═══════════════════════════════════════════════════ -->
+<section id="privacy" class="section">
+  <div class="page-head">
+    <h1>🔒 Privacy Policy</h1>
+    <p>How we collect, use and protect your personal data</p>
+    <span class="badge">Effective: June 2025</span>
+  </div>
+
+  <div class="card">
+    <h2>Who We Are</h2>
+    <p><strong>HamaraService</strong> is a home services platform operated from Visakhapatnam, Andhra Pradesh, India. Our website is <a href="https://hamaraservice.com" style="color:var(--teal)">hamaraservice.com</a>. We connect customers with verified home service professionals.</p>
+    <p>For privacy-related questions, contact: <a href="mailto:privacy@hamaraservice.com" style="color:var(--teal)">privacy@hamaraservice.com</a></p>
+  </div>
+
+  <div class="card">
+    <h2>Information We Collect</h2>
+    <h3>Information You Provide</h3>
+    <ul>
+      <li><strong>Account details:</strong> Name, email address, mobile number</li>
+      <li><strong>Booking details:</strong> Service type, address, preferred date and time</li>
+      <li><strong>Payment details:</strong> Processed securely via Razorpay — we do not store card numbers</li>
+      <li><strong>Communications:</strong> Messages sent through our support system</li>
+    </ul>
+    <h3>Information Collected Automatically</h3>
+    <ul>
+      <li>Device type, browser, operating system</li>
+      <li>Approximate location (for matching nearby providers)</li>
+      <li>Usage patterns and pages visited on our platform</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>How We Use Your Information</h2>
+    <ul>
+      <li>To process bookings and match you with service providers</li>
+      <li>To send booking confirmations, reminders and updates via SMS/email</li>
+      <li>To process payments and issue refunds</li>
+      <li>To improve our platform, services and customer experience</li>
+      <li>To comply with legal obligations under Indian law</li>
+      <li>To send promotional offers — only with your consent, unsubscribe anytime</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Data Sharing</h2>
+    <p>We do <strong>not sell</strong> your personal data. We share data only with:</p>
+    <ul>
+      <li><strong>Service Providers:</strong> Your name, phone and address are shared with the assigned provider to complete your booking</li>
+      <li><strong>Payment Processor:</strong> Razorpay (PCI-DSS compliant) for secure payment processing</li>
+      <li><strong>Firebase (Google):</strong> Our database infrastructure for secure data storage</li>
+      <li><strong>Government Authorities:</strong> When required by law</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Data Security</h2>
+    <ul>
+      <li>All data is encrypted in transit using SSL/TLS</li>
+      <li>Firebase Realtime Database with role-based access rules</li>
+      <li>Passwords are never stored — we use Firebase Authentication</li>
+      <li>Payments processed by Razorpay (PCI-DSS Level 1 certified)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Your Rights</h2>
+    <ul>
+      <li><strong>Access:</strong> Request a copy of your personal data</li>
+      <li><strong>Correction:</strong> Update incorrect information via your profile</li>
+      <li><strong>Deletion:</strong> Request account deletion — email privacy@hamaraservice.com</li>
+      <li><strong>Opt-out:</strong> Unsubscribe from marketing at any time</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Cookies</h2>
+    <p>We use minimal cookies for session management and analytics (Google Analytics). No third-party advertising cookies are used. You can clear cookies via your browser settings at any time.</p>
+  </div>
+
+  <p class="updated">Last updated: 1 June 2025 &nbsp;·&nbsp; HamaraService, Visakhapatnam, Andhra Pradesh</p>
+</section>
+
+<!-- ═══ TERMS & CONDITIONS ════════════════════════════════════════════════ -->
+<section id="terms" class="section">
+  <div class="page-head">
+    <h1>📋 Terms & Conditions</h1>
+    <p>Please read these terms carefully before using our services</p>
+    <span class="badge">Effective: June 2025</span>
+  </div>
+
+  <div class="card">
+    <h2>Acceptance of Terms</h2>
+    <p>By accessing or using HamaraService (hamaraservice.com), you agree to be bound by these Terms and Conditions. If you do not agree, please do not use our platform.</p>
+    <p>These terms are governed by the laws of India and the jurisdiction of Visakhapatnam, Andhra Pradesh.</p>
+  </div>
+
+  <div class="card">
+    <h2>Our Platform</h2>
+    <p>HamaraService is a <strong>marketplace platform</strong> that connects customers with independent home service professionals. We are not the employer of service providers — they are independent contractors.</p>
+    <div class="highlight">
+      <p>⚠️ HamaraService acts as an intermediary. The service agreement is between the customer and the service provider. We facilitate the connection, payment and dispute resolution.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Customer Responsibilities</h2>
+    <ul>
+      <li>Provide accurate booking information (address, service requirements)</li>
+      <li>Be present or arrange access at the scheduled service time</li>
+      <li>Treat service providers with respect and professionalism</li>
+      <li>Pay for services rendered in full</li>
+      <li>Not share your account credentials with others</li>
+      <li>Not use the platform for any illegal or fraudulent purpose</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Service Provider Responsibilities</h2>
+    <ul>
+      <li>Provide services as described and to a professional standard</li>
+      <li>Arrive on time or give adequate notice of delays</li>
+      <li>Maintain valid certifications where required by law</li>
+      <li>Not solicit direct business from customers outside the platform</li>
+      <li>Maintain confidentiality of customer information</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Pricing & Payments</h2>
+    <ul>
+      <li>All prices displayed are in Indian Rupees (₹) inclusive of applicable taxes</li>
+      <li>Payments are collected securely through Razorpay</li>
+      <li>Platform commission is deducted before provider payout</li>
+      <li>HamaraService reserves the right to change pricing with 7 days' notice</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Prohibited Activities</h2>
+    <ul>
+      <li>Using the platform for any unlawful purpose</li>
+      <li>Creating fake accounts or fraudulent bookings</li>
+      <li>Posting false reviews or misleading information</li>
+      <li>Attempting to circumvent platform fees by direct dealings</li>
+      <li>Harassing, threatening or abusing other users or providers</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Limitation of Liability</h2>
+    <p>HamaraService shall not be liable for:</p>
+    <ul>
+      <li>Any indirect, incidental or consequential damages</li>
+      <li>Quality of services provided by independent professionals</li>
+      <li>Property damage caused by service providers (handled through insurance/disputes)</li>
+      <li>Service delays due to force majeure events</li>
+    </ul>
+    <p>Our maximum liability in any dispute is limited to the amount paid for the specific booking in question.</p>
+  </div>
+
+  <div class="card">
+    <h2>Account Termination</h2>
+    <p>HamaraService reserves the right to suspend or terminate accounts that violate these Terms. Users may delete their account at any time from the Account Settings page.</p>
+  </div>
+
+  <div class="card">
+    <h2>Changes to Terms</h2>
+    <p>We may update these Terms from time to time. Continued use of the platform after changes constitutes acceptance. We will notify registered users of material changes via email or in-app notification.</p>
+  </div>
+
+  <p class="updated">Last updated: 1 June 2025 &nbsp;·&nbsp; HamaraService, Visakhapatnam, Andhra Pradesh</p>
+</section>
+
+<!-- ═══ CONTACT US ════════════════════════════════════════════════════════ -->
+<section id="contact" class="section">
+  <div class="page-head">
+    <h1>📞 Contact Us</h1>
+    <p>We're here to help — reach us through any channel</p>
+    <span class="badge">Response within 4 hours</span>
+  </div>
+
+  <div class="card">
+    <h2>Get in Touch</h2>
+    <div class="contact-grid">
+      <div class="contact-item">
+        <div class="icon">📧</div>
+        <div class="label">Email (General)</div>
+        <div class="value"><a href="mailto:support@hamaraservice.com">support@hamaraservice.com</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="icon">🔒</div>
+        <div class="label">Email (Privacy)</div>
+        <div class="value"><a href="mailto:privacy@hamaraservice.com">privacy@hamaraservice.com</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="icon">📱</div>
+        <div class="label">WhatsApp / Phone</div>
+        <div class="value">+91 98765 43210</div>
+      </div>
+      <div class="contact-item">
+        <div class="icon">🕐</div>
+        <div class="label">Support Hours</div>
+        <div class="value">Mon–Sat, 9 AM – 7 PM</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Registered Office</h2>
+    <p><strong>HamaraService</strong><br/>
+    Visakhapatnam, Andhra Pradesh – 530001<br/>
+    India</p>
+    <p style="margin-top:12px">Website: <a href="https://hamaraservice.com" style="color:var(--teal)">hamaraservice.com</a></p>
+  </div>
+
+  <div class="card">
+    <h2>Grievance Officer</h2>
+    <p>As per the Information Technology (Intermediary Guidelines) Rules, 2021:</p>
+    <p><strong>Name:</strong> [Your Name]<br/>
+    <strong>Email:</strong> <a href="mailto:grievance@hamaraservice.com" style="color:var(--teal)">grievance@hamaraservice.com</a><br/>
+    <strong>Response Time:</strong> Within 24 hours of receipt</p>
+    <div class="highlight">
+      <p>📌 For payment disputes, please include your <strong>Booking ID</strong> and <strong>Razorpay Payment ID</strong> in your message.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>For Service Providers</h2>
+    <p>Are you a skilled professional looking to join our network?</p>
+    <p>Register at: <a href="https://hamaraservice.com/provider-register.html" style="color:var(--teal)">hamaraservice.com/provider-register.html</a></p>
+    <p>Provider support: <a href="mailto:providers@hamaraservice.com" style="color:var(--teal)">providers@hamaraservice.com</a></p>
+  </div>
+
+  <p class="updated">HamaraService &nbsp;·&nbsp; Visakhapatnam, Andhra Pradesh &nbsp;·&nbsp; India</p>
+</section>
+
+</div><!-- /main -->
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.page-nav a').forEach(function(a){ a.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+  return false;
+}
+// Show section from URL hash
+var hash = location.hash.replace('#','');
+if (hash) {
+  var el = document.getElementById(hash);
+  var nav = document.querySelector('[onclick*="'+hash+'"]');
+  if (el) show(hash, nav);
+}
+</script>
+
+</body>
+</html>

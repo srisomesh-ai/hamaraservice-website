@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>House Maid – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;
+  --line:#e2e8f0;--bg:#f0f7f9;
+  --green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;
+  --r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+
+/* HERO */
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+
+/* LAYOUT */
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+
+/* CARDS */
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+
+/* TASK CHIPS */
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.task-chip{
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 10px;
+  border:2px solid var(--line);border-radius:16px;
+  cursor:pointer;transition:all .18s;background:white;text-align:center;
+  user-select:none;
+}
+.task-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.task-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.task-emoji{font-size:28px;margin-bottom:7px;line-height:1;}
+.task-name{font-size:12px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.task-chip.active .task-name{color:var(--brand);}
+.task-chip.active .task-emoji{filter:none;}
+.bhk-chip{padding:8px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink2);background:white;transition:all .15s;text-align:center;min-width:80px;user-select:none;}
+.bhk-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.bhk-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);}
+.bhk-chip.active span{color:var(--brand);}
+
+/* PRICE BAR */
+.price-bar{background:linear-gradient(135deg,#0d3d47,var(--teal));border-radius:14px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;}
+.pb-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.pb-price{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.pb-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.35;}
+.pb-btn{padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.pb-btn:hover:not(:disabled){background:var(--brand2);}
+@media(max-width:480px){.price-bar{flex-direction:column;align-items:flex-start;gap:12px;}.pb-btn{width:100%;text-align:center;}.pb-price{font-size:24px;}}
+
+/* WHAT'S INCLUDED — shown only after selection */
+.inc-section{margin-bottom:18px;}
+.inc-section-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;padding:5px 12px;background:var(--teal-soft);border-radius:8px;}
+.inc-list{display:flex;flex-direction:column;gap:7px;}
+.inc-item{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;background:var(--bg);border-radius:10px;}
+.inc-check{color:var(--green);font-size:13px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.inc-text{font-size:13px;color:var(--ink2);line-height:1.45;}
+.excl-wrap{padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;margin-top:12px;}
+.excl-title{font-size:10px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.excl-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#7f1d1d;padding:2px 0;}
+.excl-x{font-weight:800;flex-shrink:0;}
+
+/* STEPS */
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:44px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:200px;padding-top:7px;}
+
+/* SIMILAR */
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;text-decoration:none;display:block;transition:all .2s;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+
+/* RATINGS */
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+
+/* BOOKING CARD */
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+
+/* MOBILE BAR */
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<!-- HERO -->
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">🧹</div>
+    <div>
+      <div class="hero-cat">Home Cleaning</div>
+      <div class="hero-name">House Maid</div>
+      <div class="hero-tagline">Your home, spotless every day — she handles it all</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ 2–4 hours</div>
+        <div class="pill green">✅ Verified & Trusted</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">🔁 Book Daily or Weekly</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+<!-- About -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">📋</div><div class="card-title">About This Service</div></div>
+  <div class="card-body">
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;">A trusted, background-verified house maid visits your home for everyday cleaning and household tasks. She uses your home's broom, mop, and supplies — bring only her skill and dedication. Select the tasks you need below and see the estimated time and price instantly.</p>
+  </div>
+</div>
+
+<!-- TASK SELECTOR -->
+<div class="card" id="taskCard">
+  <div class="card-head"><div class="card-icon">🧮</div><div class="card-title">Select Tasks &amp; See Price</div></div>
+  <div class="card-body">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Tap the tasks you need. Price and included items update instantly.</p>
+
+    <div class="task-grid">
+      <div class="task-chip" data-task="sweep" data-price="149" data-time="30" onclick="toggleTask(this)">
+        <div class="task-emoji">🧹</div><div class="task-name">Sweeping &amp; Mopping</div>
+      </div>
+      <div class="task-chip" data-task="dust" data-price="99" data-time="20" onclick="toggleTask(this)">
+        <div class="task-emoji">🪣</div><div class="task-name">Dusting</div>
+      </div>
+      <div class="task-chip" data-task="dishes" data-price="149" data-time="30" onclick="toggleTask(this)">
+        <div class="task-emoji">🍽️</div><div class="task-name">Dishwashing</div>
+      </div>
+      <div class="task-chip" data-task="clothes" data-price="99" data-time="25" onclick="toggleTask(this)">
+        <div class="task-emoji">👗</div><div class="task-name">Folding Clothes</div>
+      </div>
+      <div class="task-chip" data-task="laundry" data-price="149" data-time="35" onclick="toggleTask(this)">
+        <div class="task-emoji">👚</div><div class="task-name">Laundry (Washing)</div>
+      </div>
+    </div>
+
+    <!-- Sweep BHK selector — appears when sweep is selected -->
+    <div id="sweepBhk" style="display:none;margin-top:12px;padding:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">🧹 Home Size (for sweeping &amp; mopping)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="bhkChips">
+        <div class="bhk-chip active" data-bhk="1bhk" data-price="149" onclick="selectBhk(this)">1 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹149</span></div>
+        <div class="bhk-chip" data-bhk="2bhk" data-price="249" onclick="selectBhk(this)">2 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹249</span></div>
+        <div class="bhk-chip" data-bhk="3bhk" data-price="349" onclick="selectBhk(this)">3 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹349</span></div>
+        <div class="bhk-chip" data-bhk="4bhk" data-price="449" onclick="selectBhk(this)">4 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹449</span></div>
+        <div class="bhk-chip" data-bhk="villa" data-price="599" onclick="selectBhk(this)">Villa / Bungalow<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹599</span></div>
+        <div class="bhk-chip" data-bhk="studio" data-price="99" onclick="selectBhk(this)">Studio / 1 Room<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹99</span></div>
+      </div>
+    </div>
+
+    <!-- Dust BHK selector — appears when dust is selected (includes sweep) -->
+    <div id="dustBhk" style="display:none;margin-top:12px;padding:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">🪣 Dusting includes Sweeping &amp; Mopping</div>
+      <div style="font-size:12px;color:var(--teal);font-weight:600;margin-bottom:10px;">💡 Dusting loosens dust onto the floor — sweeping & mopping is included automatically.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="dustBhkChips">
+        <div class="bhk-chip active" data-bhk="1bhk" data-price="199" onclick="selectDustBhk(this)">1 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹199</span></div>
+        <div class="bhk-chip" data-bhk="2bhk" data-price="329" onclick="selectDustBhk(this)">2 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹329</span></div>
+        <div class="bhk-chip" data-bhk="3bhk" data-price="449" onclick="selectDustBhk(this)">3 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹449</span></div>
+        <div class="bhk-chip" data-bhk="4bhk" data-price="579" onclick="selectDustBhk(this)">4 BHK<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹579</span></div>
+        <div class="bhk-chip" data-bhk="villa" data-price="749" onclick="selectDustBhk(this)">Villa / Bungalow<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹749</span></div>
+        <div class="bhk-chip" data-bhk="studio" data-price="149" onclick="selectDustBhk(this)">Studio / 1 Room<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹149</span></div>
+      </div>
+    </div>
+
+    <!-- Dishwashing occasion selector — appears when dishes is selected -->
+    <div id="dishOccasion" style="display:none;margin-top:12px;padding:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">🍽️ Occasion / Purpose</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="dishOccasionChips">
+        <div class="bhk-chip active" data-occ="daily" data-price="149" onclick="selectOccasion(this)">Daily (home)<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹149</span></div>
+        <div class="bhk-chip" data-occ="people" data-price="249" onclick="selectOccasion(this)">Small gathering (10–20 people)<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹249</span></div>
+        <div class="bhk-chip" data-occ="event" data-price="499" onclick="selectOccasion(this)">Party / Event (20–50 people)<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹499</span></div>
+        <div class="bhk-chip" data-occ="marriage" data-price="999" onclick="selectOccasion(this)">Marriage / Big function (50+ people)<span style="display:block;font-size:10px;color:var(--muted);font-weight:500;">₹999</span></div>
+      </div>
+    </div>
+
+    <!-- Laundry counter — appears when laundry is selected -->
+    <div id="laundryCounter" style="display:none;margin-top:12px;padding:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;">👚 Laundry Details</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div><div style="font-size:13px;font-weight:700;color:var(--ink);">Adults clothes</div><div style="font-size:11px;color:var(--muted);">pairs (shirts, trousers, sarees…)</div></div>
+          <div style="display:flex;align-items:center;gap:0;">
+            <button onclick="changeCount('adults',-1)" style="width:36px;height:36px;border:2px solid var(--line);border-radius:9px 0 0 9px;background:white;font-size:18px;cursor:pointer;color:var(--teal);">−</button>
+            <div id="adults-count" style="min-width:42px;height:36px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:16px;font-weight:800;">0</div>
+            <button onclick="changeCount('adults',1)" style="width:36px;height:36px;border:2px solid var(--line);border-radius:0 9px 9px 0;background:white;font-size:18px;cursor:pointer;color:var(--teal);">+</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div><div style="font-size:13px;font-weight:700;color:var(--ink);">Kids clothes</div><div style="font-size:11px;color:var(--muted);">pairs (shirts, frocks, shorts…)</div></div>
+          <div style="display:flex;align-items:center;gap:0;">
+            <button onclick="changeCount('kids',-1)" style="width:36px;height:36px;border:2px solid var(--line);border-radius:9px 0 0 9px;background:white;font-size:18px;cursor:pointer;color:var(--teal);">−</button>
+            <div id="kids-count" style="min-width:42px;height:36px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:16px;font-weight:800;">0</div>
+            <button onclick="changeCount('kids',1)" style="width:36px;height:36px;border:2px solid var(--line);border-radius:0 9px 9px 0;background:white;font-size:18px;cursor:pointer;color:var(--teal);">+</button>
+          </div>
+        </div>
+      </div>
+      <div id="laundryNote" style="margin-top:10px;font-size:11px;color:var(--muted);padding:8px 10px;background:white;border-radius:8px;border:1px solid var(--line);">Minimum charge: ₹400 (up to 10 adults + 10 kids pairs)</div>
+    </div>
+
+    <!-- Folding clothes counter -->
+    <div id="foldingCounter" style="display:none;margin-top:12px;padding:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;">👗 Folding Details</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div><div style="font-size:13px;font-weight:700;color:var(--ink);">Number of clothes</div><div style="font-size:11px;color:var(--muted);">Minimum 20 clothes required</div></div>
+        <div style="display:flex;align-items:center;gap:0;">
+          <button onclick="changeCount('folding',-5)" style="width:36px;height:36px;border:2px solid var(--line);border-radius:9px 0 0 9px;background:white;font-size:16px;cursor:pointer;color:var(--teal);">−</button>
+          <div id="folding-count" style="min-width:48px;height:36px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:16px;font-weight:800;">20</div>
+          <button onclick="changeCount('folding',5)" style="width:36px;height:36px;border:2px solid var(--line);border-radius:0 9px 9px 0;background:white;font-size:16px;cursor:pointer;color:var(--teal);">+</button>
+        </div>
+      </div>
+      <div id="foldingNote" style="margin-top:10px;font-size:11px;color:var(--muted);padding:8px 10px;background:white;border-radius:8px;border:1px solid var(--line);">Starting from 20 clothes — price will be confirmed after booking</div>
+    </div>
+
+    <!-- Price bar -->
+    <div class="price-bar">
+      <div>
+        <div class="pb-label">Estimated Total</div>
+        <div class="pb-price" id="totalPrice">₹0</div>
+        <div class="pb-note" id="priceNote">Select at least one task above</div>
+      </div>
+      <button class="pb-btn" id="bookBtn" onclick="bookNow()" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+    </div>
+  </div>
+</div>
+
+<!-- WHAT'S INCLUDED — shown only after task selection -->
+<div class="card" id="includedCard" style="display:none;">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" id="includedBody">
+    <!-- Filled dynamically -->
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⚡</div><div class="card-title">How It Works</div></div>
+  <div class="card-body">
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Select your tasks</div><div class="step-desc">Choose exactly what you need — sweeping, dishes, laundry, or everything. Price is shown instantly.</div></div></div>
+      <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Book your slot</div><div class="step-desc">Pick your preferred date and time. Same-day slots are often available.</div></div></div>
+      <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Maid arrives on time</div><div class="step-desc">Background-verified maid arrives at your door. Brief her on priorities for the day.</div></div></div>
+      <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Done — home spotless</div><div class="step-desc">Quick walk-through to confirm. Not satisfied? We fix it — no questions asked.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;">
+        <div class="rating-num">4.8</div>
+        <div class="rating-stars">★★★★★</div>
+        <div class="rating-count">2,840 reviews</div>
+      </div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:80%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:13%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:5%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ — dynamic based on selection -->
+<div class="card" id="faqCard">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" id="faqBody" style="padding-top:6px;">
+    <!-- Default FAQs shown before any selection -->
+    <div class="faq-item" id="faq0"><div class="faq-q" onclick="tFaq('faq0')">Should I provide cleaning supplies?<span class="faq-arr">›</span></div><div class="faq-a">Yes. The maid uses your broom, mop, bucket, and cleaning liquid. Please keep them ready before she arrives.</div></div>
+    <div class="faq-item" id="faq1"><div class="faq-q" onclick="tFaq('faq1')">Can I book a regular daily maid?<span class="faq-arr">›</span></div><div class="faq-a">Yes. After your first booking you can set a recurring schedule — daily, alternate days, or weekly at a discounted rate.</div></div>
+    <div class="faq-item" id="faq2"><div class="faq-q" onclick="tFaq('faq2')">Are maids background verified?<span class="faq-arr">›</span></div><div class="faq-a">Yes. Every maid on our platform is identity-verified and has been personally reviewed before being onboarded.</div></div>
+    <div class="faq-item" id="faq3"><div class="faq-q" onclick="tFaq('faq3')">What if I'm not satisfied?<span class="faq-arr">›</span></div><div class="faq-a">Raise a concern within 24 hours and we'll arrange a free re-visit or process a refund — no questions asked.</div></div>
+    <div class="faq-item" id="faq4"><div class="faq-q" onclick="tFaq('faq4')">How many rooms does one visit cover?<span class="faq-arr">›</span></div><div class="faq-a">A 2–4 hour slot covers up to a 3 BHK comfortably. For larger homes, book an extended 4–6 hour slot.</div></div>
+  </div>
+</div>
+
+<!-- Similar -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body">
+    <div class="sim-grid">
+      <a class="sim-card" href="svc-deep-cleaning.html"><div class="sim-icon">🧽</div><div class="sim-name">Deep Cleaning</div><div class="sim-price">from ₹999</div></a>
+      <a class="sim-card" href="svc-bathroom-cleaning.html"><div class="sim-icon">🚿</div><div class="sim-name">Bathroom Cleaning</div><div class="sim-price">from ₹399</div></a>
+      <a class="sim-card" href="svc-kitchen-cleaning.html"><div class="sim-icon">🍳</div><div class="sim-name">Kitchen Cleaning</div><div class="sim-price">from ₹699</div></a>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">₹0 <sub>select tasks</sub></div>
+      <div class="book-note-sm">Updates as you select tasks</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val" id="desktopTime">Based on tasks</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.8 (2,840 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">✅ Verified</span><span class="book-meta-val">Background checked</span></div>
+    </div>
+    <button class="scroll-btn" onclick="scrollToTasks()">Select Tasks &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Background-verified maid</div>
+      <div class="book-trust-item">💯 Satisfaction promise</div>
+      <div class="book-trust-item">🔄 Easy reschedule</div>
+      <div class="book-trust-item">🔁 Daily / weekly bookings</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<!-- Mobile sticky bar -->
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">₹0 <sub>select tasks</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.8 · 2,840 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+// ── Task data ──────────────────────────────────────────────────────────────
+var TASKS = {
+  sweep:   { name:"Sweeping & Mopping", emoji:"🧹", price:149, time:30,
+    includes:["All floors swept with broom","Wet mopping with your mop & liquid","Under furniture dusting","Corner and edge cleaning"],
+    faqs:[
+      {q:"Should I provide the mop and broom?", a:"Yes. Please keep your broom, mop, bucket, and floor cleaner ready before the maid arrives."},
+      {q:"How long does sweeping & mopping take?", a:"A 2 BHK typically takes 25–40 minutes. Larger homes take proportionally longer."},
+      {q:"Is mopping done after sweeping?", a:"Yes. The maid always sweeps first, then mops to avoid spreading dust."}
+    ]
+  },
+  dust:    { name:"Dusting (incl. Sweeping & Mopping)", emoji:"🪣", price:99,  time:40,
+    includes:["Furniture and shelves dusted","Ceiling fans and light fixtures","Door frames and windowsills","Switchboards and corners","All floors swept after dusting","Wet mopping with cleaning liquid","Corner and edge cleaning"],
+    faqs:[
+      {q:"Do I need to provide a duster?", a:"Yes. Please keep a clean duster or microfiber cloth ready."},
+      {q:"Is ceiling fan cleaning included?", a:"Yes. The maid dusts fan blades and light fixtures as part of the dusting task."},
+      {q:"How often should dusting be done?", a:"Daily for allergy-sensitive homes, otherwise 2–3 times a week."}
+    ]
+  },
+  dishes:  { name:"Dishwashing",        emoji:"🍽️", price:149, time:30,
+    includes:["All dishes, plates, and glasses washed","Pots and pans scrubbed clean","Drying rack arrangement","Sink cleaned after washing"],
+    faqs:[
+      {q:"Does the maid bring dish soap?", a:"No. Please keep your dish soap and scrubber ready."},
+      {q:"Are pots and heavy vessels included?", a:"Yes. All vessels including pots and pans are washed unless you specify otherwise."},
+      {q:"How long does dishwashing take?", a:"Typically 20–35 minutes depending on the number of vessels."}
+    ]
+  },
+  clothes: { name:"Folding Clothes",    emoji:"👗", price:99,  time:25,
+    includes:["Dry clothes folded neatly","Organised into your wardrobe or shelves","Matching pairs sorted","Children's clothes handled carefully"],
+    faqs:[
+      {q:"Does folding include putting clothes in the wardrobe?", a:"Yes. Clothes are folded and placed in your wardrobe or designated shelf as directed."},
+      {q:"Is ironing included?", a:"Folding does not include ironing. Please book a laundry & ironing service separately."},
+      {q:"What if I want specific folding styles?", a:"Just tell the maid your preference when she arrives — she'll follow your style."}
+    ]
+  },
+  laundry: { name:"Laundry (Washing)",  emoji:"👚", price:149, time:35,
+    includes:["Clothes loaded into washing machine","Detergent measured and added","Cycle selected as per fabric","Clothes transferred to dry after wash"],
+    faqs:[
+      {q:"Is hand washing included?", a:"Machine washing is included. Hand washing of delicates can be requested when briefing the maid."},
+      {q:"Does she fold the clothes too?", a:"Laundry task covers washing only. Add 'Folding Clothes' to your selection for full service."},
+      {q:"Should I provide detergent?", a:"Yes. Please keep your detergent and fabric softener ready."}
+    ]
+  }
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+var selected = {}; // { taskId: true }
+var counts = { adults: 0, kids: 0, folding: 20 };
+var bhkPrice = 149;       // price for sweep based on BHK
+var dustBhkPrice = 199;   // price for dust (includes sweep) based on BHK
+var dishPrice = 149;      // price for dishwashing based on occasion
+
+function selectBhk(el) {
+  document.querySelectorAll('#bhkChips .bhk-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  bhkPrice = parseInt(el.dataset.price) || 149;
+  updateAll();
+}
+
+function selectDustBhk(el) {
+  document.querySelectorAll('#dustBhkChips .bhk-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  dustBhkPrice = parseInt(el.dataset.price) || 199;
+  updateAll();
+}
+
+function selectOccasion(el) {
+  document.querySelectorAll('#dishOccasionChips .bhk-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  dishPrice = parseInt(el.dataset.price) || 149;
+  updateAll();
+}
+
+function changeCount(type, delta) {
+  if (type === 'adults') {
+    counts.adults = Math.max(0, Math.min(30, counts.adults + delta));
+  } else if (type === 'kids') {
+    counts.kids = Math.max(0, Math.min(30, counts.kids + delta));
+  } else if (type === 'folding') {
+    counts.folding = Math.max(20, Math.min(100, counts.folding + delta));
+  }
+  updateCountDisplay(type);
+  updateAll();
+}
+
+function updateCountDisplay(type) {
+  var el = document.getElementById(type + '-count');
+  if (el) el.textContent = counts[type];
+  // Update laundry note
+  if (type === 'adults' || type === 'kids') {
+    var total = counts.adults + counts.kids;
+    var note = document.getElementById('laundryNote');
+    if (note) {
+      if (total === 0) {
+        note.textContent = 'Minimum charge: ₹400 (up to 10 adults + 10 kids pairs)';
+      } else {
+        var price = calcLaundryPrice();
+        note.textContent = counts.adults + ' adult + ' + counts.kids + ' kids pairs → ₹' + price;
+      }
+    }
+  }
+  // Update folding note
+  if (type === 'folding') {
+    var note = document.getElementById('foldingNote');
+    if (note) {
+      note.textContent = counts.folding + ' clothes selected — price will be confirmed after booking';
+    }
+  }
+}
+
+function calcLaundryPrice() {
+  var total = counts.adults + counts.kids;
+  if (total === 0) return 400; // minimum
+  // Base: ₹400 for up to 10 adults + 10 kids (20 total)
+  // Extra: ₹15 per additional pair
+  var base = 400;
+  var extra = Math.max(0, total - 20) * 15;
+  return base + extra;
+}
+
+function calcFoldingPrice() {
+  // Temporary price: ₹2 per cloth, minimum ₹50
+  var price = Math.max(50, Math.round(counts.folding * 2));
+  return price;
+}
+
+function toggleTask(el) {
+  var task = el.dataset.task;
+  if (selected[task]) {
+    delete selected[task];
+    el.classList.remove('active');
+    if (task === 'laundry') { counts.adults = 0; counts.kids = 0; updateCountDisplay('adults'); updateCountDisplay('kids'); }
+    if (task === 'clothes') { counts.folding = 20; updateCountDisplay('folding'); }
+  } else {
+    selected[task] = true;
+    el.classList.add('active');
+  }
+  // Show/hide all sub-panels
+  var show = function(id, cond) { var el = document.getElementById(id); if(el) el.style.display = cond ? 'block' : 'none'; };
+  show('sweepBhk',      selected['sweep'] && !selected['dust']);
+  show('dustBhk',       !!selected['dust']);
+  show('dishOccasion',  !!selected['dishes']);
+  show('laundryCounter',!!selected['laundry']);
+  show('foldingCounter',!!selected['clothes']);
+  updateAll();
+}
+
+function updateAll() {
+  var tasks = Object.keys(selected);
+  var total = 0, totalTime = 0;
+
+  tasks.forEach(function(id) {
+    if (!TASKS[id]) return;
+    totalTime += TASKS[id].time;
+    if (id === 'sweep') {
+      // If dust is also selected, sweep is included in dust price — skip
+      if (!selected['dust']) total += bhkPrice;
+    } else if (id === 'dust') {
+      total += dustBhkPrice; // includes sweep+mop
+    } else if (id === 'dishes') {
+      total += dishPrice;
+    } else if (id === 'laundry') {
+      total += calcLaundryPrice();
+    } else if (id === 'clothes') {
+      total += calcFoldingPrice();
+    } else {
+      total += TASKS[id].price;
+    }
+  });
+
+  // Price displays
+  var fmt = total > 0 ? '₹' + total.toLocaleString('en-IN') : '₹0';
+  var timeStr = totalTime > 0 ? '~' + Math.round(totalTime/60*10)/10 + ' hrs (' + totalTime + ' min)' : 'Based on tasks';
+  var note = tasks.length > 0 ? tasks.map(function(id){ return TASKS[id] ? TASKS[id].name : ''; }).join(' + ') : 'Select at least one task above';
+
+  document.getElementById('totalPrice').textContent = fmt;
+  document.getElementById('priceNote').textContent  = note;
+  document.getElementById('desktopPrice').innerHTML = fmt + ' <sub>estimated</sub>';
+  document.getElementById('mobPrice').innerHTML     = fmt + ' <sub>estimated</sub>';
+  document.getElementById('desktopTime').textContent = timeStr;
+
+  // Enable/disable book buttons
+  var enabled = tasks.length > 0;
+  ['bookBtn','mobBtn'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? '1' : '0.4';
+    btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
+  });
+
+  // Dust now includes sweep — no separate suggestion needed
+
+  // Show/hide What's Included card
+  var incCard = document.getElementById('includedCard');
+  if (tasks.length > 0) {
+    incCard.style.display = 'block';
+    buildIncluded(tasks);
+  } else {
+    incCard.style.display = 'none';
+  }
+
+  // Update FAQs based on selected tasks
+  buildFaqs(tasks);
+}
+
+function buildIncluded(tasks) {
+  var body = document.getElementById('includedBody');
+  var html = '';
+  tasks.forEach(function(id) {
+    var t = TASKS[id];
+    if (!t) return;
+    html += '<div class="inc-section">';
+    html += '<div class="inc-section-label">' + t.emoji + ' ' + t.name + '</div>';
+    html += '<div class="inc-list">';
+    t.includes.forEach(function(item) {
+      html += '<div class="inc-item"><span class="inc-check">✓</span><span class="inc-text">' + item + '</span></div>';
+    });
+    html += '</div></div>';
+  });
+  // Common note
+  html += '<div class="excl-wrap"><div class="excl-title">Please Note</div>';
+  html += '<div class="excl-item"><span class="excl-x">→</span>Maid uses your cleaning supplies — please keep them ready</div>';
+  html += '<div class="excl-item"><span class="excl-x">→</span>Deep scrubbing or descaling not included in daily service</div>';
+  html += '<div class="excl-item"><span class="excl-x">→</span>Tasks outside this selection require a separate booking</div>';
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function buildFaqs(tasks) {
+  var body = document.getElementById('faqBody');
+
+  if (tasks.length === 0) {
+    // Default FAQs
+    body.innerHTML =
+      makeFaq('faqd0','Should I provide cleaning supplies?','Yes. The maid uses your broom, mop, bucket, and cleaning liquid. Please keep them ready before she arrives.') +
+      makeFaq('faqd1','Can I book a regular daily maid?','Yes. After your first booking you can set a recurring schedule — daily, alternate days, or weekly at a discounted rate.') +
+      makeFaq('faqd2','Are maids background verified?','Yes. Every maid is identity-verified and reviewed before being onboarded.') +
+      makeFaq('faqd3','What if I\'m not satisfied?','Raise a concern within 24 hours — we\'ll arrange a free re-visit or process a refund.') +
+      makeFaq('faqd4','How many rooms does one visit cover?','A 2–4 hour slot covers up to a 3 BHK. For larger homes, book an extended slot.');
+    return;
+  }
+
+  // Collect FAQs from selected tasks (max 2 per task, deduplicate)
+  var allFaqs = [];
+  // Add general FAQ first
+  allFaqs.push({q:'Are maids background verified?', a:'Yes. Every maid is identity-verified and reviewed before being onboarded to our platform.'});
+  allFaqs.push({q:'What if I\'m not satisfied?', a:'Raise a concern within 24 hours — we\'ll arrange a free re-visit or process a refund, no questions asked.'});
+
+  tasks.forEach(function(id) {
+    var t = TASKS[id];
+    if (!t || !t.faqs) return;
+    t.faqs.slice(0, 2).forEach(function(f) { allFaqs.push(f); });
+  });
+
+  // Max 7 FAQs
+  var shown = allFaqs.slice(0, 7);
+  body.innerHTML = shown.map(function(f, i) {
+    return makeFaq('faqd' + i, f.q, f.a);
+  }).join('');
+}
+
+function makeFaq(id, q, a) {
+  return '<div class="faq-item" id="' + id + '">' +
+    '<div class="faq-q" onclick="tFaq(\'' + id + '\')">' + q + '<span class="faq-arr">›</span></div>' +
+    '<div class="faq-a">' + a + '</div>' +
+    '</div>';
+}
+
+function tFaq(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function scrollToTasks() {
+  document.getElementById('taskCard').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function addSweep() {
+  // Select the sweep chip and trigger toggle
+  var sweepChip = document.querySelector('[data-task="sweep"]');
+  if (sweepChip && !sweepChip.classList.contains('active')) {
+    sweepChip.classList.add('active');
+    selected['sweep'] = true;
+    updateAll();
+  }
+}
+
+function bookNow() {
+  var tasks = Object.keys(selected);
+  if (tasks.length === 0) {
+    showToast('⚠️ Please select at least one task first');
+    scrollToTasks();
+    return;
+  }
+  var bhkChip = document.querySelector('#bhkChips .bhk-chip.active');
+  var bhkLabel = bhkChip ? bhkChip.childNodes[0].textContent.trim() : '';
+  var dustBhkChip = document.querySelector('#dustBhkChips .bhk-chip.active');
+  var dustBhkLabel = dustBhkChip ? dustBhkChip.childNodes[0].textContent.trim() : '';
+  var dishOccChip = document.querySelector('#dishOccasionChips .bhk-chip.active');
+  var dishOccLabel = dishOccChip ? dishOccChip.childNodes[0].textContent.trim() : '';
+  var taskSummary = tasks.map(function(id){
+    var t = TASKS[id]; var nm = t ? t.name : id;
+    var ap = 0;
+    if (id==='sweep') ap = selected['dust'] ? 0 : bhkPrice;
+    else if (id==='dust') ap = dustBhkPrice;
+    else if (id==='dishes') ap = dishPrice;
+    else if (id==='laundry') ap = calcLaundryPrice();
+    else if (id==='clothes') ap = calcFoldingPrice();
+    else ap = t ? t.price : 0;
+    var sub = '';
+    if (id==='sweep' && !selected['dust'] && bhkLabel) sub = bhkLabel;
+    else if (id==='dust' && dustBhkLabel) sub = dustBhkLabel;
+    else if (id==='dishes' && dishOccLabel) sub = dishOccLabel;
+    var parts = ['House Maid', nm];
+    if (sub) parts.push(sub);
+    return parts.join(' > ');
+  });
+  var priceEl = document.getElementById('totalPrice');
+  sessionStorage.setItem('hs_service_options', JSON.stringify({
+    service: 'House Maid', icon: '🧹', svcId: 'SVC001',
+    price: priceEl ? priceEl.textContent.replace(/[^0-9]/g,'') : '',
+    summary: taskSummary
+  }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=House%20Maid';
+  if (user) { window.location.href = url; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display='none'; }, 3000);
+}
+
+firebase.auth().onAuthStateChanged(function(u) {
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// Init FAQs on load
+buildFaqs([]);
+
+
+// ── HS Firebase Price Sync (SVC001 House Maid) ──────────────────────────────
+(function(){
+  var _DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var _tok = '';
+
+  function getToken(cb){
+    if(_tok){ cb(_tok); return; }
+    var x = new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload = function(){
+      try{ var d=JSON.parse(x.responseText); _tok=d.idToken||''; cb(_tok); }catch(e){ cb(''); }
+    };
+    x.onerror = function(){ cb(''); };
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+
+  // Update every chip in a container: patch data-price + price span text
+  function patchChips(containerSel, keyAttr, prices){
+    document.querySelectorAll(containerSel + ' [' + keyAttr + ']').forEach(function(chip){
+      var k = chip.getAttribute(keyAttr);
+      if(prices[k] === undefined) return;
+      chip.dataset.price = prices[k];
+      var sp = chip.querySelector('span');
+      if(sp) sp.textContent = '₹' + parseInt(prices[k]).toLocaleString('en-IN');
+    });
+    // Also update active chip variable so current selection uses new price
+    var active = document.querySelector(containerSel + ' .bhk-chip.active');
+    return active ? parseInt(active.dataset.price) : null;
+  }
+
+  function applyPrices(d){
+    if(!d || d.error) return;
+
+    // 1. SWEEP: #bhkChips — data-bhk = 1bhk,2bhk,3bhk,4bhk,villa,studio
+    if(d.sweep){
+      var p = patchChips('#bhkChips', 'data-bhk', d.sweep);
+      if(p !== null) bhkPrice = p;
+    }
+
+    // 2. DUST: #dustBhkChips — data-bhk = 1bhk,2bhk,3bhk,4bhk,villa,studio
+    if(d.dust){
+      var p2 = patchChips('#dustBhkChips', 'data-bhk', d.dust);
+      if(p2 !== null) dustBhkPrice = p2;
+    }
+
+    // 3. DISHES: #dishOccasionChips — data-occ = daily,people,event,marriage
+    if(d.dishes){
+      var p3 = patchChips('#dishOccasionChips', 'data-occ', d.dishes);
+      if(p3 !== null) dishPrice = p3;
+    }
+
+    // 4. Hero "from ₹X" pill
+    if(d.base){
+      document.querySelectorAll('.pill').forEach(function(p){
+        if(p.textContent.indexOf('from') >= 0 && p.textContent.indexOf('₹') >= 0)
+          p.textContent = 'from ₹' + parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+
+    // 5. Recalc total if tasks already selected
+    if(typeof updateAll === 'function') updateAll();
+  }
+
+  function load(){
+    getToken(function(tok){
+      var url = _DB + '/hs_service_prices/SVC001.json' + (tok ? '?auth=' + tok : '');
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.timeout = 6000;
+      xhr.onload = function(){
+        try{
+          var d = JSON.parse(xhr.responseText);
+          if(d && !d.error) applyPrices(d);
+        }catch(e){}
+      };
+      xhr.onerror = function(){};
+      xhr.send();
+    });
+  }
+
+  // Load on page ready
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', load);
+  } else {
+    load();
+  }
+
+  // Refresh every 30 seconds
+  setInterval(load, 30000);
+
+  // Instant update when admin saves in same browser
+  window.addEventListener('storage', function(e){
+    if(e.key === 'hs_pricing_ts') load();
+  });
+})();
+</script>
+</body>
+</html>

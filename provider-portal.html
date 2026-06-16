@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Provider Portal – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="js/email-triggers.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--brand:#E8651A;--brand2:#c9510f;--brand-light:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-light:#e6f4f6;--red:#E8651A;--red-dark:#c9510f;--red-light:#fff3eb;--orange:#E8651A;--green:#2ecc71;--green-light:#e8f8f0;--yellow:#f59e0b;--yellow-light:#fffbeb;--blue:#1A73E8;--blue-light:#e8f0fd;--bg:#f0f7f9;--white:#fff;--text:#1a1a2e;--muted:#718096;--border:#e2e8f0;--radius:16px;--shadow:0 4px 24px rgba(27,107,122,0.12);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+header{position:sticky;top:0;z-index:200;background:var(--teal);border-top:none;box-shadow:0 2px 12px rgba(27,107,122,0.25);padding:0 28px;height:66px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;}
+.back-btn{padding:9px 18px;background:rgba(255,255,255,.15);color:white;border:2px solid rgba(255,255,255,.3);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;}
+.back-btn:hover{background:rgba(255,255,255,.28);color:white;}
+.hero-band{background:linear-gradient(135deg,#0d3d47 0%,var(--teal) 55%,#0d3d47 100%);padding:36px 24px;text-align:center;color:white;}
+.hero-band h1{font-family:'Baloo 2',sans-serif;font-size:clamp(26px,5vw,40px);font-weight:800;margin-bottom:6px;}
+.hero-band p{font-size:16px;opacity:.9;font-weight:600;}
+.hero-stats{display:flex;justify-content:center;gap:24px;margin-top:22px;flex-wrap:wrap;}
+.hstat{background:rgba(255,255,255,0.15);border-radius:12px;padding:12px 20px;text-align:center;}
+.hstat-num{font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;}
+.hstat-label{font-size:12px;opacity:.85;font-weight:700;}
+.main{max-width:860px;margin:0 auto;padding:36px 20px 80px;}
+.tab-bar{display:flex;background:white;border-radius:16px;padding:5px;box-shadow:var(--shadow);border:2px solid var(--border);margin-bottom:28px;}
+.tab-btn{flex:1;padding:13px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all .25s;background:transparent;color:var(--muted);}
+.tab-btn.active{background:linear-gradient(135deg,var(--teal),var(--teal2));color:white;box-shadow:0 3px 14px rgba(27,107,122,0.35);}
+.panel{display:none;}
+.panel.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.login-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);padding:40px;max-width:500px;margin:0 auto;}
+.card-title{font-family:'Sora',sans-serif;font-size:24px;font-weight:800;margin-bottom:4px;}
+.card-sub{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:24px;}
+.err-box{background:var(--brand-light);border:1.5px solid var(--brand);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);display:none;margin-bottom:14px;}
+.ffield{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.ffield label{font-size:13px;font-weight:800;color:var(--text);}
+.ffield input,.ffield select,.ffield textarea{padding:13px 14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;border:2px solid var(--border);border-radius:11px;outline:none;color:var(--text);background:var(--bg);transition:border .2s;width:100%;}
+.ffield input:focus,.ffield select:focus,.ffield textarea:focus{border-color:var(--teal);box-shadow:0 0 0 4px rgba(27,107,122,0.08);}
+.ffield textarea{resize:vertical;min-height:75px;}
+.big-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:17px;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px rgba(232,101,26,0.35);margin-top:4px;}
+.big-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(232,101,26,0.4);}
+.hint-box{background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:#7a5a00;margin-top:14px;text-align:center;line-height:1.6;}
+.steps-bar{display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+.step-dot{width:36px;height:36px;border-radius:50%;background:var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;transition:all .3s;}
+.step-dot.active{background:var(--teal);color:white;box-shadow:0 2px 12px rgba(27,107,122,0.35);}
+.step-dot.done{background:var(--green);color:white;}
+.step-line{flex:1;height:3px;background:var(--border);max-width:60px;transition:background .3s;}
+.step-line.done{background:var(--green);}
+.step-labels{display:flex;justify-content:space-between;max-width:360px;margin:6px auto 24px;padding:0 2px;}
+.step-lbl{font-size:11px;font-weight:800;color:var(--muted);text-align:center;flex:1;}
+.form-card{display:none;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--border);padding:24px 20px;margin-bottom:20px;}
+.form-card.active{display:block;animation:fadeUp .3s ease;}
+.fc-title{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.fc-sub{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:22px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:580px){.fgrid{grid-template-columns:1fr;}}
+.svc-cat-tabs{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:14px;padding-bottom:4px;scrollbar-width:none;}
+.svc-cat-tabs::-webkit-scrollbar{display:none;}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+/* Override for new service picker */
+#svcGrid{display:block;}
+.svc-chip{border:2px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+.svc-chip.selected{border-color:var(--green);background:var(--green-light);}
+.svc-chip:hover:not(.selected){border-color:var(--teal);background:var(--teal-light);}
+.svc-icon{font-size:26px;margin-bottom:5px;}
+.svc-name{font-size:12px;font-weight:800;color:var(--text);}
+.svc-price-input{display:none;margin-top:8px;padding:7px 8px;width:100%;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border:2px solid var(--border);border-radius:8px;outline:none;text-align:center;background:white;}
+.svc-chip.selected .svc-price-input{display:block;border-color:var(--green);}
+#regMap{width:100%;height:250px;border-radius:12px;border:2px solid var(--border);margin-bottom:12px;}
+.step-nav{display:flex;gap:12px;justify-content:flex-end;margin-top:8px;}
+.snb{padding:12px 28px;border-radius:11px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
+.snb.back{background:var(--bg);color:var(--muted);border:2px solid var(--border);}
+.snb.back:hover{border-color:var(--teal);color:var(--teal);}
+.snb.next{background:linear-gradient(135deg,var(--brand),var(--brand2));color:white;box-shadow:0 3px 14px rgba(232,101,26,0.3);}
+.snb.next:hover{transform:translateY(-2px);}
+.snb.submit{background:linear-gradient(135deg,var(--green),#34d058);color:white;box-shadow:0 3px 14px rgba(30,168,75,0.3);}
+.snb.submit:hover{transform:translateY(-2px);}
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.summary-row:last-child{border:none;}
+.summary-label{color:var(--muted);font-weight:700;flex-shrink:0;margin-right:12px;}
+.summary-value{font-weight:800;color:var(--text);text-align:right;}
+.success-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--green);padding:40px;text-align:center;max-width:540px;margin:0 auto;}
+.success-id{font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800;color:var(--red);background:var(--red-light);border-radius:12px;padding:10px 22px;display:inline-block;margin:12px 0;}
+.success-steps{display:flex;flex-direction:column;gap:8px;text-align:left;margin:20px 0;background:var(--bg);border-radius:12px;padding:18px;}
+.success-step{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--text);}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--teal);cursor:pointer;box-shadow:0 2px 6px rgba(27,107,122,0.4);}
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:12px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 28px rgba(0,0,0,0.2);white-space:nowrap;max-width:90vw;}
+
+/* ── Unified registration fields ──────────────────────────── */
+.field-wrap        { display:flex; flex-direction:column; gap:5px; }
+.field-label       { font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.4px; }
+.field-inp         { padding:11px 14px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s, box-shadow .2s; background:#fafafa; width:100%; box-sizing:border-box; }
+.field-inp:focus   { border-color:var(--teal); box-shadow:0 0 0 3px rgba(27,107,122,.1); background:white; }
+.field-inp.valid   { border-color:#16a34a !important; box-shadow:0 0 0 3px rgba(22,163,74,.1) !important; }
+.field-inp.invalid { border-color:var(--brand) !important; box-shadow:0 0 0 3px rgba(232,101,26,.1) !important; }
+@media(max-width:600px){ .field-wrap { grid-column:1/-1 !important; } }
+/* ═══ MOBILE APP FEEL ═══ */
+@media(max-width:768px){
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom));overscroll-behavior-y:none;}
+  header{padding:0 16px;}
+  .hero-band{padding:24px 16px;}
+  .main{padding:20px 14px 100px;}
+  .login-card{padding:24px 18px;}
+  .form-card{padding:20px 16px;}
+  .tab-btn{font-size:13px;padding:11px 8px;}
+}
+/* ═══ MOBILE BOTTOM NAV ═══ */
+.mob-bottom-nav{display:none;}
+@media(min-width:769px){.mob-bottom-nav{display:none !important;}}
+@media(max-width:768px){
+  .mob-bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    height:calc(64px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:white;border-top:1px solid #e2e8f0;
+    box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;
+    align-items:center;justify-content:space-around;
+    font-family:'DM Sans',sans-serif;
+  }
+  .mob-nav-item{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;flex:1;padding:8px 4px;text-decoration:none;color:#718096;
+    font-size:10px;font-weight:600;letter-spacing:.2px;transition:color .15s;
+    -webkit-tap-highlight-color:transparent;position:relative;
+  }
+  .mob-nav-item svg{width:22px;height:22px;transition:transform .15s;}
+  .mob-nav-item:active svg{transform:scale(.85);}
+  .mob-nav-item.active{color:#1B6B7A;}
+  .mob-nav-item.active svg{color:#1B6B7A;}
+  .mob-nav-center{color:transparent !important;pointer-events:auto;margin-top:-28px;}
+  .mob-nav-center span{color:#1B6B7A;font-size:9px;font-weight:700;margin-top:30px;display:block;text-align:center;}
+  .mob-nav-fab{
+    width:54px;height:54px;
+    background:linear-gradient(135deg,#E8651A,#ff8c3a);
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(232,101,26,.45);position:absolute;top:-14px;
+    transition:transform .15s;
+  }
+  .mob-nav-center:active .mob-nav-fab{transform:scale(.9);}
+  .mob-nav-fab svg{width:24px;height:24px;color:white;stroke:white;}
+}
+
+
+  /* ── Sub-category panel ──────────────────────────────── */
+  .svc-subpanel{display:none;grid-column:1/-1;background:white;border:2px solid var(--green);border-radius:14px;padding:16px;margin-bottom:8px;}
+  .svc-subpanel.show{display:block;}
+  .svc-subpanel-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .svc-subpanel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+  .svc-subitem{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;background:#f9fafb;}
+  .svc-subitem-name{font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:2px;line-height:1.3;}
+  .svc-subitem-customer{font-size:10px;color:#718096;margin-bottom:6px;}
+  .svc-subitem-customer b{color:#1B6B7A;}
+  .svc-subitem-inp{width:100%;padding:5px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;text-align:center;outline:none;background:white;}
+  .svc-subitem-inp:focus{border-color:#1B6B7A;}
+  .svc-subitem-lbl{font-size:9px;color:#718096;text-align:center;margin-top:3px;}
+  .svc-chip .svc-price-badge{display:none;position:absolute;top:-6px;right:-6px;background:#1B6B7A;color:white;font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;white-space:nowrap;}
+  .svc-chip.selected .svc-price-badge{display:block;background:#2ecc71;}
+  .svc-firebase-banner{background:#e6f4f6;border:1.5px solid #1B6B7A;border-radius:10px;padding:10px 14px;font-size:12px;color:#1B6B7A;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* ── Step 2: Service Selection ─────────────────────────────────────── */
+#svcGrid{display:block !important;}
+
+/* Service group card */
+.svc-group{border:2px solid #e2e8f0;border-radius:14px;margin-bottom:10px;background:#fff;}
+
+/* Collapsed header */
+.svc-hdr2{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
+  -webkit-user-select:none;user-select:none;border-radius:12px;transition:background .15s;}
+.svc-hdr2:active,.svc-hdr2:hover{background:#e6f4f6;}
+.svc-hdr2.open{background:#e6f4f6;border-radius:12px 12px 0 0;border-bottom:2px solid #e2e8f0;}
+
+.svc-ico2{font-size:22px;flex-shrink:0;width:30px;text-align:center;}
+.svc-meta2{flex:1;min-width:0;}
+.svc-title2{font-size:14px;font-weight:800;color:#1a1a2e;line-height:1.2;}
+.svc-sub2{font-size:11px;color:#718096;margin-top:2px;}
+.svc-right2{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.svc-cnt2{background:#1B6B7A;color:#fff;font-size:11px;font-weight:900;
+  padding:2px 8px;border-radius:10px;min-width:24px;text-align:center;}
+.svc-cnt2.zero{background:#e2e8f0;color:#94a3b8;}
+.svc-chev2{font-size:13px;color:#94a3b8;transition:transform .25s;display:inline-block;}
+.svc-hdr2.open .svc-chev2{transform:rotate(90deg);}
+
+/* Expanded task list */
+.svc-tasklist{display:none;padding:12px 14px 14px;border-top:0;}
+.svc-tasklist.open{display:block;}
+
+.task-block2{margin-bottom:14px;}
+.task-block2:last-child{margin-bottom:0;}
+.task-name2{font-size:11px;font-weight:900;color:#1B6B7A;text-transform:uppercase;
+  letter-spacing:.6px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;
+  display:flex;align-items:center;justify-content:space-between;}
+.sel-all-btn2{font-size:11px;font-weight:700;color:#E8651A;cursor:pointer;
+  text-transform:none;letter-spacing:0;padding:3px 10px;border-radius:6px;
+  background:#fff3eb;border:1px solid #E8651A;}
+
+/* Variant rows */
+.var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:7px;}
+.var-row{display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border:1.5px solid #e2e8f0;border-radius:9px;cursor:pointer;
+  transition:border-color .15s,background .15s;background:#fff;}
+.var-row:active,.var-row:hover{border-color:#1B6B7A;background:#e6f4f6;}
+.var-row.sel{border-color:#2ecc71;background:#e8f8f0;}
+.var-chk{width:16px;height:16px;accent-color:#2ecc71;flex-shrink:0;cursor:pointer;}
+.var-info{flex:1;min-width:0;}
+.var-lbl{font-size:12px;font-weight:800;color:#1a1a2e;line-height:1.3;}
+.var-price{text-align:right;flex-shrink:0;padding-left:4px;}
+.var-cust{font-size:10px;color:#94a3b8;line-height:1.2;}
+.var-earn{font-size:12px;font-weight:900;color:#27ae60;line-height:1.2;}
+
+/* Category filter tabs */
+.cat-tabs2{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;
+  margin-bottom:10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.cat-tabs2::-webkit-scrollbar{display:none;}
+.cat-tab2{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;
+  white-space:nowrap;cursor:pointer;border:2px solid #e2e8f0;background:#fff;
+  color:#718096;transition:all .15s;flex-shrink:0;}
+.cat-tab2.active{background:#1B6B7A;color:#fff;border-color:#1B6B7A;}
+
+/* Selection summary */
+.svc-sel-bar{padding:9px 14px;font-size:12px;font-weight:700;color:#1B6B7A;
+  background:#e6f4f6;border-radius:10px;margin-bottom:10px;text-align:center;}
+.price-col-note{font-size:11px;color:#94a3b8;text-align:right;
+  margin-bottom:6px;font-style:italic;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">🏠</div>
+    Hamara<span style="color:#ffb07a">Service</span>
+  </a>
+  <a class="back-btn" href="index.html">← Back to Home</a>
+</header>
+
+<div class="hero-band">
+  <h1>👷 Provider Portal</h1>
+  <p>Login to your dashboard or register as a new service provider</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">₹800+</div><div class="hstat-label">Avg Daily Earn</div></div>
+    <div class="hstat"><div class="hstat-num">25+</div><div class="hstat-label">Service Types</div></div>
+    <div class="hstat"><div class="hstat-num">24/7</div><div class="hstat-label">Support</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">🔑 Already Registered? Login</button>
+    <button class="tab-btn" id="tabReg" onclick="switchTab('register')">📝 New Provider? Register Here</button>
+  </div>
+
+  <!-- ══════════ LOGIN PANEL ══════════ -->
+  <div class="panel active" id="panelLogin">
+    <div class="login-card">
+      <div class="card-title">👷 Provider Login</div>
+      <div class="card-sub">Sign in with your registered email and password</div>
+      <div class="err-box" id="loginErr"></div>
+
+      <button onclick="providerGoogleSignIn()" style="width:100%;padding:13px;background:white;border:1.5px solid #ddd;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#333;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign in with Google
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span style="font-size:12px;color:var(--muted);font-weight:600;">or sign in with email &amp; password</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <div class="ffield">
+        <label>Registered Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="ffield">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="big-btn" onclick="doLogin()">🚀 Login to Dashboard</button>
+      <button onclick="fillDemo()" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:2px dashed #f5c842;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#7a5a00;cursor:pointer;">⚡ Fill Demo Credentials</button>
+      <div class="hint-box">
+        💡 <strong>Demo login:</strong> Email = <strong>demo@hamaraservice.in</strong> · Password = <strong>demo123</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ REGISTER PANEL ══════════ -->
+  <div class="panel" id="panelRegister">
+    <div class="steps-bar">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot" id="sd2">2</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot" id="sd3">3</div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-dot" id="sd4">4</div>
+    </div>
+    <div class="step-labels">
+      <span class="step-lbl">Personal</span>
+      <span class="step-lbl">Services</span>
+      <span class="step-lbl">Location</span>
+      <span class="step-lbl">Review</span>
+    </div>
+
+    <!-- STEP 1: PERSONAL INFO -->
+    <div class="form-card active" id="step1">
+      <div class="fc-title">👤 Personal Information</div>
+      <div class="fc-sub">Tell us about yourself — customers will see this on your profile</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="field-wrap">
+          <label class="field-label">Full Name *</label>
+          <input type="text" id="r_name" class="field-inp" placeholder="e.g. Renu Sharma"/>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Mobile Number *</label>
+          <input type="tel" id="r_phone" class="field-inp" placeholder="9876543210" maxlength="10"/>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Email Address *</label>
+          <input type="email" id="r_email" class="field-inp" placeholder="your@email.com"/>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">WhatsApp Number</label>
+          <input type="tel" id="r_whatsapp" class="field-inp" placeholder="Same as mobile if same"/>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Gender</label>
+          <select id="r_gender" class="field-inp">
+            <option value="">Select gender</option>
+            <option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Experience *</label>
+          <select id="r_exp" class="field-inp">
+            <option value="">Select experience</option>
+            <option>Less than 1 year</option><option>1–2 years</option>
+            <option>3–5 years</option><option>5–10 years</option><option>10+ years</option>
+          </select>
+        </div>
+        <div class="field-wrap" style="grid-column:1/-1" id="passFieldWrap">
+          <label class="field-label">Create Password *</label>
+          <div style="position:relative;">
+            <input type="password" id="r_password" class="field-inp" placeholder="Min 8 chars, letters + numbers" oninput="onRegPwdInput(this)" style="padding-right:44px;"/>
+            <button type="button" onclick="toggleRegEye()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;" id="eyeBtn">👁</button>
+          </div>
+          <div id="pwdRules" style="display:none;margin-top:8px;background:#f0f7f9;border-radius:10px;padding:10px 12px;">
+            <div style="font-size:11px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Password strength</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span id="rule_len"     style="font-size:12px;padding:3px 8px;border-radius:100px;background:#e2e8f0;color:#718096;">8+ chars</span>
+              <span id="rule_upper"   style="font-size:12px;padding:3px 8px;border-radius:100px;background:#e2e8f0;color:#718096;">Uppercase</span>
+              <span id="rule_lower"   style="font-size:12px;padding:3px 8px;border-radius:100px;background:#e2e8f0;color:#718096;">Lowercase</span>
+              <span id="rule_num"     style="font-size:12px;padding:3px 8px;border-radius:100px;background:#e2e8f0;color:#718096;">Number</span>
+              <span id="rule_special" style="font-size:12px;padding:3px 8px;border-radius:100px;background:#e2e8f0;color:#718096;">Special char</span>
+            </div>
+          </div>
+          <div id="passGoogleNote" style="display:none;font-size:13px;color:#718096;margin-top:6px;padding:8px 12px;background:#e6f4f6;border-radius:8px;">✅ Google verified — no password needed</div>
+          <div id="passRequiredNote" style="display:none;font-size:12px;color:#718096;margin-top:4px;"></div>
+        </div>
+        <div class="field-wrap" id="confirmPwdWrap" style="grid-column:1/-1;display:none;">
+          <label class="field-label">Confirm Password *</label>
+          <input type="password" id="r_password_confirm" class="field-inp" placeholder="Re-enter password" oninput="onRegConfirmInput(this)"/>
+          <div id="confirmMsg" style="font-size:12px;margin-top:4px;"></div>
+        </div>
+        <div class="field-wrap" style="grid-column:1/-1">
+          <label class="field-label">Short Bio</label>
+          <textarea id="r_bio" class="field-inp" rows="3" placeholder="e.g. Professional house maid with 5 years experience. Punctual and trustworthy."></textarea>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">ID Proof Type *</label>
+          <select id="r_idtype" class="field-inp" onchange="onRegIdTypeChange()">
+            <option value="">Select ID type</option>
+            <option>Aadhaar Card</option><option>PAN Card</option>
+            <option>Voter ID</option><option>Driving Licence</option><option>Passport</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">ID Number *</label>
+          <input type="text" id="r_idnum" class="field-inp" placeholder="Select ID type first" oninput="onRegIdInput()" disabled/>
+          <div id="r_id_hint" style="font-size:11px;color:var(--muted);margin-top:3px;"></div>
+          <div id="r_id_error" style="font-size:12px;color:var(--brand);margin-top:3px;display:none;">⚠️ <span id="r_id_error_msg"></span></div>
+          <div id="r_id_ok"    style="font-size:12px;color:var(--green);margin-top:3px;display:none;">✅ ID number looks valid</div>
+        </div>
+      </div>
+      <div class="btn-row" style="display:flex;justify-content:flex-end;margin-top:24px;">
+        <button class="snb next" onclick="nextStep(1)">Next: Services →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: SERVICES -->
+    <div class="form-card" id="step2">
+      <div class="fc-title">🛠️ Select Your Services</div>
+      <div class="fc-sub">Select the services and variants you offer — we'll show what you earn after platform commission.</div>
+      <div class="svc-grid" id="svcGrid"></div>
+      <div style="background:var(--teal-light);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:var(--teal);">
+        💡 You can update prices anytime from your dashboard
+      </div>
+      <div class="step-nav">
+        <button class="snb back" onclick="prevStep(2)">← Back</button>
+        <button class="snb next" onclick="nextStep(2)">Next: Location →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: LOCATION -->
+    <div class="form-card" id="step3">
+      <div class="fc-title">📍 Your Work Location</div>
+      <div class="fc-sub">Drop a pin on map or search. Set how far you travel.</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <input type="text" id="locSearch" placeholder="Search area, city..." style="flex:1;padding:11px 14px;border:2px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;outline:none;background:var(--bg);" onkeydown="if(event.key==='Enter')searchLoc()"/>
+        <button onclick="searchLoc()" style="padding:11px 16px;background:var(--teal);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">🔍</button>
+        <button onclick="useGPS()" style="padding:11px 16px;background:var(--teal-light);color:var(--teal);border:2px solid var(--teal);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">🎯 GPS</button>
+      </div>
+      <div id="regMap"></div>
+      <div id="addrBox" style="background:var(--yellow-light);border:1.5px solid #ffe58a;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:#7a5a00;margin-bottom:14px;">
+        📍 Click on the map or use GPS to set your location
+      </div>
+      <div class="ffield">
+        <label>🔵 Service Radius: <span id="radiusLabel" style="color:var(--teal);">5 km</span></label>
+        <input type="range" id="radiusSlider" min="1" max="50" value="5" oninput="updateRadius(this.value)" style="background:linear-gradient(to right,var(--teal) 0%,var(--teal) 8%,var(--border) 8%);"/>
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-top:3px;"><span>1 km</span><span>10 km</span><span>25 km</span><span>50 km</span></div>
+      </div>
+      <div class="step-nav">
+        <button class="snb back" onclick="prevStep(3)">← Back</button>
+        <button class="snb next" onclick="nextStep(3)">Next: Review →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: REVIEW -->
+    <div class="form-card" id="step4">
+      <div class="fc-title">✅ Review &amp; Submit</div>
+      <div class="fc-sub">Check your details before submitting</div>
+      <div id="summaryBox"></div>
+      <div style="background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:700;color:var(--green);margin:14px 0;">
+        ✅ By submitting you agree to Hamara Service provider terms and conditions.
+      </div>
+      <div class="step-nav">
+        <button class="snb back" onclick="prevStep(4)">← Back</button>
+        <button class="snb submit" onclick="submitRegistration()">🎉 Complete Registration</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="form-card" id="stepSuccess">
+      <div class="success-card">
+        <div style="font-size:72px;margin-bottom:12px;">🎉</div>
+        <div style="font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:var(--green);margin-bottom:4px;">Registration Complete!</div>
+        <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:12px;">Your Provider ID is</div>
+        <div class="success-id" id="generatedId">HS-PRO-XXXXXX</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px;">📌 Save this ID — you need it to login next time</div>
+        <div class="success-steps">
+          <div class="success-step">✅ Profile saved to database</div>
+          <div class="success-step">📍 Location and radius configured</div>
+          <div class="success-step">🛠️ Services and prices listed</div>
+          <div class="success-step">🔔 You will receive booking notifications immediately</div>
+        </div>
+        <button class="big-btn" onclick="window.location.href='provider-dashboard.html'">🚀 Go to My Dashboard →</button>
+        <div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--muted);">Login anytime with your Email + Password</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-bottom-nav">
+  <a class="mob-nav-item" href="index.html">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="mob-nav-item" href="user-booking.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Services</span>
+  </a>
+  <a class="mob-nav-item mob-nav-center" href="user-booking.html">
+    <div class="mob-nav-fab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    </div>
+    <span>Book Now</span>
+  </a>
+  <a class="mob-nav-item" href="user-panel.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span>Bookings</span>
+  </a>
+  <a class="mob-nav-item active" href="provider-portal.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    <span>Provider</span>
+  </a>
+</nav>
+
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+var FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+      authDomain:        "hamaraservice-s009.firebaseapp.com",
+      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:         "hamaraservice-s009",
+      storageBucket:     "hamaraservice-s009.firebasestorage.app",
+      messagingSenderId: "1064274729048",
+      appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    var fbAuth = firebase.auth();
+    var fbDB   = firebase.database();
+    var googleProvider = new firebase.auth.GoogleAuthProvider();
+    googleProvider.addScope('email');
+    googleProvider.addScope('profile');
+
+// ── Firebase REST helper — NO auth token required ────────────────────────────
+// Firebase rules set to allow public read/write on providers path
+var FB_DB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+function fbRest(method, path, data, cb){
+  var x = new XMLHttpRequest();
+  var url = FB_DB + '/' + path + '.json';
+  x.open(method, url, true);
+  x.setRequestHeader('Content-Type','application/json');
+  x.timeout = 10000;
+  x.onload = function(){
+    try{
+      var d = JSON.parse(x.responseText);
+      if(x.status >= 200 && x.status < 300){
+        if(cb) cb(null, d);
+      } else {
+        // 401/403 = rules blocking — try with SDK auth as fallback
+        fbRestWithAuth(method, path, data, cb);
+      }
+    }catch(e){ if(cb) cb(e, null); }
+  };
+  x.onerror = x.ontimeout = function(){ if(cb) cb(new Error('Network error. Check internet.'), null); };
+  x.send(data ? JSON.stringify(data) : null);
+}
+
+function fbRestWithAuth(method, path, data, cb){
+  // Fallback: use Firebase SDK anonymous auth
+  var doIt = function(){
+    var user = typeof fbAuth !== 'undefined' ? fbAuth.currentUser : null;
+    if(!user){ if(cb) cb(new Error('Auth required'), null); return; }
+    user.getIdToken().then(function(tok){
+      var x = new XMLHttpRequest();
+      x.open(method, FB_DB+'/'+path+'.json?auth='+tok, true);
+      x.setRequestHeader('Content-Type','application/json');
+      x.timeout = 10000;
+      x.onload = function(){
+        try{ var d=JSON.parse(x.responseText); if(cb) cb(x.status>=200&&x.status<300?null:new Error(x.status), d); }
+        catch(e){ if(cb) cb(e,null); }
+      };
+      x.onerror = x.ontimeout = function(){ if(cb) cb(new Error('network'),null); };
+      x.send(data ? JSON.stringify(data) : null);
+    }).catch(function(e){ if(cb) cb(e,null); });
+  };
+  if(typeof fbAuth !== 'undefined' && fbAuth.currentUser){
+    doIt();
+  } else if(typeof fbAuth !== 'undefined'){
+    fbAuth.signInAnonymously().then(doIt).catch(function(e){ if(cb) cb(e,null); });
+  } else {
+    if(cb) cb(new Error('Firebase not available'),null);
+  }
+}
+
+  
+
+
+
+var REG_ID_RULES = {
+  'Aadhaar Card': { pattern:/^[2-9]{1}[0-9]{11}$/, format:'12 digits starting 2-9', clean:function(v){return v.replace(/\s/g,'');}, placeholder:'e.g. 2345 6789 1234', maxlength:14, hint:'12 digits only. Spaces ignored.' },
+  'PAN Card':     { pattern:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, format:'ABCDE1234F', clean:function(v){return v.toUpperCase().replace(/[^A-Z0-9]/g,'');}, placeholder:'e.g. ABCDE1234F', maxlength:10, hint:'5 letters + 4 digits + 1 letter' },
+  'Voter ID':     { pattern:/^[A-Z]{3}[0-9]{7}$/, format:'ABC1234567', clean:function(v){return v.toUpperCase().replace(/[^A-Z0-9]/g,'');}, placeholder:'e.g. ABC1234567', maxlength:10, hint:'3 letters + 7 digits' },
+  'Driving Licence': { pattern:/^[A-Z]{2}[0-9]{13}$/, format:'AB12345678901234', clean:function(v){return v.toUpperCase().replace(/[^A-Z0-9]/g,'');}, placeholder:'e.g. MH1234567890123', maxlength:15, hint:'2 letters + 13 digits' },
+  'Passport':     { pattern:/^[A-Z]{1}[0-9]{7}$/, format:'A1234567', clean:function(v){return v.toUpperCase().replace(/[^A-Z0-9]/g,'');}, placeholder:'e.g. A1234567', maxlength:8, hint:'1 letter + 7 digits' },
+};
+
+function onRegIdTypeChange() {
+  var type = document.getElementById('r_idtype').value;
+  var inp  = document.getElementById('r_idnum');
+  var hint = document.getElementById('r_id_hint');
+  if (!type) { inp.disabled=true; inp.placeholder='Select ID type first'; if(hint) hint.textContent=''; return; }
+  var rule = REG_ID_RULES[type];
+  inp.disabled = false;
+  inp.value = '';
+  inp.placeholder = rule ? rule.placeholder : '';
+  inp.maxLength   = rule ? rule.maxlength  : 50;
+  if (hint) hint.textContent = rule ? rule.hint : '';
+  setRegIdFeedback('','');
+}
+
+function setRegIdFeedback(state, msg) {
+  var err = document.getElementById('r_id_error');
+  var ok  = document.getElementById('r_id_ok');
+  var emsg= document.getElementById('r_id_error_msg');
+  if (err) err.style.display = state==='error'?'block':'none';
+  if (ok)  ok.style.display  = state==='ok'   ?'block':'none';
+  if (emsg) emsg.textContent = msg;
+}
+
+function onRegIdInput() {
+  var type = document.getElementById('r_idtype').value;
+  var raw  = document.getElementById('r_idnum').value;
+  if (!type || !raw.trim()) { setRegIdFeedback('',''); return; }
+  var rule = REG_ID_RULES[type];
+  if (!rule) { setRegIdFeedback('',''); return; }
+  var val = rule.clean(raw);
+  document.getElementById('r_idnum').value = val;
+  if (!rule.pattern.test(val)) {
+    setRegIdFeedback('error', 'Invalid format. Expected: ' + rule.format);
+  } else {
+    setRegIdFeedback('ok', '');
+  }
+}
+
+function regPwdChecks(pwd) {
+  return {
+    len:     pwd.length >= 8,
+    upper:   /[A-Z]/.test(pwd),
+    lower:   /[a-z]/.test(pwd),
+    num:     /[0-9]/.test(pwd),
+    special: /[^A-Za-z0-9]/.test(pwd),
+  };
+}
+
+function onRegPwdInput(el) {
+  var pwd = el.value;
+  var rules = document.getElementById('pwdRules');
+  var confirmWrap = document.getElementById('confirmPwdWrap');
+  if (rules) rules.style.display = pwd.length ? 'block' : 'none';
+  if (confirmWrap && pwd.length >= 4) confirmWrap.style.display = 'block';
+  var c = regPwdChecks(pwd);
+  var map = {rule_len:c.len, rule_upper:c.upper, rule_lower:c.lower, rule_num:c.num, rule_special:c.special};
+  Object.keys(map).forEach(function(id) {
+    var el2 = document.getElementById(id);
+    if (!el2) return;
+    el2.style.background = map[id] ? '#dcfce7' : '#e5e7eb';
+    el2.style.color      = map[id] ? '#16a34a' : '#6b7280';
+  });
+}
+
+function onRegConfirmInput(el) {
+  var pwd  = document.getElementById('r_password').value;
+  var conf = el.value;
+  var msg  = document.getElementById('confirmMsg');
+  if (!msg) return;
+  if (!conf) { msg.textContent=''; return; }
+  if (conf === pwd) { msg.textContent='✅ Passwords match'; msg.style.color='#16a34a'; }
+  else              { msg.textContent='❌ Passwords do not match'; msg.style.color='#E8251A'; }
+}
+
+function toggleRegEye() {
+  var inp = document.getElementById('r_password');
+  var btn = document.getElementById('eyeBtn');
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  if (btn) btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function regValidatePasswords() {
+  if (window._googleUid) return true; // Google users skip password
+  var pwd  = document.getElementById('r_password').value;
+  var conf = (document.getElementById('r_password_confirm')||{value:''}).value;
+  if (!pwd) { showToast('⚠️ Please create a password'); return false; }
+  var c = regPwdChecks(pwd);
+  var score = Object.values(c).filter(Boolean).length;
+  if (score < 3) { showToast('⚠️ Password too weak — use letters + numbers'); return false; }
+  if (conf && pwd !== conf) { showToast('⚠️ Passwords do not match'); return false; }
+  return true;
+}
+
+// Full 34-service catalog — synced from admin
+function _getPortalCatalog(){
+  try{
+    var s=JSON.parse(localStorage.getItem('hs_catalog')||'[]');
+    if(s&&s.length>0) return s.filter(function(x){return x.status!=='inactive';}).map(function(x){
+      return {name:x.name,icon:x.icon||'🔧',cat:x.cat||'Other',defaultPrice:x.userPrice||x.defaultPrice||499};
+    });
+  }catch(e){}
+  return [
+    {name:"House Maid",             icon:"🧹",cat:"Home Cleaning",   defaultPrice:499},
+    {name:"Deep Cleaning",          icon:"🧽",cat:"Home Cleaning",   defaultPrice:999},
+    {name:"Bathroom Cleaning",      icon:"🚿",cat:"Home Cleaning",   defaultPrice:399},
+    {name:"Kitchen Cleaning",       icon:"🍳",cat:"Home Cleaning",   defaultPrice:699},
+    {name:"Sofa / Carpet Cleaning", icon:"🛋️",cat:"Home Cleaning",   defaultPrice:599},
+    {name:"Laundry / Ironing",      icon:"👔",cat:"Home Cleaning",   defaultPrice:299},
+    {name:"AC Cleaning",            icon:"❄️",cat:"Appliance Care",  defaultPrice:799},
+    {name:"AC Repair",              icon:"🔩",cat:"Appliance Care",  defaultPrice:599},
+    {name:"Home Appliance Repair",  icon:"🫙",cat:"Appliance Care",  defaultPrice:599},
+    {name:"Water Purifier Service", icon:"💧",cat:"Appliance Care",  defaultPrice:499},
+    {name:"Plumber",                icon:"🔧",cat:"Repairs",         defaultPrice:499},
+    {name:"Electrician",            icon:"⚡",cat:"Repairs",         defaultPrice:499},
+    {name:"Carpenter",              icon:"🪚",cat:"Repairs",         defaultPrice:599},
+    {name:"Painter",                icon:"🎨",cat:"Repairs",         defaultPrice:699},
+    {name:"CCTV Installation",      icon:"📷",cat:"Repairs",         defaultPrice:899},
+    {name:"Solar Panel Cleaning",   icon:"☀️",cat:"Repairs",         defaultPrice:699},
+    {name:"Car Wash",               icon:"🚗",cat:"Vehicle Care",    defaultPrice:499},
+    {name:"Bike Wash",              icon:"🏍️",cat:"Vehicle Care",    defaultPrice:199},
+    {name:"4 Wheeler Mechanic",     icon:"🔧",cat:"Vehicle Care",    defaultPrice:599},
+    {name:"2 Wheeler Mechanic",     icon:"🛵",cat:"Vehicle Care",    defaultPrice:299},
+    {name:"Pest Control",           icon:"🐛",cat:"Pest Control",    defaultPrice:799},
+    {name:"Cook / Cooking Person",  icon:"🍱",cat:"Cooking",         defaultPrice:799},
+    {name:"Haircut (Men)",          icon:"✂️",cat:"Beauty & Wellness",defaultPrice:199},
+    {name:"Haircut (Women)",        icon:"💇",cat:"Beauty & Wellness",defaultPrice:349},
+    {name:"Full Body Massage",      icon:"💆",cat:"Beauty & Wellness",defaultPrice:999},
+    {name:"Gym / Fitness Trainer",  icon:"💪",cat:"Beauty & Wellness",defaultPrice:999},
+    {name:"Doctor Visit",           icon:"👨‍⚕️",cat:"Medical",       defaultPrice:699},
+    {name:"Nurse Visit",            icon:"💉",cat:"Medical",         defaultPrice:399},
+    {name:"Lab Test Collection",    icon:"🧪",cat:"Medical",         defaultPrice:199},
+    {name:"Babysitter / Nanny",     icon:"👶",cat:"Care Services",   defaultPrice:599},
+    {name:"Elderly Care",           icon:"🧓",cat:"Care Services",   defaultPrice:799},
+    {name:"Gardener",               icon:"🌱",cat:"Outdoor",         defaultPrice:399},
+    {name:"Driver",                 icon:"🚙",cat:"Outdoor",         defaultPrice:699},
+    {name:"Security Guard",         icon:"💂",cat:"Security",        defaultPrice:899},
+  ];
+}
+const SERVICES = _getPortalCatalog();
+
+function switchTab(tab){
+  const isLogin=tab==='login';
+  document.getElementById('panelLogin').classList.toggle('active',isLogin);
+  document.getElementById('panelRegister').classList.toggle('active',!isLogin);
+  document.getElementById('tabLogin').classList.toggle('active',isLogin);
+  document.getElementById('tabReg').classList.toggle('active',!isLogin);
+  if(!isLogin)buildPortalSvcGrid();
+  if(!isLogin && window._googleUid){
+    // Google user coming to register — show password optional note
+    setTimeout(function(){
+      var note = document.getElementById('passGoogleNote');
+      var req  = document.getElementById('passRequiredNote');
+      if(note) note.style.display = 'block';
+      if(req)  req.style.display  = 'none';
+    }, 350);
+  }
+}
+
+function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('loginPass').value.trim();
+  const err=document.getElementById('loginErr');
+  err.style.display='none';
+  if(!email||!pass){showErr('Please enter your email and password');return;}
+  if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showErr('Please enter a valid email address');return;}
+  // Demo shortcut
+  if(email==='demo@hamaraservice.in'&&pass==='demo123'){
+    const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
+    const demo=createDemo(providers);
+    localStorage.setItem('hs_current_provider',JSON.stringify(demo));
+    showToast('✅ Login successful! Redirecting...');
+    setTimeout(()=>window.location.href='provider-dashboard.html',800);
+    return;
+  }
+  showToast('🔍 Checking credentials...');
+  // Query Firebase REST directly — works on ANY device, ANY browser
+  fbRest('GET', 'providers', null, function(err, data){
+    if(err || !data){
+      showErr('Connection error. Please check your internet and try again.');
+      return;
+    }
+    // Find provider by email
+    var found = null;
+    Object.keys(data).forEach(function(key){
+      var p = data[key];
+      if(p && p.email && p.email.toLowerCase() === email && p.password === pass){
+        found = p;
+      }
+    });
+    if(!found){
+      showErr('Email or password incorrect. Please check and try again.');
+      return;
+    }
+    var pStatus = found.status || 'pending';
+    if(pStatus === 'pending'){ showWaitingScreen(found); return; }
+    if(pStatus === 'suspended'){ showErr('Account suspended. Contact: 8985849710'); return; }
+    // Login success — store for session only
+    localStorage.setItem('hs_current_provider', JSON.stringify(found));
+    showToast('✅ Login successful! Redirecting...');
+    setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 800);
+  });
+}
+
+function showErr(msg){const e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
+
+function createDemo(providers){
+  const demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
+  const idx=providers.findIndex(p=>p.id==='HS-PRO-DEMO');
+  if(idx===-1)providers.push(demo);else providers[idx]=demo;
+  localStorage.setItem('hs_providers',JSON.stringify(providers));
+  return demo;
+}
+
+let currentStep=1,regMap=null,regMarker=null,regCircle=null,regLat=null,regLng=null,regRadius=5,regAddress='';
+
+function nextStep(from){
+  if(!validateStep(from)) return;
+  if(from===3) buildSummary();
+  goToStep(from+1);
+  if(from===1) { try { buildPortalSvcGrid(); } catch(e){ console.warn('svc grid err:',e); } }
+}
+function prevStep(from){goToStep(from-1);}
+function goToStep(n){
+  document.querySelectorAll('.form-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('step'+n)?.classList.add('active');
+  currentStep=n;
+  for(let i=1;i<=4;i++){
+    const d=document.getElementById('sd'+i);
+    const l=document.getElementById('sl'+i);
+    if(d){d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);}
+    if(l)l.classList.toggle('done',i<n);
+  }
+  if(n===3)setTimeout(initMap,200);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function validateStep(n){
+  if(n===1){
+    if(!document.getElementById('r_name').value.trim()){showToast('⚠️ Enter your full name');return false;}
+    const phone=document.getElementById('r_phone').value.trim();
+    if(!phone||phone.length!==10||!/^\d+$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return false;}
+    const email=document.getElementById('r_email').value.trim();
+    if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showToast('⚠️ Enter a valid email address — you will use it to login');return false;}
+    if(!regValidatePasswords()) return false;
+    if(!document.getElementById('r_exp').value){showToast('⚠️ Select your experience');return false;}
+    if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
+    if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
+    // Email uniqueness is enforced during Firebase write
+    return true;
+  }
+  if(n===2){if(getSelectedServices().length===0){showToast('⚠️ Select at least one service');return false;}return true;}
+  if(n===3){if(!regLat){showToast('⚠️ Please set your location on the map');return false;}return true;}
+  return true;
+}
+
+var _portalActiveCat = 'All';
+
+// ── Firebase price cache ─────────────────────────────────────────────────────
+var _fbPrices = {}; // { SVC001: { sweep:{1bhk:149,...}, ... }, ... }
+
+// Sub-category config matching hs-prices.html SVC config
+var SVC_SUBCATS = {
+  'House Maid':            { id:'SVC001', subs:[
+    {k:'sweep.1bhk',name:'Sweeping – 1 BHK',    def:149},
+    {k:'sweep.2bhk',name:'Sweeping – 2 BHK',    def:249},
+    {k:'sweep.3bhk',name:'Sweeping – 3 BHK',    def:349},
+    {k:'dust.1bhk', name:'Dusting – 1 BHK',     def:199},
+    {k:'dishes.daily',name:'Dishwashing – Daily',def:149},
+  ]},
+  'Deep Cleaning':         { id:'SVC002', subs:[
+    {k:'bhk.1bhk',  name:'With Material – 1 BHK',   def:999},
+    {k:'bhk.2bhk',  name:'With Material – 2 BHK',   def:1499},
+    {k:'bhk.3bhk',  name:'With Material – 3 BHK',   def:1999},
+    {k:'without.1bhk',name:'Without Material – 1 BHK',def:749},
+    {k:'without.2bhk',name:'Without Material – 2 BHK',def:1124},
+  ]},
+  'Bathroom Cleaning':     { id:'SVC003', subs:[
+    {k:'with.perBath',   name:'With Material (per bathroom)',   def:399},
+    {k:'without.perBath',name:'Without Material (per bathroom)',def:299},
+    {k:'addon.bathtub',  name:'Bathtub Deep Clean',            def:199},
+    {k:'addon.shower',   name:'Glass Shower Cabin',            def:149},
+  ]},
+  'Kitchen Cleaning':      { id:'SVC004', subs:[
+    {k:'with.tiles',   name:'Tiles & Walls',          def:199},
+    {k:'with.cabinets',name:'Cabinets',                def:249},
+    {k:'with.stove',   name:'Stove & Countertop',      def:249},
+    {k:'without.tiles',name:'Tiles (manpower)',        def:149},
+    {k:'without.stove',name:'Stove (manpower)',        def:187},
+  ]},
+  'Sofa / Carpet Cleaning':{ id:'SVC005', subs:[
+    {k:'sofa.1seater',     name:'Sofa – 1 Seater',        def:399},
+    {k:'sofa.2seater',     name:'Sofa – 2 Seater',        def:599},
+    {k:'sofa.3seater',     name:'Sofa – 3 Seater',        def:799},
+    {k:'carpet.small',     name:'Carpet – Small',         def:399},
+    {k:'carpet.large',     name:'Carpet – Large',         def:899},
+    {k:'mattress.with',    name:'Mattress (per item)',     def:299},
+  ]},
+  'AC Cleaning':           { id:'SVC007B', subs:[
+    {k:'svc.filter',      name:'Filter Clean (1 Ton)',    def:399},
+    {k:'svc.deepclean',   name:'Deep Clean (1.5 Ton)',    def:799},
+    {k:'svc.outdoor',     name:'Outdoor Unit',            def:399},
+  ]},
+  'AC Repair':             { id:'SVC007C', subs:[
+    {k:'svc.gas',         name:'Gas Refill',              def:1200},
+    {k:'svc.notcooling',  name:'Not Cooling',             def:499},
+    {k:'svc.notstarting', name:'Not Starting',            def:499},
+    {k:'svc.water',       name:'Water Leakage',           def:399},
+  ]},
+  'Plumber':               { id:'SVC010', subs:[
+    {k:'svc.leak',        name:'Pipe Leak Fix',           def:199},
+    {k:'svc.blockage',    name:'Blockage / Drain',        def:299},
+    {k:'svc.toilet',      name:'Toilet Repair',           def:249},
+    {k:'svc.tapfit',      name:'Tap Repair / Fit',        def:249},
+    {k:'svc.motor',       name:'Motor / Pump Install',    def:399},
+  ]},
+  'Electrician':           { id:'SVC011', subs:[
+    {k:'svc.mcb',         name:'MCB / Fuse Fix',          def:199},
+    {k:'svc.fan',         name:'Fan Install / Repair',    def:299},
+    {k:'svc.light',       name:'Light Fitting',           def:199},
+    {k:'svc.wiring',      name:'Wiring Work',             def:299},
+  ]},
+  'Carpenter':             { id:'SVC012', subs:[
+    {k:'svc.door',        name:'Door Repair',             def:299},
+    {k:'svc.furniture',   name:'Furniture Repair',        def:349},
+    {k:'svc.wardrobe',    name:'Wardrobe Install',        def:349},
+    {k:'svc.assembly',    name:'Furniture Assembly',      def:499},
+  ]},
+  'Pest Control':          { id:'SVC018', subs:[
+    {k:'pest.cockroach',  name:'Cockroach Control',       def:999},
+    {k:'pest.rodent',     name:'Rat / Rodent Control',    def:1299},
+    {k:'pest.mosquito',   name:'Mosquito Control',        def:999},
+    {k:'pest.termite',    name:'Termite Control',         def:2499},
+    {k:'pest.bedbug',     name:'Bed Bug Treatment',       def:1999},
+    {k:'pest.general',    name:'General Full Home',       def:1999},
+  ]},
+  'Cook / Cooking Person': { id:'SVC019', subs:[
+    {k:'svc.breakfast',   name:'Breakfast Cooking',       def:299},
+    {k:'svc.lunch',       name:'Lunch Cooking',           def:399},
+    {k:'svc.dinner',      name:'Dinner Cooking',          def:349},
+    {k:'svc.fullday',     name:'Full Day Cook',           def:799},
+    {k:'svc.party',       name:'Party / Function',        def:1499},
+  ]},
+  'Haircut (Men)':         { id:'SVC023', subs:[
+    {k:'svc.haircut',     name:'Haircut',                 def:249},
+    {k:'svc.shave',       name:'Clean Shave',             def:199},
+    {k:'svc.beardtrim',   name:'Beard Trim',              def:199},
+    {k:'svc.combo',       name:'Grooming Combo',          def:999},
+  ]},
+  'Haircut (Women)':       { id:'SVC024', subs:[
+    {k:'cut.trim',        name:'Trim / Basic Cut',        def:349},
+    {k:'facial.basic',    name:'Basic Facial',            def:499},
+    {k:'makeup.party',    name:'Party Makeup',            def:1499},
+  ]},
+  'Full Body Massage':     { id:'SVC025', subs:[
+    {k:'base.price',      name:'Per Session (base)',      def:999},
+  ]},
+  'Doctor Visit':          { id:'SVC026', subs:[
+    {k:'visit.general',   name:'General Consultation',    def:599},
+    {k:'visit.elderly',   name:'Elderly Check-Up',        def:799},
+    {k:'visit.urgent',    name:'Urgent / Emergency',      def:999},
+  ]},
+  'Nurse Visit':           { id:'SVC027', subs:[
+    {k:'svc.injection',   name:'Injection / Vaccination', def:399},
+    {k:'svc.dressing',    name:'Wound Dressing',          def:499},
+    {k:'svc.fullday',     name:'Full Day Nurse (8 hrs)',  def:1999},
+  ]},
+  'Car Wash':              { id:'SVC016', subs:[
+    {k:'car.exterior',    name:'Exterior Car Cleaning',   def:299},
+    {k:'car.interior',    name:'Interior Cleaning',       def:249},
+    {k:'car.premium',     name:'Premium Cleaning',        def:499},
+  ]},
+  'Bike Wash':             { id:'SVC016B', subs:[
+    {k:'svc.bike_exterior',name:'Exterior Bike Clean',    def:149},
+    {k:'svc.bike_chain',   name:'Chain & Engine Area',    def:99},
+    {k:'svc.bike_premium', name:'Premium Bike Wash',      def:199},
+  ]},
+  '4 Wheeler Mechanic':    { id:'SVC017C', subs:[
+    {k:'svc.car_service',   name:'General Car Service',   def:599},
+    {k:'svc.car_oilchange', name:'Oil & Filter Change',   def:499},
+    {k:'svc.car_battery',   name:'Battery Check',         def:399},
+  ]},
+  '2 Wheeler Mechanic':    { id:'SVC017B', subs:[
+    {k:'svc.bike_service',  name:'General Bike Service',  def:299},
+    {k:'svc.bike_oilchange',name:'Engine Oil Change',     def:249},
+    {k:'svc.bike_tyre',     name:'Tyre Puncture / Change',def:149},
+  ]},
+  'Security Guard':        { id:'SVC020', subs:[
+    {k:'type.daytime',    name:'Daytime Guard (8 hrs)',   def:899},
+    {k:'type.nighttime',  name:'Night Guard (8 hrs)',     def:999},
+    {k:'type.fullday',    name:'Full Day Guard (12 hrs)', def:1699},
+    {k:'type.bouncer',    name:'Event Bouncer',           def:1299},
+  ]},
+  'Driver':                { id:'SVC021', subs:[
+    {k:'car.local',       name:'Car – Local / City',      def:299},
+    {k:'car.fullday',     name:'Car – Full Day (8 hrs)',  def:699},
+    {k:'auto.local',      name:'Auto – Local',            def:199},
+  ]},
+  'Gym / Fitness Trainer': { id:'SVC022', subs:[
+    {k:'svc.weightloss',  name:'Weight Loss Training',    def:599},
+    {k:'svc.muscle',      name:'Muscle Building',         def:649},
+    {k:'svc.yoga',        name:'Yoga & Flexibility',      def:499},
+    {k:'svc.monthly',     name:'Monthly Package',         def:5999},
+  ]},
+  'Babysitter / Nanny':    { id:'SVC029', subs:[
+    {k:'care.half',       name:'Half Day (4 hrs)',        def:599},
+    {k:'care.fullday',    name:'Full Day (8–10 hrs)',     def:999},
+    {k:'care.monthly',    name:'Monthly Nanny',           def:18999},
+  ]},
+  'Elderly Care':          { id:'SVC030', subs:[
+    {k:'care.half',       name:'Half Day Care (4 hrs)',   def:799},
+    {k:'care.fullday',    name:'Full Day Care (8 hrs)',   def:1299},
+    {k:'care.monthly',    name:'Monthly Plan',            def:24999},
+  ]},
+};
+
+// Get live price from Firebase cache
+function _getSubPrice(svcId, subKey) {
+  var parts = subKey.split('.');
+  var grp = parts[0], key = parts[1];
+  var d = _fbPrices[svcId];
+  if (d && d[grp] && d[grp][key] !== undefined) return d[grp][key];
+  return null;
+}
+
+// Fetch all prices from Firebase once
+function _loadFirebasePrices(cb) {
+  var API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  // Get anonymous token first
+  var x = new XMLHttpRequest();
+  x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+API,true);
+  x.setRequestHeader('Content-Type','application/json');
+  x.onload = function(){
+    try {
+      var tok = JSON.parse(x.responseText).idToken || '';
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', DB+'/hs_service_prices.json?auth='+tok, true);
+      xhr.timeout = 6000;
+      xhr.onload = function(){
+        try { _fbPrices = JSON.parse(xhr.responseText) || {}; } catch(e) {}
+        if (cb) cb();
+      };
+      xhr.onerror = function(){ if (cb) cb(); };
+      xhr.send();
+    } catch(e) { if (cb) cb(); }
+  };
+  x.onerror = function(){ if (cb) cb(); };
+  x.send(JSON.stringify({returnSecureToken:true}));
+}
+
+function buildSvcGrid(){
+  var grid = document.getElementById('svcGrid');
+  if (!grid) return;
+
+  // Add Firebase banner
+  if (!document.getElementById('fbPriceBanner')) {
+    var banner = document.createElement('div');
+    banner.id = 'fbPriceBanner';
+    banner.className = 'svc-firebase-banner';
+    banner.innerHTML = '⏳ Loading live prices from Firebase…';
+    grid.parentNode.insertBefore(banner, grid);
+  }
+
+  // Category tabs
+  var tabsId = 'portalCatTabs';
+  if (!document.getElementById(tabsId)) {
+    var tabsWrap = document.createElement('div');
+    tabsWrap.id = tabsId;
+    tabsWrap.style.cssText = 'display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;';
+    grid.parentNode.insertBefore(tabsWrap, grid);
+  }
+
+  // Load Firebase prices then render
+  _loadFirebasePrices(function(){
+    var banner2 = document.getElementById('fbPriceBanner');
+    if (banner2) banner2.innerHTML = '✅ Live prices loaded — set your rate for each sub-service below';
+    _renderPortalCatTabs();
+    _renderPortalChips();
+  });
+}
+
+function _renderPortalCatTabs() {
+  var wrap = document.getElementById('portalCatTabs');
+  if (!wrap) return;
+  var cats = ['All'];
+  SERVICES.forEach(function(s){ if(s.cat && cats.indexOf(s.cat)===-1) cats.push(s.cat); });
+  wrap.innerHTML = '';
+  cats.forEach(function(c){
+    var btn = document.createElement('button');
+    btn.textContent = c === 'All' ? '⭐ All' : c;
+    btn.style.cssText = 'padding:6px 13px;border:2px solid '+(c===_portalActiveCat?'var(--teal)':'var(--border)')+';border-radius:100px;background:'+(c===_portalActiveCat?'var(--teal)':'var(--bg)')+';color:'+(c===_portalActiveCat?'white':'var(--muted)')+';font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;';
+    btn.onclick = function(){ setPortalCat(c); };
+    wrap.appendChild(btn);
+  });
+}
+
+function setPortalCat(cat) {
+  _portalActiveCat = cat;
+  _renderPortalCatTabs();
+  _renderPortalChips();
+}
+
+function _renderPortalChips() {
+  var grid = document.getElementById('svcGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  var filtered = _portalActiveCat === 'All' ? SERVICES : SERVICES.filter(function(s){ return s.cat === _portalActiveCat; });
+
+  filtered.forEach(function(s) {
+    // Main chip
+    var chip = document.createElement('div');
+    chip.className = 'svc-chip';
+    chip.dataset.name = s.name;
+    chip.dataset.icon = s.icon;
+    chip.style.cssText = 'position:relative;';
+
+    // Price badge (shown when selected)
+    var subConf = SVC_SUBCATS[s.name];
+    chip.innerHTML = '<div class="svc-icon">'+s.icon+'</div>'
+      + '<div class="svc-name">'+s.name+'</div>'
+      + '<div style="font-size:9px;color:#718096;margin-top:3px;">from ₹'+s.defaultPrice+'</div>'
+      + '<div class="svc-price-badge" id="badge-'+s.name.replace(/\s/g,'_')+'">✓ Selected</div>';
+
+    // Toggle selection + sub-panel
+    chip.onclick = function() {
+      var wasSelected = chip.classList.contains('selected');
+      chip.classList.toggle('selected');
+      var subPanel = document.getElementById('subpanel-' + s.name.replace(/\s/g,'_'));
+      if (subPanel) {
+        subPanel.classList.toggle('show', !wasSelected);
+        if (!wasSelected) {
+          setTimeout(function(){ subPanel.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 50);
+        }
+      }
+    };
+    grid.appendChild(chip);
+
+    // Sub-category panel — shown after chip
+    if (subConf && subConf.subs && subConf.subs.length > 0) {
+      var panel = document.createElement('div');
+      panel.className = 'svc-subpanel';
+      panel.id = 'subpanel-' + s.name.replace(/\s/g,'_');
+
+      var panelHtml = '<div class="svc-subpanel-title">'+s.icon+' '+s.name+' — Set Your Rate Per Sub-Service</div>';
+      panelHtml += '<div class="svc-subpanel-grid">';
+
+      subConf.subs.forEach(function(sub) {
+        var livePrice = _getSubPrice(subConf.id, sub.k);
+        var custPrice = livePrice !== null ? livePrice : sub.def;
+        var provDef   = Math.round(custPrice * 0.7); // provider gets ~70% by default
+        panelHtml += '<div class="svc-subitem">'
+          + '<div class="svc-subitem-name">'+sub.name+'</div>'
+          + '<div class="svc-subitem-customer">Customer pays: <b>₹'+custPrice+'</b></div>'
+          + '<input class="svc-subitem-inp" type="number" value="'+provDef+'" min="1"'
+          + ' data-subkey="'+sub.k+'" data-custprice="'+custPrice+'"'
+          + ' placeholder="Your rate" onclick="event.stopPropagation()" />'
+          + '<div class="svc-subitem-lbl">Your rate (₹)</div>'
+          + '</div>';
+      });
+
+      panelHtml += '</div>';
+      panel.innerHTML = panelHtml;
+      grid.appendChild(panel);
+    } else {
+      // No sub-cats — just a simple price input panel
+      var panel2 = document.createElement('div');
+      panel2.className = 'svc-subpanel';
+      panel2.id = 'subpanel-' + s.name.replace(/\s/g,'_');
+      panel2.innerHTML = '<div class="svc-subpanel-title">'+s.icon+' '+s.name+' — Set Your Rate</div>'
+        + '<div style="display:flex;align-items:center;gap:12px;padding:4px 0;">'
+        + '<span style="font-size:13px;color:#718096;">Customer pays: <b style="color:#1B6B7A;">from ₹'+s.defaultPrice+'</b></span>'
+        + '<div><input class="svc-subitem-inp" type="number" value="'+Math.round(s.defaultPrice*0.7)+'" min="1"'
+        + ' data-subkey="base" data-custprice="'+s.defaultPrice+'" placeholder="Your rate"'
+        + ' style="width:110px;" onclick="event.stopPropagation()" />'
+        + '<div class="svc-subitem-lbl">Your rate (₹)</div></div>'
+        + '</div>';
+      grid.appendChild(panel2);
+    }
+  });
+}
+
+
+function initMap(){
+  if(regMap){regMap.invalidateSize();return;}
+  regMap=L.map('regMap').setView([17.3850,78.4867],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19}).addTo(regMap);
+  regMap.on('click',e=>{regLat=e.latlng.lat;regLng=e.latlng.lng;placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);});
+}
+
+function placeMarker(lat,lng){
+  if(regMarker)regMap.removeLayer(regMarker);
+  if(regCircle)regMap.removeLayer(regCircle);
+  regMarker=L.marker([lat,lng],{draggable:true,icon:L.divIcon({html:`<div style="font-size:36px;margin-top:-36px;margin-left:-14px;filter:drop-shadow(0 3px 8px rgba(232,37,26,0.5))">📍</div>`,className:'',iconSize:[28,36],iconAnchor:[14,36]})}).addTo(regMap);
+  regMarker.on('dragend',e=>{const ll=e.target.getLatLng();regLat=ll.lat;regLng=ll.lng;drawCircle();reverseGeocode(regLat,regLng);});
+  drawCircle();
+}
+
+function drawCircle(){
+  if(regCircle)regMap.removeLayer(regCircle);
+  if(!regLat)return;
+  regCircle=L.circle([regLat,regLng],{radius:regRadius*1000,color:'#1B6B7A',fillColor:'#1B6B7A',fillOpacity:0.08,weight:2,dashArray:'6,4'}).addTo(regMap);
+}
+
+function updateRadius(val){
+  regRadius=parseInt(val);
+  document.getElementById('radiusLabel').textContent=val+' km';
+  const pct=((val-1)/(50-1)*100).toFixed(1);
+  document.getElementById('radiusSlider').style.background=`linear-gradient(to right,var(--teal) 0%,var(--teal) ${pct}%,var(--border) ${pct}%)`;
+  drawCircle();
+}
+
+function searchLoc(){
+  const q=document.getElementById('locSearch').value.trim();
+  if(!q){showToast('⚠️ Enter a location');return;}
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(res=>{
+      if(!res.length){showToast('❌ Location not found');return;}
+      regLat=+res[0].lat;regLng=+res[0].lon;
+      regMap.setView([regLat,regLng],14);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
+    }).catch(()=>showToast('❌ Search failed'));
+}
+
+function useGPS(){
+  if(!navigator.geolocation){showToast('❌ GPS not available');return;}
+  showToast('🎯 Getting location...');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    regLat=pos.coords.latitude;regLng=pos.coords.longitude;
+    regMap.setView([regLat,regLng],15);placeMarker(regLat,regLng);reverseGeocode(regLat,regLng);
+    showToast('✅ Location detected!');
+  },()=>showToast('❌ GPS failed. Click on map instead.'));
+}
+
+function reverseGeocode(lat,lng){
+  document.getElementById('addrBox').textContent='⏳ Fetching address...';
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(d=>{
+      const a=d.address||{};
+      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
+      regAddress=parts.join(', ')||d.display_name;
+      document.getElementById('addrBox').textContent='📍 '+regAddress;
+    }).catch(()=>{regAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;document.getElementById('addrBox').textContent='📍 '+regAddress;});
+}
+
+function buildSummary(){
+  const svcs=getSelectedServices();
+  const rows=[
+    ['Name',document.getElementById('r_name').value],
+    ['Mobile',document.getElementById('r_phone').value],
+    ['Login Email',document.getElementById('r_email').value||'—'],
+    ['Experience',document.getElementById('r_exp').value],
+    ['ID Proof',document.getElementById('r_idtype').value+': '+document.getElementById('r_idnum').value],
+    ['Services',svcs.map(s=>s.icon+' '+s.name+' ₹'+s.price).join(' | ')],
+    ['Location',regAddress||`${regLat?.toFixed(4)}, ${regLng?.toFixed(4)}`],
+    ['Service Radius',regRadius+' km'],
+  ];
+  document.getElementById('summaryBox').innerHTML=rows.map(([l,v])=>`<div class="summary-row"><span class="summary-label">${l}</span><span class="summary-value">${v}</span></div>`).join('');
+}
+
+function submitRegistration(){
+  const rawName=document.getElementById('r_name').value.trim();
+  const rawPhone=document.getElementById('r_phone').value.trim();
+  const rawPass=document.getElementById('r_password').value.trim() || (window._googleUid ? 'google-auth-'+window._googleUid.slice(0,8) : '');
+  // ID = first 4 letters of name (uppercase, letters only) + last 4 digits of phone
+  const namePart=rawName.replace(/[^a-zA-Z]/g,'').toUpperCase().padEnd(4,'X').slice(0,4);
+  const phonePart=rawPhone.slice(-4);
+  const id='HS-PRO-'+namePart+phonePart;
+  // Check Firebase for duplicate email (works across all devices)
+  var regEmail = document.getElementById('r_email').value.trim().toLowerCase();
+  showToast('⏳ Checking...');
+  // Check Firebase directly — works across ALL devices
+  fbRest('GET', 'providers/'+id, null, function(err, existing){
+    if(!err && existing && existing.id){
+      showToast('⚠️ Already registered. Please login.'); return;
+    }
+    _doRegister(id, rawName, rawPhone, rawPass, regEmail);
+  });
+}
+
+function _doRegister(id, rawName, rawPhone, rawPass, regEmail){
+  var provider={
+    id:id,
+    name:rawName,
+    phone:rawPhone,
+    password:rawPass,
+    email:document.getElementById('r_email').value.trim(),
+    whatsapp:document.getElementById('r_whatsapp').value.trim()||document.getElementById('r_phone').value.trim(),
+    gender:document.getElementById('r_gender').value,
+    experience:document.getElementById('r_exp').value,
+    bio:document.getElementById('r_bio').value.trim(),
+    idType:document.getElementById('r_idtype').value,
+    idNum:document.getElementById('r_idnum').value.trim(),
+    services:getSelectedServices(),
+    lat:regLat,lng:regLng,address:regAddress,
+    radius:regRadius,
+    rating:0,reviews:0,
+    totalBookings:0,completedBookings:0,
+    totalEarned:0,pendingEarned:0,withdrawnEarned:0,
+    available:true,
+    registeredAt:new Date().toISOString()
+  };
+  // Mark as pending — admin must approve before provider can log in
+  provider.status = 'pending';
+  provider.appliedAt = new Date().toISOString();
+  // Save to Firebase with success/error feedback
+  showToast('⏳ Saving registration...');
+  saveProviderToFirebase(provider, function(){
+    // ✅ Saved successfully
+    sendProviderRegistrationEmail(provider);
+    showRegistrationSuccess(provider.id);
+  }, function(err){
+    // ❌ Save failed — show error, let user retry
+    showToast('❌ Failed to save: ' + (err ? err.message : 'network error') + '. Please try again.');
+  });
+}
+
+function showRegistrationSuccess(id){
+  // Show pending approval screen
+  document.querySelectorAll('.form-card').forEach(function(card){ card.classList.remove('active'); });
+  var succ = document.getElementById('stepSuccess');
+  if(succ){
+    succ.classList.add('active');
+    succ.innerHTML =
+      '<div style="text-align:center;padding:32px 20px;">'+
+      '<div style="font-size:60px;margin-bottom:18px;">&#x23F3;</div>'+
+      '<h2 style="font-family:Sora,sans-serif;color:#E8251A;margin-bottom:12px;">Registration Submitted!</h2>'+
+      '<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:20px;">'+
+        'Your application has been received.<br/>'+
+        '<strong style="color:#0f1117;">Waiting for Admin Approval.</strong><br/><br/>'+
+        'You will be able to log in once your account is approved.'+
+      '</p>'+
+      '<div style="background:#fff3eb;border:2px solid rgba(232,101,26,.25);border-radius:14px;padding:18px;margin-bottom:20px;">'+
+        '<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">For faster approval, contact Admin</div>'+
+        '<a href="tel:8985849710" style="font-size:26px;font-weight:800;color:#E8251A;text-decoration:none;display:block;margin-bottom:4px;">&#x1F4DE; 8985849710</a>'+
+        '<div style="font-size:13px;color:#6b7280;">Call or WhatsApp</div>'+
+      '</div>'+
+      '<div style="background:#f7f8fc;border-radius:12px;padding:14px 16px;margin-bottom:20px;text-align:left;">'+
+        '<div style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Your Provider ID</div>'+
+        '<div style="font-size:18px;font-weight:800;color:#6c4ff8;">'+id+'</div>'+
+        '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Save this — needed to log in after approval</div>'+
+      '</div>'+
+      '<a href="provider-portal.html" style="display:inline-block;padding:13px 28px;background:#E8251A;color:white;border-radius:10px;font-weight:700;text-decoration:none;font-family:DM Sans,sans-serif;">Back to Login</a>'+
+      '</div>';
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── PROVIDER GOOGLE SIGN-IN ──────────────────────────────────────
+function providerGoogleSignIn(){
+  fbAuth.signInWithPopup(googleProvider)
+    .then(function(result){
+      var user = result.user;
+      // Check if this Google account is linked to a provider
+      // First check localStorage for existing provider with this Google UID or email
+      var localProviders = []; // always check Firebase directly
+      var localFound = localProviders.find(function(p){ return p.googleUid===user.uid || (p.email&&p.email.toLowerCase()===user.email.toLowerCase()); });
+      if(localFound){
+        var lStatus = localFound.status || 'pending';
+        if(lStatus === 'approved'){
+          localStorage.setItem('hs_current_provider', JSON.stringify(localFound));
+          showToast('Welcome back, '+localFound.name+'!');
+          setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
+        } else {
+          showWaitingScreen(localFound);
+        }
+        return;
+      }
+      fbDB.ref('providers').orderByChild('googleUid').equalTo(user.uid).once('value', function(snap){
+        var found = null;
+        snap.forEach(function(child){ found = child.val(); });
+        if(found){
+          // Existing provider — check approval status
+          var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+          if(!allProvs.find(function(p){return p.id===found.id;})) allProvs.push(found);
+          localStorage.setItem('hs_providers', JSON.stringify(allProvs));
+          var gStatus = found.status || 'pending';
+          if(gStatus === 'approved'){
+            localStorage.setItem('hs_current_provider', JSON.stringify(found));
+            showToast('Welcome back, '+found.name+'!');
+            setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
+          } else if(gStatus === 'suspended'){
+            showToast('Account suspended. Contact: 8985849710');
+            showWaitingScreen(found);
+          } else {
+            showWaitingScreen(found);
+          }
+        } else {
+          // New provider — switch to register tab and pre-fill Google data
+          switchTab('register');
+          window.scrollTo({top:0,behavior:'smooth'});
+          setTimeout(function(){
+            var nameEl = document.getElementById('r_name');
+            var emailEl = document.getElementById('r_email');
+            if(nameEl) nameEl.value = user.displayName || '';
+            if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
+            // Store Google UID and photo for linking at submit time
+            window._googleUid = user.uid;
+            window._googlePhoto = user.photoURL || '';
+            showToast('✅ Google verified! Your name & email are pre-filled. Complete the form to register.');
+          }, 300);
+        }
+      }).catch(function(){
+        // Firebase offline — still allow registration flow
+        switchTab('register');
+        window.scrollTo({top:0,behavior:'smooth'});
+        setTimeout(function(){
+          var nameEl = document.getElementById('r_name');
+          var emailEl = document.getElementById('r_email');
+          if(nameEl) nameEl.value = user.displayName || '';
+          if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
+          window._googleUid = user.uid;
+          window._googlePhoto = user.photoURL || '';
+          showToast('✅ Google verified! Complete your registration below.');
+        }, 300);
+      });
+    })
+    .catch(function(err){
+      if(err.code !== 'auth/popup-closed-by-user'){
+        showToast('⚠️ Google sign-in failed: '+(err.message||err.code));
+      }
+    });
+}
+
+// Save provider to Firebase after registration (called inside submitRegistration)
+function saveProviderToFirebase(prov, onSuccess, onError){
+  if(window._googleUid) prov.googleUid = window._googleUid;
+  if(window._googlePhoto) prov.photo = window._googlePhoto;
+  // Use fbRest (REST API with anon token) — works everywhere, no SDK needed
+  fbRest('PUT', 'providers/'+prov.id, prov, function(err, data){
+    if(err){
+      console.warn('Firebase save failed:', err.message);
+      if(onError) onError(err);
+    } else {
+      console.log('Provider saved to Firebase:', prov.id);
+      if(onSuccess) onSuccess(data);
+    }
+  });
+}
+
+// Firebase sync after login (non-blocking)
+function syncProviderFromFirebase(){
+  var prov = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
+  if(prov && prov.id){
+    fbDB.ref('providers/'+prov.id).once('value', function(snap){
+      if(snap.exists()){
+        var fbProv = snap.val();
+        localStorage.setItem('hs_current_provider', JSON.stringify(fbProv));
+        var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
+        var idx = allProvs.findIndex(function(p){ return p.id===fbProv.id; });
+        if(idx>-1) allProvs[idx]=fbProv; else allProvs.push(fbProv);
+        localStorage.setItem('hs_providers', JSON.stringify(allProvs));
+      }
+    }).catch(function(){});
+  }
+}
+
+function fillDemo(){
+  document.getElementById('loginEmail').value = 'demo@hamaraservice.in';
+  document.getElementById('loginPass').value = 'demo123';
+  showToast('✅ Demo credentials filled — click Login!');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3200);}
+
+// Auto-redirect only if approved
+var _ex=localStorage.getItem('hs_current_provider');
+if(_ex){
+  try{
+    var _ep=JSON.parse(_ex);
+    if(_ep && _ep.id && _ep.status==='approved') window.location.href='provider-dashboard.html';
+  }catch(e){localStorage.removeItem('hs_current_provider');}
+}
+// Handle ?tab=register from homepage "Register as Provider" link
+(function(){
+  var urlTab = new URLSearchParams(window.location.search).get('tab');
+  if(urlTab === 'register') {
+    setTimeout(function(){ switchTab('register'); }, 100);
+  }
+})();
+
+function showWaitingScreen(prov){
+  var panelLogin = document.getElementById('panelLogin');
+  var panelReg   = document.getElementById('panelRegister');
+  if(panelLogin) panelLogin.style.display = 'none';
+  if(panelReg)   panelReg.style.display   = 'none';
+  var scr = document.getElementById('waitingScreen');
+  if(!scr){
+    scr = document.createElement('div');
+    scr.id = 'waitingScreen';
+    var wrap = document.querySelector('.auth-card')||document.querySelector('.auth-modal-box')||document.querySelector('.login-wrap')||document.body;
+    wrap.appendChild(scr);
+  }
+  scr.style.cssText = 'padding:28px 20px;text-align:center;';
+  var html = '';
+  html += '<div style="font-size:56px;margin-bottom:16px;">&#x23F3;</div>';
+  html += '<h2 style="font-family:Sora,sans-serif;color:#E8651A;margin-bottom:10px;">Waiting for Approval</h2>';
+  html += '<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:18px;">';
+  html += 'Hello <strong style="color:#0f1117;">'+(prov.name||'Provider')+'</strong>,<br/>';
+  html += 'Your registration is under review.<br/>You will get access once the admin approves.';
+  html += '</p>';
+  html += '<div style="background:#fff3eb;border:2px solid rgba(232,101,26,.25);border-radius:14px;padding:16px;margin-bottom:16px;">';
+  html += '<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Contact Admin</div>';
+  html += '<a href="tel:8985849710" style="font-size:26px;font-weight:800;color:#E8251A;text-decoration:none;display:block;margin-bottom:4px;">&#x1F4DE; 8985849710</a>';
+  html += '<div style="font-size:13px;color:#6b7280;">Call or WhatsApp for faster approval</div>';
+  html += '</div>';
+  html += '<div style="background:#f7f8fc;border-radius:12px;padding:12px 16px;margin-bottom:16px;text-align:left;">';
+  html += '<div style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Your Provider ID</div>';
+  html += '<div style="font-size:16px;font-weight:800;color:#6c4ff8;">'+(prov.id||'')+'</div>';
+  html += '</div>';
+  html += '<button id="_chkBtn" style="width:100%;padding:13px;background:#E8651A;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:DM Sans,sans-serif;">Check Approval Status</button>';
+  html += '<button id="_backBtn" style="width:100%;padding:12px;background:#f7f8fc;border:1.5px solid #eaedf2;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;font-family:DM Sans,sans-serif;">Back to Login</button>';
+  scr.innerHTML = html;
+  document.getElementById('_chkBtn').onclick = function(){
+    document.getElementById('_chkBtn').textContent='Checking...';
+    // Use fbRest — works from any device, any browser
+    fbRest('GET', 'providers/'+prov.id, null, function(err, data){
+      var btn = document.getElementById('_chkBtn');
+      if(err || !data){
+        if(btn) btn.textContent='Check Approval Status';
+        showToast('Network error - check internet and try again');
+        return;
+      }
+      if(data.status === 'approved'){
+        localStorage.setItem('hs_current_provider', JSON.stringify(data));
+        showToast('✅ Approved! Redirecting...');
+        setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 800);
+      } else {
+        if(btn) btn.textContent='Check Approval Status';
+        showToast('⏳ Not approved yet. Contact 8985849710');
+      }
+    });
+  };
+    document.getElementById('_backBtn').onclick = function(){
+    scr.style.display='none';
+    if(panelLogin) panelLogin.style.display='block';
+  };
+}
+// ── Email: provider registration + admin notification ─────────────────────────
+function sendProviderRegistrationEmail(provider) {
+  // Uses js/email-triggers.js → api/email.php → Hostinger SMTP
+  var serviceList = (provider.services||[]).map(function(s){ return s.name||s; }).join(', ');
+  emailProviderWelcome(provider.name, provider.email, provider.id, serviceList);
+  emailAdminProviderPending(provider);
+}
+
+
+
+function buildServices(){ return [
+{id:"SVC001",icon:"\ud83e\uddf9",name:"House Maid",cat:"Home Cleaning",tasks:[
+  {n:"Sweeping & Mopping",k:"sweep",variants:[
+    {key:"1bhk",lbl:"1 BHK",def:149},
+    {key:"2bhk",lbl:"2 BHK",def:249},
+    {key:"3bhk",lbl:"3 BHK",def:349},
+    {key:"4bhk",lbl:"4 BHK",def:449},
+    {key:"villa",lbl:"Villa / Bungalow",def:599},
+    {key:"studio",lbl:"Studio / 1 Room",def:99}
+  ]},
+  {n:"Dusting (incl. Sweeping & Mopping)",k:"dust",variants:[
+    {key:"1bhk",lbl:"1 BHK",def:199},
+    {key:"2bhk",lbl:"2 BHK",def:329},
+    {key:"3bhk",lbl:"3 BHK",def:449},
+    {key:"4bhk",lbl:"4 BHK",def:579},
+    {key:"villa",lbl:"Villa / Bungalow",def:749},
+    {key:"studio",lbl:"Studio / 1 Room",def:149}
+  ]},
+  {n:"Dishwashing",k:"dishes",variants:[
+    {key:"daily",lbl:"Daily (home)",def:149},
+    {key:"people",lbl:"Small gathering (10-20 people)",def:249},
+    {key:"event",lbl:"Party / Event (20-50 people)",def:499},
+    {key:"marriage",lbl:"Marriage / Big function (50+ people)",def:999}
+  ]},
+  {n:"Folding Clothes",k:"clothes",variants:[
+    {key:"base",lbl:"Standard",def:99}
+  ]},
+  {n:"Laundry (Washing)",k:"laundry",variants:[
+    {key:"base",lbl:"Standard",def:149}
+  ]}
+]},
+{id:"SVC002",icon:"\ud83e\uddfd",name:"Deep Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"Property Size",k:"bhk",variants:[
+    {key:"studio",lbl:"Studio / 1 Room",def:799},
+    {key:"1bhk",lbl:"1 BHK",def:999},
+    {key:"2bhk",lbl:"2 BHK",def:1499},
+    {key:"3bhk",lbl:"3 BHK",def:1999},
+    {key:"4bhk",lbl:"4 BHK+",def:2499},
+    {key:"rooms",lbl:"Individual Rooms",def:499}
+  ]},
+  {n:"Optional Add-ons",k:"extras",variants:[
+    {key:"mattress",lbl:"Mattress Shampooing",def:299},
+    {key:"carpet",lbl:"Carpet Cleaning",def:399},
+    {key:"sofashampoo",lbl:"Sofa Shampoo",def:499},
+    {key:"balcony",lbl:"Balcony Cleaning",def:199},
+    {key:"watertank",lbl:"Water Tank Cleaning",def:599},
+    {key:"pest",lbl:"Pest Control (Basic Spray)",def:799}
+  ]},
+  {n:"Home Condition",k:"condition",variants:[
+    {key:"regular",lbl:"Regular",def:0},
+    {key:"moderate",lbl:"Moderately Dirty",def:0},
+    {key:"dirty",lbl:"Heavy Dirty +\u20b9200",def:200},
+    {key:"renovation",lbl:"Post Renovation +\u20b9500",def:500}
+  ]}
+]},
+{id:"SVC003",icon:"\ud83d\udebf",name:"Bathroom Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"With Material (per bathroom)",k:"with",variants:[
+    {key:"perBath",lbl:"Per Bathroom (With Material)",def:399}
+  ]},
+  {n:"Without Material (per bathroom)",k:"without",variants:[
+    {key:"perBath",lbl:"Per Bathroom (Without Material)",def:299}
+  ]},
+  {n:"Condition",k:"condition",variants:[
+    {key:"normal",lbl:"Normal / Clean",def:0},
+    {key:"moderate",lbl:"Moderately Dirty",def:0},
+    {key:"dirty",lbl:"Very Dirty +\u20b9100",def:100},
+    {key:"mold",lbl:"Mold / Fungus +\u20b9150",def:150}
+  ]},
+  {n:"Add-ons",k:"addon",variants:[
+    {key:"bathtub",lbl:"Bathtub Deep Clean",def:199},
+    {key:"shower",lbl:"Glass Shower Cabin",def:149}
+  ]}
+]},
+{id:"SVC004",icon:"\ud83c\udf73",name:"Kitchen Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"Items to Clean",k:"svc",variants:[
+    {key:"tiles",lbl:"Wall Tiles",def:199},
+    {key:"cabinets",lbl:"Cabinets (Inside)",def:249},
+    {key:"chimney",lbl:"Chimney / Hood",def:199},
+    {key:"sink",lbl:"Sink & Drain",def:149},
+    {key:"stove",lbl:"Stove & Counter",def:249},
+    {key:"floor",lbl:"Floor Scrub",def:149}
+  ]},
+  {n:"Condition",k:"grease",variants:[
+    {key:"light",lbl:"Light / Regular",def:0},
+    {key:"heavy",lbl:"Heavy Grease / Long Overdue +\u20b9200",def:200}
+  ]}
+]},
+{id:"SVC005",icon:"\ud83d\udecb\ufe0f",name:"Sofa / Carpet Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"Sofa Type",k:"sofa",variants:[
+    {key:"1seater",lbl:"1 Seater",def:599},
+    {key:"2seater",lbl:"2 Seater",def:899},
+    {key:"3seater",lbl:"3 Seater",def:1199},
+    {key:"lshape",lbl:"L-Shape Sofa",def:1499},
+    {key:"5plus",lbl:"5+ Seater / Large",def:1799}
+  ]},
+  {n:"Carpet / Rug",k:"carpet",variants:[
+    {key:"small",lbl:"Small Carpet",def:399},
+    {key:"medium",lbl:"Medium Carpet",def:599},
+    {key:"large",lbl:"Large Carpet",def:799},
+    {key:"rug",lbl:"Rug Cleaning",def:249}
+  ]},
+  {n:"Mattress",k:"mattress",variants:[
+    {key:"mattress",lbl:"Mattress Cleaning",def:599}
+  ]},
+  {n:"Extras",k:"stain",variants:[
+    {key:"heavy",lbl:"Heavy Stain Removal +\u20b9200",def:200}
+  ]}
+]},
+{id:"SVC006",icon:"\ud83d\udc54",name:"Laundry & Ironing",cat:"Home Cleaning",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"wash",lbl:"Washing (Machine wash)",def:199},
+    {key:"dry",lbl:"Drying & Hanging",def:99},
+    {key:"fold",lbl:"Folding & Arranging",def:99},
+    {key:"iron",lbl:"Ironing / Pressing",def:149},
+    {key:"handwash",lbl:"Hand Wash (Delicates)",def:149}
+  ]}
+]},
+{id:"SVC007",icon:"\u2744\ufe0f",name:"AC Cleaning & Repair",cat:"Appliance Care",tasks:[
+  {n:"Cleaning Type",k:"clean",variants:[
+    {key:"filter",lbl:"Filter Cleaning",def:399},
+    {key:"deepclean",lbl:"Deep AC Cleaning",def:799},
+    {key:"outdoor",lbl:"Outdoor Unit Cleaning",def:399},
+    {key:"gas",lbl:"Gas Top-Up / Refill",def:1200}
+  ]},
+  {n:"Repair Type",k:"repair",variants:[
+    {key:"notcooling",lbl:"Not Cooling / Weak Cooling",def:499},
+    {key:"notstarting",lbl:"Not Starting / No Power",def:499},
+    {key:"water",lbl:"Water Leaking",def:399},
+    {key:"noise",lbl:"Unusual Noise / Vibration",def:399},
+    {key:"pcb",lbl:"PCB / Board Repair",def:999},
+    {key:"install",lbl:"New Installation",def:1499}
+  ]}
+]},
+{id:"SVC007B",icon:"\ud83c\udf2c\ufe0f",name:"AC Cleaning",cat:"Appliance Care",tasks:[
+  {n:"Cleaning Type",k:"clean",variants:[
+    {key:"filter",lbl:"Filter Cleaning",def:399},
+    {key:"deepclean",lbl:"Deep AC Cleaning",def:799},
+    {key:"outdoor",lbl:"Outdoor Unit Cleaning",def:399},
+    {key:"cassette",lbl:"Cassette / Ducted Unit",def:999}
+  ]},
+  {n:"AC Type",k:"actype",variants:[
+    {key:"split",lbl:"Split AC",def:0},
+    {key:"window",lbl:"Window AC",def:0},
+    {key:"cassette",lbl:"Cassette / Ducted +\u20b9200",def:200},
+    {key:"portable",lbl:"Portable AC",def:0}
+  ]}
+]},
+{id:"SVC007C",icon:"\ud83d\udd27",name:"AC Repair",cat:"Appliance Care",tasks:[
+  {n:"Repair Type",k:"repair",variants:[
+    {key:"notcooling",lbl:"Not Cooling / Weak Cooling",def:499},
+    {key:"notstarting",lbl:"Not Starting / No Power",def:499},
+    {key:"water",lbl:"Water Leaking",def:399},
+    {key:"noise",lbl:"Noise / Vibration",def:399},
+    {key:"gas",lbl:"Gas Refill / Top-Up",def:1299},
+    {key:"pcb",lbl:"PCB / Board Repair",def:999},
+    {key:"install",lbl:"New Installation",def:1499}
+  ]}
+]},
+{id:"SVC008",icon:"\ud83d\udd0c",name:"Home Appliance Repair",cat:"Appliance Care",tasks:[
+  {n:"Appliance Type",k:"appliance",variants:[
+    {key:"washingmachine",lbl:"Washing Machine",def:599},
+    {key:"refrigerator",lbl:"Refrigerator / Fridge",def:599},
+    {key:"geyser",lbl:"Geyser / Water Heater",def:499},
+    {key:"microwave",lbl:"Microwave Oven",def:499},
+    {key:"chimney",lbl:"Kitchen Chimney",def:499},
+    {key:"dishwasher",lbl:"Dishwasher",def:549},
+    {key:"mixer",lbl:"Mixer / Grinder",def:349},
+    {key:"waterpurifier",lbl:"Water Purifier",def:399},
+    {key:"tv",lbl:"TV / LED",def:549}
+  ]}
+]},
+{id:"SVC009",icon:"\ud83d\udca7",name:"Water Purifier Service",cat:"Appliance Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"routine",lbl:"Routine Service & Checkup",def:399},
+    {key:"filter",lbl:"Filter Replacement",def:299},
+    {key:"membrane",lbl:"RO Membrane Replacement",def:499},
+    {key:"nowater",lbl:"No Water Output",def:499},
+    {key:"leaking",lbl:"Leaking",def:349},
+    {key:"taste",lbl:"Taste / Smell Issue",def:349},
+    {key:"uvlamp",lbl:"UV Lamp Replace",def:299},
+    {key:"notstarting",lbl:"Not Starting",def:349},
+    {key:"install",lbl:"New Installation",def:699}
+  ]}
+]},
+{id:"SVC010",icon:"\ud83d\udd27",name:"Plumber",cat:"Repairs",tasks:[
+  {n:"Job Type",k:"svc",variants:[
+    {key:"leak",lbl:"Tap / Pipe Leaking",def:199},
+    {key:"blockage",lbl:"Blocked Drain / Pipeline",def:299},
+    {key:"toilet",lbl:"Toilet / Flush Tank",def:249},
+    {key:"tapfit",lbl:"Tap / Faucet Replacement",def:249},
+    {key:"shower",lbl:"Shower / Geyser Pipe",def:249},
+    {key:"motor",lbl:"Water Motor / Pump",def:599},
+    {key:"tank",lbl:"Overhead Tank",def:399},
+    {key:"bathroom",lbl:"Bathroom Plumbing",def:349},
+    {key:"newpipe",lbl:"New Pipe Laying",def:499}
+  ]}
+]},
+{id:"SVC011",icon:"\u26a1",name:"Electrician",cat:"Repairs",tasks:[
+  {n:"Job Type",k:"svc",variants:[
+    {key:"mcb",lbl:"MCB / Fuse Tripping",def:199},
+    {key:"switch",lbl:"Switch / Socket / Plug",def:199},
+    {key:"fan",lbl:"Fan Installation / Repair",def:299},
+    {key:"light",lbl:"Light / LED Fitting",def:199},
+    {key:"wiring",lbl:"Wiring Fault / Power Failure",def:399},
+    {key:"geyser",lbl:"Geyser Wiring",def:349},
+    {key:"db",lbl:"Distribution Board / DB",def:499},
+    {key:"inverter",lbl:"Inverter / UPS",def:399},
+    {key:"backup",lbl:"Power Backup Setup",def:599},
+    {key:"cctv",lbl:"CCTV Wiring",def:349}
+  ]}
+]},
+{id:"SVC012",icon:"\ud83e\ude9a",name:"Carpenter",cat:"Repairs",tasks:[
+  {n:"Job Type",k:"svc",variants:[
+    {key:"door",lbl:"Door Repair / Adjustment",def:299},
+    {key:"furniture",lbl:"Furniture Repair",def:349},
+    {key:"wardrobe",lbl:"Wardrobe / Almirah Repair",def:349},
+    {key:"assembly",lbl:"Furniture Assembly",def:499},
+    {key:"window",lbl:"Window / Shutter Repair",def:299},
+    {key:"shelves",lbl:"Shelf / Rack Fitting",def:349},
+    {key:"lock",lbl:"Lock / Handle Replacement",def:199},
+    {key:"bed",lbl:"Bed / Cot Repair",def:399},
+    {key:"modular",lbl:"Modular Kitchen Work",def:799}
+  ]}
+]},
+{id:"SVC013",icon:"\ud83c\udfa8",name:"Painter",cat:"Repairs",tasks:[
+  {n:"Room Painting (with Labour)",k:"rooms",variants:[
+    {key:"pricePerRoom",lbl:"Price Per Room",def:999}
+  ]},
+  {n:"Add-ons",k:"extras",variants:[
+    {key:"crack_filling",lbl:"Crack Filling / Putty",def:299},
+    {key:"primer_coat",lbl:"Primer Coat",def:199},
+    {key:"texture",lbl:"Texture / Designer Finish",def:499},
+    {key:"ceiling",lbl:"Ceiling Only",def:699},
+    {key:"exterior",lbl:"Exterior Wall",def:1499},
+    {key:"wood",lbl:"Wood / Furniture Paint",def:399},
+    {key:"touchup",lbl:"Touch-Up / Patches",def:299}
+  ]}
+]},
+{id:"SVC014",icon:"\ud83d\udcf7",name:"CCTV Installation",cat:"Repairs",tasks:[
+  {n:"Camera Installation",k:"camera",variants:[
+    {key:"camera",lbl:"Per Camera Installation",def:999}
+  ]},
+  {n:"Additional Services",k:"svc",variants:[
+    {key:"dvr",lbl:"DVR / NVR Setup",def:499},
+    {key:"wiring",lbl:"Wiring & Connectivity",def:399},
+    {key:"mobile",lbl:"Mobile App / Remote Access",def:299},
+    {key:"testing",lbl:"Testing & Configuration",def:199}
+  ]}
+]},
+{id:"SVC015",icon:"\u2600\ufe0f",name:"Solar Panel Service",cat:"Repairs",tasks:[
+  {n:"Panel Cleaning",k:"clean",variants:[
+    {key:"p4",lbl:"Up to 4 Panels",def:299},
+    {key:"p8",lbl:"Up to 8 Panels",def:499},
+    {key:"p12",lbl:"Up to 12 Panels",def:699},
+    {key:"p20",lbl:"Up to 20 Panels",def:999}
+  ]},
+  {n:"Other Services",k:"svc",variants:[
+    {key:"inspection",lbl:"System Inspection & Health Check",def:499},
+    {key:"repair",lbl:"Fault Diagnosis & Repair",def:799},
+    {key:"inverter",lbl:"Inverter Repair",def:599},
+    {key:"battery",lbl:"Battery Service",def:499},
+    {key:"amc",lbl:"AMC Contract (Annual)",def:2999}
+  ]}
+]},
+{id:"SVC016",icon:"\ud83d\ude97",name:"Car / Bike Wash",cat:"Vehicle Care",tasks:[
+  {n:"Car Wash Type",k:"car",variants:[
+    {key:"exterior",lbl:"Exterior Car Wash",def:299},
+    {key:"interior",lbl:"Interior Cleaning",def:249},
+    {key:"premium",lbl:"Premium Full Wash",def:499},
+    {key:"finishing",lbl:"Final Finishing / Wax",def:149}
+  ]},
+  {n:"Car Type",k:"cartype",variants:[
+    {key:"hatchback",lbl:"Hatchback",def:0},
+    {key:"sedan",lbl:"Sedan",def:0},
+    {key:"suv",lbl:"SUV +\u20b9100",def:100},
+    {key:"largsuv",lbl:"Large SUV / XUV +\u20b9150",def:150},
+    {key:"luxury",lbl:"Luxury / Premium +\u20b9200",def:200}
+  ]},
+  {n:"Bike Wash",k:"bike",variants:[
+    {key:"bike_exterior",lbl:"Bike Exterior Wash",def:149},
+    {key:"bike_chain",lbl:"Chain + Lubrication",def:99},
+    {key:"bike_seat",lbl:"Seat Polish",def:79},
+    {key:"bike_premium",lbl:"Premium Bike Full Wash",def:199}
+  ]}
+]},
+{id:"SVC016B",icon:"\ud83c\udfcd\ufe0f",name:"Bike Wash",cat:"Vehicle Care",tasks:[
+  {n:"Wash Type",k:"wash",variants:[
+    {key:"exterior",lbl:"Exterior Bike Wash",def:149},
+    {key:"premium",lbl:"Premium Full Wash",def:249},
+    {key:"chain",lbl:"Chain Clean & Lube",def:99},
+    {key:"seat",lbl:"Seat Polish",def:79}
+  ]},
+  {n:"Bike Type",k:"biketype",variants:[
+    {key:"standard",lbl:"Standard / 125cc",def:0},
+    {key:"premium",lbl:"Premium / 200cc+",def:50},
+    {key:"superbike",lbl:"Superbike / 500cc+",def:150}
+  ]}
+]},
+{id:"SVC017",icon:"\ud83d\udd29",name:"Car & Bike Mechanic",cat:"Vehicle Care",tasks:[
+  {n:"Car Service",k:"car",variants:[
+    {key:"car_service",lbl:"General Service",def:799},
+    {key:"car_oilchange",lbl:"Oil Change",def:349},
+    {key:"car_battery",lbl:"Battery Replace",def:599},
+    {key:"car_brake",lbl:"Brake Service",def:499},
+    {key:"car_tyre",lbl:"Tyre Change",def:299},
+    {key:"car_ac",lbl:"Car AC Service",def:799},
+    {key:"car_engine",lbl:"Engine Check / Diagnostics",def:499}
+  ]},
+  {n:"Bike Service",k:"bike",variants:[
+    {key:"bike_service",lbl:"General Service",def:399},
+    {key:"bike_oilchange",lbl:"Oil Change",def:149},
+    {key:"bike_tyre",lbl:"Tyre Change",def:199},
+    {key:"bike_chain",lbl:"Chain Replace",def:149},
+    {key:"bike_brake",lbl:"Brake Service",def:199},
+    {key:"bike_battery",lbl:"Battery Replace",def:299}
+  ]}
+]},
+{id:"SVC017B",icon:"\ud83c\udfcd\ufe0f",name:"Bike Mechanic",cat:"Vehicle Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"service",lbl:"General Service",def:399},
+    {key:"oilchange",lbl:"Oil Change",def:149},
+    {key:"tyre",lbl:"Tyre Change",def:199},
+    {key:"chain",lbl:"Chain Replace",def:149},
+    {key:"brake",lbl:"Brake Service",def:199},
+    {key:"battery",lbl:"Battery Replace",def:299},
+    {key:"carburetor",lbl:"Carburetor Clean",def:249},
+    {key:"electrical",lbl:"Electrical Fault",def:299},
+    {key:"puncture",lbl:"Puncture Repair",def:99},
+    {key:"fullservice",lbl:"Full Service Package",def:699}
+  ]}
+]},
+{id:"SVC017C",icon:"\ud83d\ude97",name:"Car Mechanic",cat:"Vehicle Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"service",lbl:"General Service",def:799},
+    {key:"oilchange",lbl:"Oil Change",def:349},
+    {key:"battery",lbl:"Battery Replace",def:599},
+    {key:"brake",lbl:"Brake Service",def:499},
+    {key:"tyre",lbl:"Tyre Change",def:299},
+    {key:"ac",lbl:"Car AC Service",def:799},
+    {key:"engine",lbl:"Engine Check / Diagnostics",def:499},
+    {key:"electrical",lbl:"Electrical Fault",def:399},
+    {key:"inspection",lbl:"Full Vehicle Inspection",def:999},
+    {key:"denting",lbl:"Denting & Painting (Minor)",def:1499}
+  ]}
+]},
+{id:"SVC018",icon:"\ud83e\udeb2",name:"Pest Control",cat:"Home Services",tasks:[
+  {n:"Pest Type",k:"pest",variants:[
+    {key:"cockroach",lbl:"Cockroach Control",def:999},
+    {key:"rodent",lbl:"Rat / Rodent Control",def:1299},
+    {key:"mosquito",lbl:"Mosquito Control / Fogging",def:999},
+    {key:"termite",lbl:"Termite Treatment",def:2499},
+    {key:"bedbug",lbl:"Bed Bug Treatment",def:1499},
+    {key:"ants",lbl:"Ants Control",def:799},
+    {key:"lizard",lbl:"Lizard Repellent",def:799},
+    {key:"flies",lbl:"Flies / Mosquito Spray",def:799},
+    {key:"general",lbl:"General Pest Spray (All)",def:1299}
+  ]},
+  {n:"Property Size",k:"size",variants:[
+    {key:"1bhk",lbl:"1 BHK / Studio",def:0},
+    {key:"2bhk",lbl:"2 BHK",def:0},
+    {key:"3bhk",lbl:"3 BHK +\u20b9300",def:300},
+    {key:"4bhk",lbl:"4 BHK+ +\u20b9600",def:600},
+    {key:"office",lbl:"Office / Commercial",def:0}
+  ]}
+]},
+{id:"SVC019",icon:"\ud83c\udf71",name:"Cook / Cooking Person",cat:"Cooking",tasks:[
+  {n:"Meal Service",k:"svc",variants:[
+    {key:"breakfast",lbl:"Breakfast Only",def:299},
+    {key:"lunch",lbl:"Lunch Only",def:399},
+    {key:"dinner",lbl:"Dinner Only",def:349},
+    {key:"twotime",lbl:"Two Meals (Lunch + Dinner)",def:599},
+    {key:"fullday",lbl:"Full Day (All 3 Meals)",def:799},
+    {key:"party",lbl:"Party / Event Cooking",def:1499},
+    {key:"monthly",lbl:"Monthly Package",def:6999}
+  ]},
+  {n:"Cooking Style",k:"style",variants:[
+    {key:"regular",lbl:"Regular Home Style",def:0},
+    {key:"restaurant",lbl:"Restaurant / Special Style +\u20b9200",def:200}
+  ]}
+]},
+{id:"SVC020",icon:"\ud83d\udc82",name:"Security Guard & Bouncers",cat:"Security",tasks:[
+  {n:"Guard Type",k:"svc",variants:[
+    {key:"daytime",lbl:"Daytime Guard (8-hour shift)",def:899},
+    {key:"nighttime",lbl:"Night Guard (8-hour shift)",def:999},
+    {key:"fullday",lbl:"Full Day Guard (12-hour shift)",def:1699},
+    {key:"event",lbl:"Event Security Guard",def:1299},
+    {key:"office",lbl:"Office / Shop Security",def:899}
+  ]}
+]},
+{id:"SVC021",icon:"\ud83d\ude97",name:"Driver Service",cat:"Outdoor",tasks:[
+  {n:"Trip Type",k:"car",variants:[
+    {key:"local",lbl:"Local / City Trips",def:299},
+    {key:"fullday",lbl:"Full Day Driver (8 hrs)",def:699},
+    {key:"outstation",lbl:"Outstation / Long Trip",def:999},
+    {key:"monthly",lbl:"Monthly Regular Driver",def:8999},
+    {key:"event",lbl:"Event / Wedding Driver",def:799}
+  ]}
+]},
+{id:"SVC022",icon:"\ud83d\udcaa",name:"Fitness Trainer",cat:"Beauty & Wellness",tasks:[
+  {n:"Training Type",k:"svc",variants:[
+    {key:"weightloss",lbl:"Weight Loss Training",def:699},
+    {key:"muscle",lbl:"Muscle Building / Strength",def:699},
+    {key:"yoga",lbl:"Yoga & Flexibility",def:599},
+    {key:"zumba",lbl:"Zumba / Dance Fitness",def:599},
+    {key:"rehab",lbl:"Rehabilitation / Injury Recovery",def:799},
+    {key:"senior",lbl:"Senior / Elder Fitness",def:599},
+    {key:"monthly",lbl:"Monthly Package (Daily)",def:5999}
+  ]}
+]},
+{id:"SVC023",icon:"\u2702\ufe0f",name:"Men's Haircut at Home",cat:"Beauty & Wellness",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"haircut",lbl:"Haircut",def:249},
+    {key:"shave",lbl:"Clean Shave",def:199},
+    {key:"beard",lbl:"Beard Trim & Styling",def:199},
+    {key:"colour",lbl:"Hair Colour / Black Dye",def:399},
+    {key:"highlights",lbl:"Highlights",def:599},
+    {key:"massage",lbl:"Head Massage",def:149},
+    {key:"cleanup",lbl:"Face Cleanup",def:299}
+  ]}
+]},
+{id:"SVC024",icon:"\ud83d\udc87",name:"Women's Haircut & Beauty",cat:"Beauty & Wellness",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"haircut",lbl:"Haircut",def:349},
+    {key:"blowdry",lbl:"Hair Wash & Blow Dry",def:399},
+    {key:"colour",lbl:"Hair Colour & Highlights",def:599},
+    {key:"threading",lbl:"Threading (Eyebrow)",def:99},
+    {key:"waxing",lbl:"Full Body Waxing",def:399},
+    {key:"facial",lbl:"Facial",def:499},
+    {key:"mani",lbl:"Manicure / Pedicure",def:399},
+    {key:"makeup",lbl:"Makeup (Event / Wedding)",def:1499}
+  ]}
+]},
+{id:"SVC025",icon:"\ud83d\udc86",name:"Full Body Massage",cat:"Beauty & Wellness",tasks:[
+  {n:"Massage Type",k:"svc",variants:[
+    {key:"relaxation",lbl:"Relaxation Full Body",def:999},
+    {key:"deep",lbl:"Deep Tissue / Swedish",def:1299},
+    {key:"back",lbl:"Back & Shoulder Massage",def:699},
+    {key:"head",lbl:"Head & Scalp Massage",def:499},
+    {key:"couple",lbl:"Couple Massage",def:1799}
+  ]}
+]},
+{id:"SVC026",icon:"\ud83e\ude7a",name:"Doctor Visit at Home",cat:"Medical",tasks:[
+  {n:"Consultation Type",k:"svc",variants:[
+    {key:"general",lbl:"General Physician",def:599},
+    {key:"chronic",lbl:"Chronic Illness Follow-Up",def:699},
+    {key:"elderly",lbl:"Elderly Health Check-Up",def:799},
+    {key:"paeds",lbl:"Child / Paediatric",def:649},
+    {key:"fever",lbl:"Fever / Cold / Flu",def:549},
+    {key:"injection",lbl:"Injection / Vaccination",def:399}
+  ]}
+]},
+{id:"SVC027",icon:"\ud83c\udfe5",name:"Nurse Visit at Home",cat:"Medical",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"injection",lbl:"Injection / Vaccination",def:399},
+    {key:"dressing",lbl:"Wound Dressing / Stitch Care",def:499},
+    {key:"iv",lbl:"IV Drip / Infusion",def:699},
+    {key:"catheter",lbl:"Catheter Care",def:799},
+    {key:"bp",lbl:"BP / Sugar Monitoring",def:299},
+    {key:"physio",lbl:"Physiotherapy Session",def:699}
+  ]}
+]},
+{id:"SVC028",icon:"\ud83d\udd2c",name:"Lab Test Collection at Home",cat:"Medical",tasks:[
+  {n:"Test Type",k:"svc",variants:[
+    {key:"blood",lbl:"Blood Test (Basic)",def:99},
+    {key:"urine",lbl:"Urine Test",def:49},
+    {key:"healthcheckup",lbl:"Full Health Checkup",def:149},
+    {key:"diabetes",lbl:"Diabetes Panel",def:99},
+    {key:"thyroid",lbl:"Thyroid Panel",def:79},
+    {key:"vitamin",lbl:"Vitamin D / B12",def:99},
+    {key:"womens",lbl:"Women's Health Panel",def:149},
+    {key:"senior",lbl:"Senior Citizen Package",def:149}
+  ]}
+]},
+{id:"SVC029",icon:"\ud83d\udc76",name:"Babysitter / Nanny",cat:"Care Services",tasks:[
+  {n:"Duration / Type",k:"svc",variants:[
+    {key:"half",lbl:"Half Day (4 hrs)",def:599},
+    {key:"fullday",lbl:"Full Day (8-10 hrs)",def:999},
+    {key:"overnight",lbl:"Overnight (10 PM - 8 AM)",def:1499},
+    {key:"event",lbl:"Event / Party Babysitter",def:799},
+    {key:"nanny",lbl:"Experienced Nanny (Full Day)",def:1299}
+  ]}
+]},
+{id:"SVC030",icon:"\ud83e\uddd3",name:"Elderly Care",cat:"Care Services",tasks:[
+  {n:"Care Type",k:"svc",variants:[
+    {key:"companion",lbl:"Companion Care (4 hrs)",def:799},
+    {key:"personal",lbl:"Personal Care (4-6 hrs)",def:999},
+    {key:"fullday",lbl:"Full Day Care (8-10 hrs)",def:1499},
+    {key:"nightcare",lbl:"Night Care (10 PM - 6 AM)",def:1299},
+    {key:"hospital",lbl:"Hospital / Clinic Attendant",def:1199}
+  ]}
+]},
+{id:"SVC031",icon:"\ud83d\udd0b",name:"Inverter Service",cat:"Appliance Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"battery_check",lbl:"Battery Check & Service",def:299},
+    {key:"battery_replace",lbl:"Battery Replacement",def:3999},
+    {key:"not_charging",lbl:"Not Charging",def:399},
+    {key:"not_starting",lbl:"Not Starting / No Power",def:399},
+    {key:"beeping",lbl:"Beeping / Alarm Issues",def:299},
+    {key:"install",lbl:"New Inverter Installation",def:799},
+    {key:"amc",lbl:"Annual Maintenance Contract",def:999}
+  ]}
+]},
+{id:"SVC032",icon:"\ud83e\uded9",name:"Mixer Grinder Repair",cat:"Appliance Care",tasks:[
+  {n:"Problem Type",k:"svc",variants:[
+    {key:"not_starting",lbl:"Not Starting",def:299},
+    {key:"noisy",lbl:"Noisy / Vibrating",def:249},
+    {key:"jar_leak",lbl:"Jar Leaking",def:199},
+    {key:"blade",lbl:"Blade / Coupler Issue",def:199},
+    {key:"burnt_smell",lbl:"Burnt Smell / Overheating",def:349},
+    {key:"speed",lbl:"Speed / Switch Problem",def:249},
+    {key:"motor",lbl:"Motor Repair / Replace",def:499},
+    {key:"service",lbl:"General Service & Cleaning",def:199}
+  ]}
+]},
+]; }
+
+// ── Service selection state ───────────────────────────────────────────────────
+var _portalSel = {};        // { "SVC001_sweep_1bhk": true, ... }
+var _portalFBPx = {};       // Firebase prices { SVC001: { sweep: { 1bhk: 149 } } }
+var _portalCurCat = 'All';
+var _portalPxLoaded = false; // separate flag — not on the prices object
+
+function _pxGet(svcId, taskKey, varKey, fallback) {
+  var d = _portalFBPx[svcId];
+  if (d && d[taskKey] && d[taskKey][varKey] != null) return d[taskKey][varKey];
+  return fallback || 0;
+}
+function _pxComm(svcId) {
+  var d = _portalFBPx[svcId];
+  return (d && d.commission != null) ? Number(d.commission) : 15;
+}
+
+function _portalToggleVariant(svcId, taskKey, varKey) {
+  var k = svcId + '_' + taskKey + '_' + varKey;
+  _portalSel[k] = !_portalSel[k];
+  var row = document.getElementById('vr_' + k);
+  if (row) {
+    row.classList.toggle('sel', !!_portalSel[k]);
+    var chk = row.querySelector('.var-chk');
+    if (chk) chk.checked = !!_portalSel[k];
+  }
+  _portalUpdateCnt(svcId);
+}
+
+function _portalSelAll(svcId, taskKey) {
+  var SVCS = buildServices();
+  var svc = SVCS.find(function(s){ return s.id === svcId; });
+  if (!svc) return;
+  var task = svc.tasks.find(function(t){ return t.k === taskKey; });
+  if (!task) return;
+  var allSel = task.variants.every(function(v){
+    return _portalSel[svcId + '_' + taskKey + '_' + v.key];
+  });
+  task.variants.forEach(function(v) {
+    var k = svcId + '_' + taskKey + '_' + v.key;
+    _portalSel[k] = !allSel;
+    var row = document.getElementById('vr_' + k);
+    if (row) {
+      row.classList.toggle('sel', !allSel);
+      var chk = row.querySelector('.var-chk');
+      if (chk) chk.checked = !allSel;
+    }
+  });
+  _portalUpdateCnt(svcId);
+}
+
+function _portalUpdateCnt(svcId) {
+  var SVCS = buildServices();
+  var svc = SVCS.find(function(s){ return s.id === svcId; }); if (!svc) return;
+  var cnt = 0;
+  svc.tasks.forEach(function(t){
+    t.variants.forEach(function(v){
+      if (_portalSel[svcId + '_' + t.k + '_' + v.key]) cnt++;
+    });
+  });
+  var el = document.getElementById('pcnt2_' + svcId);
+  if (el) { el.textContent = cnt; el.className = 'svc-cnt2' + (cnt === 0 ? ' zero' : ''); }
+  // Summary bar
+  var total = Object.values(_portalSel).filter(Boolean).length;
+  var bar = document.getElementById('svcSelBar');
+  if (bar) bar.textContent = total === 0
+    ? 'Tap any service to expand, then tick the variants you offer'
+    : total + ' sub-service(s) selected — you can always update this later';
+}
+
+function _portalToggleGroup(svcId) {
+  var hdr  = document.getElementById('phdr2_' + svcId);
+  var list = document.getElementById('ptl2_' + svcId);
+  if (!hdr || !list) return;
+  var open = hdr.classList.contains('open');
+  hdr.classList.toggle('open', !open);
+  list.classList.toggle('open', !open);
+}
+
+function _portalSetCat(el) {
+  _portalCurCat = decodeURIComponent(el.dataset.cat);
+  buildPortalSvcGrid();
+}
+
+function buildPortalSvcGrid() {
+  var grid = document.getElementById('svcGrid');
+  if (!grid) return;
+  var SVCS = buildServices();
+
+  // Category tabs
+  var cats = ['All'];
+  SVCS.forEach(function(s){ if (s.cat && cats.indexOf(s.cat) === -1) cats.push(s.cat); });
+  var tabsEl = document.getElementById('portalCatTabs');
+  if (!tabsEl) {
+    tabsEl = document.createElement('div');
+    tabsEl.id = 'portalCatTabs';
+    tabsEl.className = 'cat-tabs2';
+    grid.parentNode.insertBefore(tabsEl, grid);
+  }
+  var tabHtml = ''; cats.forEach(function(c){
+    tabHtml += '<div class="cat-tab2' + (c === _portalCurCat ? ' active' : '') + '" data-cat="' + encodeURIComponent(c) + '" onclick="_portalSetCat(decodeURIComponent(this.dataset.cat))">' + c + '</div>';
+  });
+  tabsEl.innerHTML = tabHtml;
+
+  // Summary bar
+  var bar = document.getElementById('svcSelBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'svcSelBar';
+    bar.className = 'svc-sel-bar';
+    grid.parentNode.insertBefore(bar, grid);
+  }
+  var totalSel = Object.values(_portalSel).filter(Boolean).length;
+  bar.textContent = totalSel === 0
+    ? 'Tap any service to expand, then tick the variants you offer'
+    : totalSel + ' sub-service(s) selected';
+
+  // Price column note
+  var note = document.getElementById('priceNote');
+  if (!note) {
+    note = document.createElement('div');
+    note.id = 'priceNote';
+    note.className = 'price-col-note';
+    note.innerHTML = 'Customer pays <span style="color:var(--muted)">→</span> <span style="color:#27ae60;font-weight:900">You receive</span>';
+    grid.parentNode.insertBefore(note, grid);
+  }
+
+  // Filter
+  var filtered = _portalCurCat === 'All'
+    ? SVCS : SVCS.filter(function(s){ return s.cat === _portalCurCat; });
+
+  grid.innerHTML = filtered.map(function(g) {
+    var commPct = _pxComm(g.id);
+    var earnPct = 100 - commPct;
+    var cnt = Object.keys(_portalSel).filter(function(k){
+      return k.indexOf(g.id + '_') === 0 && _portalSel[k];
+    }).length;
+
+    var taskHtml = g.tasks.map(function(t) {
+      var varHtml = t.variants.map(function(v) {
+        var k = g.id + '_' + t.k + '_' + v.key;
+        var custP = _pxGet(g.id, t.k, v.key, v.def || 0);
+        var earnP = Math.round(custP * earnPct / 100);
+        var isSel = !!_portalSel[k];
+        return '<div class="var-row' + (isSel ? ' sel' : '') + '" id="vr_' + k + '"'
+          + ' data-sid="' + g.id + '" data-tk="' + t.k + '" data-vk="' + v.key + '"'
+          + ' onclick="_portalToggleVariant(this.dataset.sid,this.dataset.tk,this.dataset.vk)">'
+          + '<input class="var-chk" type="checkbox"' + (isSel ? ' checked' : '') + ' onclick="event.stopPropagation()">'
+          + '<div class="var-info"><div class="var-lbl">' + v.lbl + '</div></div>'
+          + (custP > 0
+            ? '<div class="var-price"><div class="var-cust">&#8377;' + custP + '</div>'
+              + '<div class="var-earn">&#8377;' + earnP + '</div></div>'
+            : '')
+          + '</div>';
+      }).join('');
+
+      return '<div class="task-block2">'
+        + '<div class="task-name2">' + t.n
+        + '<span class="sel-all-btn2" data-sid="' + g.id + '" data-tk="' + t.k + '" onclick="event.stopPropagation();_portalSelAll(this.dataset.sid,this.dataset.tk)">Select all</span>'
+        + '</div>'
+        + '<div class="var-grid">' + varHtml + '</div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="svc-group">'
+      + '<div class="svc-hdr2' + (cnt > 0 ? ' open' : '') + '" id="phdr2_' + g.id + '"'
+      + ' data-gid="' + g.id + '" onclick="_portalToggleGroup(this.dataset.gid)">'
+      + '<div class="svc-ico2">' + g.icon + '</div>'
+      + '<div class="svc-meta2">'
+      + '<div class="svc-title2">' + g.name + '</div>'
+      + '<div class="svc-sub2">' + g.cat + ' · You earn ' + earnPct + '% · '
+      + g.tasks.reduce(function(s,t){return s+t.variants.length;},0) + ' job types</div>'
+      + '</div>'
+      + '<div class="svc-right2">'
+      + '<span class="svc-cnt2' + (cnt === 0 ? ' zero' : '') + '" id="pcnt2_' + g.id + '">' + cnt + '</span>'
+      + '<span class="svc-chev2">▶</span>'
+      + '</div></div>'
+      + '<div class="svc-tasklist' + (cnt > 0 ? ' open' : '') + '" id="ptl2_' + g.id + '">' + taskHtml + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Restore open state after re-render
+  Object.keys(_openGroups).forEach(function(gid) {
+    var hdr = document.getElementById('phdr2_' + gid);
+    var lst = document.getElementById('ptl2_' + gid);
+    if (hdr) hdr.classList.add('open');
+    if (lst) lst.classList.add('open');
+  });
+
+  // Fetch live prices from Firebase (once only)
+  if (!_portalPxLoaded) {
+    _portalPxLoaded = true;
+    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_=' + Date.now())
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data && typeof data === 'object') {
+          _portalFBPx = data; // prices replaced, flag is separate — safe
+          buildPortalSvcGrid(); // re-render once with live prices
+        }
+      }).catch(function(){});
+  }
+}
+
+// Replace getSelectedServices to use new selection
+function getSelectedServices() {
+  var result = [];
+  var SVCS = buildServices();
+  SVCS.forEach(function(g) {
+    var commPct = _pxComm(g.id);
+    var earnPct = 100 - commPct;
+    var subRates = [];
+    g.tasks.forEach(function(t) {
+      t.variants.forEach(function(v) {
+        var k = g.id + '_' + t.k + '_' + v.key;
+        if (!_portalSel[k]) return;
+        var custP = _pxGet(g.id, t.k, v.key, v.def || 0);
+        subRates.push({
+          key: k, svcId: g.id, taskKey: t.k, varKey: v.key,
+          label: t.n + ' — ' + v.lbl,
+          custPrice: custP,
+          rate: Math.round(custP * earnPct / 100)
+        });
+      });
+    });
+    if (!subRates.length) return;
+    result.push({
+      name: g.name, icon: g.icon, id: g.id,
+      price: subRates[0].rate,
+      subRates: subRates
+    });
+  });
+  return result;
+}
+</script>
+</body>
+</html>

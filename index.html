@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>HamaraService – Home Services at Your Doorstep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+
+  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  
+
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;
+  --line:#e2e8f0;--bg:#f0f7f9;--white:#ffffff;
+  --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;
+  --accent:#1B6B7A;--accent-soft:#e6f4f6;
+  --green:#2ecc71;--green-soft:#e8f8f0;
+  --yellow:#f59e0b;--yellow-soft:#fffbeb;
+  --r:12px;--r2:20px;--r3:32px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
+  --sh2:0 8px 32px rgba(0,0,0,.10);
+  --sh3:0 24px 64px rgba(0,0,0,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+
+/* ─── HEADER ─── */
+header{
+  position:sticky;top:0;z-index:900;
+  background:rgba(255,255,255,.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);
+  height:68px;padding:0 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:box-shadow .3s;
+}
+header.scrolled{box-shadow:var(--sh);}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-img{height:44px;width:auto;object-fit:contain;display:block;}
+.logo-mark{width:38px;height:38px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark svg{width:20px;height:20px;fill:white;}
+.logo-text{display:flex;flex-direction:column;line-height:1;}
+.logo-name{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:.2px;}
+.logo-accent{color:var(--brand);}
+.logo-tagline{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:.8px;margin-top:2px;text-transform:uppercase;}
+.logo-name{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;}
+.logo-name span{color:var(--brand);}
+nav{display:flex;align-items:center;gap:6px;}
+.nav-link{font-size:14px;font-weight:500;color:var(--ink2);text-decoration:none;padding:8px 16px;border-radius:8px;transition:all .2s;}
+.nav-link:hover{background:var(--bg);color:var(--ink);}
+.nav-pill{display:flex;align-items:center;gap:8px;padding:8px 18px;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;border:none;font-family:'DM Sans',sans-serif;}
+.nav-pill.ghost{background:transparent;color:var(--ink2);border:1.5px solid var(--line);}
+.nav-pill.ghost:hover{border-color:var(--ink);color:var(--ink);}
+.nav-pill.filled{background:var(--brand);color:white;box-shadow:0 4px 14px rgba(232,101,26,.28);}
+.nav-pill.filled:hover{background:var(--brand2);box-shadow:0 6px 20px rgba(232,101,26,.36);transform:translateY(-1px);}
+.hamburger{display:none;background:none;border:1.5px solid var(--line);border-radius:8px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
+@media(max-width:768px){nav .nav-link{display:none;}
+  #navUserBtn + a{display:none;}
+  nav a[href*='register']{display:none;}.hamburger{display:flex;}}
+
+/* ─── HERO ─── */
+.hero{
+  background:linear-gradient(135deg,#0d3d47 0%,#1B6B7A 50%,#0d3d47 100%);
+  padding:100px 40px 120px;
+  text-align:center;
+  position:relative;
+  overflow:visible;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(232,101,26,.3) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:80px;
+  background:linear-gradient(to top,var(--white),transparent);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.8);font-size:13px;font-weight:500;
+  padding:6px 14px;border-radius:100px;margin-bottom:28px;
+  backdrop-filter:blur(10px);
+}
+.hero-badge span{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{
+  font-family:'Sora',sans-serif;font-size:clamp(36px,6vw,72px);
+  font-weight:800;color:white;line-height:1.05;
+  letter-spacing:-1.5px;margin-bottom:24px;
+}
+.hero h1 em{
+  font-style:normal;
+  background:linear-gradient(90deg,#ffb07a,var(--brand));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub{font-size:18px;color:rgba(255,255,255,.55);font-weight:400;max-width:520px;margin:0 auto 48px;line-height:1.7;}
+
+/* ─── SEARCH BOX ─── */
+.search-box{
+  max-width:640px;margin:0 auto;
+  background:white;border-radius:var(--r2);
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  overflow:visible;
+  position:relative;
+}
+.search-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--line);}
+.search-tab{flex:1;padding:14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.search-tab.active{color:var(--brand);background:white;border-bottom:2px solid var(--brand);margin-bottom:-1px;}
+.search-body{padding:20px 24px 24px;display:flex;flex-direction:column;gap:14px;}
+.search-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:520px){.search-row{grid-template-columns:1fr;}}
+.sfield{display:flex;flex-direction:column;gap:6px;}
+.sfield label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.sfield select,.sfield input{width:100%;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .2s;cursor:pointer;}
+.sfield select:focus,.sfield input:focus{border-color:var(--brand);background:white;}
+.loc-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink2);cursor:pointer;transition:all .2s;width:100%;text-align:left;}
+.loc-btn:hover{border-color:var(--brand);background:white;color:var(--ink);}
+.loc-btn svg{flex-shrink:0;color:var(--brand);}
+.search-cta{width:100%;padding:16px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px;}
+.search-cta:hover{background:var(--brand2);box-shadow:0 8px 24px rgba(232,101,26,.35);transform:translateY(-1px);}
+.hero-trust{display:flex;align-items:center;justify-content:center;gap:28px;margin-top:40px;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;}
+.trust-item strong{color:rgba(255,255,255,.85);}
+.trust-sep{width:1px;height:16px;background:rgba(255,255,255,.15);}
+
+/* ─── SECTION ─── */
+section{padding:80px 40px;}
+.section-label{font-size:12px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
+.section-title{font-family:'Sora',sans-serif;font-size:clamp(26px,4vw,40px);font-weight:800;color:var(--ink);letter-spacing:-.8px;line-height:1.15;}
+.section-sub{font-size:16px;color:var(--muted);margin-top:12px;max-width:500px;line-height:1.7;}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:40px;gap:20px;flex-wrap:wrap;}
+.see-all{font-size:14px;font-weight:600;color:var(--brand);text-decoration:none;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.see-all:hover{color:var(--brand2);}
+.see-all svg{transition:transform .2s;}
+.see-all:hover svg{transform:translateX(3px);}
+.max-w{max-width:1200px;margin:0 auto;}
+
+/* ─── SERVICES GRID ─── */
+.services-bg{background:var(--white);}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
+@media(min-width:1024px){
+  .services-grid{grid-template-columns:repeat(8,1fr);gap:14px;}
+  .svc-card{padding:20px 12px 16px;}
+}
+@media(min-width:768px) and (max-width:1023px){
+  .services-grid{grid-template-columns:repeat(5,1fr);}
+}
+/* ─── SERVICE CARDS ─── */
+.services-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:14px;
+}
+.svc-card{
+  background:var(--white);
+  border:1.5px solid var(--line);
+  border-radius:16px;
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;transition:all .22s;text-align:center;
+  position:relative;overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+.svc-card:hover{
+  border-color:var(--brand);
+  transform:translateY(-3px);
+  box-shadow:0 8px 28px rgba(232,101,26,.15);
+}
+/* Icon area — fixed height, no aspect-ratio so it doesn't dominate */
+.svc-card-img{
+  width:100%;height:90px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;
+  background:var(--brand-soft);
+  border-radius:16px 16px 0 0;
+  transition:background .22s;
+  flex-shrink:0;
+}
+.svc-card:hover .svc-card-img{background:linear-gradient(135deg,#fff3eb,#ffe5d0);}
+/* Info area */
+.svc-card-info{
+  padding:10px 10px 10px;
+  width:100%;
+  display:flex;flex-direction:column;align-items:center;
+  flex:1;
+}
+.svc-name{
+  font-size:13px;font-weight:700;
+  color:var(--ink2);line-height:1.35;
+  margin-bottom:4px;
+  min-height:36px; /* 2 lines reserved so cards align */
+  display:flex;align-items:center;justify-content:center;
+}
+.svc-price-tag{
+  font-size:13px;font-weight:700;
+  color:var(--teal);
+  margin-bottom:10px;
+}
+.svc-card:hover .svc-name{color:var(--brand);}
+/* Book button — always visible, clean */
+.svc-book{
+  width:calc(100% - 16px);
+  margin:0 8px 10px;
+  padding:9px 6px;
+  background:var(--brand);color:white;
+  border:none;border-radius:10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:700;
+  cursor:pointer;
+  transition:background .2s;
+  white-space:nowrap;
+  letter-spacing:-.1px;
+}
+.svc-book:hover{background:var(--brand2);}
+.svc-emoji{display:none;}
+.svc-pop{position:absolute;top:8px;right:8px;background:var(--brand);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;}
+
+/* ── Desktop grid ── */
+@media(min-width:1200px){
+  .services-grid{grid-template-columns:repeat(8,1fr);gap:14px;}
+  .svc-card-img{height:80px;font-size:38px;}
+  .svc-name{font-size:12px;min-height:32px;}
+  .svc-price-tag{font-size:12px;}
+  .svc-book{font-size:11px;padding:8px 4px;}
+}
+@media(min-width:769px) and (max-width:1199px){
+  .services-grid{grid-template-columns:repeat(5,1fr);}
+}
+
+/* ── Mobile grid — 2 per row, clean and readable ── */
+@media(max-width:768px){
+  .services-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+  .svc-card-img{height:100px;font-size:44px;}
+  .svc-name{font-size:14px;min-height:40px;}
+  .svc-price-tag{font-size:14px;}
+  .svc-book{font-size:13px;padding:11px 8px;margin:0 10px 12px;width:calc(100% - 20px);}
+}
+@media(max-width:380px){
+  .services-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+}
+
+/* ─── HOW IT WORKS ─── */
+.hiw-bg{background:var(--bg);}
+.hiw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px;counter-reset:step;}
+.hiw-card{
+  background:white;border-radius:var(--r2);padding:32px 28px;
+  box-shadow:var(--sh);position:relative;
+  counter-increment:step;
+  transition:all .25s;
+}
+.hiw-card:hover{transform:translateY(-4px);box-shadow:var(--sh2);}
+.hiw-num{
+  font-family:'Sora',sans-serif;font-size:48px;font-weight:800;
+  color:var(--line);position:absolute;top:20px;right:20px;line-height:1;
+  letter-spacing:-2px;
+}
+.hiw-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:18px;}
+.hiw-icon.brand{background:var(--brand-soft);}
+.hiw-icon.blue{background:var(--accent-soft);}
+.hiw-icon.green{background:var(--green-soft);}
+.hiw-icon.yellow{background:var(--yellow-soft);}
+.hiw-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px;letter-spacing:-.3px;}
+.hiw-desc{font-size:14px;color:var(--muted);line-height:1.65;}
+
+/* ─── WHY US ─── */
+.why-bg{background:linear-gradient(135deg,#0d3d47 0%,#1B6B7A 100%);position:relative;overflow:hidden;}
+.why-bg::before{content:'';position:absolute;top:-50%;right:-20%;width:600px;height:600px;background:radial-gradient(circle,rgba(232,101,26,.18),transparent 70%);pointer-events:none;}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+@media(max-width:768px){.why-grid{grid-template-columns:1fr;}}
+.why-left .section-title{color:white;}
+.why-left .section-sub{color:rgba(255,255,255,.5);}
+.why-left .section-label{color:rgba(255,91,60,.8);}
+.why-features{display:flex;flex-direction:column;gap:20px;margin-top:36px;}
+.why-feat{display:flex;align-items:flex-start;gap:16px;}
+.why-feat-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.why-feat-ic.r{background:rgba(232,37,26,.15);}
+.why-feat-ic.g{background:rgba(0,179,126,.15);}
+.why-feat-ic.b{background:rgba(27,79,255,.15);}
+.why-feat-ic.y{background:rgba(245,158,11,.15);}
+.why-feat-title{font-size:15px;font-weight:700;color:white;margin-bottom:4px;}
+.why-feat-desc{font-size:14px;color:rgba(255,255,255,.45);line-height:1.6;}
+.why-right{display:flex;flex-direction:column;gap:16px;}
+.why-stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:var(--r2);padding:28px 32px;backdrop-filter:blur(10px);}
+.why-stat-num{font-family:'Sora',sans-serif;font-size:44px;font-weight:800;color:white;line-height:1;letter-spacing:-1.5px;}
+.why-stat-num span{color:var(--brand);font-size:32px;}
+.why-stat-label{font-size:14px;color:rgba(255,255,255,.45);margin-top:6px;font-weight:500;}
+.why-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ─── PROVIDER CTA ─── */
+.provider-bg{background:var(--bg);}
+.provider-card{
+  background:white;border-radius:var(--r3);overflow:hidden;
+  box-shadow:var(--sh2);
+  display:grid;grid-template-columns:1fr 1fr;
+}
+@media(max-width:768px){.provider-card{grid-template-columns:1fr;}}
+.provider-left{padding:60px 56px;display:flex;flex-direction:column;justify-content:center;}
+.provider-left .section-label{margin-bottom:14px;}
+.provider-left .section-title{margin-bottom:16px;font-size:clamp(24px,3vw,36px);}
+.provider-left p{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:32px;}
+.provider-perks{display:flex;flex-direction:column;gap:12px;margin-bottom:36px;}
+.perk{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500;color:var(--ink2);}
+.perk-ic{width:28px;height:28px;border-radius:8px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.provider-cta-btns{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-primary{padding:14px 28px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s;box-shadow:0 4px 14px rgba(232,37,26,.3);}
+.btn-primary:hover{background:var(--brand2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(232,37,26,.35);}
+.btn-ghost{padding:14px 28px;background:transparent;color:var(--ink2);border:1.5px solid var(--line);border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s;}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink);}
+.provider-right{background:linear-gradient(135deg,#0d3d47,#1B6B7A);padding:60px 40px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;}
+.earn-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:20px;padding:24px 28px;width:100%;max-width:300px;}
+.earn-card-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.earn-card-val{font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:white;letter-spacing:-1px;}
+.earn-card-val span{font-size:20px;color:rgba(255,255,255,.4);}
+.earn-card-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:4px;}
+.earn-tags{display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:300px;}
+.earn-tag{padding:8px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:100px;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);}
+
+/* ─── TESTIMONIALS ─── */
+.testimonials-bg{background:white;}
+.testimonials-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.t-card{background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r2);padding:28px;transition:all .25s;}
+.t-card:hover{border-color:rgba(232,37,26,.2);box-shadow:var(--sh);}
+.t-stars{color:var(--yellow);font-size:14px;letter-spacing:2px;margin-bottom:14px;}
+.t-text{font-size:15px;color:var(--ink2);line-height:1.7;margin-bottom:20px;font-style:italic;}
+.t-author{display:flex;align-items:center;gap:12px;}
+.t-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.t-name{font-size:14px;font-weight:700;color:var(--ink);}
+.t-location{font-size:12px;color:var(--muted);}
+
+/* ─── APP CTA ─── */
+.app-bg{background:linear-gradient(135deg,#0d3d47,var(--teal));position:relative;overflow:hidden;}
+.app-bg::before{content:'';position:absolute;top:-40%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%);pointer-events:none;}
+.app-inner{max-width:700px;margin:0 auto;text-align:center;position:relative;}
+.app-bg h2{font-family:'Sora',sans-serif;font-size:clamp(28px,4vw,44px);font-weight:800;color:white;letter-spacing:-1px;margin-bottom:16px;}
+.app-bg p{font-size:17px;color:rgba(255,255,255,.7);margin-bottom:40px;}
+.app-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.app-btn{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:white;padding:14px 24px;border-radius:14px;cursor:pointer;transition:all .2s;text-decoration:none;}
+.app-btn:hover{background:rgba(255,255,255,.2);}
+.app-btn-icon{font-size:28px;}
+.app-btn-text{}
+.app-btn-label{font-size:11px;opacity:.7;font-weight:500;}
+.app-btn-store{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;}
+
+/* ─── FOOTER ─── */
+footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
+.footer-inner{max-width:1200px;margin:0 auto;}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px;}
+@media(max-width:768px){.footer-top{grid-template-columns:1fr 1fr;gap:32px;}}
+@media(max-width:480px){.footer-top{grid-template-columns:1fr;}}
+.footer-brand .logo-name{color:white;}
+.footer-desc{font-size:14px;line-height:1.7;margin:16px 0 24px;color:rgba(255,255,255,.4);}
+.footer-social{display:flex;gap:10px;}
+.social-btn{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s;}
+.social-btn:hover{background:rgba(255,255,255,.15);}
+.footer-col h4{font-size:13px;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;}
+.footer-col a{display:block;font-size:14px;color:rgba(255,255,255,.4);text-decoration:none;margin-bottom:10px;transition:color .2s;}
+.footer-col a:hover{color:rgba(255,255,255,.8);}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;}
+
+/* ─── MAP MODAL ─── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:white;border-radius:var(--r3);width:100%;max-width:600px;box-shadow:var(--sh3);overflow:hidden;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.modal-head-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
+.modal-close{width:36px;height:36px;border-radius:8px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);transition:all .2s;}
+.modal-close:hover{background:var(--line);color:var(--ink);}
+#mapContainer{height:280px;background:var(--bg);}
+.modal-body{padding:20px 26px;display:flex;flex-direction:column;gap:12px;}
+.map-search-row{display:flex;gap:8px;}
+.map-search-input{flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;outline:none;transition:border .2s;}
+.map-search-input:focus{border-color:var(--brand);}
+.map-btn{padding:11px 16px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.map-btn.primary{background:var(--brand);color:white;}
+.map-btn.ghost{background:var(--bg);color:var(--ink2);border:1.5px solid var(--line);}
+.map-btn:hover{opacity:.85;}
+.addr-display{padding:12px 14px;background:var(--bg);border-radius:var(--r);font-size:13px;font-weight:500;color:var(--ink2);line-height:1.5;}
+.map-confirm-btn{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;}
+.map-confirm-btn:hover{background:var(--brand2);}
+
+/* ─── AUTH MODAL ─── */
+.auth-modal-box{background:white;border-radius:var(--r3);width:100%;max-width:440px;box-shadow:var(--sh3);overflow:hidden;animation:slideUp .3s ease;}
+.auth-tabs{display:flex;padding:6px;background:var(--bg);border-radius:14px;margin-bottom:24px;}
+.auth-tab{flex:1;padding:10px;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);}
+.auth-tab.active{background:white;color:var(--brand);box-shadow:var(--sh);}
+.auth-body{padding:28px 32px 32px;}
+.auth-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:6px;letter-spacing:-.4px;}
+.auth-sub{font-size:14px;color:var(--muted);margin-bottom:24px;}
+.afield{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.afield label{font-size:12px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;}
+.afield input{padding:13px 15px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);outline:none;transition:border .2s;}
+.afield input:focus{border-color:var(--brand);}
+.auth-submit{width:100%;padding:15px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:all .2s;box-shadow:0 4px 14px rgba(232,37,26,.25);}
+.auth-submit:hover{background:var(--brand2);transform:translateY(-1px);}
+.auth-alt{text-align:center;font-size:13px;color:var(--muted);margin-top:14px;}
+.auth-alt a{color:var(--brand);font-weight:600;cursor:pointer;text-decoration:none;}
+.auth-err{background:var(--brand-soft);border:1.5px solid rgba(232,37,26,.2);border-radius:var(--r);padding:10px 14px;font-size:13px;font-weight:500;color:var(--brand);display:none;margin-bottom:12px;}
+.auth-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ─── USER WIDGET ─── */
+#userWidget{display:none;position:relative;}
+.user-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg);border:1.5px solid var(--line);border-radius:100px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink2);transition:all .2s;}
+.user-trigger:hover{border-color:var(--ink);color:var(--ink);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--brand);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+.user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:var(--r2);box-shadow:var(--sh3);border:1px solid var(--line);overflow:hidden;min-width:180px;display:none;z-index:100;animation:slideUp .2s ease;}
+.user-dropdown.open{display:block;}
+.dd-item{padding:13px 18px;font-size:14px;font-weight:500;color:var(--ink2);cursor:pointer;transition:background .15s;display:block;text-decoration:none;}
+.dd-item:hover{background:var(--bg);color:var(--ink);}
+.dd-item.danger{color:var(--brand);}
+.dd-sep{height:1px;background:var(--line);}
+
+
+/* ─── LOGIN DROPDOWN ─── */
+.login-dropdown-wrap{position:relative;}
+.login-drop{
+  display:none;position:absolute;top:calc(100% + 10px);right:0;
+  background:white;border-radius:16px;
+  box-shadow:0 8px 40px rgba(0,0,0,.14);
+  border:1px solid var(--line);
+  min-width:220px;z-index:9999;
+  animation:slideUp .2s ease;
+  overflow:hidden;
+}
+.login-drop.open{display:block;}
+.login-drop-item{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;cursor:pointer;
+  text-decoration:none;color:var(--ink2);
+  transition:background .15s;
+}
+.login-drop-item:hover{background:var(--bg);}
+.ldi-icon{font-size:24px;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;}
+.ldi-title{font-size:14px;font-weight:700;color:var(--ink);}
+.ldi-sub{font-size:12px;color:var(--muted);margin-top:1px;}
+.login-drop-sep{height:1px;background:var(--line);margin:0 16px;}
+@media(max-width:768px){
+  .login-dropdown-wrap{display:none;}
+}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:13px 22px;border-radius:100px;font-size:14px;font-weight:500;z-index:99999;display:none;box-shadow:var(--sh3);max-width:90vw;text-align:center;white-space:nowrap;}
+
+/* ═══════════════════════════════════════════
+   MOBILE BOTTOM NAV — hidden on desktop
+═══════════════════════════════════════════ */
+.mob-bottom-nav{display:none;}
+
+/* ═══════════════════════════════════════════
+   DESKTOP
+═══════════════════════════════════════════ */
+@media(min-width:769px){
+  .mob-bottom-nav{display:none !important;}
+}
+@media(min-width:1200px){
+  header{ padding:0 max(40px, calc(50vw - 570px)); }
+  .hero{ padding-left:max(40px, calc(50vw - 570px)); padding-right:max(40px, calc(50vw - 570px)); }
+  section{ padding-left:max(40px, calc(50vw - 570px)); padding-right:max(40px, calc(50vw - 570px)); }
+  .app-bg{ padding-left:max(40px, calc(50vw - 570px)); padding-right:max(40px, calc(50vw - 570px)); }
+  footer{ padding-left:max(40px, calc(50vw - 570px)); padding-right:max(40px, calc(50vw - 570px)); }
+}
+
+/* ═══════════════════════════════════════════
+   ANDROID APP MODE — ≤768px
+═══════════════════════════════════════════ */
+@media(max-width:768px){
+
+  /* ── Body safe area ── */
+  body{
+    font-size:15px;
+    padding-bottom:calc(72px + env(safe-area-inset-bottom));
+    background:#f5f7fa;
+    overscroll-behavior-y:none;
+  }
+
+  /* ── Hide desktop header nav items, show only logo + hamburger ── */
+  header{
+    padding:0 16px;
+    height:60px;
+    background:var(--teal);
+    border-bottom:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.18);
+  }
+  header.scrolled{box-shadow:0 2px 12px rgba(0,0,0,.25);}
+  .logo-name{ color:white !important; }
+  .logo-accent{ color:#ffb07a !important; }
+  .logo-tagline{ color:rgba(255,255,255,.55) !important; }
+  .logo-mark{ background:rgba(255,255,255,.2) !important; }
+  .logo-mark svg{ fill:white !important; }
+  .logo-img{ filter:brightness(0) invert(1); }
+
+  nav .nav-link{ display:none; }
+  #navLoginBtn{ display:none !important; }
+  #navProviderBtn{ display:none !important; }
+  .hamburger{
+    display:flex;
+    background:rgba(255,255,255,.15);
+    border:none;
+    color:white;
+    font-size:20px;
+    border-radius:10px;
+  }
+
+  /* ── Hero ── */
+  .hero{ padding:24px 16px 80px; }
+  .hero h1{ font-size:clamp(26px,7vw,36px); letter-spacing:-.5px; }
+  .hero-sub{ font-size:14px; }
+  .hero-badge{ font-size:12px; margin-bottom:16px; }
+
+  /* ── Search box ── */
+  .search-box{ border-radius:16px; margin:0 0; }
+
+  /* ── Sections ── */
+  section{ padding:24px 16px; }
+  .provider-left{ padding:28px 20px; }
+  .provider-right{ padding:28px 20px; }
+  footer{ padding:32px 16px 100px; }
+
+  /* ── Service grid compact ── */
+  section.services-bg{ padding-bottom:40px; }
+  .svc-card:active{ transform:scale(.94); transition:transform .1s; }
+
+  /* ── Stats ── */
+  .why-stat-num{ font-size:32px; }
+
+  /* ── Bottom nav bar ── */
+  .mob-bottom-nav{
+    display:flex;
+    position:fixed;
+    bottom:0; left:0; right:0;
+    height:calc(64px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:white;
+    border-top:1px solid var(--line);
+    box-shadow:0 -4px 20px rgba(0,0,0,.10);
+    z-index:9999;
+    align-items:center;
+    justify-content:space-around;
+  }
+  .mob-nav-item{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;flex:1;padding:8px 4px;
+    text-decoration:none;color:var(--muted);
+    font-size:10px;font-weight:600;letter-spacing:.2px;
+    transition:color .15s;
+    -webkit-tap-highlight-color:transparent;
+    position:relative;
+  }
+  .mob-nav-item svg{ width:22px;height:22px;transition:transform .15s; }
+  .mob-nav-item:active svg{ transform:scale(.85); }
+  .mob-nav-item.active{ color:var(--teal); }
+  .mob-nav-item.active svg{ color:var(--teal); }
+
+  /* Book Now — flat nav button, no floating FAB */
+  .mob-nav-center{
+    color:var(--brand) !important;
+    pointer-events:auto;
+    margin-top:0;
+    position:relative;
+  }
+  .mob-nav-center svg{ color:var(--brand); }
+  .mob-nav-center span{ color:var(--brand); font-weight:700; }
+  .mob-nav-center:active{ opacity:.7; }
+  .mob-nav-fab{
+    width:36px;height:36px;
+    background:var(--brand);
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s;
+  }
+  .mob-nav-center:active .mob-nav-fab{ transform:scale(.88); }
+  .mob-nav-fab svg{ width:20px;height:20px;color:white;stroke:white; }
+
+  /* ── Toast adjust for bottom nav ── */
+  .toast{ bottom:calc(76px + env(safe-area-inset-bottom)); }
+}
+
+@media(max-width:480px){
+  .svc-pop{ font-size:8px; }
+  .hero h1{ letter-spacing:-.4px; }
+}
+@media(max-width:320px){
+}
+
+/* ─── CATEGORY TABS ─── */
+.cat-tab{
+  padding:8px 16px;
+  border:2px solid var(--line);
+  border-radius:100px;
+  background:var(--white);
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;
+  cursor:pointer;
+  transition:all .2s;
+  white-space:nowrap;
+  color:var(--ink2);
+  flex-shrink:0;
+}
+.cat-tab:hover{
+  border-color:var(--teal);
+  color:var(--teal);
+  background:#e6f4f6;
+}
+.cat-tab.active{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:white;
+  font-weight:700;
+  box-shadow:0 4px 12px rgba(27,107,122,.3);
+}
+@media(max-width:768px){
+  #catTabsWrap{
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-bottom:6px;
+  }
+  #catTabsWrap::-webkit-scrollbar{display:none;}
+  .cat-tab{font-size:12px;padding:7px 13px;}
+}
+
+/* ══ SPLIT OVERLAY ══════════════════════════════════════════════════ */
+#splitOverlay{position:fixed;inset:0;z-index:9999;display:flex;
+  transition:opacity .45s ease,visibility .45s ease;}
+#splitOverlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.sp-side{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:40px 32px;cursor:pointer;position:relative;
+  overflow:hidden;transition:flex .45s cubic-bezier(.77,0,.175,1);}
+.sp-side:hover{flex:1.22;}
+.sp-need{background:linear-gradient(145deg,#0d3d47 0%,#1B6B7A 55%,#1e8a9e 100%);}
+.sp-provide{background:linear-gradient(145deg,#7a2800 0%,#E8651A 55%,#f5844a 100%);}
+.sp-side::before,.sp-side::after{content:'';position:absolute;border-radius:50%;
+  opacity:.08;pointer-events:none;animation:spFloat 6s ease-in-out infinite;}
+.sp-need::before{width:420px;height:420px;background:#fff;top:-110px;right:-110px;}
+.sp-need::after{width:260px;height:260px;background:#fff;bottom:-80px;left:-60px;animation-delay:-3s;}
+.sp-provide::before{width:360px;height:360px;background:#fff;top:-90px;left:-90px;animation-delay:-1.5s;}
+.sp-provide::after{width:210px;height:210px;background:#fff;bottom:-60px;right:-40px;animation-delay:-4s;}
+@keyframes spFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-18px);}}
+.sp-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:340px;}
+.sp-need .sp-content{animation:spR .6s ease both;}
+.sp-provide .sp-content{animation:spL .6s ease both;}
+@keyframes spR{from{opacity:0;transform:translateX(-32px);}to{opacity:1;transform:none;}}
+@keyframes spL{from{opacity:0;transform:translateX(32px);}to{opacity:1;transform:none;}}
+.sp-icon{width:84px;height:84px;border-radius:22px;margin:0 auto 20px;
+  background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  box-shadow:0 8px 28px rgba(0,0,0,.2);transition:transform .3s;}
+.sp-side:hover .sp-icon{transform:scale(1.1) translateY(-4px);}
+.sp-label{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.55);margin-bottom:8px;}
+.sp-title{font-family:'Sora',sans-serif;font-size:clamp(22px,2.8vw,36px);font-weight:900;
+  line-height:1.1;margin-bottom:12px;}
+.sp-desc{font-size:14px;color:rgba(255,255,255,.72);line-height:1.6;font-weight:500;}
+.sp-tap{margin-top:22px;font-size:12px;font-weight:700;color:rgba(255,255,255,.4);
+  letter-spacing:1px;text-transform:uppercase;animation:spPulse 2s ease-in-out infinite;}
+@keyframes spPulse{0%,100%{opacity:.4;}50%{opacity:.75;}}
+.sp-divider{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:10;display:flex;flex-direction:column;align-items:center;pointer-events:none;}
+.sp-div-line{width:1px;height:55px;background:rgba(255,255,255,.2);}
+.sp-div-logo{width:64px;height:64px;border-radius:50%;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 28px rgba(0,0,0,.28);animation:spPop .5s .3s ease both;}
+.sp-div-logo img{width:44px;height:44px;object-fit:contain;}
+.sp-div-or{width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,.6);font-size:10px;font-weight:800;}
+@keyframes spPop{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+.sp-nav{position:absolute;top:0;left:0;right:0;z-index:11;
+  display:flex;align-items:center;justify-content:space-between;padding:14px 24px;
+  background:linear-gradient(180deg,rgba(13,61,71,.7) 0%,transparent 100%);}
+.sp-nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.sp-nav-logo img{width:30px;height:30px;object-fit:contain;}
+.sp-nav-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;color:#fff;}
+.sp-skip{color:rgba(255,255,255,.6);font-size:12px;font-weight:700;padding:6px 14px;
+  border-radius:20px;border:1px solid rgba(255,255,255,.15);cursor:pointer;
+  background:rgba(255,255,255,.06);transition:all .2s;}
+.sp-skip:hover{background:rgba(255,255,255,.15);color:#fff;}
+@media(max-width:600px){
+  #splitOverlay{flex-direction:column;}
+  .sp-side{flex:none;min-height:48vh;padding:56px 24px 36px;}
+  .sp-side:hover{flex:none;}
+  .sp-divider{display:none;}
+  .sp-or-m{display:flex;align-items:center;gap:12px;background:#0d3d47;padding:10px 24px;}
+  .sp-or-m::before,.sp-or-m::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.15);}
+  .sp-or-m span{color:rgba(255,255,255,.35);font-size:10px;font-weight:800;letter-spacing:1px;}
+}
+@media(min-width:601px){.sp-or-m{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ══ SPLIT SCREEN ══ -->
+<div id="splitOverlay">
+  <nav class="sp-nav">
+    <a class="sp-nav-logo" href="#">
+      <img src="images/rlogo.png" alt="HamaraService" onerror="this.style.display='none'"/>
+      <span class="sp-nav-name">HamaraService</span>
+    </a>
+    <span class="sp-skip" onclick="dismissOverlay()">Skip →</span>
+  </nav>
+  <div class="sp-side sp-need" onclick="dismissOverlay()">
+    <div class="sp-content">
+      <div class="sp-icon">🏠</div>
+      <div class="sp-label">For Customers</div>
+      <div class="sp-title">Need a Home Service?</div>
+      <div class="sp-desc">Book trusted professionals for cleaning, repairs, appliances, beauty & more — at your doorstep.</div>
+      <div class="sp-tap">Tap to explore →</div>
+    </div>
+  </div>
+  <div class="sp-divider">
+    <div class="sp-div-line"></div>
+    <div class="sp-div-logo"><img src="images/rlogo.png" alt="HS" onerror="this.outerHTML='🏠'"/></div>
+    <div class="sp-div-line"></div>
+    <div class="sp-div-or">OR</div>
+    <div class="sp-div-line"></div>
+  </div>
+  <div class="sp-or-m"><span>OR</span></div>
+  <div class="sp-side sp-provide" onclick="window.location.href='provider-portal.html'">
+    <div class="sp-content">
+      <div class="sp-icon">💼</div>
+      <div class="sp-label">For Professionals</div>
+      <div class="sp-title">Want to Provide Services?</div>
+      <div class="sp-desc">Join our network of skilled professionals. Earn on your own schedule with steady work near you.</div>
+      <div class="sp-tap">Tap to join →</div>
+    </div>
+  </div>
+</div>
+<!-- ══ END SPLIT SCREEN ══ -->
+
+<!-- ─── HEADER ─── -->
+<header id="siteHeader">
+  <a class="logo" href="#">
+    <img src="images/rlogo.png" alt="Hamara Service" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <div class="logo-fallback" style="display:none;align-items:center;gap:10px;">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+      <div class="logo-text">
+        <span class="logo-name">HAMARA <span class="logo-accent">SERVICE</span></span>
+        <span class="logo-tagline">FOR EVERY HOME, EVERY NEED</span>
+      </div>
+    </div>
+  </a>
+  <nav>
+    <a class="nav-link" href="#services">Services</a>
+    <a class="nav-link" href="#how">How it works</a>
+    <a class="nav-link" href="#about">About</a>
+    <!-- Login dropdown -->
+    <div class="login-dropdown-wrap" id="loginDropWrap">
+      <button class="nav-pill ghost" id="loginDropBtn" onclick="toggleLoginDrop(event)">
+        👤 Login <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="login-drop" id="loginDrop">
+        <a class="login-drop-item" href="login.html">
+          <span class="ldi-icon">👤</span>
+          <div><div class="ldi-title">Customer Login</div><div class="ldi-sub">Book home services</div></div>
+        </a>
+        <div class="login-drop-sep"></div>
+        <a class="login-drop-item" href="provider-portal.html">
+          <span class="ldi-icon">🔧</span>
+          <div><div class="ldi-title">Service Provider</div><div class="ldi-sub">Manage your jobs</div></div>
+        </a>
+      </div>
+    </div>
+    <div id="userWidget">
+      <div class="user-trigger" onclick="toggleUserMenu()">
+        <div class="user-avatar" id="userAvatarLetter">U</div>
+        <span id="userWidgetName">Account</span>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="user-dropdown" id="userDropdown">
+        <a class="dd-item" href="user-panel.html" onclick="toggleUserMenu()">📋 My Bookings</a>
+        <a class="dd-item" href="user-panel.html?tab=profile" onclick="toggleUserMenu()">👤 My Profile</a>
+        <a class="dd-item" href="user-panel.html" onclick="toggleUserMenu()">💰 My Wallet</a>
+        <div class="dd-sep"></div>
+        <a class="dd-item danger" onclick="logoutUser();">Sign out</a>
+      </div>
+    </div>
+    <button class="hamburger" id="menuBtn">☰</button>
+  </nav>
+</header>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-badge"><span></span>Live in 50+ cities across India</div>
+  <h1>Professional Home Services<br/>at Your <em>Doorstep</em></h1>
+  <p class="hero-sub">Trusted, background-verified professionals for every home need. Book in 60 seconds.</p>
+
+  <div class="search-box" id="searchBox" style="overflow:visible;">
+    <div class="search-body" style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:14px;overflow:visible;position:relative;">
+
+      <div style="position:relative;">
+        <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:8px;">What service do you need?</label>
+
+        <!-- input + dropdown anchored together -->
+        <div style="position:relative;z-index:1000;">
+          <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;z-index:2;" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="heroSearchInput"
+            placeholder="e.g. House cleaning, Plumber, AC repair…"
+            oninput="liveSearchFn(this.value)"
+            onkeydown="if(event.key==='Enter')pickFirstResult()"
+            autocomplete="off"
+            style="width:100%;padding:14px 16px 14px 44px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;border:2px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:border .2s;box-sizing:border-box;"/>
+          <!-- Dropdown anchored directly below input -->
+          <div id="srchDrop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:white;border:2px solid var(--brand);border-radius:var(--r);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:99999;max-height:280px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <button class="search-cta" onclick="heroSearch()">Find Professionals Near You →</button>
+    </div>
+  </div>
+
+  <div class="hero-trust">
+    <div class="trust-item"><strong>1.5L+</strong> happy customers</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><strong>10K+</strong> verified professionals</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><strong>4.8★</strong> avg rating</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><strong>60 sec</strong> booking</div>
+  </div>
+</section>
+
+<!-- ─── SERVICES ─── -->
+<section class="services-bg" id="services">
+  <div class="max-w">
+    <div class="section-head">
+      <div>
+        <div class="section-label">What we offer</div>
+        <div class="section-title">Services for every<br/>home need</div>
+      </div>
+
+    </div>
+    <!-- Category filter tabs - scrollable on mobile -->
+    <div id="catTabsWrap" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;"></div>
+    <!-- Services grid -->
+    <div class="services-grid" id="servicesGrid"></div>
+    <!-- Show all button -->
+    <div id="showAllBtnWrap" style="text-align:center;margin-top:20px;margin-bottom:100px;display:none;">
+      <button id="showAllBtn" onclick="toggleShowAll()" style="padding:14px 36px;background:var(--teal);color:white;border:none;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(27,107,122,.3);letter-spacing:-.2px;">
+        Show All Services ↓
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section class="hiw-bg" id="how">
+  <div class="max-w">
+    <div class="section-head">
+      <div>
+        <div class="section-label">Simple process</div>
+        <div class="section-title">Book in 3 easy steps</div>
+        <div class="section-sub">No calls, no waiting. Professional service at the tap of a button.</div>
+      </div>
+    </div>
+    <div class="hiw-grid">
+      <div class="hiw-card">
+        <div class="hiw-num">01</div>
+        <div class="hiw-icon brand">📍</div>
+        <div class="hiw-title">Pick your service</div>
+        <div class="hiw-desc">Choose from 15+ home services. Set your date, time, and location in seconds.</div>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">02</div>
+        <div class="hiw-icon blue">🎯</div>
+        <div class="hiw-title">Get matched instantly</div>
+        <div class="hiw-desc">Our system finds the nearest verified professional available for your slot.</div>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">03</div>
+        <div class="hiw-icon green">✅</div>
+        <div class="hiw-title">Sit back & relax</div>
+        <div class="hiw-desc">Professional arrives on time. Pay securely after the job is done to your satisfaction.</div>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">04</div>
+        <div class="hiw-icon yellow">⭐</div>
+        <div class="hiw-title">Rate your experience</div>
+        <div class="hiw-desc">Your feedback shapes our quality. Every review makes the platform better for everyone.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── WHY US ─── -->
+<section class="why-bg" id="about">
+  <div class="max-w">
+    <div class="why-grid">
+      <div class="why-left">
+        <div class="section-label">Why HamaraService</div>
+        <div class="section-title">The most trusted home service platform in India</div>
+        <div class="why-features">
+          <div class="why-feat">
+            <div class="why-feat-ic r">🛡️</div>
+            <div><div class="why-feat-title">100% Background Verified</div><div class="why-feat-desc">Every professional is Aadhaar-verified and police-checked before onboarding.</div></div>
+          </div>
+          <div class="why-feat">
+            <div class="why-feat-ic g">⚡</div>
+            <div><div class="why-feat-title">60-Second Booking</div><div class="why-feat-desc">Book any service in under a minute. No calls, no negotiations.</div></div>
+          </div>
+          <div class="why-feat">
+            <div class="why-feat-ic b">💰</div>
+            <div><div class="why-feat-title">Transparent Pricing</div><div class="why-feat-desc">Fixed prices. No hidden charges. Pay only after the job is done.</div></div>
+          </div>
+          <div class="why-feat">
+            <div class="why-feat-ic y">🔄</div>
+            <div><div class="why-feat-title">Satisfaction Guarantee</div><div class="why-feat-desc">Not happy? We'll re-do the service or give you a full refund. No questions asked.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="why-right">
+        <div class="why-stats-row">
+          <div class="why-stat">
+            <div class="why-stat-num">1.5L<span>+</span></div>
+            <div class="why-stat-label">Customers served</div>
+          </div>
+          <div class="why-stat">
+            <div class="why-stat-num">10K<span>+</span></div>
+            <div class="why-stat-label">Verified professionals</div>
+          </div>
+        </div>
+        <div class="why-stat">
+          <div class="why-stat-num">4.8<span>/5</span></div>
+          <div class="why-stat-label">Average rating across all services</div>
+        </div>
+        <div class="why-stat">
+          <div class="why-stat-num">50<span>+ cities</span></div>
+          <div class="why-stat-label">Across India and growing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIALS ─── -->
+<section class="testimonials-bg">
+  <div class="max-w">
+    <div class="section-head">
+      <div>
+        <div class="section-label">Customer stories</div>
+        <div class="section-title">Loved by families<br/>across India</div>
+      </div>
+    </div>
+    <div class="testimonials-grid">
+      <div class="t-card">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-text">"Booked a deep cleaning and the team arrived exactly on time. My apartment has never looked this good. Will definitely use again!"</div>
+        <div class="t-author">
+          <div class="t-avatar" style="background:#fdecea;">👩</div>
+          <div><div class="t-name">Priya Sharma</div><div class="t-location">Hyderabad, Telangana</div></div>
+        </div>
+      </div>
+      <div class="t-card">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-text">"The electrician fixed everything in 45 minutes. Very professional, wore shoe covers, and cleaned up after himself. Exceptional service!"</div>
+        <div class="t-author">
+          <div class="t-avatar" style="background:#eff3ff;">👨</div>
+          <div><div class="t-name">Rahul Nair</div><div class="t-location">Bengaluru, Karnataka</div></div>
+        </div>
+      </div>
+      <div class="t-card">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-text">"I use HamaraService every month for house maid service. The quality is consistently excellent and the booking is so easy. 10/10 would recommend!"</div>
+        <div class="t-author">
+          <div class="t-avatar" style="background:#e6faf4;">👩</div>
+          <div><div class="t-name">Anita Reddy</div><div class="t-location">Chennai, Tamil Nadu</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PARTNER CTA ─── -->
+<section class="provider-bg">
+  <div class="max-w">
+    <div class="provider-card">
+      <div class="provider-left">
+        <div class="section-label">For professionals</div>
+        <div class="section-title">Earn ₹800–₹2000<br/>every day</div>
+        <p>Join thousands of professionals who have transformed their income with HamaraService. Flexible hours, guaranteed payments, and a steady flow of customers.</p>
+        <div class="provider-perks">
+          <div class="perk"><div class="perk-ic">✅</div>Get paid within 24 hours</div>
+          <div class="perk"><div class="perk-ic">📍</div>Work within your preferred radius</div>
+          <div class="perk"><div class="perk-ic">📱</div>Manage everything from your phone</div>
+          <div class="perk"><div class="perk-ic">🛡️</div>Insurance & safety support included</div>
+        </div>
+        <div class="provider-cta-btns">
+          <a class="btn-primary" href="provider-portal.html?tab=register">Register as Provider →</a>
+          <a class="btn-ghost" href="provider-portal.html">Already a Provider? Login</a>
+        </div>
+      </div>
+      <div class="provider-right">
+        <div class="earn-card">
+          <div class="earn-card-label">Average monthly earnings</div>
+          <div class="earn-card-val"><span>₹</span>24,000</div>
+          <div class="earn-card-sub">Working 6 days/week · 4–6 bookings/day</div>
+        </div>
+        <div class="earn-tags">
+          <div class="earn-tag">🧹 House Maid</div>
+          <div class="earn-tag">⚡ Electrician</div>
+          <div class="earn-tag">🔧 Plumber</div>
+          <div class="earn-tag">👨‍🍳 Cook</div>
+          <div class="earn-tag">❄️ AC Service</div>
+          <div class="earn-tag">+ 10 more</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── APP CTA ─── -->
+<section class="app-bg" style="padding:80px 40px;">
+  <div class="app-inner">
+    <h2>Get the HamaraService App</h2>
+    <p>Book services, track professionals in real-time, and manage everything from your pocket.</p>
+    <div class="app-btns">
+      <a class="app-btn" href="#">
+        <div class="app-btn-icon">🍎</div>
+        <div class="app-btn-text">
+          <div class="app-btn-label">Download on the</div>
+          <div class="app-btn-store">App Store</div>
+        </div>
+      </a>
+      <a class="app-btn" href="#">
+        <div class="app-btn-icon">▶️</div>
+        <div class="app-btn-text">
+          <div class="app-btn-label">Get it on</div>
+          <div class="app-btn-store">Google Play</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="logo" href="#">
+          <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+          <div class="logo-text">
+            <span class="logo-name" style="color:white;">HAMARA <span class="logo-accent">SERVICE</span></span>
+            <span class="logo-tagline" style="color:rgba(255,255,255,.4);">FOR EVERY HOME, EVERY NEED</span>
+          </div>
+        </a>
+        <p class="footer-desc">India's most trusted platform for home services. Safe, reliable, and always on time.</p>
+        <div class="footer-social">
+          <div class="social-btn">📘</div>
+          <div class="social-btn">📷</div>
+          <div class="social-btn">🐦</div>
+          <div class="social-btn">▶️</div>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <a href="#">House Cleaning</a>
+        <a href="#">AC Service</a>
+        <a href="#">Plumbing</a>
+        <a href="#">Electrical</a>
+        <a href="#">Carpentry</a>
+        <a href="#">Pest Control</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About us</a>
+        <a href="#">Careers</a>
+        <a href="#">Blog</a>
+        <a href="#">Press</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <a href="legal-pages.html#contact">Help Centre</a>
+        <a href="legal-pages.html#privacy">Privacy Policy</a>
+        <a href="legal-pages.html#terms">Terms & Conditions</a>
+        <a href="legal-pages.html#refund">Refund Policy</a>
+        <a href="tel:+918898584971">📞 88985849710</a>
+        <a href="mailto:support@hamaraservice.com">✉️ support@hamaraservice.com</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 HamaraService. All rights reserved.</span>
+      <span>Made with ❤️ in India</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ─── MAP MODAL ─── -->
+<div class="modal-overlay" id="mapModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-head-title">Set your location</span>
+      <button class="modal-close" onclick="closeMapModal()">✕</button>
+    </div>
+    <div id="mapContainer"></div>
+    <div class="modal-body">
+      <div class="map-search-row">
+        <input class="map-search-input" id="mapSearchInput" type="text" placeholder="Search area, street, city…"/>
+        <button class="map-btn ghost" onclick="searchLocation()">Search</button>
+        <button class="map-btn primary" onclick="detectLocation(false)">📍 GPS</button>
+      </div>
+      <div class="addr-display" id="addrDisplay">📍 Click on the map or use GPS to set your location</div>
+      <button class="map-confirm-btn" onclick="confirmLocation()">Confirm Location</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── AUTH MODAL ─── -->
+<div class="modal-overlay" id="authModal">
+  <div class="auth-modal-box">
+    <div class="auth-body">
+      <button onclick="closeAuthModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;">✕</button>
+
+      <div id="authLoginView">
+        <div class="auth-title">Welcome back 👋</div>
+        <div class="auth-sub">Sign in to track bookings and manage your account</div>
+
+        <!-- Google Sign-In -->
+        <button onclick="signInWithGoogle()" id="googleSignInBtn" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">or</span>
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+        </div>
+
+        <!-- Email login -->
+        <div class="auth-err" id="loginErr"></div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile Number or Email</label>
+            <input type="text" id="loginId" placeholder="Mobile number or email address" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Name (as registered)</label>
+            <input type="text" id="loginName" placeholder="Your full name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'" onkeydown="if(event.key==='Enter')doLogin()"/>
+          </div>
+          <button onclick="doLogin()" class="auth-submit">Log in →</button>
+        </div>
+        <div class="auth-alt">New here? <a onclick="closeAuthModal();window.location.href='login.html';" style="cursor:pointer;">Create free account</a></div>
+      </div>
+
+      <div id="authRegView" style="display:none;">
+        <div class="auth-title">Create account ✨</div>
+        <div class="auth-sub">Track bookings, get offers and manage your services</div>
+
+        <!-- Google Sign-Up -->
+        <button onclick="signInWithGoogle()" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign up with Google
+        </button>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">or sign up with mobile</span>
+          <div style="flex:1;height:1px;background:var(--line);"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="auth-2col">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Full Name</label>
+              <input type="text" id="regName" placeholder="Your name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile</label>
+              <input type="tel" id="regPhone" placeholder="10-digit" maxlength="10" inputmode="numeric" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email (optional)</label>
+            <input type="email" id="regEmail" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">City</label>
+            <input type="text" id="regCity" placeholder="e.g. Hyderabad" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
+          </div>
+          <button onclick="doRegister()" class="auth-submit">Create Account →</button>
+        </div>
+        <div class="auth-alt">Have an account? <a onclick="switchAuthTab('login')">Log in</a></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── MOBILE BOTTOM NAV (Android App Style) ─── -->
+<nav class="mob-bottom-nav" id="mobBottomNav">
+  <a class="mob-nav-item active" href="#" onclick="mobNavActive(this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="mob-nav-item" href="#services" onclick="mobNavActive(this);document.getElementById('services').scrollIntoView({behavior:'smooth'});return false;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Services</span>
+  </a>
+  <a class="mob-nav-item mob-nav-center" href="#" onclick="mobBookNow();return false;">
+    <div class="mob-nav-fab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    </div>
+    <span>Book Now</span>
+  </a>
+  <a class="mob-nav-item" href="user-panel.html" onclick="mobNavActive(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span>Bookings</span>
+  </a>
+  <a class="mob-nav-item" href="user-panel.html?tab=profile" onclick="mobNavActive(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Account</span>
+  </a>
+  <a class="mob-nav-item" href="provider-portal.html" onclick="mobNavActive(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+    <span>Provider</span>
+  </a>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════
+    // FIREBASE CONFIG — hamaraservice-s009
+    // To get your API key:
+    // 1. Go to https://console.firebase.google.com/project/hamaraservice-s009/settings/general
+    // 2. Scroll to "Your apps" → Web app → Config
+    // 3. Copy the apiKey, messagingSenderId, appId values below
+    // ══════════════════════════════════════════════════════════
+    var FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+      authDomain:        "hamaraservice-s009.firebaseapp.com",
+      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:         "hamaraservice-s009",
+      storageBucket:     "hamaraservice-s009.firebasestorage.app",
+      messagingSenderId: "1064274729048",
+      appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    var fbAuth = firebase.auth();
+    var fbDB   = firebase.database();
+    // Google provider
+    var googleProvider = new firebase.auth.GoogleAuthProvider();
+    googleProvider.addScope('email');
+    googleProvider.addScope('profile');
+  
+
+
+// ── Master service catalog — 34 services, synced from admin ─
+var HS_CATALOG=[
+  {id:"SVC001",icon:"🧹",name:"House Maid",             cat:"Home Cleaning",   price:0,  keywords:["maid","clean","sweep","house","mop"]},
+  {id:"SVC002",icon:"🧽",name:"Deep Cleaning",           cat:"Home Cleaning",   price:0,  keywords:["deep","full","thorough","clean","home"]},
+  {id:"SVC003",icon:"🚿",name:"Bathroom Cleaning",       cat:"Home Cleaning",   price:0,  keywords:["bathroom","toilet","washroom","bath","tiles"]},
+  {id:"SVC004",icon:"🍳",name:"Kitchen Cleaning",        cat:"Home Cleaning",   price:0,  keywords:["kitchen","cook","clean","chimney","stove"]},
+  {id:"SVC005",icon:"🛋️",name:"Sofa / Carpet Cleaning", cat:"Home Cleaning",   price:0,  keywords:["sofa","carpet","couch","upholstery","clean"]},
+  {id:"SVC006",icon:"👔",name:"Laundry / Ironing",       cat:"Home Cleaning",   price:0,  keywords:["laundry","iron","clothes","wash","dry"]},
+  {id:"SVC007",icon:"❄️",name:"AC Cleaning & Repair",   cat:"Appliance Care",  price:0,  keywords:["ac","air","condition","cool","filter","clean","repair","fix","not cooling","gas"]},
+  {id:"SVC009",icon:"🫙",name:"Home Appliance Repair",   cat:"Appliance Care",  price:0,  keywords:["washing","machine","fridge","microwave","geyser","repair"]},
+  {id:"SVC010",icon:"💧",name:"Water Purifier Service",  cat:"Appliance Care",  price:0,  keywords:["water","purifier","filter","ro","clean"]},
+  {id:"SVC011",icon:"🔧",name:"Plumber",                 cat:"Repairs",         price:0,  keywords:["plumb","pipe","leak","water","tap","drain","flush"]},
+  {id:"SVC012",icon:"⚡",name:"Electrician",             cat:"Repairs",         price:0,  keywords:["electric","wire","switch","light","fan","power","mcb"]},
+  {id:"SVC013",icon:"🪚",name:"Carpenter",               cat:"Repairs",         price:0,  keywords:["carpenter","wood","furniture","door","window","hinge"]},
+  {id:"SVC014",icon:"🎨",name:"Painter",                 cat:"Repairs",         price:0,  keywords:["paint","wall","colour","color","room","house"]},
+  {id:"SVC015",icon:"📷",name:"CCTV Installation",       cat:"Repairs",         price:0,  keywords:["cctv","camera","security","install","dvr"]},
+  {id:"SVC016",icon:"☀️",name:"Solar Panel Cleaning",    cat:"Repairs",         price:0,  keywords:["solar","panel","clean","energy"]},
+  {id:"SVC017",icon:"🚗",name:"Car / Bike Wash",          cat:"Vehicle Care",    price:0,  keywords:["car","bike","motorcycle","wash","vehicle","auto","clean","two wheeler","scooter"]},
+  {id:"SVC019",icon:"🔩",name:"Car & Bike Mechanic",     cat:"Vehicle Care",    price:0,  keywords:["car","bike","scooter","mechanic","engine","oil","service","repair","4 wheeler","2 wheeler"]},
+  {id:"SVC021",icon:"🐛",name:"Pest Control",            cat:"Pest Control",    price:0,  keywords:["pest","cockroach","rat","bug","insect","termite"]},
+  {id:"SVC022",icon:"🍱",name:"Cook / Cooking Person",   cat:"Cooking",         price:0,  keywords:["cook","food","meal","lunch","dinner","chef","daily"]},
+  {id:"SVC023",icon:"✂️",name:"Haircut (Men)",            cat:"Beauty & Wellness",price:0, keywords:["haircut","hair","cut","men","shave","barber","trim"]},
+  {id:"SVC024",icon:"💇",name:"Haircut (Women)",          cat:"Beauty & Wellness",price:0, keywords:["haircut","hair","cut","women","ladies","salon","blow"]},
+  {id:"SVC025",icon:"💆",name:"Full Body Massage",        cat:"Beauty & Wellness",price:0, keywords:["massage","body","spa","relax","pain","therapy"]},
+  {id:"SVC026",icon:"💪",name:"Gym / Fitness Trainer",   cat:"Beauty & Wellness",price:0, keywords:["gym","fitness","trainer","workout","exercise","personal"]},
+  {id:"SVC027",icon:"👨‍⚕️",name:"Doctor Visit",           cat:"Medical",         price:0,  keywords:["doctor","physician","medical","health","ill","sick","fever","gp"]},
+  {id:"SVC028",icon:"💉",name:"Nurse Visit",              cat:"Medical",         price:0,  keywords:["nurse","injection","dressing","iv","drip","care","wound"]},
+  {id:"SVC029",icon:"🧪",name:"Lab Test Collection",     cat:"Medical",         price:0,  keywords:["lab","test","blood","sample","report","collection"]},
+  {id:"SVC030",icon:"👶",name:"Babysitter / Nanny",       cat:"Care Services",   price:0,  keywords:["baby","child","kid","nanny","babysit","day care"]},
+  {id:"SVC031",icon:"🧓",name:"Elderly Care",             cat:"Care Services",   price:0,  keywords:["elder","old","senior","care","attend","companion"]},
+  {id:"SVC032",icon:"🌱",name:"Gardener",                 cat:"Outdoor",         price:0,  keywords:["garden","plant","grass","lawn","trim","mow"]},
+  {id:"SVC033",icon:"🚙",name:"Driver",                   cat:"Outdoor",         price:0,  keywords:["driver","drive","car","errand","trip","outstation"]},
+  {id:"SVC034",icon:"💂",name:"Security Guard & Bouncers",cat:"Security",        price:0,  keywords:["security","guard","bouncer","protect","event","night","watch","pub","club","vip"]},
+];
+
+function _getLiveCatalog(){
+  try{
+    var s=JSON.parse(localStorage.getItem('hs_catalog')||'[]');
+    if(s&&s.length>0) return s.filter(function(x){return x.status!=='inactive';}).map(function(x){
+      var m=HS_CATALOG.find(function(m){return m.name===x.name||(m.id&&m.id===x.id);})||{};
+      return {id:x.id,icon:x.icon||m.icon||'🔧',name:x.name||m.name,
+              cat:x.cat||m.cat||'Other',price:x.userPrice||x.defaultPrice||m.price||499,keywords:m.keywords||[]};
+    });
+  }catch(e){}
+  return HS_CATALOG;
+}
+
+// ALL_SERVICES starts empty — filled by loadAndRenderCatalog()
+var ALL_SERVICES = [];
+
+function _buildAllServices(catalog) {
+  ALL_SERVICES.length = 0;
+  catalog.forEach(function(s) {
+    ALL_SERVICES.push({name:s.name, emoji:s.icon||s.emoji||'🔧',
+      price:s.price, cat:s.cat||'Other', id:s.id, keywords:s.keywords||[]});
+  });
+}
+
+function loadAndRenderCatalog() {
+  // Step 1: Render from localStorage cache immediately (fast, no blank screen)
+  var cached = _getLiveCatalog();
+  if (cached.length) {
+    _buildAllServices(cached);
+    _buildCatTabs();
+    renderServicesGrid();
+  }
+
+  // Step 2a: Fetch hs_service_prices from Firebase (set by hs-prices.html)
+  // This overrides catalog.json base prices with admin-set prices
+  var xhrP = new XMLHttpRequest();
+  xhrP.open('GET', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_=' + Date.now(), true);
+  xhrP.timeout = 8000;
+  xhrP.onload = function() {
+    try {
+      var priceData = JSON.parse(xhrP.responseText);
+      if (priceData && typeof priceData === 'object') {
+        // Apply base prices to HS_CATALOG
+        Object.keys(priceData).forEach(function(svcId) {
+          var p = priceData[svcId];
+          if (!p) return;
+          var svc = HS_CATALOG.find(function(s){ return s.id === svcId; });
+          if (!svc) return;
+          // Try base price first (cleaning/multi-option services)
+          if (p.base != null) {
+            svc.price = parseInt(p.base) || svc.price;
+          }
+          // Visit-only services: read visit.price (SVC007-SVC018 etc.)
+          else if (p.visit && p.visit.price != null) {
+            svc.price = parseInt(p.visit.price) || svc.price;
+          }
+          // Mechanic: car.visit or bike.visit
+          else if (p.car && p.car.visit != null) {
+            svc.price = parseInt(p.car.visit) || svc.price;
+          }
+          // Appliance: appliance.visit
+          else if (p.appliance && p.appliance.visit != null) {
+            svc.price = parseInt(p.appliance.visit) || svc.price;
+          }
+          // AC/Electrician/Plumber etc: svc.visit
+          else if (p.svc && p.svc.visit != null) {
+            svc.price = parseInt(p.svc.visit) || svc.price;
+          }
+          // Massage: base.price
+          else if (p.base && p.base.price != null) {
+            svc.price = parseInt(p.base.price) || svc.price;
+          }
+        });
+        // Rebuild ALL_SERVICES so search bar shows updated prices too
+        _buildAllServices(HS_CATALOG);
+        renderServicesGrid();
+      }
+    } catch(e) {}
+  };
+  xhrP.send();
+
+// Step 2b: Fetch catalog.json for service list/status
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'catalog.json?_=' + Date.now(), true);
+  xhr.timeout = 8000;
+  xhr.onload = function() {
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (!data) return;
+      // Firebase may return object (keyed by id) or array — normalise to array
+      var arr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data).filter(Boolean);
+      if (!arr.length) return;
+      // Save to localStorage for next visit
+      try { localStorage.setItem('hs_catalog', JSON.stringify(arr)); } catch(e) {}
+      // Build active services
+      var active = arr.filter(function(s){ return s && s.status !== 'inactive'; })
+        .map(function(s) {
+          var m = HS_CATALOG.find(function(m){ return m.name===s.name || m.id===s.id; }) || {};
+          return {
+            id:       s.id       || m.id,
+            icon:     s.icon     || m.icon || '🔧',
+            name:     s.name     || m.name,
+            cat:      s.cat      || m.cat  || 'Other',
+            price:    s.userPrice|| s.defaultPrice || m.price || 0,
+            keywords: m.keywords || []
+          };
+        });
+      if (!active.length) return;
+      var changed = active.length !== ALL_SERVICES.length ||
+        active.some(function(a, i) {
+          return !ALL_SERVICES[i] || ALL_SERVICES[i].price !== a.price || ALL_SERVICES[i].name !== a.name;
+        });
+      if (changed) {
+        _buildAllServices(active);
+        _buildCatTabs();
+        renderServicesGrid();
+      }
+    } catch(e) { console.warn('Catalog fetch error:', e); }
+  };
+  xhr.onerror = xhr.ontimeout = function() {
+    // Firebase unavailable — already showing from cache, nothing to do
+  };
+  xhr.send();
+}
+let selectedServiceName = '';
+
+function liveSearchFn(q) {
+  var dd = document.getElementById('srchDrop');
+  if(!dd) return;
+  if(!q || !q.trim()) { dd.style.display='none'; return; }
+  var lq = q.toLowerCase().trim();
+  var results = ALL_SERVICES.filter(function(s) {
+    if(s.name.toLowerCase().includes(lq)) return true;
+    if(s.keywords && s.keywords.some(function(k){ return k.includes(lq); })) return true;
+    return false;
+  });
+  if(!results.length) {
+    dd.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--muted);font-weight:500;">No services found — try: cleaning, plumber, doctor…</div>';
+    dd.style.display = 'block';
+    return;
+  }
+  dd.innerHTML = results.map(function(s, i) {
+    return '<div data-svc="'+encodeURIComponent(s.name)+'" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background=\'#fff1f0\'" onmouseout="this.style.background=\'\'">'+
+      '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
+      '<div style="flex:1;">'+
+        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
+        '<div style="font-size:12px;font-weight:600;color:#00956a;">₹'+s.price+'</div>'+
+      '</div>'+
+      '<span style="font-size:13px;font-weight:700;color:#E8651A;flex-shrink:0;">View →</span>'+
+    '</div>';
+  }).join('');
+  // Attach click handlers via JS (avoids quote-escaping issues with service names)
+  dd.querySelectorAll('[data-svc]').forEach(function(el){
+    el.addEventListener('click', function(){ pickService(decodeURIComponent(el.getAttribute('data-svc'))); });
+  });
+  dd.style.display = 'block';
+}
+
+function pickService(name) {
+  selectedServiceName = name;
+  document.getElementById('heroSearchInput').value = name;
+  document.getElementById('srchDrop').style.display = 'none';
+  var page = SVC_PAGE_MAP[name] || ('service-detail.html?service=' + encodeURIComponent(name));
+  window.location.href = page;
+}
+
+function pickFirstResult() {
+  var dd = document.getElementById('srchDrop');
+  if(!dd) return;
+  var first = dd.querySelector('div');
+  if(first) first.click();
+}
+
+function mobBookNow() {
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  if (user) {
+    window.location.href = 'user-booking.html';
+  } else {
+    sessionStorage.setItem('hs_after_login', 'user-booking.html');
+    window.location.href = 'login.html';
+  }
+}
+function mobNavActive(el) {
+  document.querySelectorAll('.mob-nav-item').forEach(function(i){ i.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+  var inp = document.getElementById('heroSearchInput');
+  var dd = document.getElementById('srchDrop');
+  if(inp && dd && !inp.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+// ── HERO SEARCH
+var _pendingUrl=null;
+function heroSearch(){
+  var inp = document.getElementById('heroSearchInput');
+  var svc = selectedServiceName || (inp ? inp.value.trim() : '');
+  if(!svc){
+    // Shake the input
+    if(inp){inp.style.border='2px solid var(--brand)';inp.focus();setTimeout(function(){inp.style.border='2px solid var(--line)';},2000);}
+    showToast('⚠️ Type or select a service first');
+    return;
+  }
+  // Go to service detail page — no login required to browse details
+  var page = SVC_PAGE_MAP[svc] || ('service-detail.html?service=' + encodeURIComponent(svc));
+  window.location.href = page;
+}
+var SVC_PAGE_MAP = {
+  'House Maid': 'svc-house-maid.html',
+  'Deep Cleaning': 'svc-deep-cleaning.html',
+  'Bathroom Cleaning': 'svc-bathroom-cleaning.html',
+  'Kitchen Cleaning': 'svc-kitchen-cleaning.html',
+  'Sofa / Carpet Cleaning': 'svc-sofa-carpet-cleaning.html',
+  'Laundry / Ironing': 'svc-laundry-ironing.html',
+  'AC Cleaning & Repair': 'svc-ac-service.html',
+  'Home Appliance Repair': 'svc-appliance-repair.html',
+  'Water Purifier Service': 'svc-water-purifier.html',
+  'Plumber': 'svc-plumber.html',
+  'Electrician': 'svc-electrician.html',
+  'Carpenter': 'svc-carpenter.html',
+  'Painter': 'svc-painter.html',
+  'CCTV Installation': 'svc-cctv.html',
+  'Solar Panel Cleaning': 'svc-solar-panel.html',
+  'Car / Bike Wash': 'svc-car-wash.html',
+  'Car & Bike Mechanic': 'svc-mechanic.html',
+  'Pest Control': 'svc-pest-control.html',
+  'Cook / Cooking Person': 'svc-cook.html',
+  'Haircut (Men)': 'svc-haircut-men.html',
+  'Haircut (Women)': 'svc-haircut-women.html',
+  'Full Body Massage': 'svc-massage.html',
+  'Gym / Fitness Trainer': 'svc-fitness-trainer.html',
+  'Doctor Visit': 'svc-doctor-visit.html',
+  'Nurse Visit': 'svc-nurse-visit.html',
+  'Lab Test Collection': 'svc-lab-test.html',
+  'Babysitter / Nanny': 'svc-babysitter.html',
+  'Elderly Care': 'svc-elderly-care.html',
+  'Gardener': 'svc-gardener.html',
+  'Driver': 'svc-driver.html',
+  'Security Guard & Bouncers': 'svc-security-guard.html',
+};
+
+function openService(slug){
+  var name = decodeURIComponent(slug);
+  // Known services → dedicated page; admin-added new services → generic detail page
+  var page = SVC_PAGE_MAP[name] || ('service-detail.html?service=' + encodeURIComponent(name));
+  window.location.href = page;
+}
+function selectService(name){
+  selectedServiceName = name;
+  var loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
+  var addr = encodeURIComponent(selectedAddress||'');
+  var url = 'user-booking.html?service='+encodeURIComponent(name)+(loc?'&loc='+loc:'')+(addr?'&addr='+addr:'');
+
+  function doNavigate(){
+    var user = JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
+    if(user){
+      window.location.href = url;
+    } else {
+      sessionStorage.setItem('hs_after_login', url);
+      window.location.href = 'login.html';
+    }
+  }
+
+  if(_fbAuthReady){
+    // Firebase already resolved — act immediately
+    doNavigate();
+  } else {
+    // Firebase not yet resolved — wait up to 3s then act
+    var waited = 0;
+    var interval = setInterval(function(){
+      waited += 50;
+      if(_fbAuthReady || waited >= 3000){
+        clearInterval(interval);
+        doNavigate();
+      }
+    }, 50);
+  }
+}
+
+// ── MAP
+let leafletMap=null,leafletMarker=null;
+let selectedLatLng=null,selectedAddress='';
+
+function openMapModal(){
+  document.getElementById('mapModal').classList.add('show');
+  setTimeout(()=>{
+    if(!leafletMap){
+      leafletMap=L.map('mapContainer').setView([17.3850,78.4867],12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(leafletMap);
+      leafletMap.on('click',e=>{
+        selectedLatLng={lat:e.latlng.lat,lng:e.latlng.lng};
+        placePin(e.latlng.lat,e.latlng.lng);
+        reverseGeocode(e.latlng.lat,e.latlng.lng);
+      });
+    }
+    leafletMap.invalidateSize();
+    detectLocation(true);
+  },200);
+}
+function closeMapModal(){document.getElementById('mapModal').classList.remove('show');}
+
+function placePin(lat,lng){
+  if(leafletMarker)leafletMap.removeLayer(leafletMarker);
+  leafletMarker=L.marker([lat,lng],{
+    icon:L.divIcon({html:`<div style="width:32px;height:32px;background:#E8251A;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(232,37,26,.4)"></div>`,className:'',iconSize:[32,32],iconAnchor:[16,32]})
+  }).addTo(leafletMap);
+  leafletMap.panTo([lat,lng]);
+}
+function reverseGeocode(lat,lng){
+  document.getElementById('addrDisplay').textContent='📍 Fetching address…';
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(d=>{
+      const a=d.address||{};
+      const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state].filter(Boolean);
+      selectedAddress=parts.join(', ')||d.display_name;
+      document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
+    }).catch(()=>{
+      selectedAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      document.getElementById('addrDisplay').textContent='📍 '+selectedAddress;
+    });
+}
+function detectLocation(silent){
+  if(!navigator.geolocation){if(!silent)showToast('❌ GPS not supported');return;}
+  if(!silent)showToast('📍 Getting your location…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:lat,longitude:lng}=pos.coords;
+    selectedLatLng={lat,lng};
+    if(leafletMap)leafletMap.setView([lat,lng],15);
+    placePin(lat,lng);reverseGeocode(lat,lng);
+    if(!silent)showToast('✅ Location found!');
+  },err=>{if(!silent)showToast('❌ Could not get location');});
+}
+function searchLocation(){
+  const q=document.getElementById('mapSearchInput').value.trim();
+  if(!q){showToast('⚠️ Enter an address to search');return;}
+  showToast('🔍 Searching…');
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}})
+    .then(r=>r.json()).then(res=>{
+      if(!res.length){showToast('❌ Location not found');return;}
+      const lat=+res[0].lat,lng=+res[0].lon;
+      selectedLatLng={lat,lng};
+      leafletMap.setView([lat,lng],15);
+      placePin(lat,lng);reverseGeocode(lat,lng);
+    }).catch(()=>showToast('❌ Search failed'));
+}
+document.getElementById('mapSearchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchLocation();});
+function confirmLocation(){
+  if(!selectedLatLng){showToast('📍 Please tap the map or use GPS first');return;}
+  const short=selectedAddress?(selectedAddress.length>50?selectedAddress.substring(0,50)+'…':selectedAddress):`${selectedLatLng.lat.toFixed(4)}, ${selectedLatLng.lng.toFixed(4)}`;
+  closeMapModal();showToast('✅ Location confirmed: '+short);
+}
+
+
+function openUserAuth(tab){
+  document.getElementById('authModal').classList.add('show');
+  switchAuthTab(tab||'login');
+}
+function closeAuthModal(){
+  document.getElementById('authModal').classList.remove('show');
+}
+function switchAuthTab(tab){
+  var isLogin=(tab==='login');
+  document.getElementById('authLoginView').style.display=isLogin?'block':'none';
+  document.getElementById('authRegView').style.display=isLogin?'none':'block';
+}
+
+// ── GOOGLE SIGN-IN ─────────────────────────────────────────────
+function signInWithGoogle(){
+  var btn = document.getElementById('googleSignInBtn');
+  if(btn){btn.textContent='Signing in…';btn.disabled=true;}
+  fbAuth.signInWithPopup(googleProvider)
+    .then(function(result){
+      var user = result.user;
+      var userData = {
+        id:          'HS-CU-'+user.uid.slice(0,8).toUpperCase(),
+        uid:         user.uid,
+        name:        user.displayName || 'Customer',
+        email:       user.email || '',
+        phone:       user.phoneNumber || '',
+        photo:       user.photoURL || '',
+        city:        '',
+        provider:    'google',
+        registeredAt: new Date().toISOString(),
+      };
+      // Save to Firebase Realtime DB only
+      fbDB.ref('customers/'+user.uid).set(userData);
+      sessionStorage.setItem('hs_current_customer', JSON.stringify(userData));
+      closeAuthModal();
+      updateUserWidget();
+      showToast('✅ Welcome, '+userData.name+'!');
+      var gAfter=sessionStorage.getItem('hs_after_login');
+      if(gAfter){ sessionStorage.removeItem('hs_after_login'); window.location.href=gAfter; }
+      else if(_pendingUrl){ var gUrl=_pendingUrl; _pendingUrl=null; window.location.href=gUrl; }
+      else { window.location.href='user-panel.html'; }
+    })
+    .catch(function(err){
+      console.error('Google sign-in error:', err);
+      if(btn){btn.textContent='Continue with Google';btn.disabled=false;}
+      if(err.code==='auth/popup-closed-by-user'){showToast('Sign-in cancelled');return;}
+      showToast('⚠️ Sign-in failed: '+err.message);
+    });
+}
+
+// ── MOBILE/EMAIL LOGIN ─────────────────────────────────────────
+function doLogin(){
+  var id   = document.getElementById('loginId').value.trim();
+  var name = document.getElementById('loginName').value.trim();
+  var err  = document.getElementById('loginErr');
+  if(!id){err.textContent='Enter your mobile or email';err.style.display='block';return;}
+  if(!name){err.textContent='Enter your registered name';err.style.display='block';return;}
+  err.style.display='none';
+
+  // Always check Firebase — no local cache fallback
+  fbDB.ref('customers').orderByChild('phone').equalTo(id).once('value', function(snap){
+    var found = null;
+    snap.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
+    if(!found){
+      // Try by email
+      fbDB.ref('customers').orderByChild('email').equalTo(id).once('value', function(s2){
+        s2.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
+        if(found){ loginSuccess(found); }
+        else {
+          err.innerHTML='Account not found. <a onclick="closeAuthModal();window.location.href=\'login.html\';" style="color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;">Create an account</a>';
+          err.style.display='block';
+        }
+      });
+    } else { loginSuccess(found); }
+  }).catch(function(){
+    err.textContent='⚠️ Could not reach server. Check your connection and try again.';
+    err.style.display='block';
+  });
+}
+
+function loginSuccess(user){
+  sessionStorage.setItem('hs_current_customer', JSON.stringify(user));
+  closeAuthModal();
+  updateUserWidget();
+  showToast('✅ Welcome back, '+user.name+'!');
+  var afterLogin = sessionStorage.getItem('hs_after_login');
+  if(afterLogin){ sessionStorage.removeItem('hs_after_login'); window.location.href=afterLogin; return; }
+  if(_pendingUrl){ var url=_pendingUrl; _pendingUrl=null; window.location.href=url; return; }
+  window.location.href='user-panel.html';
+}
+
+// ── REGISTER ───────────────────────────────────────────────────
+function doRegister(){
+  var name  = document.getElementById('regName').value.trim();
+  var phone = document.getElementById('regPhone').value.trim();
+  var email = document.getElementById('regEmail').value.trim();
+  var city  = document.getElementById('regCity').value.trim();
+  if(!name){showToast('⚠️ Enter your name');return;}
+  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return;}
+
+  var userData = {
+    id:          'HS-CU-'+Date.now().toString(36).toUpperCase(),
+    name:        name,
+    phone:       phone,
+    email:       email,
+    city:        city,
+    provider:    'manual',
+    registeredAt: new Date().toISOString(),
+  };
+
+  // Check if phone already exists in Firebase before registering
+  fbDB.ref('customers').orderByChild('phone').equalTo(phone).once('value', function(snap){
+    if(snap.exists()){
+      showToast('⚠️ Mobile already registered — log in');
+      switchAuthTab('login');
+      return;
+    }
+    // Save to Firebase only — no local cache
+    fbDB.ref('customers/'+userData.id).set(userData).then(function(){
+      sessionStorage.setItem('hs_current_customer', JSON.stringify(userData));
+      closeAuthModal();
+      updateUserWidget();
+      showToast('🎉 Welcome to HamaraService, '+name+'!');
+      var rAfter=sessionStorage.getItem('hs_after_login');
+      if(rAfter){ sessionStorage.removeItem('hs_after_login'); window.location.href=rAfter; }
+      else if(_pendingUrl){ var rUrl=_pendingUrl; _pendingUrl=null; window.location.href=rUrl; }
+      else { window.location.href='user-panel.html'; }
+    }).catch(function(e){
+      showToast('⚠️ Registration failed. Check connection and try again.');
+      console.warn('Firebase save failed:', e.message);
+    });
+  }).catch(function(){
+    showToast('⚠️ Could not reach server. Check your connection.');
+  });
+}
+
+// ── AUTH STATE LISTENER ────────────────────────────────────────
+fbAuth.onAuthStateChanged(function(user){
+  if(user){
+    fbDB.ref('customers/'+user.uid).once('value', function(snap){
+      if(snap.exists()){
+        sessionStorage.setItem('hs_current_customer', JSON.stringify(snap.val()));
+      }
+      updateUserWidget();
+    });
+  } else {
+    sessionStorage.removeItem('hs_current_customer');
+    updateUserWidget();
+  }
+});
+
+function logoutUser(){
+  fbAuth.signOut().catch(function(){});
+  sessionStorage.removeItem('hs_current_customer');
+  document.getElementById('userDropdown').classList.remove('open');
+  updateUserWidget();
+  showToast('👋 Signed out');
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+function showToast(msg){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.className='toast';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(function(){t.style.display='none';},3500);
+}
+
+// ── PROVIDER LOGIN SMART REDIRECT ─────────────────────────────
+
+function toggleLoginDrop(e){
+  e.stopPropagation();
+  var d = document.getElementById('loginDrop');
+  if(d) d.classList.toggle('open');
+}
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('loginDropWrap');
+  var d = document.getElementById('loginDrop');
+  if(wrap && d && !wrap.contains(e.target)) d.classList.remove('open');
+});
+
+function providerLoginClick(){
+  // Provider portal handles both login and registration in one place
+  window.location.href = 'provider-portal.html';
+}
+
+// ── USER WIDGET ────────────────────────────────────────────────
+function updateUserWidget(){
+  var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
+  var loginWrap=document.getElementById('loginDropWrap');
+  var widget=document.getElementById('userWidget');
+  if(user){
+    if(loginWrap)loginWrap.style.display='none';
+    if(widget){
+      widget.style.display='block';
+      var letter=document.getElementById('userAvatarLetter');
+      var nameEl=document.getElementById('userWidgetName');
+      if(letter)letter.textContent=(user.name||'U').charAt(0).toUpperCase();
+      if(nameEl)nameEl.textContent=(user.name||'Account').split(' ')[0];
+    }
+  } else {
+    if(loginWrap)loginWrap.style.display='';
+    if(widget)widget.style.display='none';
+  }
+}
+
+function toggleUserMenu(){
+  var dd=document.getElementById('userDropdown');
+  if(dd)dd.classList.toggle('open');
+}
+
+function showUserProfile(){
+  var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
+  if(!user){showToast('⚠️ Please log in first');return;}
+  showToast('👤 '+user.name+' · '+user.phone+(user.city?' · '+user.city:''));
+}
+
+// Close user dropdown on outside click
+document.addEventListener('click',function(e){
+  var widget=document.getElementById('userWidget');
+  var dd=document.getElementById('userDropdown');
+  if(widget&&dd&&!widget.contains(e.target))dd.classList.remove('open');
+});
+
+// ── RENDER SERVICES GRID ──────────────────────────────────────
+// ── RENDER SERVICES GRID — category-aware, synced from admin ─
+var _showAllSvc = false;
+var _activeCat = 'All';
+
+function _buildCatTabs() {
+  var wrap = document.getElementById('catTabsWrap');
+  if (!wrap) return;
+  var cats = ['All'];
+  HS_CATALOG.forEach(function(s){ if(s.cat && cats.indexOf(s.cat) === -1) cats.push(s.cat); });
+  wrap.innerHTML = cats.map(function(c){
+    var safeC = c.replace(/'/g, "\\'");
+    return '<button class="cat-tab' + (c === _activeCat ? ' active' : '') + '" onclick="setCat(\'' + safeC + '\')">'
+      + (c === 'All' ? '&#11088; All' : c) + '</button>';
+  }).join('');
+}
+
+function setCat(cat) {
+  _activeCat = cat;
+  _showAllSvc = false;
+  _buildCatTabs();
+  renderServicesGrid();
+}
+
+function toggleShowAll() {
+  _showAllSvc = !_showAllSvc;
+  renderServicesGrid();
+}
+
+function renderServicesGrid() {
+  var grid = document.getElementById('servicesGrid');
+  var btn  = document.getElementById('showAllBtn');
+  if (!grid) return;
+  var filtered = _activeCat === 'All'
+    ? HS_CATALOG
+    : HS_CATALOG.filter(function(s){ return s.cat === _activeCat; });
+  var LIMIT = 12;
+  var toShow = (_showAllSvc || _activeCat !== 'All') ? filtered : filtered.slice(0, LIMIT);
+  grid.innerHTML = toShow.map(function(s){
+    var slug = encodeURIComponent(s.name);
+    return '<div class="svc-card" onclick="openService(\'' + slug + '\')">'  
+      + '<div class="svc-card-img">' + (s.icon||s.emoji||'🔧') + '</div>'
+      + '<div class="svc-card-info">'
+        + '<div class="svc-name">' + s.name + '</div>'
+        + '<div class="svc-price-tag" id="ptag-'+s.id+'">' + (s.price > 0 ? 'from ₹'+s.price.toLocaleString('en-IN') : '…') + '</div>'
+      + '</div>'
+      + '<button class="svc-book">View Details →</button>'
+      + '</div>';
+  }).join('');
+  if (btn) {
+    var showBtn = (_activeCat === 'All' && filtered.length > LIMIT);
+    var wrap = document.getElementById('showAllBtnWrap');
+    if (wrap) wrap.style.display = showBtn ? 'block' : 'none';
+    btn.textContent = _showAllSvc ? 'Show Less ↑' : 'Show All ' + filtered.length + ' Services ↓';
+  }
+}
+
+// Load catalog from Firebase (with localStorage cache fallback)
+loadAndRenderCatalog();
+
+
+
+// ── HEADER SCROLL EFFECT ──────────────────────────────────────
+window.addEventListener('scroll',function(){
+  var h=document.getElementById('siteHeader');
+  if(h)h.classList.toggle('scrolled',window.scrollY>10);
+});
+
+// ── HAMBURGER MENU ────────────────────────────────────────────
+(function(){
+  var btn=document.getElementById('menuBtn');
+  if(!btn)return;
+  btn.addEventListener('click',function(){
+    var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
+    window.location.href = user ? 'user-panel.html' : 'login.html';
+  });
+})();
+
+// ── INIT USER WIDGET ON LOAD ──────────────────────────────────
+updateUserWidget();
+</script>
+
+<script>
+// Split screen
+function dismissOverlay(){
+  var ov=document.getElementById('splitOverlay');
+  if(!ov)return;
+  ov.classList.add('hidden');
+  setTimeout(function(){ov.style.display='none';},500);
+  // Remember — never show again after first choice
+  try{localStorage.setItem('hs_overlay_seen','1');}catch(e){}
+}
+
+// Skip overlay if already seen (refresh, home button, back navigation)
+(function(){
+  try{
+    if(localStorage.getItem('hs_overlay_seen')==='1'){
+      var ov=document.getElementById('splitOverlay');
+      if(ov) ov.style.display='none';
+    }
+  }catch(e){}
+})();
+
+// Haptic feedback on every touch across the whole page
+document.addEventListener('touchstart', function(){
+  if(navigator.vibrate) navigator.vibrate(10);
+},{passive:true});
+</script>
+</body>
+</html>

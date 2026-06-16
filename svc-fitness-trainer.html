@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Fitness Trainer at Home – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{--brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;--ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;--line:#e2e8f0;--bg:#f0f7f9;--green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;--r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+.ksvc-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.ksvc-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.ksvc-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.ksvc-check{font-size:20px;flex-shrink:0;color:var(--muted);width:24px;text-align:center;}
+.ksvc-chip.active .ksvc-check{color:var(--brand);}
+.ksvc-info{flex:1;}
+.ksvc-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ksvc-chip.active .ksvc-name{color:var(--brand);}
+.ksvc-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.ksvc-price{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--teal);flex-shrink:0;text-align:right;}
+.ksvc-chip.active .ksvc-price{color:var(--brand);}
+.calc-chip{padding:7px 14px;border:1.5px solid var(--line);border-radius:100px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);background:white;transition:all .15s;user-select:none;white-space:nowrap;}
+.calc-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
+.calc-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;}
+.cnt-btn{width:40px;height:40px;border:2px solid var(--line);background:white;font-size:22px;cursor:pointer;color:var(--teal);}
+.cnt-btn.left{border-radius:10px 0 0 10px;}
+.cnt-btn.right{border-radius:0 10px 10px 0;}
+.cnt-val{min-width:48px;height:40px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:800;}
+.price-bar{background:linear-gradient(135deg,#0d3d47,var(--teal));border-radius:14px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;}
+.pb-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.pb-price{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.pb-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.35;}
+.pb-btn{padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.pb-btn:hover:not(:disabled){background:var(--brand2);}
+@media(max-width:480px){.price-bar{flex-direction:column;align-items:flex-start;gap:12px;}.pb-price{font-size:24px;}.pb-btn{width:100%;text-align:center;}}
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:44px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:220px;padding-top:7px;}
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;text-decoration:none;display:block;transition:all .2s;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+.sub-panel{margin-left:8px;margin-bottom:4px;padding:16px;background:var(--bg);border-radius:14px;border:1.5px solid var(--brand);display:flex;flex-direction:column;gap:14px;}
+.sub-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">💪</div>
+    <div>
+      <div class="hero-cat">Health &amp; Wellness</div>
+      <div class="hero-name">Fitness Trainer at Home</div>
+      <div class="hero-tagline">Personal trainer at your doorstep — weight loss, muscle gain, yoga &amp; more</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ 45–90 minutes</div>
+        <div class="pill green">✅ Certified Trainer</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">from ₹499</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+<!-- About -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">📋</div><div class="card-title">About This Service</div></div>
+  <div class="card-body">
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;">A certified personal fitness trainer comes to your home at your preferred time with a customised workout plan. Whether your goal is weight loss, muscle building, yoga, post-injury recovery, or just staying active — select the training type below and set your session preferences right below it.</p>
+  </div>
+</div>
+
+<!-- Calculator -->
+<div class="card" id="calcCard">
+  <div class="card-head"><div class="card-icon">💪</div><div class="card-title">Book a Fitness Trainer</div></div>
+  <div class="card-body" style="padding-top:0;">
+
+    <!-- Sticky price bar -->
+    <div style="position:sticky;top:60px;z-index:100;background:linear-gradient(135deg,#0d3d47,var(--teal));margin:0 -20px 16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Visit Fee</div>
+        <div id="stickyPrice">…</div>
+        <div id="stickyNote" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Per trainer visit</div>
+      </div>
+      <button id="stickyBookBtn" onclick="bookNow()" style="padding:10px 18px;background:var(--brand);color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">Book Now →</button>
+    </div>
+
+    <!-- Visit fee info card -->
+    <div style="background:var(--teal-soft,#e6f4f6);border-radius:12px;padding:16px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:34px;">💪</div>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:var(--teal);">Trainer Visit Fee</div>
+        <div id="visitPriceDisplay">…</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Per session · At your home or terrace</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- What's Included -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" style="padding-top:12px;">
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Certified personal trainer (CPT / ACE / ISSA / equivalent)</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Personalised workout plan tailored to your goal and fitness level</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Warm-up, main workout, and cool-down in each session</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Correct form and technique guidance — injury prevention</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Basic nutrition and diet tips relevant to your goal</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Resistance bands and basic training tools brought by trainer</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Progress tracking and session notes shared after each session</span></div>
+    </div>
+    <div style="padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+      <div style="font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">What's Not Included</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Dumbbells, barbells, bench (provide your own if needed)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Supplements or protein products</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Medical diagnosis or physiotherapy treatment</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Full diet chart or clinical nutrition plan (basic tips only)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⚡</div><div class="card-title">How Fitness Training Works</div></div>
+  <div class="card-body">
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Booking</div><div class="step-desc">Select training type, fitness level, goal, and number of sessions. Trainer confirmed for your preferred time.</div></div></div>
+      <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Fitness Assessment</div><div class="step-desc">Trainer arrives and does a quick assessment — current fitness level, medical conditions, available space and equipment.</div></div></div>
+      <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Session Plan Shared</div><div class="step-desc">Personalised workout plan created and shared on WhatsApp before or after first session.</div></div></div>
+      <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Training</div><div class="step-desc">Trainer guides every exercise with correct form — no guesswork, no injuries. Warm-up to cool-down covered.</div></div></div>
+      <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Progress Tracking</div><div class="step-desc">Session notes, progress updates, and next session plan shared after each session.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Benefits -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💡</div><div class="card-title">Benefits of Home Personal Training</div></div>
+  <div class="card-body">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">No gym commute — saves 30–60 minutes daily</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Train at home at your preferred time — no travel, no parking, no waiting for equipment.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">100% personalised — every session is for you</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Unlike group gym classes, the trainer's full attention is on your form, progress, and goals.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Correct form — prevents injuries</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Most gym injuries happen due to incorrect form without supervision. A home trainer watches every rep.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">More consistent — trainer holds you accountable</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Having a trainer show up at your door makes you far less likely to skip workouts.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Works with no equipment</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Effective bodyweight and resistance band workouts — no gym required. Trainer brings bands.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Great for all ages — including seniors</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Safe, supervised training for elderly, post-surgery recovery, and beginners with health conditions.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.8</div><div class="rating-stars">★★★★★</div><div class="rating-count">2,050 reviews</div></div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:80%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:14%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:4%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQs -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" style="padding-top:6px;">
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Do I need gym equipment at home?<span class="faq-arr">›</span></div><div class="faq-a">No — trainers bring resistance bands and design effective bodyweight workouts. For strength training, basic dumbbells or resistance bands at home help, but are not mandatory.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is the trainer certified?<span class="faq-arr">›</span></div><div class="faq-a">Yes — all trainers are certified (CPT, ACE, ISSA, or equivalent Indian certifications). You can request certification details at booking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How much space is needed for a home workout?<span class="faq-arr">›</span></div><div class="faq-a">A 6x6 feet clear space is enough for most workouts. The trainer will adapt the session to the space available in your home.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I train if I have a health condition?<span class="faq-arr">›</span></div><div class="faq-a">Yes — mention your condition at booking. The trainer will design a safe, appropriate workout. For serious conditions, medical clearance from your doctor is recommended before starting.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can a family member join my session?<span class="faq-arr">›</span></div><div class="faq-a">Yes — for Zumba and group sessions, you can include family members. For personalised training (weight loss, muscle, rehab), individual sessions give better results.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How soon will I see results?<span class="faq-arr">›</span></div><div class="faq-a">With consistent training (3–5 sessions/week), most people see visible improvement in 4–6 weeks. Weight loss, strength, and flexibility vary based on diet and consistency.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I get the same trainer every session?<span class="faq-arr">›</span></div><div class="faq-a">Yes — for regular bookings and monthly packages, the same trainer is assigned for continuity and better progress tracking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What if I am not happy with the trainer?<span class="faq-arr">›</span></div><div class="faq-a">Contact us within 24 hours and we will arrange a replacement trainer at no extra charge.</div></div>
+  </div>
+</div>
+
+<!-- Similar -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body">
+    <div class="sim-grid">
+      <a class="sim-card" href="svc-massage.html"><div class="sim-icon">💆</div><div class="sim-name">Massage at Home</div><div class="sim-price">from ₹499</div></a>
+      <a class="sim-card" href="svc-doctor-visit.html"><div class="sim-icon">👨‍⚕️</div><div class="sim-name">Doctor Visit</div><div class="sim-price">from ₹599</div></a>
+      <a class="sim-card" href="svc-elderly-care.html"><div class="sim-icon">🧓</div><div class="sim-name">Elderly Care</div><div class="sim-price">from ₹799</div></a>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">₹0 <sub>select training</sub></div>
+      <div class="book-note-sm">Updates as you select</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">45–90 min/session</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.8 (2,050 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
+    </div>
+    <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Select Training &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Certified personal trainer</div>
+      <div class="book-trust-item">📋 Custom workout plan</div>
+      <div class="book-trust-item">🔒 Pay after session</div>
+      <div class="book-trust-item">🔁 Same trainer available</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">₹0 <sub>select training</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.8 · 2,050 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var selected  = {};   // svc -> { base, extra, sessions }
+var counts    = {};   // svc -> session count
+var SVCS = ['weightloss','muscle','yoga','zumba','rehab','senior','monthly'];
+
+function toggleSvc(el) {
+  var svc = el.dataset.svc;
+  var chk = document.getElementById('chk-' + svc);
+  var panel = document.getElementById('sub-' + svc);
+  if(el.classList.contains('active')) {
+    el.classList.remove('active');
+    delete selected[svc];
+    if(chk) chk.textContent = '\u2610';
+    if(panel) panel.style.display = 'none';
+  } else {
+    el.classList.add('active');
+    var base = parseInt(el.dataset.base) || 0;
+    counts[svc] = counts[svc] || 1;
+    selected[svc] = { base: base, extra: 0, sessions: counts[svc] };
+    if(chk) chk.textContent = '\u2611';
+    if(panel) panel.style.display = 'block';
+  }
+  updatePrice();
+}
+
+function selectInGroup(el, group) {
+  var container = el.parentElement;
+  container.querySelectorAll('.calc-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  // Update extra for groups that have data-extra
+  var extra = parseInt(el.dataset.extra || 0);
+  var svc = groupToSvc(group);
+  if(svc && selected[svc] !== undefined && el.dataset.extra !== undefined) {
+    selected[svc].extra = extra;
+    updatePrice();
+  }
+}
+
+function groupToSvc(g) {
+  if(g.indexOf('wl') === 0)  return 'weightloss';
+  if(g.indexOf('mu') === 0)  return 'muscle';
+  if(g.indexOf('yo') === 0)  return 'yoga';
+  if(g.indexOf('zu') === 0)  return 'zumba';
+  if(g.indexOf('re') === 0)  return 'rehab';
+  if(g.indexOf('se') === 0)  return 'senior';
+  if(g.indexOf('mo') === 0)  return 'monthly';
+  return null;
+}
+
+function changeSessions(svc, delta) {
+  counts[svc] = Math.max(1, Math.min(30, (counts[svc]||1) + delta));
+  var el = document.getElementById('cnt-' + svc); if(el) el.textContent = counts[svc];
+  if(selected[svc]) { selected[svc].sessions = counts[svc]; updatePrice(); }
+}
+
+function updatePrice() {
+  var svcs = Object.keys(selected);
+  var isMonthly = svcs.indexOf('monthly') !== -1;
+  var total = svcs.reduce(function(s, k) {
+    var d = selected[k];
+    var sessions = k === 'monthly' ? 1 : (d.sessions || 1);
+    return s + (d.base + (d.extra||0)) * sessions;
+  }, 0);
+  var enabled = svcs.length > 0;
+  var fmt = total > 0 ? '\u20b9'+total.toLocaleString('en-IN') : '\u20b90';
+  var totalSessions = svcs.filter(function(k){ return k!=='monthly'; }).reduce(function(s,k){ return s+(selected[k].sessions||1); }, 0);
+  var note = enabled
+    ? (isMonthly ? 'Monthly package' : totalSessions+' session'+(totalSessions>1?'s':''))
+    : 'Select training type above';
+  ['stickyPrice','totalPrice'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=fmt; });
+  ['stickyNote','priceNote'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=note; });
+  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>estimated</sub>';
+  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>estimated</sub>';
+  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid){
+    var b=document.getElementById(bid); if(!b) return;
+    b.disabled=!enabled; b.style.opacity=enabled?'1':'0.4'; b.style.cursor=enabled?'pointer':'not-allowed';
+  });
+}
+
+function bookNow() {
+  if(Object.keys(selected).length === 0) {
+    showToast('\u26a0\ufe0f Please select a training type');
+    document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ service:'Fitness Trainer', training: selected,
+    icon: '💪',
+    price: (document.getElementById('totalPrice')||{textContent:''}).textContent.replace(/[^0-9]/g,''),
+    summary: Object.keys(selected||{}).map(function(k){ return 'Fitness Trainer > '+k; })
+  }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
+  var url = 'user-booking.html?service=Fitness%20Trainer';
+  if(user){ window.location.href=url; }
+  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
+}
+
+function showToast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; },3000);
+}
+
+firebase.auth().onAuthStateChanged(function(u){
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC022) ────────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+  function applyPrices(d){
+    if(!d||d.error) return;
+    // Visit fee
+    var vp=0;
+    if(d.visit&&d.visit.visit!==undefined) vp=parseInt(d.visit.visit);
+    else if(d.base!==undefined) vp=parseInt(d.base);
+    if(vp>0&&typeof VISIT_PRICE!=='undefined'){ VISIT_PRICE=vp; }
+    // Individual chip prices
+    if(d.svc) document.querySelectorAll('.ksvc-chip[data-svc]').forEach(function(c){
+      var k=c.dataset.svc;if(d.svc[k]===undefined) return;
+      var p=parseInt(d.svc[k]);c.dataset.base=p;
+      if(typeof selected!=='undefined'&&selected[k]) selected[k]=p;
+      var pd=c.querySelector('.ksvc-price'); if(pd) pd.textContent='₹'+p.toLocaleString('en-IN');
+    });
+    if(d.base!==undefined){
+      document.querySelectorAll('.pill').forEach(function(pl){
+        if(pl.textContent.indexOf('from')>=0&&pl.textContent.indexOf('₹')>=0)
+          pl.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+    if(typeof updatePrice==='function') updatePrice();
+  }  function load(){
+    getToken(function(tok){
+      var url=_DB+'/hs_service_prices/SVC026.json'+(tok?'?auth='+tok:'');
+      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
+      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      xhr.onerror=function(){};xhr.send();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+</script>
+</body>
+</html>
+var VISIT_PRICE = 0;
+
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var selected  = {};   // svc -> { base, extra, sessions }
+var counts    = {};   // svc -> session count
+var SVCS = ['weightloss','muscle','yoga','zumba','rehab','senior','monthly'];
+
+function toggleSvc(el) {
+  var svc = el.dataset.svc;
+  var chk = document.getElementById('chk-' + svc);
+  var panel = document.getElementById('sub-' + svc);
+  if(el.classList.contains('active')) {
+    el.classList.remove('active');
+    delete selected[svc];
+    if(chk) chk.textContent = '\u2610';
+    if(panel) panel.style.display = 'none';
+  } else {
+    el.classList.add('active');
+    var base = parseInt(el.dataset.base) || 0;
+    counts[svc] = counts[svc] || 1;
+    selected[svc] = { base: base, extra: 0, sessions: counts[svc] };
+    if(chk) chk.textContent = '\u2611';
+    if(panel) panel.style.display = 'block';
+  }
+  updatePrice();
+}
+
+function selectInGroup(el, group) {
+  var container = el.parentElement;
+  container.querySelectorAll('.calc-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  // Update extra for groups that have data-extra
+  var extra = parseInt(el.dataset.extra || 0);
+  var svc = groupToSvc(group);
+  if(svc && selected[svc] !== undefined && el.dataset.extra !== undefined) {
+    selected[svc].extra = extra;
+    updatePrice();
+  }
+}
+
+function groupToSvc(g) {
+  if(g.indexOf('wl') === 0)  return 'weightloss';
+  if(g.indexOf('mu') === 0)  return 'muscle';
+  if(g.indexOf('yo') === 0)  return 'yoga';
+  if(g.indexOf('zu') === 0)  return 'zumba';
+  if(g.indexOf('re') === 0)  return 'rehab';
+  if(g.indexOf('se') === 0)  return 'senior';
+  if(g.indexOf('mo') === 0)  return 'monthly';
+  return null;
+}
+
+function changeSessions(svc, delta) {
+  counts[svc] = Math.max(1, Math.min(30, (counts[svc]||1) + delta));
+  var el = document.getElementById('cnt-' + svc); if(el) el.textContent = counts[svc];
+  if(selected[svc]) { selected[svc].sessions = counts[svc]; updatePrice(); }
+}
+
+function updatePrice() {
+  var p = VISIT_PRICE || 599;
+  var fmt = '₹' + p.toLocaleString('en-IN');
+  ['stickyPrice','visitPriceDisplay'].forEach(function(id){
+    var e = document.getElementById(id); if(e) e.textContent = fmt;
+  });
+  var sn = document.getElementById('stickyNote');
+  if(sn) sn.textContent = 'Per trainer visit · At your home';
+  var btn = document.getElementById('stickyBookBtn');
+  if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+}
+function bookNow() {
+  if (!VISIT_PRICE) { showToast('⚠️ Price still loading, please wait'); return; }
+  sessionStorage.setItem('hs_service_options', JSON.stringify({
+    service: 'Gym / Fitness Trainer', icon: '💪',
+    price: String(VISIT_PRICE),
+    summary: ['Fitness Trainer > Trainer Visit']
+  }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=Gym%20Fitness%20Trainer';
+  if(user){ window.location.href=url; }
+  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
+}
+function showToast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; },3000);
+}
+
+firebase.auth().onAuthStateChanged(function(u){
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC022) ────────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+  function applyPrices(d){
+    if(!d||d.error) return;
+    var p=0;
+    if(d.visit&&d.visit.visit!==undefined) p=parseInt(d.visit.visit);
+    else if(d.svc&&d.svc.visit!==undefined) p=parseInt(d.svc.visit);
+    else if(d.base!==undefined) p=parseInt(d.base);
+    if(p>0){
+      VISIT_PRICE=p;
+      if(typeof updatePrice==='function') updatePrice();
+    }
+  }  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();

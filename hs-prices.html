@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hamara Service — Price Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;
+  --line:#e2e8f0;--bg:#f4f6f9;--surface:#fff;
+  --green:#16a34a;--green-soft:#dcfce7;
+  --red:#ef4444;--purple:#6c4ff8;
+  --sh:0 1px 8px rgba(0,0,0,.06);--sh2:0 4px 20px rgba(0,0,0,.1);
+  --sb:240px; /* sidebar width */
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-font-smoothing:antialiased;height:100%;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);height:100%;overflow:hidden;}
+
+/* ── LOGIN ─────────────────────────────────────────── */
+#loginWrap{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0d3d47 0%,var(--teal) 100%);z-index:1000;
+}
+.lbox{background:white;border-radius:20px;padding:44px 40px;width:360px;box-shadow:0 24px 64px rgba(0,0,0,.3);}
+.lbox-logo{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--teal);}
+.lbox-logo span{color:var(--brand);}
+.lbox-sub{font-size:13px;color:var(--muted);margin:4px 0 28px;}
+.lbox label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;color:var(--ink);}
+.lbox input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;}
+.lbox input:focus{border-color:var(--teal);}
+.lbox-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--teal2),var(--teal));color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.lbox-err{color:var(--red);font-size:12px;margin-top:8px;text-align:center;display:none;}
+
+/* ── APP SHELL ──────────────────────────────────────── */
+#appWrap{display:none;height:100vh;overflow:hidden;}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+.topbar{
+  height:56px;background:linear-gradient(135deg,var(--teal2) 0%,var(--teal) 100%);
+  display:flex;align-items:center;padding:0 20px 0 0;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);position:relative;z-index:200;flex-shrink:0;
+}
+.tb-brand{
+  width:var(--sb);flex-shrink:0;display:flex;align-items:center;gap:10px;
+  padding:0 20px;border-right:1px solid rgba(255,255,255,.12);
+}
+.tb-brand-logo{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;color:white;line-height:1;}
+.tb-brand-logo span{color:#ffb07a;}
+.tb-brand-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px;}
+.tb-center{flex:1;padding:0 20px;display:flex;align-items:center;gap:10px;}
+.tb-search{
+  flex:1;max-width:340px;padding:8px 14px 8px 36px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:8px;color:white;font-size:13px;font-family:inherit;outline:none;
+}
+.tb-search::placeholder{color:rgba(255,255,255,.5);}
+.tb-search:focus{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);}
+.tb-search-wrap{position:relative;flex:1;max-width:340px;}
+.tb-search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6;}
+.tb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.tb-status{font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7);white-space:nowrap;}
+.tb-status.ok{color:#86efac;border-color:#86efac;}
+.tb-status.err{color:#fca5a5;border-color:#fca5a5;}
+.tb-btn{padding:7px 16px;background:var(--brand);color:white;border:none;border-radius:8px;font-family:'Sora',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.tb-btn:hover{background:var(--brand2);}
+.tb-btn.ghost{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);}
+
+/* ── BODY LAYOUT ────────────────────────────────────── */
+.body-wrap{display:flex;height:calc(100vh - 56px);overflow:hidden;}
+
+/* ── SIDEBAR ────────────────────────────────────────── */
+.sidebar{
+  width:var(--sb);flex-shrink:0;background:white;
+  border-right:1px solid var(--line);display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.sb-stats{padding:16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sb-stat{background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center;}
+.sb-stat-num{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--teal);}
+.sb-stat-num.orange{color:var(--brand);}
+.sb-stat-num.green{color:var(--green);}
+.sb-stat-lbl{font-size:10px;color:var(--muted);margin-top:1px;}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+.sb-section{padding:10px 16px 4px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
+.sb-item{
+  display:flex;align-items:center;gap:9px;padding:8px 16px;
+  font-size:12px;font-weight:500;color:var(--ink2);cursor:pointer;
+  border-left:3px solid transparent;transition:all .12s;
+  white-space:nowrap;overflow:hidden;
+}
+.sb-item:hover{background:var(--teal-soft);color:var(--teal);}
+.sb-item.active{background:var(--teal-soft);color:var(--teal);font-weight:700;border-left-color:var(--teal);}
+.sb-item.has-dirty{color:var(--brand);}
+.sb-item.has-dirty.active{background:var(--brand-soft);border-left-color:var(--brand);}
+.sb-ico{font-size:15px;flex-shrink:0;width:18px;text-align:center;}
+.sb-name{flex:1;overflow:hidden;text-overflow:ellipsis;}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:var(--brand);flex-shrink:0;display:none;}
+.sb-item.has-dirty .sb-dot{display:block;}
+.sb-saved-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;display:none;}
+.sb-item.is-saved .sb-saved-dot{display:block;}
+
+/* ── MAIN CONTENT ───────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:20px 24px 60px;min-width:0;}
+
+/* ── CATEGORY PILLS ─────────────────────────────────── */
+.cat-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+.cat-pill{
+  padding:6px 14px;border-radius:100px;border:1.5px solid var(--line);
+  font-size:12px;font-weight:600;color:var(--muted);background:white;
+  cursor:pointer;transition:all .12s;white-space:nowrap;
+}
+.cat-pill:hover{border-color:var(--teal);color:var(--teal);}
+.cat-pill.on{background:var(--teal);color:white;border-color:var(--teal);}
+
+/* ── SERVICE CARDS ──────────────────────────────────── */
+.card{
+  background:white;border-radius:14px;border:1.5px solid var(--line);
+  box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;
+  scroll-margin-top:20px;transition:border-color .15s;
+}
+.card:hover{box-shadow:var(--sh2);}
+.card.open{border-color:var(--teal);}
+.card.dirty{border-color:var(--brand);}
+.card-head{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;
+  cursor:pointer;user-select:none;transition:background .12s;
+}
+.card-head:hover{background:#f9fafb;}
+.card.open .card-head{background:var(--teal-soft);}
+.card.dirty .card-head{background:var(--brand-soft);}
+.card-icon{width:36px;height:36px;border-radius:10px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.card-info{flex:1;}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
+.card-cat{font-size:10px;color:var(--muted);margin-top:1px;}
+.card-badge{padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;background:var(--teal-soft);color:var(--teal);flex-shrink:0;}
+.card-badge.dirty{background:var(--brand-soft);color:var(--brand);}
+.card-badge.saved{background:var(--green-soft);color:var(--green);}
+.card-chev{font-size:14px;color:var(--muted);transition:transform .2s;flex-shrink:0;margin-left:4px;}
+.card.open .card-chev{transform:rotate(90deg);}
+.card-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--line);}
+.card.open .card-body{display:block;}
+
+/* ── PRICE BAR (base price) ─────────────────────────── */
+.price-bar{
+  background:linear-gradient(135deg,#0d3d47,var(--teal));
+  border-radius:12px;padding:14px 18px;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.price-bar.dirty{background:linear-gradient(135deg,#4a1500,var(--brand));}
+.price-bar.saved{background:linear-gradient(135deg,#063d18,#16a34a);}
+.pb-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+.pb-price{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:white;}
+.pb-hint{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;}
+.pb-inp{
+  width:100px;padding:8px 10px;border:2px solid rgba(255,255,255,.3);
+  border-radius:9px;font-family:'Sora',sans-serif;font-size:16px;font-weight:800;
+  text-align:right;background:rgba(255,255,255,.15);color:white;outline:none;
+}
+.pb-inp:focus{border-color:rgba(255,255,255,.8);}
+
+/* ── GROUP SECTION ──────────────────────────────────── */
+.grp-wrap{}
+.sub-label{
+  font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.7px;margin:14px 0 8px;display:inline-block;
+  padding:3px 10px;background:var(--bg);border-radius:6px;
+}
+
+/* ── TASK TILES ─────────────────────────────────────── */
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:8px;}
+.task-chip{
+  display:flex;flex-direction:column;align-items:center;padding:14px 8px 12px;
+  border:1.5px solid var(--line);border-radius:12px;background:white;
+  text-align:center;transition:border-color .15s;
+}
+.task-emoji{font-size:24px;margin-bottom:5px;}
+.task-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;margin-bottom:6px;}
+.task-price-inp{
+  width:72px;padding:4px 7px;border:1.5px solid var(--line);border-radius:7px;
+  font-family:'Sora',sans-serif;font-size:12px;font-weight:800;
+  text-align:center;outline:none;color:var(--ink);background:var(--bg);
+}
+.task-price-inp:focus{border-color:var(--teal);}
+.task-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.task-chip.active .task-name{color:var(--brand);}
+.task-chip.active .tile-hint{color:var(--brand)!important;font-weight:700;}
+.task-chip.dirty{border-color:var(--brand);background:var(--brand-soft);}
+.task-chip.dirty .task-name{color:var(--brand);}
+.task-chip.dirty .task-price-inp{border-color:var(--brand);color:var(--brand);background:#fff3eb;}
+.task-chip.saved{border-color:var(--green);background:var(--green-soft);}
+.task-chip.saved .task-name{color:var(--green);}
+.task-chip.saved .task-price-inp{border-color:var(--green);color:var(--green);}
+
+/* ── BHK CHIPS ──────────────────────────────────────── */
+.bhk-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;}
+.bhk-chip{
+  padding:8px 12px;border:1.5px solid var(--line);border-radius:9px;
+  font-size:12px;font-weight:700;color:var(--ink2);background:white;
+  text-align:center;min-width:74px;
+}
+.bhk-chip span{display:block;font-size:9px;color:var(--muted);font-weight:500;margin-top:1px;}
+.bhk-price-inp{
+  display:block;width:64px;padding:3px 6px;margin-top:4px;
+  border:1.5px solid var(--line);border-radius:6px;
+  font-family:'Sora',sans-serif;font-size:11px;font-weight:800;
+  text-align:center;outline:none;color:var(--ink);background:var(--bg);
+}
+.bhk-price-inp:focus{border-color:var(--teal);}
+.bhk-chip.dirty{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);}
+.bhk-chip.dirty .bhk-price-inp{border-color:var(--brand);color:var(--brand);background:#fff3eb;}
+.bhk-chip.saved{border-color:var(--green);background:var(--green-soft);color:var(--green);}
+.bhk-chip.saved .bhk-price-inp{border-color:var(--green);color:var(--green);}
+
+/* ── CARD ACTIONS ───────────────────────────────────── */
+.card-actions{display:flex;align-items:center;gap:8px;padding-top:14px;margin-top:8px;border-top:1px solid var(--line);}
+.btn-save{padding:8px 16px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:'Sora',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-save:hover{background:var(--teal2);}
+.btn-reset{padding:8px 13px;background:white;color:var(--muted);border:1.5px solid var(--line);border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;}
+.btn-reset:hover{border-color:var(--red);color:var(--red);}
+.save-ok{margin-left:auto;font-size:11px;font-weight:700;color:var(--green);display:none;}
+.save-ok.show{display:inline;}
+
+/* ── INFO BOX ───────────────────────────────────────── */
+.info-box{padding:10px 14px;background:var(--teal-soft);border:1.5px solid var(--teal);border-radius:9px;font-size:12px;color:var(--teal);font-weight:600;margin-bottom:16px;}
+.info-panel{padding:11px 14px;background:#f0f4ff;border:1.5px dashed #c7d2fe;border-radius:9px;font-size:12px;color:var(--muted);margin-bottom:6px;}
+
+/* ── EMPTY STATE ────────────────────────────────────── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-ico{font-size:36px;margin-bottom:10px;}
+
+/* ── TOAST ──────────────────────────────────────────── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:100px;font-size:13px;font-weight:700;display:none;z-index:9999;background:var(--ink);color:white;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.2);}
+.toast.ok{background:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lbox">
+    <div class="lbox-logo">Hamara<span>Service</span></div>
+    <div class="lbox-sub">Price Manager · Admin Only</div>
+    <label>Password</label>
+    <input type="password" id="pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="lbox-btn" onclick="doLogin()">Login →</button>
+    <div class="lbox-err" id="lErr">❌ Wrong password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appWrap">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <div>
+        <div class="tb-brand-logo">Hamara<span>Service</span></div>
+        <div class="tb-brand-sub">Price Manager</div>
+      </div>
+    </div>
+    <div class="tb-center">
+      <div class="tb-search-wrap">
+        <span class="tb-search-ico">🔍</span>
+        <input class="tb-search" id="srch" placeholder="Search service or sub-category..." oninput="renderCards()"/>
+      </div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-status" id="fbSt">⏳ Connecting...</div>
+      <button class="tb-btn" onclick="saveAll()">💾 Save All Changes</button>
+      <button class="tb-btn ghost" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-wrap">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <!-- Stats -->
+      <div class="sb-stats">
+        <div class="sb-stat"><div class="sb-stat-num" id="stTotal">0</div><div class="sb-stat-lbl">Services</div></div>
+        <div class="sb-stat"><div class="sb-stat-num orange" id="stDirty">0</div><div class="sb-stat-lbl">Unsaved</div></div>
+        <div class="sb-stat"><div class="sb-stat-num green" id="stSaved">0</div><div class="sb-stat-lbl">Saved</div></div>
+        <div class="sb-stat"><div class="sb-stat-num" id="stItems" style="font-size:15px;">0</div><div class="sb-stat-lbl">Price Points</div></div>
+      </div>
+      <!-- Nav -->
+      <div class="sb-nav" id="sbNav">
+        <div class="sb-section">Categories</div>
+        <div class="sb-item active" data-c="All" onclick="setCat(this,'All')"><span class="sb-ico">🏠</span><span class="sb-name">All Services</span></div>
+        <div class="sb-item" data-c="Home Cleaning" onclick="setCat(this,'Home Cleaning')"><span class="sb-ico">🧹</span><span class="sb-name">Home Cleaning</span></div>
+        <div class="sb-item" data-c="Home Services" onclick="setCat(this,'Home Services')"><span class="sb-ico">🔧</span><span class="sb-name">Home Services</span></div>
+        <div class="sb-item" data-c="Vehicle Care" onclick="setCat(this,'Vehicle Care')"><span class="sb-ico">🚗</span><span class="sb-name">Vehicle Care</span></div>
+        <div class="sb-item" data-c="Pest Control" onclick="setCat(this,'Pest Control')"><span class="sb-ico">🪲</span><span class="sb-name">Pest Control</span></div>
+        <div class="sb-item" data-c="Cooking" onclick="setCat(this,'Cooking')"><span class="sb-ico">🍱</span><span class="sb-name">Cooking</span></div>
+        <div class="sb-item" data-c="Beauty & Wellness" onclick="setCat(this,'Beauty & Wellness')"><span class="sb-ico">💅</span><span class="sb-name">Beauty & Wellness</span></div>
+        <div class="sb-item" data-c="Health Services" onclick="setCat(this,'Health Services')"><span class="sb-ico">🏥</span><span class="sb-name">Health Services</span></div>
+        <div class="sb-item" data-c="Care Services" onclick="setCat(this,'Care Services')"><span class="sb-ico">🤲</span><span class="sb-name">Care Services</span></div>
+        <div class="sb-item" data-c="Outdoor" onclick="setCat(this,'Outdoor')"><span class="sb-ico">🌿</span><span class="sb-name">Outdoor</span></div>
+        <div class="sb-item" data-c="Security" onclick="setCat(this,'Security')"><span class="sb-ico">🛡️</span><span class="sb-name">Security</span></div>
+        <div class="sb-section" style="margin-top:10px;">Quick Jump</div>
+        <div id="sbJump"></div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content" id="contentArea">
+      <!-- Category pills -->
+      <div class="cat-pills">
+        <div class="cat-pill on" data-c="All" onclick="setCat(this,'All')">All</div>
+        <div class="cat-pill" data-c="Home Cleaning" onclick="setCat(this,'Home Cleaning')">🧹 Cleaning</div>
+        <div class="cat-pill" data-c="Home Services" onclick="setCat(this,'Home Services')">🔧 Home</div>
+        <div class="cat-pill" data-c="Vehicle Care" onclick="setCat(this,'Vehicle Care')">🚗 Vehicle</div>
+        <div class="cat-pill" data-c="Pest Control" onclick="setCat(this,'Pest Control')">🪲 Pest</div>
+        <div class="cat-pill" data-c="Cooking" onclick="setCat(this,'Cooking')">🍱 Cooking</div>
+        <div class="cat-pill" data-c="Beauty & Wellness" onclick="setCat(this,'Beauty & Wellness')">💅 Beauty</div>
+        <div class="cat-pill" data-c="Health Services" onclick="setCat(this,'Health Services')">🏥 Health</div>
+        <div class="cat-pill" data-c="Care Services" onclick="setCat(this,'Care Services')">🤲 Care</div>
+        <div class="cat-pill" data-c="Outdoor" onclick="setCat(this,'Outdoor')">🌿 Outdoor</div>
+        <div class="cat-pill" data-c="Security" onclick="setCat(this,'Security')">🛡️ Security</div>
+      </div>
+      <!-- Info -->
+      <div class="info-box">ℹ️ Click any service to expand · Edit prices · <strong>Save</strong> to push to Firebase · Service pages update within 30 seconds</div>
+      <!-- Cards -->
+      <div id="wrap"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+var PASS='hamaraAdmin2024';
+var FB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FBP='hs_service_prices';
+var _tok='',_fb={},_dirty={},_cat='All',_savedN=0;
+
+// ── SERVICE CONFIG ────────────────────────────────────────────────────────────
+// style: 'task' = task-chip grid (big emoji, name, editable price)
+//        'bhk'  = bhk-chip row (name + price below)
+var SVC=[
+  {id:'SVC001',name:'House Maid',icon:'🧹',cat:'Home Cleaning',base:499,groups:[
+    {key:'task',title:'Select Tasks',style:'label',items:[
+      {k:'sweep',  ico:'🧹',name:'Sweeping & Mopping'},
+      {k:'dust',   ico:'🪣',name:'Dusting'},
+      {k:'dishes', ico:'🍽️',name:'Dishwashing'},
+      {k:'clothes',ico:'👗',name:'Folding Clothes'},
+      {k:'laundry',ico:'👚',name:'Laundry (Washing)'}
+    ]},
+    {key:'sweep',title:'🧹 Home Size (for Sweeping & Mopping)',style:'bhk',showOn:'sweep',items:[
+      {k:'1bhk',  name:'1 BHK',           p:149},
+      {k:'2bhk',  name:'2 BHK',           p:249},
+      {k:'3bhk',  name:'3 BHK',           p:349},
+      {k:'4bhk',  name:'4 BHK',           p:449},
+      {k:'villa', name:'Villa / Bungalow', p:599},
+      {k:'studio',name:'Studio / 1 Room',  p:99}
+    ]},
+    {key:'dust',title:'🪣 Home Size (for Dusting)',style:'bhk',showOn:'dust',items:[
+      {k:'1bhk',  name:'1 BHK',           p:199},
+      {k:'2bhk',  name:'2 BHK',           p:329},
+      {k:'3bhk',  name:'3 BHK',           p:449},
+      {k:'4bhk',  name:'4 BHK',           p:579},
+      {k:'villa', name:'Villa / Bungalow', p:749},
+      {k:'studio',name:'Studio / 1 Room',  p:149}
+    ]},
+    {key:'dishes',title:'🍽️ Dishwashing — Occasion / Purpose',style:'bhk',showOn:'dishes',items:[
+      {k:'daily',   name:'Daily (home)',                    p:149},
+      {k:'people',  name:'Small gathering (10–20 people)',  p:249},
+      {k:'event',   name:'Party / Event (20–50 people)',    p:499},
+      {k:'marriage',name:'Marriage / Big function (50+ people)', p:999}
+    ]},
+    {key:'clothes',title:'👗 Folding Clothes — Pricing',style:'info',showOn:'clothes',
+     info:'Price is calculated per item in the service page (₹2 per cloth, minimum ₹50). No fixed chip price.'},
+    {key:'laundry',title:'👚 Laundry (Washing) — Pricing',style:'info',showOn:'laundry',
+     info:'Price is calculated based on number of adult + kids clothes pairs (base ₹400 for up to 20 pairs, +₹15 per extra pair).'}
+  ]},
+  {id:'SVC002',name:'Deep Cleaning',icon:'🧽',cat:'Home Cleaning',base:999,groups:[
+    {key:'bhk',title:'🧴 With Material & Equipment — Price per Home Size',style:'bhk',items:[
+      {k:'1bhk',  name:'1 BHK',              p:999},
+      {k:'2bhk',  name:'2 BHK',              p:1499},
+      {k:'3bhk',  name:'3 BHK',              p:1999},
+      {k:'4bhk',  name:'4 BHK+',             p:2499},
+      {k:'rooms', name:'Individual Rooms',   p:499},
+      {k:'studio',name:'Studio / 1 Room',    p:799}
+    ]},
+
+    {key:'extras',title:'Optional Add-ons',style:'task',items:[
+      {k:'mattress',   ico:'🛏️',name:'Mattress Shampooing',  p:299},
+      {k:'carpet',     ico:'🟫',name:'Carpet Cleaning',       p:399},
+      {k:'sofashampoo',ico:'🛋️',name:'Sofa Shampoo',         p:499},
+      {k:'balcony',    ico:'🏠',name:'Balcony Cleaning',      p:199},
+      {k:'watertank',  ico:'💧',name:'Water Tank Cleaning',   p:599},
+      {k:'pest',       ico:'🪲',name:'Pest Control',          p:799}
+    ]},
+    {key:'condition',title:'Home Condition Surcharge',style:'bhk',items:[
+      {k:'regular',   name:'Regularly Maintained', p:0},
+      {k:'moderate',  name:'Moderately Dirty',     p:0},
+      {k:'dirty',     name:'Very Dirty',           p:200},
+      {k:'renovation',name:'Post-Renovation',      p:500}
+    ]}
+  ]},
+  {id:'SVC003',name:'Bathroom Cleaning',icon:'🚿',cat:'Home Cleaning',base:399,groups:[
+    {key:'with',title:'🧴 With Material & Equipment — Price per Bathroom',style:'bhk',items:[
+      {k:'perBath',name:'Per Bathroom',p:399}
+    ]},
+
+    {key:'addon',title:'Add-ons',style:'task',items:[
+      {k:'bathtub',ico:'🛁',name:'Bathtub Deep Clean',  p:199},
+      {k:'shower', ico:'🚿',name:'Glass Shower Cabin',  p:149}
+    ]},
+    {key:'condition',title:'Condition Surcharge',style:'bhk',items:[
+      {k:'normal',  name:'Normal',            p:0},
+      {k:'moderate',name:'Moderately Dirty',  p:0},
+      {k:'dirty',   name:'Very Dirty',        p:100},
+      {k:'mold',    name:'Mold / Fungus',     p:150}
+    ]}
+  ]},
+  {id:'SVC004',name:'Kitchen Cleaning',icon:'🍳',cat:'Home Cleaning',base:199,groups:[
+    {key:'with',title:'🧴 With Material & Equipment — Price per Service',style:'task',items:[
+      {k:'tiles',   ico:'🧱',name:'Degreasing Tiles & Walls',     p:199},
+      {k:'cabinets',ico:'🗄️',name:'Cabinets (inside & outside)',  p:249},
+      {k:'chimney', ico:'🏭',name:'Chimney Exterior',             p:199},
+      {k:'sink',    ico:'🚰',name:'Sink & Tap Descaling',         p:149},
+      {k:'stove',   ico:'🔥',name:'Stove & Countertop',           p:249},
+      {k:'floor',   ico:'🧹',name:'Floor Scrubbing',              p:149}
+    ]},
+
+    {key:'grease',title:'Grease Level Surcharge',style:'bhk',items:[
+      {k:'light',name:'Light / Regular',                          p:0},
+      {k:'heavy',name:'Heavy / Months without cleaning',          p:150}
+    ]}
+  ]},
+  {id:'SVC005',name:'Sofa / Carpet Cleaning',icon:'🛋️',cat:'Home Cleaning',base:399,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:399}
+    ]}
+  ]},
+  {id:'SVC006',name:'Laundry / Ironing',icon:'👕',cat:'Home Cleaning',base:199,groups:[
+    {key:'wash',title:'👗 Wash — Base Price (per 15 items)',style:'bhk',items:[
+      {k:'basePrice',name:'Per 15 clothes (base)',p:199},
+      {k:'extraPer', name:'Per extra item (above 15)',p:10}
+    ]},
+    {key:'iron',title:'🔥 Ironing — Base Price (per 10 items)',style:'bhk',items:[
+      {k:'basePrice',name:'Per 10 clothes (base)',p:149},
+      {k:'extraPer', name:'Per extra item (above 10)',p:12}
+    ]},
+    {key:'dry',title:'💨 Dry Service — Per Visit',style:'bhk',items:[
+      {k:'perVisit',name:'Per visit',p:99}
+    ]},
+    {key:'fold',title:'👕 Fold Service — Per Visit',style:'bhk',items:[
+      {k:'perVisit',name:'Per visit',p:99}
+    ]},
+    {key:'handwash',title:'✋ Handwash — Per Visit',style:'bhk',items:[
+      {k:'perVisit',name:'Per visit',p:149}
+    ]}
+  ]},
+
+  {id:'SVC007',name:'AC Cleaning & Repair',icon:'❄️',cat:'Home Services',base:399,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:399}
+    ]}
+  ]},
+  {id:'SVC009',name:'Home Appliance Repair',icon:'🔌',cat:'Home Services',base:299,groups:[
+    {key:'appliance',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:299}
+    ]}
+  ]},
+  {id:'SVC010',name:'Water Purifier Service',icon:'💧',cat:'Home Services',base:299,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:299}
+    ]}
+  ]},
+  {id:'SVC011',name:'Plumber',icon:'🪠',cat:'Home Services',base:199,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:199}
+    ]}
+  ]},
+  {id:'SVC012',name:'Electrician',icon:'⚡',cat:'Home Services',base:199,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:199}
+    ]}
+  ]},
+  {id:'SVC013',name:'Carpenter',icon:'🪚',cat:'Home Services',base:249,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:249}
+    ]}
+  ]},
+  {id:'SVC014',name:'Painter',icon:'🎨',cat:'Home Services',base:699,groups:[
+    {key:'rooms',title:'🧴 With Material — Price per Room',style:'bhk',items:[
+      {k:'pricePerRoom',name:'Per room (base)',p:699}
+    ]},
+
+
+
+  ]},
+  {id:'SVC015',name:'CCTV Installation',icon:'📹',cat:'Home Services',base:499,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:499}
+    ]}
+  ]},
+  {id:'SVC016',name:'Solar Panel Cleaning',icon:'☀️',cat:'Home Services',base:299,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:299}
+    ]}
+  ]},
+  {id:'SVC017',name:'Car / Bike Wash',icon:'🚗',cat:'Vehicle Care',base:149,groups:[
+    {key:'car',title:'🚗 Car Wash Prices',style:'bhk',items:[
+      {k:'base',name:'Base price — Hatchback (per wash)',p:299},
+      {k:'exterior', name:'Exterior Car Cleaning',  p:299},
+      {k:'interior', name:'Interior Cleaning',      p:249},
+      {k:'premium',  name:'Premium Cleaning',       p:499},
+      {k:'finishing',name:'Final Finishing',        p:149}
+    ]},
+    {key:'bike',title:'🏍️ Bike Wash Prices',style:'bhk',items:[
+      {k:'base',name:'Base price — per bike (per wash)',p:149},
+      {k:'bike_exterior',name:'Exterior Bike Cleaning',     p:149},
+      {k:'bike_chain',   name:'Chain & Engine Area',        p:99},
+      {k:'bike_seat',    name:'Seat & Interior Area',       p:79},
+      {k:'bike_premium', name:'Premium Bike Options',       p:199}
+    ]},
+    {key:'cartype',title:'Car Type Surcharge (data-type)',style:'bhk',items:[
+      {k:'hatchback',name:'Hatchback (base)',          p:0},
+      {k:'sedan',    name:'Sedan',                     p:0},
+      {k:'suv',      name:'SUV / MUV',                 p:100},
+      {k:'largsuv',  name:'Large SUV / XUV',           p:150},
+      {k:'luxury',   name:'Luxury / Imported',         p:200}
+    ]}
+  ]},
+  {id:'SVC019',name:'Car & Bike Mechanic',icon:'🔧',cat:'Vehicle Care',base:299,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'car',name:'Car visit fee (shown on booking page)',p:599},
+      {k:'bike',name:'Bike visit fee (shown on booking page)',p:299}
+    ]}
+  ]},
+  {id:'SVC021',name:'Pest Control',icon:'🪲',cat:'Pest Control',base:799,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:799}
+    ]}
+  ]},
+  {id:'SVC022',name:'Cook / Cooking Person',icon:'👨‍🍳',cat:'Cooking',base:299,groups:[
+    {key:'svc',title:'Service Type',style:'task',items:[
+      {k:'breakfast',ico:'🌅',name:'Breakfast Cooking',       p:299},
+      {k:'lunch',    ico:'☀️',name:'Lunch Cooking',           p:399},
+      {k:'dinner',   ico:'🌙',name:'Dinner Cooking',          p:349},
+      {k:'twotime',  ico:'🍽️',name:'Two Meals (Lunch+Dinner)',p:599},
+      {k:'fullday',  ico:'🏠',name:'Full Day Cook (3 Meals)', p:799},
+      {k:'party',    ico:'🎉',name:'Party / Function',        p:1499},
+      {k:'tiffin',   ico:'📦',name:'Tiffin (5 days)',         p:2999},
+      {k:'monthly',  ico:'📅',name:'Monthly Cook',            p:7999}
+    ]},
+    {key:'people',title:'People Surcharge',style:'bhk',items:[
+      {k:'p2',name:'1–2 people',p:0},
+      {k:'p4',name:'3–4 people',p:100},
+      {k:'p6',name:'5–6 people',p:200},
+      {k:'p7',name:'7+ people', p:350}
+    ]},
+    {key:'style',title:'Cooking Style Surcharge',style:'bhk',items:[
+      {k:'regular',   name:'Regular Home Style',p:0},
+      {k:'restaurant',name:'Restaurant Style',  p:150}
+    ]}
+  ]},
+  {id:'SVC034',name:'Security Guard & Bouncers',icon:'🛡️',cat:'Security',base:899,groups:[
+    {key:'type',title:'Guard / Bouncer Type (data-svc keys)',style:'bhk',items:[
+      {k:'daytime',      name:'Daytime Guard (8-hr shift)',    p:899},
+      {k:'nighttime',    name:'Night Guard (8-hr shift)',      p:999},
+      {k:'fullday',      name:'Full Day Guard (12-hr shift)',  p:1699},
+      {k:'event',        name:'Event Security Guard',          p:1299},
+      {k:'office',       name:'Office / Shop Security',        p:899},
+      {k:'bouncer_event',name:'Event Bouncer',                 p:1299},
+      {k:'bouncer_pub',  name:'Pub / Bar / Club Bouncer',      p:1499},
+      {k:'bouncer_vip',  name:'VIP / Personal Bouncer',        p:1799}
+    ]}
+  ]},
+  {id:'SVC032',name:'Gardener',icon:'🌱',cat:'Outdoor',base:399,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Visit fee (shown on booking page)',p:399}
+    ]}
+  ]},
+  {id:'SVC033',name:'Driver',icon:'🚕',cat:'Outdoor',base:299,groups:[
+    {key:'car',title:'🚗 Car Driver (VEHICLE_SERVICES.car)',style:'bhk',items:[
+      {k:'local',     name:'Local / City Trips',      p:299},
+      {k:'fullday',   name:'Full Day Driver (8 hrs)',  p:699},
+      {k:'outstation',name:'Outstation / Long Trip',   p:999},
+      {k:'monthly',   name:'Monthly Regular Driver',   p:8999},
+      {k:'event',     name:'Event / Wedding Driver',   p:799}
+    ]},
+    {key:'auto',title:'🛺 Auto Driver',style:'bhk',items:[
+      {k:'local',  name:'Local Auto Driving',          p:199},
+      {k:'fullday',name:'Full Day Auto Driver',        p:499},
+      {k:'monthly',name:'Monthly Auto Driver',         p:5999}
+    ]},
+    {key:'tempo',title:'🚐 Tempo Driver',style:'bhk',items:[
+      {k:'shifting',  name:'Goods Shifting / Moving',  p:699},
+      {k:'local',     name:'Local Tempo Driving',      p:499},
+      {k:'outstation',name:'Outstation Tempo Trip',    p:1299},
+      {k:'fullday',   name:'Full Day Tempo Driver',    p:999}
+    ]},
+    {key:'truck',title:'🚛 Truck Driver',style:'bhk',items:[
+      {k:'shifting',  name:'House / Office Shifting',  p:1299},
+      {k:'goods',     name:'Goods Transport',          p:999},
+      {k:'outstation',name:'Outstation Truck Trip',    p:1799},
+      {k:'fullday',   name:'Full Day Truck Driver',    p:1499}
+    ]},
+    {key:'bus',title:'🚌 Bus Driver',style:'bhk',items:[
+      {k:'event',     name:'Event / Function Bus',     p:1299},
+      {k:'staff',     name:'Staff Pickup & Drop',      p:999},
+      {k:'outstation',name:'Outstation Bus Trip',      p:1999},
+      {k:'fullday',   name:'Full Day Bus Driver',      p:1699}
+    ]},
+    {key:'tractor',title:'🚜 Tractor Driver',style:'bhk',items:[
+      {k:'farm',    name:'Farm / Agricultural Work',   p:799},
+      {k:'goods',   name:'Goods / Material Transport', p:699},
+      {k:'fullday', name:'Full Day Tractor Driver',    p:999}
+    ]}
+  ]},
+  {id:'SVC026',name:'Gym / Fitness Trainer',icon:'💪',cat:'Beauty & Wellness',base:599,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Trainer visit fee (shown on booking page)',p:599}
+    ]}
+  ]},
+  {id:'SVC023',name:"Men's Haircut at Home",icon:'✂️',cat:'Beauty & Wellness',base:249,groups:[
+    {key:'svc',title:'Select Service',style:'task',items:[
+      {k:'visit',    ico:'🏠',name:'Visit fee (shown on page)',p:249},
+      {k:'haircut',  ico:'✂️',name:'Haircut',           p:249},
+      {k:'fade',     ico:'💈',name:'Fade / Taper Cut',  p:349},
+      {k:'layer',    ico:'🎨',name:'Layer / Designer',  p:399},
+      {k:'kids',     ico:'👦',name:'Kids Cut',          p:249},
+      {k:'shave',    ico:'🪒',name:'Clean Shave',       p:199},
+      {k:'beardtrim',ico:'🧔',name:'Beard Trim',        p:199},
+      {k:'beardline',ico:'🧔',name:'Beard Shape & Line',p:299},
+      {k:'bearddes', ico:'👑',name:'Designer Beard',    p:399},
+      {k:'colblack', ico:'⚫',name:'Colour — Black',    p:399},
+      {k:'colfash',  ico:'🎨',name:'Colour — Fashion',  p:599},
+      {k:'highlights',ico:'✨',name:'Highlights',       p:799},
+      {k:'massage',  ico:'💆',name:'Head Massage',      p:299},
+      {k:'cleanup',  ico:'🧴',name:'Face Cleanup',      p:349},
+      {k:'combo',    ico:'⭐',name:'Grooming Combo',    p:999}
+    ]}
+  ]},
+  {id:'SVC024',name:"Women's Haircut & Beauty",icon:'💇',cat:'Beauty & Wellness',base:349,groups:[
+    {key:'cut',title:'Haircut',style:'task',items:[
+      {k:'visit',   ico:'🏠',name:'Visit fee (shown on page)',p:349},
+      {k:'trim',    ico:'✂️',name:'Trim / Basic Cut',p:349},
+      {k:'layer',   ico:'🌊',name:'Layer / Step Cut', p:499},
+      {k:'uvcut',   ico:'💇',name:'U-Cut / V-Cut',    p:549},
+      {k:'designer',ico:'✨',name:'Designer Cut',     p:599}
+    ]},
+    {key:'hair',title:'Hair Treatments',style:'task',items:[
+      {k:'blowdry',    ico:'💨',name:'Hair Wash & Blow Dry',p:399},
+      {k:'globalcol',  ico:'🎨',name:'Global Colour',       p:599},
+      {k:'highlights', ico:'✨',name:'Highlights',          p:799},
+      {k:'balayage',   ico:'🌈',name:'Balayage',            p:999},
+      {k:'roottouchup',ico:'🔄',name:'Root Touch-up',       p:449}
+    ]},
+    {key:'thread',title:'Threading',style:'bhk',items:[
+      {k:'eyebrow', name:'Eyebrow',   p:99},
+      {k:'upperlip',name:'Upper Lip', p:49},
+      {k:'fullface',name:'Full Face', p:249}
+    ]},
+    {key:'wax',title:'Waxing',style:'bhk',items:[
+      {k:'armswax',    name:'Arms',       p:199},
+      {k:'legswax',    name:'Legs',       p:299},
+      {k:'fullbodywax',name:'Full Body',  p:799},
+      {k:'underarms',  name:'Underarms',  p:99}
+    ]},
+    {key:'facial',title:'Facial & Skin',style:'task',items:[
+      {k:'basic',  ico:'🌿',name:'Basic Facial',   p:499},
+      {k:'dtan',   ico:'🌞',name:'D-Tan Facial',   p:599},
+      {k:'fruit',  ico:'🍑',name:'Fruit Facial',   p:799},
+      {k:'gold',   ico:'✨',name:'Gold Facial',    p:999},
+      {k:'antiage',ico:'💎',name:'Anti-Ageing',    p:1199}
+    ]},
+    {key:'nail',title:'Nail Care',style:'task',items:[
+      {k:'mani', ico:'💅',name:'Manicure',    p:399},
+      {k:'pedi', ico:'🦶',name:'Pedicure',    p:499},
+      {k:'combo',ico:'💆',name:'Mani + Pedi', p:799}
+    ]},
+    {key:'makeup',title:'Makeup',style:'task',items:[
+      {k:'party',  ico:'💄',name:'Party Makeup',  p:1499},
+      {k:'bridal', ico:'👰',name:'Bridal Makeup', p:2499},
+      {k:'hd',     ico:'🌟',name:'HD / Airbrush', p:3499}
+    ]}
+  ]},
+  {id:'SVC025',name:'Full Body Massage',icon:'💆',cat:'Beauty & Wellness',base:999,groups:[
+    {key:'base',title:'Session Base Price (applies if no per-type set)',style:'bhk',items:[
+      {k:'price',name:'Per session (base price)',p:999}
+    ]},
+    {key:'types',title:'Per Massage Type Price (optional — overrides base)',style:'task',items:[
+      {k:'swedish',      ico:'💆',name:'Swedish / Relaxation', p:999},
+      {k:'deeptissue',   ico:'💪',name:'Deep Tissue',          p:1199},
+      {k:'ayurvedic',    ico:'🌿',name:'Ayurvedic / Abhyanga', p:1299},
+      {k:'sports',       ico:'🏃',name:'Sports Massage',       p:1199},
+      {k:'reflexology',  ico:'🦶',name:'Reflexology (Feet)',   p:999},
+      {k:'aromatherapy', ico:'🌸',name:'Aromatherapy',         p:1099},
+      {k:'headneck',     ico:'🧠',name:'Head & Neck',          p:799},
+      {k:'backpain',     ico:'🔙',name:'Back Pain Relief',     p:1099}
+    ]}
+  ]},
+  {id:'SVC027',name:'Doctor Visit at Home',icon:'👨‍⚕️',cat:'Health Services',base:499,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Doctor home visit fee (shown on booking page)',p:499}
+    ]}
+  ]},
+  {id:'SVC028',name:'Nurse Visit at Home',icon:'💉',cat:'Health Services',base:399,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Nurse home visit fee (shown on booking page)',p:399}
+    ]}
+  ]},
+  {id:'SVC029',name:'Lab Test Collection',icon:'🧪',cat:'Health Services',base:99,groups:[
+    {key:'visit',title:'🏠 Visit / Call-out Price',style:'bhk',items:[
+      {k:'visit',name:'Home collection visit fee (shown on booking page)',p:99}
+    ]}
+  ]},
+  {id:'SVC030',name:'Babysitter / Nanny',icon:'👶',cat:'Care Services',base:599,groups:[
+    {key:'care',title:'Care Type',style:'task',items:[
+      {k:'half',     ico:'🌤️',name:'Half Day (4 hrs)',       p:599},
+      {k:'fullday',  ico:'☀️',name:'Full Day (8–10 hrs)',    p:999},
+      {k:'overnight',ico:'🌙',name:'Overnight (10 PM–8 AM)',p:1499},
+      {k:'event',    ico:'🎉',name:'Event / Party',          p:799},
+      {k:'nanny',    ico:'👩‍🍼',name:'Experienced Nanny',   p:1299},
+      {k:'monthly',  ico:'📅',name:'Monthly Nanny',          p:18999}
+    ]},
+    {key:'extra',title:'Extra Charges',style:'bhk',items:[
+      {k:'extrachild',name:'Per Extra Child / Day',p:300}
+    ]}
+  ]},
+  {id:'SVC031',name:'Elderly Care',icon:'🧓',cat:'Care Services',base:799,groups:[
+    {key:'care',title:'Care Package',style:'task',items:[
+      {k:'companion',ico:'💬',name:'Companion Care (4 hrs)',   p:799},
+      {k:'personal', ico:'🛁',name:'Personal Care (4–6 hrs)',  p:999},
+      {k:'fullday',  ico:'☀️',name:'Full Day Care (8 hrs)',    p:1499},
+      {k:'nightcare',ico:'🌙',name:'Night Care (10 PM–8 AM)', p:1299},
+      {k:'hospital', ico:'🏥',name:'Hospital Attendant',       p:1199},
+      {k:'monthly',  ico:'🗓️',name:'Monthly Plan',            p:22999}
+    ]},
+    {key:'needs',title:'Special Needs Add-ons',style:'task',items:[
+      {k:'dementia', ico:'🧠',name:'Dementia Care',            p:200},
+      {k:'bedridden',ico:'🛏️',name:'Bedridden Patient Care',  p:300},
+      {k:'physio',   ico:'🤸',name:'Physiotherapy Support',    p:300},
+      {k:'diabetes', ico:'💉',name:'Diabetes / Sugar Care',    p:100},
+      {k:'catheter', ico:'🩺',name:'Catheter / Medical Care',  p:200}
+    ]}
+  ]}
+];
+
+
+// ── TILE TOGGLE (for label-style tasks) ──────────────────────────────────────
+// Global tile registry to avoid onclick string quoting issues
+var _tileReg = {};
+function _regTile(id, sid, key){ _tileReg[id] = {sid:sid, key:key}; }
+
+function toggleTile(sid, taskKey) {
+  var tile = document.getElementById('tile-'+sid+'-'+taskKey);
+  var subgrp = document.getElementById('subgrp-'+sid+'-'+taskKey);
+  if(!tile) return;
+
+  var isActive = tile.classList.contains('active');
+  var hint = tile.querySelector('.tile-hint');
+
+  if(isActive) {
+    tile.classList.remove('active');
+    if(hint) hint.textContent = 'Tap to set price';
+    if(subgrp) subgrp.style.display = 'none';
+  } else {
+    tile.classList.add('active');
+    if(subgrp) {
+      if(hint) hint.textContent = 'See below ↓';
+      subgrp.style.display = 'block';
+      setTimeout(function(){ subgrp.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 50);
+    } else {
+      // No sub-group (counter-based pricing) — show info in hint
+      if(hint) hint.textContent = 'Counter-based pricing';
+    }
+  }
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function doLogin(){
+  if(document.getElementById('pw').value===PASS){
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('appWrap').style.display='block';
+    initApp();
+  }else{document.getElementById('lErr').style.display='block';}
+}
+function doLogout(){location.reload();}
+
+// ── FIREBASE REST ─────────────────────────────────────────────────────────────
+function getToken(cb){
+  if(_tok){cb(_tok);return;}
+  var x=new XMLHttpRequest();
+  x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',true);
+  x.setRequestHeader('Content-Type','application/json');
+  x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+  x.onerror=function(){cb('');};
+  x.send(JSON.stringify({returnSecureToken:true}));
+}
+function fbGet(p,cb){getToken(function(t){var x=new XMLHttpRequest();x.open('GET',FB+'/'+p+'.json'+(t?'?auth='+t:''),true);x.timeout=8000;x.onload=function(){try{var d=JSON.parse(x.responseText);if(d&&d.error){cb(new Error(d.error),null);return;}cb(null,d);}catch(e){cb(e,null);}};x.onerror=x.ontimeout=function(){cb(new Error('Network error'),null);};x.send();});}
+function fbPut(p,data,cb){getToken(function(t){var x=new XMLHttpRequest();x.open('PUT',FB+'/'+p+'.json'+(t?'?auth='+t:''),true);x.setRequestHeader('Content-Type','application/json');x.timeout=10000;x.onload=function(){if(x.status>=200&&x.status<300){cb(null);}else{try{var e=JSON.parse(x.responseText);cb(new Error(e.error||'HTTP '+x.status));}catch(err){cb(new Error('HTTP '+x.status));}}};x.onerror=x.ontimeout=function(){cb(new Error('Network error'));};x.send(JSON.stringify(data));});}
+function fbDel(p,cb){getToken(function(t){var x=new XMLHttpRequest();x.open('DELETE',FB+'/'+p+'.json'+(t?'?auth='+t:''),true);x.timeout=8000;x.onload=function(){cb(null);};x.onerror=x.ontimeout=function(){cb(new Error('Network error'));};x.send();});}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function initApp(){
+  setSt('⏳ Connecting...');
+  fbGet(FBP,function(err,data){
+    if(err){setSt('⚠️ Offline — using defaults',false);}
+    else{_fb=data||{};setSt('✅ Firebase Connected',true);}
+    renderCards();
+  });
+}
+
+// ── EFFECTIVE PRICE ───────────────────────────────────────────────────────────
+function eff(sid,grp,key,def){
+  var k=sid+'.'+grp+'.'+key;
+  if(_dirty[k]!==undefined)return{v:_dirty[k],s:'dirty'};
+  var fv=((_fb[sid]||{})[grp]||{})[key];
+  if(fv!==undefined)return{v:fv,s:'saved'};
+  return{v:def,s:''};
+}
+function effBase(sid,def){
+  var k=sid+'.base';
+  if(_dirty[k]!==undefined)return{v:_dirty[k],s:'dirty'};
+  var fv=(_fb[sid]||{}).base;
+  if(fv!==undefined)return{v:fv,s:'saved'};
+  return{v:def,s:''};
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderCards(){
+  var q=(document.getElementById('srch').value||'').toLowerCase().trim();
+  var html='';
+  SVC.forEach(function(svc){
+    if(_cat!=='All'&&svc.cat!==_cat)return;
+    if(q){
+      var ms=svc.name.toLowerCase().includes(q);
+      var mi=svc.groups.some(function(g){return g.items.some(function(it){return it.name.toLowerCase().includes(q);});});
+      if(!ms&&!mi)return;
+    }
+    var bE=effBase(svc.id,svc.base);
+    var hasDirty=Object.keys(_dirty).some(function(k){return k.startsWith(svc.id+'.');});
+    var hasSaved=Object.keys(_fb[svc.id]||{}).length>0;
+
+    html+='<div class="card'+(hasDirty?' dirty':'')+'" id="sc-'+svc.id+'">';
+    // HEAD — same as .card-head
+    html+='<div class="card-head" onclick="tog(\''+svc.id+'\')">';
+    html+='<div class="card-icon">'+svc.icon+'</div>';
+    html+='<div class="card-title">'+svc.name+'</div>';
+    html+='<div class="card-badge'+(hasDirty?' dirty':hasSaved?' saved':'')+'">from ₹'+bE.v.toLocaleString('en-IN')+'</div>';
+    html+='<div class="card-chev">›</div>';
+    html+='</div>';
+
+    // BODY
+    html+='<div class="card-body">';
+
+    // BASE PRICE — as price-bar (same dark teal gradient as service page)
+    html+='<div class="price-bar'+(bE.s==='dirty'?' dirty':bE.s==='saved'?' saved':'')+'">';
+    html+='<div><div class="pb-label">Starting / Base Price</div>';
+    html+='<div class="pb-price" id="basedisp-'+svc.id+'">₹'+bE.v.toLocaleString('en-IN')+'</div>';
+    html+='<div class="pb-note">Shown on index page · default: ₹'+svc.base.toLocaleString('en-IN')+'</div></div>';
+    html+='<input class="pb-inp" type="number" value="'+bE.v+'"';
+    html+=' data-sid="'+svc.id+'" data-grp="base" data-key="base" data-def="'+svc.base+'" oninput="onI(this)">';
+    html+='</div>';
+
+    // GROUPS
+    svc.groups.forEach(function(grp){
+      // Groups with showOn are hidden until the linked task tile is clicked
+      var hidden = grp.showOn ? ' style="display:none;"' : '';
+      var grpId = grp.showOn ? ' id="subgrp-'+svc.id+'-'+grp.showOn+'"' : '';
+      html+='<div class="grp-wrap"'+grpId+hidden+'>';
+      html+='<div class="sub-label">'+grp.title+'</div>';
+
+      if(grp.style==='info'){
+        html+='<div style="padding:12px 16px;background:#f8f8ff;border:1.5px dashed var(--line);border-radius:10px;margin-bottom:10px;">';
+        html+='<div style="font-size:12px;color:var(--muted);line-height:1.5;">ℹ️ '+grp.info+'</div>';
+        html+='</div>';
+
+
+      } else if(grp.style==='label'){
+        // Clickable task tiles — toggle active, show linked sub-group
+        html+='<div class="task-grid" style="margin-bottom:12px;">';
+        grp.items.forEach(function(item){
+          html+='<div class="task-chip" id="tile-'+svc.id+'-'+item.k+'" data-sid="'+svc.id+'" data-tkey="'+item.k+'" style="cursor:pointer;">';
+          if(item.ico) html+='<div class="task-emoji">'+item.ico+'</div>';
+          html+='<div class="task-name">'+item.name+'</div>';
+          html+='<div class="tile-hint" style="font-size:10px;color:var(--muted);margin-top:4px;">Tap to set price</div>';
+          html+='</div>';
+        });
+        html+='</div>';
+      } else if(grp.style==='task'){
+        html+='<div class="task-grid" style="margin-bottom:12px;">';
+        grp.items.forEach(function(item){
+          var e=eff(svc.id,grp.key,item.k,item.p);
+          var cls=e.s==='dirty'?' dirty':e.s==='saved'?' saved':'';
+          html+='<div class="task-chip'+cls+'">';
+          if(item.ico) html+='<div class="task-emoji">'+item.ico+'</div>';
+          html+='<div class="task-name">'+item.name+'</div>';
+          html+='<input class="task-price-inp" type="number" value="'+e.v+'"';
+          html+=' data-sid="'+svc.id+'" data-grp="'+grp.key+'" data-key="'+item.k+'" data-def="'+item.p+'" oninput="onI(this)">';
+          html+='</div>';
+        });
+        html+='</div>';
+      } else {
+        html+='<div class="bhk-row" style="margin-bottom:12px;">';
+        grp.items.forEach(function(item){
+          var e=eff(svc.id,grp.key,item.k,item.p);
+          var cls=e.s==='dirty'?' dirty':e.s==='saved'?' saved':'';
+          html+='<div class="bhk-chip'+cls+'">';
+          html+='<div>'+item.name+'</div>';
+          html+='<input class="bhk-price-inp" type="number" value="'+e.v+'"';
+          html+=' data-sid="'+svc.id+'" data-grp="'+grp.key+'" data-key="'+item.k+'" data-def="'+item.p+'" oninput="onI(this)">';
+          html+='</div>';
+        });
+        html+='</div>';
+      }
+      html+='</div>'; // end grp-wrap
+    });
+
+    html+='<div class="card-actions">';
+    html+='<button class="btn-save" data-sid="'+svc.id+'" onclick="saveSvc(this.dataset.sid)">💾 Save '+svc.name+'</button>';
+    html+='<button class="btn-reset" data-sid="'+svc.id+'" onclick="resetSvc(this.dataset.sid)">↺ Reset</button>';
+    html+='<span class="save-ok" id="ok-'+svc.id+'">✅ Saved to Firebase!</span>';
+    html+='</div>';
+    html+='</div></div>';
+  });
+  if(!html)html='<div style="text-align:center;padding:40px;color:var(--muted)">No services found</div>';
+  document.getElementById('wrap').innerHTML=html;
+  // Wire tile clicks via addEventListener (avoids any onclick string issues)
+  document.querySelectorAll('[data-sid][data-tkey]').forEach(function(tile){
+    tile.addEventListener('click', function(){
+      toggleTile(this.dataset.sid, this.dataset.tkey);
+    });
+  });
+}
+
+function tog(id){var c=document.getElementById('sc-'+id);if(c)c.classList.toggle('open');}
+
+// ── INPUT ─────────────────────────────────────────────────────────────────────
+function onI(inp){
+  var val=parseInt(inp.value);if(isNaN(val))return;
+  var sid=inp.dataset.sid,grp=inp.dataset.grp,key=inp.dataset.key,def=parseInt(inp.dataset.def);
+  var k=grp==='base'?sid+'.base':sid+'.'+grp+'.'+key;
+  var fbv=grp==='base'?(_fb[sid]||{}).base:((_fb[sid]||{})[grp]||{})[key];
+
+  if((fbv!==undefined&&val===fbv)||(fbv===undefined&&val===def)){
+    delete _dirty[k];
+  }else{
+    _dirty[k]=val;
+  }
+
+  var s=_dirty[k]!==undefined?'dirty':(fbv!==undefined?'saved':'');
+
+  // Update parent chip style
+  var chip=inp.closest('.task-chip,.bhk-chip,.price-bar');
+  if(chip){
+    chip.classList.remove('dirty','saved');
+    if(s)chip.classList.add(s);
+  }
+
+  // Update card badge + base display
+  if(grp==='base'){
+    var d=document.getElementById('basedisp-'+sid);
+    if(d)d.textContent='₹'+val.toLocaleString('en-IN');
+    var badge=document.querySelector('#sc-'+sid+' .card-badge');
+    if(badge){
+      badge.textContent='from ₹'+val.toLocaleString('en-IN');
+      badge.className='card-badge'+(s==='dirty'?' dirty':s==='saved'?' saved':'');
+    }
+  }
+
+  // Card dirty border
+  var card=document.getElementById('sc-'+sid);
+  if(card)card.classList.toggle('dirty',Object.keys(_dirty).some(function(k2){return k2.startsWith(sid+'.');}));
+}
+
+// ── SAVE ──────────────────────────────────────────────────────────────────────
+function saveSvc(sid){
+  var svc=SVC.find(function(s){return s.id===sid;});if(!svc)return;
+  var keys=Object.keys(_dirty).filter(function(k){return k.startsWith(sid+'.');});
+  if(!keys.length){toast('No changes for '+svc.name);return;}
+  var data=JSON.parse(JSON.stringify(_fb[sid]||{}));
+  data.name = svc.name;
+  keys.forEach(function(k){
+    var rest=k.slice(sid.length+1);
+    if(rest==='base'){data.base=_dirty[k];}
+    else{var p=rest.split('.');if(!data[p[0]])data[p[0]]={};data[p[0]][p[1]]=_dirty[k];}
+    delete _dirty[k];
+  });
+  _fb[sid]=data;
+  setSt('⏳ Saving...');
+  fbPut(FBP+'/'+sid,data,function(err){
+    if(err){toast('❌ '+err.message);setSt('❌ Error',false);}
+    else{
+      try{localStorage.setItem('hs_pricing_ts',Date.now().toString());}catch(e){}
+      toast('✅ '+svc.name+' — '+keys.length+' prices saved!',true);
+      setSt('✅ Firebase Connected',true);
+      var ok=document.getElementById('ok-'+sid);
+      if(ok){ok.style.display='inline';setTimeout(function(){ok.style.display='none';},3000);}
+      renderCards();
+      setTimeout(function(){var c=document.getElementById('sc-'+sid);if(c)c.classList.add('open');},30);
+    }
+  });
+}
+function saveAll(){
+  var ids=[...new Set(Object.keys(_dirty).map(function(k){return k.split('.')[0];}))];
+  if(!ids.length){toast('No unsaved changes');return;}
+  setSt('⏳ Saving...');var done=0;
+  ids.forEach(function(sid){
+    var svc=SVC.find(function(s){return s.id===sid;});
+    var data=JSON.parse(JSON.stringify(_fb[sid]||{}));
+    if(svc) data.name=svc.name;
+    Object.keys(_dirty).forEach(function(k){
+      if(!k.startsWith(sid+'.'))return;
+      var rest=k.slice(sid.length+1);
+      if(rest==='base'){data.base=_dirty[k];}
+      else{var p=rest.split('.');if(!data[p[0]])data[p[0]]={};data[p[0]][p[1]]=_dirty[k];}
+      delete _dirty[k];
+    });
+    _fb[sid]=data;
+    fbPut(FBP+'/'+sid,data,function(err){
+      done++;
+      if(done===ids.length){
+        try{localStorage.setItem('hs_pricing_ts',Date.now().toString());}catch(e){}
+        toast('✅ All changes saved!',true);setSt('✅ Firebase Connected',true);renderCards();
+      }
+    });
+  });
+}
+function resetSvc(sid){
+  var svc=SVC.find(function(s){return s.id===sid;});if(!svc)return;
+  if(!confirm('Reset "'+svc.name+'" to default prices?\nAll Firebase overrides will be deleted.'))return;
+  Object.keys(_dirty).forEach(function(k){if(k.startsWith(sid+'.'))delete _dirty[k];});
+  fbDel(FBP+'/'+sid,function(err){
+    if(err){toast('❌ '+err.message);return;}
+    delete _fb[sid];
+    try{localStorage.setItem('hs_pricing_ts',Date.now().toString());}catch(e){}
+    toast('↺ '+svc.name+' reset to defaults');
+    renderCards();
+    setTimeout(function(){var c=document.getElementById('sc-'+sid);if(c)c.classList.add('open');},30);
+  });
+}
+
+function setCat(el,cat){
+  _cat=cat;
+  document.querySelectorAll('.cat-tab').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  renderCards();
+}
+function setSt(msg,ok){
+  var el=document.getElementById('fbSt');el.textContent=msg;
+  el.className='tb-status'+(ok===true?' ok':ok===false?' err':'');
+}
+function toast(msg,ok){
+  var t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(ok?' ok':'');
+  t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);
+}
+window.addEventListener('beforeunload',function(e){
+  if(Object.keys(_dirty).length>0){e.preventDefault();e.returnValue='Unsaved price changes!';}
+});
+
+// ── ADDITIONAL DESKTOP UI FUNCTIONS ──────────────────────────────────────────
+
+// Build sidebar quick-jump links
+function buildSbJump(){
+  var html='';
+  SVC.forEach(function(svc){
+    var hasDirty=Object.keys(_dirty).some(function(k){return k.startsWith(svc.id+'.');});
+    var hasSaved=Object.keys(_fb[svc.id]||{}).length>0;
+    html+='<div class="sb-item'+(hasDirty?' has-dirty':hasSaved?' is-saved':'')+'" id="sbj-'+svc.id+'"';
+    html+=' data-jid="'+svc.id+'" onclick="jumpTo(this.dataset.jid)">';
+    html+='<span class="sb-ico">'+svc.icon+'</span>';
+    html+='<span class="sb-name">'+svc.name+'</span>';
+    html+='<span class="sb-dot"></span>';
+    html+='<span class="sb-saved-dot"></span>';
+    html+='</div>';
+  });
+  document.getElementById('sbJump').innerHTML=html;
+}
+
+function jumpTo(id){
+  var svc=SVC.find(function(s){return s.id===id;});if(!svc)return;
+  // Switch cat if needed
+  if(svc.cat!==_cat){
+    _cat=svc.cat;
+    document.querySelectorAll('.cat-pill,.sb-item[data-c]').forEach(function(b){b.classList.remove('on','active');});
+    document.querySelectorAll('[data-c="'+svc.cat+'"]').forEach(function(b){b.classList.add(b.classList.contains('cat-pill')?'on':'active');});
+    renderCards();
+  }
+  setTimeout(function(){
+    var c=document.getElementById('sc-'+id);
+    if(c){c.classList.add('open');c.scrollIntoView({behavior:'smooth',block:'start'});}
+  },50);
+}
+
+function updateStats(visible){
+  var totalItems=SVC.reduce(function(s,sv){return s+sv.groups.reduce(function(ss,g){return ss+(g.items?g.items.length:0);},0);},0);
+  var el=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  el('stTotal',visible!==undefined?visible:SVC.length);
+  el('stItems',totalItems);
+  el('stDirty',Object.keys(_dirty).length);
+  el('stSaved',_savedN);
+}
+
+function updateSbDots(){
+  SVC.forEach(function(svc){
+    var el=document.getElementById('sbj-'+svc.id);if(!el)return;
+    var hasDirty=Object.keys(_dirty).some(function(k){return k.startsWith(svc.id+'.');});
+    var hasSaved=Object.keys(_fb[svc.id]||{}).length>0;
+    el.className='sb-item'+(hasDirty?' has-dirty':hasSaved?' is-saved':'');
+  });
+}
+
+// Override renderCards to also update sidebar
+var _origRenderCards=renderCards;
+renderCards=function(){
+  _origRenderCards();
+  updateStats();
+  buildSbJump();
+  updateSbDots();
+};
+
+// Override saveSvc to update dots
+var _origSaveSvc=saveSvc;
+saveSvc=function(sid){
+  _origSaveSvc(sid);
+};
+
+// Override onI to update stats and dots
+var _origOnI=onI;
+onI=function(inp){
+  _origOnI(inp);
+  updateStats();
+  updateSbDots();
+};
+</script>
+</body>
+</html>

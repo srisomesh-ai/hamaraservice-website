@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Security Guard &amp; Bouncers – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{--brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;--ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;--line:#e2e8f0;--bg:#f0f7f9;--green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;--r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+.ksvc-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.ksvc-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.ksvc-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.ksvc-check{font-size:20px;flex-shrink:0;color:var(--muted);width:24px;text-align:center;}
+.ksvc-chip.active .ksvc-check{color:var(--brand);}
+.ksvc-info{flex:1;}
+.ksvc-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ksvc-chip.active .ksvc-name{color:var(--brand);}
+.ksvc-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.ksvc-price{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--teal);flex-shrink:0;text-align:right;}
+.ksvc-chip.active .ksvc-price{color:var(--brand);}
+/* Shift counter */
+.counter-row{display:flex;align-items:center;gap:0;margin-top:10px;}
+.cnt-btn{width:40px;height:40px;border:2px solid var(--line);background:white;font-size:22px;cursor:pointer;color:var(--teal);}
+.cnt-btn.left{border-radius:10px 0 0 10px;}
+.cnt-btn.right{border-radius:0 10px 10px 0;}
+.cnt-val{min-width:48px;height:40px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:800;}
+/* Calc chips */
+.calc-chip{padding:7px 14px;border:1.5px solid var(--line);border-radius:100px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);background:white;transition:all .15s;user-select:none;white-space:nowrap;}
+.calc-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
+.calc-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;}
+.price-bar{background:linear-gradient(135deg,#0d3d47,var(--teal));border-radius:14px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;}
+.pb-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.pb-price{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.pb-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.35;}
+.pb-btn{padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:11px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.pb-btn:hover:not(:disabled){background:var(--brand2);}
+@media(max-width:480px){.price-bar{flex-direction:column;align-items:flex-start;gap:12px;}.pb-price{font-size:24px;}.pb-btn{width:100%;text-align:center;}}
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:44px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:220px;padding-top:7px;}
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;text-decoration:none;display:block;transition:all .2s;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">💂</div>
+    <div>
+      <div class="hero-cat">Security Services</div>
+      <div class="hero-name">Security Guard &amp; Bouncers</div>
+      <div class="hero-tagline">Trained guards &amp; bouncers for home, office, events &amp; venues</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ 8–24 hour shifts</div>
+        <div class="pill green">✅ Verified &amp; Trained</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">Guard from ₹899 · Bouncer from ₹1,299</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+<!-- About -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">📋</div><div class="card-title">About This Service</div></div>
+  <div class="card-body">
+    <p style="font-size:14px;color:var(--ink2);line-height:1.75;">A trained and verified security guard or bouncer is deployed at your home, office, event, venue, pub, or function. Guards and bouncers are background-checked, physically fit, and briefed on your specific requirements before deployment. Select the type below and set the number of shifts.</p>
+  </div>
+</div>
+
+<!-- Calculator -->
+<div class="card" id="calcCard">
+  <div class="card-head"><div class="card-icon">💂</div><div class="card-title">Select Guard Type &amp; Duration</div></div>
+  <div class="card-body" style="padding-top:0;">
+
+    <!-- Sticky bar -->
+    <div style="position:sticky;top:60px;z-index:100;background:linear-gradient(135deg,#0d3d47,var(--teal));margin:0 -20px 16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Estimated Total</div>
+        <div id="stickyPrice" style="font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:white;line-height:1;">₹0</div>
+        <div id="stickyNote" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Select guard type below</div>
+      </div>
+      <button id="stickyBookBtn" onclick="bookNow()" disabled style="padding:10px 18px;background:var(--brand);color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;opacity:.4;white-space:nowrap;transition:all .2s;">Book Now →</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Select the guard type you need — tap one. Then set shifts and guards.</p>
+
+    <!-- Guard type chips (single select) -->
+    <div style="display:flex;flex-direction:column;gap:10px;" id="guardChips">
+
+      <div class="ksvc-chip" data-svc="daytime" data-price="899" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-daytime">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">☀️ Daytime Guard (8-hour shift)</div>
+          <div class="ksvc-desc">Gate monitoring · Visitor management · Perimeter checks · Entry & exit logging · 6 AM – 10 PM</div>
+        </div>
+        <div class="ksvc-price">₹899<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="nighttime" data-price="999" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-nighttime">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🌙 Night Guard (8-hour shift)</div>
+          <div class="ksvc-desc">Night watch · Gate locked · Perimeter patrol · Emergency alert · 10 PM – 6 AM</div>
+        </div>
+        <div class="ksvc-price">₹999<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="fullday" data-price="1699" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-fullday">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🕐 Full Day Guard (12-hour shift)</div>
+          <div class="ksvc-desc">Extended coverage · Gate + perimeter · Visitor log · Incident reporting · Flexible timing</div>
+        </div>
+        <div class="ksvc-price">₹1,699<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="event" data-price="1299" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-event">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🎉 Event Security Guard</div>
+          <div class="ksvc-desc">Crowd management · Entry control · VIP area monitoring · Incident handling · Up to 8 hours</div>
+        </div>
+        <div class="ksvc-price">₹1,299<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per guard/shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="office" data-price="899" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-office">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🏢 Office / Shop Security</div>
+          <div class="ksvc-desc">Premises monitoring · Staff &amp; visitor log · Asset security · Daily report · 8-hour shift</div>
+        </div>
+        <div class="ksvc-price">₹899<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="bouncer_event" data-price="1299" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-bouncer_event">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">💪 Event Bouncer</div>
+          <div class="ksvc-desc">Entry control · Crowd management · Gate checking · Removing disruptive guests · Up to 8 hours</div>
+        </div>
+        <div class="ksvc-price">₹1,299<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per bouncer/shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="bouncer_pub" data-price="1499" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-bouncer_pub">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">🍻 Pub / Bar / Club Bouncer</div>
+          <div class="ksvc-desc">Door control · ID verification · Capacity management · Handling intoxicated guests · Night shift</div>
+        </div>
+        <div class="ksvc-price">₹1,499<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per bouncer/shift</span></div>
+      </div>
+
+      <div class="ksvc-chip" data-svc="bouncer_vip" data-price="1799" onclick="selectGuard(this)">
+        <div class="ksvc-check" id="chk-bouncer_vip">○</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">⭐ VIP / Personal Bouncer</div>
+          <div class="ksvc-desc">Personal close protection · VIP escort · Crowd clearing · High-profile events &amp; functions</div>
+        </div>
+        <div class="ksvc-price">₹1,799<span style="font-size:10px;font-weight:500;color:var(--muted);display:block;">per bouncer/shift</span></div>
+      </div>
+
+    </div>
+
+    <!-- Guards count -->
+    <div id="guardsSection" style="display:none;margin-top:16px;">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px;">Number of Guards</div>
+      <div style="display:flex;align-items:center;gap:0;">
+        <button class="cnt-btn left" onclick="changeGuards(-1)">−</button>
+        <div class="cnt-val" id="guardCount">1</div>
+        <button class="cnt-btn right" onclick="changeGuards(1)">+</button>
+        <span style="font-size:12px;color:var(--muted);margin-left:12px;">guard(s)</span>
+      </div>
+    </div>
+
+    <!-- Shifts count -->
+    <div id="shiftsSection" style="display:none;margin-top:16px;">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px;">Number of Days / Shifts</div>
+      <div style="display:flex;align-items:center;gap:0;">
+        <button class="cnt-btn left" onclick="changeShifts(-1)">−</button>
+        <div class="cnt-val" id="shiftCount">1</div>
+        <button class="cnt-btn right" onclick="changeShifts(1)">+</button>
+        <span style="font-size:12px;color:var(--muted);margin-left:12px;">day(s) / shift(s)</span>
+      </div>
+    </div>
+
+    <!-- Add-on -->
+    <div id="addonSection" style="display:none;margin-top:16px;">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px;">Add-ons (optional)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;">
+        <div class="calc-chip" data-addon="walkie" data-price="150" onclick="toggleAddon(this)">📻 Walkie-talkie +₹150/day</div>
+        <div class="calc-chip" data-addon="torch" data-price="50" onclick="toggleAddon(this)">🔦 Torch &amp; baton +₹50/day</div>
+        <div class="calc-chip" data-addon="report" data-price="0" onclick="toggleAddon(this)">📋 Daily written report (free)</div>
+      </div>
+    </div>
+
+    <!-- Info note -->
+    <div style="margin-top:14px;padding:10px 14px;background:var(--teal-soft);border-radius:10px;border:1.5px solid var(--teal);font-size:12px;color:var(--teal);font-weight:600;">
+      ℹ️ Guards arrive in uniform. Firearms &amp; armed security are a separate specialised service. All guards are background verified.
+    </div>
+
+    <!-- Price bar -->
+    <div class="price-bar">
+      <div>
+        <div class="pb-label">Estimated Total</div>
+        <div class="pb-price" id="totalPrice">₹0</div>
+        <div class="pb-note" id="priceNote">Select guard type above</div>
+      </div>
+      <button class="pb-btn" id="bookNowBtn" onclick="bookNow()" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- What's Included -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" style="padding-top:12px;">
+
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Gate and entry point monitoring</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Visitor entry and exit logging</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Perimeter checks and patrol (as agreed)</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Emergency escalation and alert to owner</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Event crowd control and entry management</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Incident reporting and daily handover notes</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Guard arrives in uniform — presentable and professional</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Pre-deployment briefing on your security requirements</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:5px;margin-top:10px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;padding:5px 10px;background:var(--brand-soft);border-radius:8px;">💪 Bouncers Additionally Include</div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Physical entry control and screening at venue entrance</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">ID and age verification at door (pub / club)</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Handling and removing disruptive or intoxicated guests</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">Crowd capacity control and queue management</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">VIP escort and close personal protection</span></div>
+      <div style="display:flex;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;"><span style="color:var(--green);font-weight:800;flex-shrink:0;">✓</span><span style="font-size:13px;color:var(--ink2);">De-escalation of conflicts before they become physical</span></div>
+    </div>
+
+    <!-- What's Not Included -->
+    <div style="padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+      <div style="font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">What's Not Included</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Firearms or armed security (separate specialised service)</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>CCTV cameras or surveillance equipment</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Transportation or vehicle patrolling</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Investigation or detective services</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Legal action or police coordination (guard can assist, not act)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⚡</div><div class="card-title">How Security Guard Service Works</div></div>
+  <div class="card-body">
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Booking</div><div class="step-desc">Select guard type, number of guards, and duration. Share your address and specific security requirements in the booking.</div></div></div>
+      <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Guard Assigned &amp; Briefed</div><div class="step-desc">A verified guard is assigned and briefed on your location, access points, key contacts, and specific instructions.</div></div></div>
+      <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Guard Reports for Duty</div><div class="step-desc">Guard arrives in uniform on time, introduces themselves, and takes over the assigned post or area.</div></div></div>
+      <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Active Duty</div><div class="step-desc">Guard monitors gate, manages visitors, patrols perimeter, and reports any suspicious activity immediately.</div></div></div>
+      <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Shift Handover</div><div class="step-desc">Guard provides a shift report at the end of duty covering all incidents, visitor logs, and observations.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Benefits -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💡</div><div class="card-title">Benefits of Professional Security &amp; Bouncer Service</div></div>
+  <div class="card-body">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Visible deterrent against theft and intrusion</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">A uniformed guard at the gate significantly reduces the risk of unauthorized entry and theft.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Controlled visitor access</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Guard logs all visitors, controls entry, and ensures only authorized people access your premises.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">24/7 coverage available</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Day shift, night shift, or full-day coverage — your property is protected around the clock.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Perfect for events and functions</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Weddings, parties, and corporate events — guards manage entry, crowds, and VIP areas professionally.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Background verified — trustworthy</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">All guards are police-verified and background-checked before deployment — complete peace of mind.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Immediate emergency response</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Guard escalates emergencies instantly — alerting you, calling authorities if needed, and managing the situation on ground.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.6</div><div class="rating-stars">★★★★★</div><div class="rating-count">1,850 reviews</div></div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:73%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:18%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:6%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQs -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" style="padding-top:6px;">
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Are the guards police verified?<span class="faq-arr">›</span></div><div class="faq-a">Yes — all guards are background-checked and police-verified before deployment. You can request verification documents at booking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book a guard for a single day?<span class="faq-arr">›</span></div><div class="faq-a">Yes — single day or single shift bookings are available. You can also book for multiple consecutive days at a discounted rate.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What does the guard bring?<span class="faq-arr">›</span></div><div class="faq-a">Guards arrive in uniform and carry a mobile phone for communication. Walkie-talkies, torches, and batons can be added as optional equipment at booking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book multiple guards for an event?<span class="faq-arr">›</span></div><div class="faq-a">Yes — set the number of guards needed when booking. For large events with 10+ guards, contact us directly for a custom quote.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is armed security available?<span class="faq-arr">›</span></div><div class="faq-a">Armed and specialised security is a separate service requiring additional licensing. Contact us directly to arrange armed security for high-risk requirements.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can the guard stay overnight?<span class="faq-arr">›</span></div><div class="faq-a">Yes — select the Night Guard (8-hour shift) for overnight coverage from 10 PM to 6 AM. For full 24-hour coverage, book both a day shift and a night shift guard.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What happens if the guard doesn't show up?<span class="faq-arr">›</span></div><div class="faq-a">We have a replacement guarantee — if a guard cannot report, a replacement is arranged immediately. Your security is never left unattended.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is food and accommodation provided for the guard?<span class="faq-arr">›</span></div><div class="faq-a">For short deployments (8–12 hours), basic meals are the customer's courtesy. For multi-day deployments, accommodation and meal arrangements should be discussed at booking.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What is the difference between a security guard and a bouncer?<span class="faq-arr">›</span></div><div class="faq-a">Security guards focus on monitoring, patrol, and gate management. Bouncers are physically trained for crowd control, entry management, handling disruptive guests, and close protection at events and venues.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I book bouncers for a private party or wedding?<span class="faq-arr">›</span></div><div class="faq-a">Yes — select "Event Bouncer" for weddings, private parties, and functions. For VIP protection or high-profile events, select "VIP / Personal Bouncer" instead.</div></div>
+  </div>
+</div>
+
+<!-- Similar -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body">
+    <div class="sim-grid">
+      <a class="sim-card" href="svc-cctv.html"><div class="sim-icon">📷</div><div class="sim-name">CCTV Installation</div><div class="sim-price">from ₹299</div></a>
+      <a class="sim-card" href="svc-electrician.html"><div class="sim-icon">⚡</div><div class="sim-name">Electrician</div><div class="sim-price">from ₹199</div></a>
+      <a class="sim-card" href="svc-deep-cleaning.html"><div class="sim-icon">🧽</div><div class="sim-name">Deep Cleaning</div><div class="sim-price">from ₹999</div></a>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">₹0 <sub>select type</sub></div>
+      <div class="book-note-sm">Updates as you select</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Shift</span><span class="book-meta-val">8–12 hours</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.6 (1,850 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
+    </div>
+    <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Select Guard / Bouncer &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Police verified guard</div>
+      <div class="book-trust-item">👔 Guard in uniform · Bouncer ready</div>
+      <div class="book-trust-item">🔁 Replacement guarantee</div>
+      <div class="book-trust-item">💯 Transparent pricing</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">₹0 <sub>select type</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.6 · 1,850 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var guardType = null;
+var guardPrice = 0;
+var guardCount = 1;
+var shiftCount = 1;
+var addons = {};
+var _sgTotal = 0; // global so bookNow can read calculated total
+
+function selectGuard(el) {
+  document.querySelectorAll('#guardChips .ksvc-chip').forEach(function(c){
+    c.classList.remove('active');
+    var chk = c.querySelector('.ksvc-check');
+    if(chk) chk.textContent = '○';
+  });
+  el.classList.add('active');
+  var chk = document.getElementById('chk-' + el.dataset.svc);
+  if(chk) chk.textContent = '●';
+  guardType = el.dataset.svc;
+  guardPrice = parseInt(el.dataset.price) || 0;
+  document.getElementById('guardsSection').style.display = 'block';
+  document.getElementById('shiftsSection').style.display = 'block';
+  document.getElementById('addonSection').style.display = 'block';
+  updatePrice();
+}
+
+function changeGuards(delta) {
+  guardCount = Math.max(1, Math.min(20, guardCount + delta));
+  document.getElementById('guardCount').textContent = guardCount;
+  updatePrice();
+}
+
+function changeShifts(delta) {
+  shiftCount = Math.max(1, Math.min(30, shiftCount + delta));
+  document.getElementById('shiftCount').textContent = shiftCount;
+  updatePrice();
+}
+
+function toggleAddon(el) {
+  var key = el.dataset.addon;
+  var price = parseInt(el.dataset.price) || 0;
+  el.classList.toggle('active');
+  if(el.classList.contains('active')) addons[key] = price;
+  else delete addons[key];
+  updatePrice();
+}
+
+function updatePrice() {
+  if(!guardType) return;
+  var addonTotal = Object.values(addons).reduce(function(s,v){ return s+v; }, 0);
+  var total = (guardPrice * guardCount * shiftCount) + (addonTotal * shiftCount);
+  _sgTotal = total;
+  var fmt = '₹' + total.toLocaleString('en-IN');
+  var note = guardCount + ' guard'+(guardCount>1?'s':'')+' × '+shiftCount+' shift'+(shiftCount>1?'s':'')+(addonTotal>0?' + add-ons':'');
+  ['stickyPrice','totalPrice'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=fmt; });
+  ['stickyNote','priceNote'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=note; });
+  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>estimated</sub>';
+  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>estimated</sub>';
+  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid){
+    var b=document.getElementById(bid); if(!b) return;
+    b.disabled=false; b.style.opacity='1'; b.style.cursor='pointer';
+  });
+}
+
+function bookNow() {
+  if(!guardType) {
+    showToast('⚠️ Please select a guard type');
+    document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  // Get guard type label from active chip
+  var _sgChip = document.querySelector('#guardChips .ksvc-chip.active');
+  var _sgLabel = _sgChip ? (_sgChip.querySelector('.ksvc-name')||{textContent:guardType}).textContent.trim() : guardType;
+  var _sgSum = ['Security Guard > ' + _sgLabel];
+  if (guardCount > 1) _sgSum.push('Security Guard > ' + guardCount + ' guards');
+  if (shiftCount > 1) _sgSum.push('Security Guard > ' + shiftCount + ' shifts');
+  // Addons — object keys, read chip labels
+  document.querySelectorAll('#addonSection [data-addon].active').forEach(function(chip) {
+    var label = chip.textContent.trim();
+    if (label) _sgSum.push('Security Guard > ' + label);
+  });
+  sessionStorage.setItem('hs_service_options', JSON.stringify({
+    service:'Security Guard', guardType:guardType, guardPrice:guardPrice,
+    guardCount:guardCount, shiftCount:shiftCount, addons:addons,
+    icon:'💂', price: String(_sgTotal > 0 ? _sgTotal : 0),
+    summary: _sgSum
+  }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=Security%20Guard';
+  if(user){ window.location.href=url; }
+  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
+}
+
+function showToast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; }, 3000);
+}
+
+firebase.auth().onAuthStateChanged(function(u) {
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC034) ────────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+  function applyPrices(d){
+    if(!d||d.error) return;
+    if(d.type) document.querySelectorAll('.ksvc-chip[data-svc]').forEach(function(c){
+      var k=c.dataset.svc;if(d.type[k]===undefined) return;
+      c.dataset.price=d.type[k];
+      var pe=c.querySelector('.ksvc-price');if(pe){var sp=pe.querySelector('span');pe.innerHTML='₹'+parseInt(d.type[k]).toLocaleString('en-IN')+(sp?sp.outerHTML:'');}
+      // Update guardPrice if this chip is currently selected
+      if(c.classList.contains('active') && guardType === k) guardPrice = parseInt(d.type[k]) || guardPrice;
+    });
+    if(d.base){
+      document.querySelectorAll('.pill').forEach(function(p){
+        if(p.textContent.indexOf('from')>=0&&p.textContent.indexOf('₹')>=0)
+          p.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+    if(typeof updatePrice==='function') updatePrice();
+  }
+  function load(){
+    getToken(function(tok){
+      var url=_DB+'/hs_service_prices/SVC034.json'+(tok?'?auth='+tok:'');
+      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
+      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      xhr.onerror=function(){};xhr.send();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+</script>
+</body>
+</html>

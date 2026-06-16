@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Cctv – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;
+  --line:#e2e8f0;--bg:#f0f7f9;--white:#fff;
+  --green:#2ecc71;--green-soft:#e8f8f0;--yellow:#f59e0b;
+  --r:12px;--r2:20px;--sh:0 2px 16px rgba(0,0,0,.07);--sh2:0 8px 32px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.85);font-size:13px;font-weight:600;text-decoration:none;padding:7px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;}
+
+/* HERO */
+.svc-hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:32px 24px 50px;position:relative;overflow:hidden;}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:linear-gradient(to top,var(--bg),transparent);}
+.hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:18px;}
+.hero-icon{font-size:56px;flex-shrink:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:800;color:white;letter-spacing:-.4px;margin-bottom:6px;}
+.hero-tagline{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:14px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:4px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.85);}
+.pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+@media(max-width:520px){.hero-inner{flex-direction:column;text-align:center;}.hero-pills{justify-content:center;}}
+
+/* LAYOUT */
+.svc-main{max-width:900px;margin:0 auto;padding:24px 20px 120px;display:grid;grid-template-columns:1fr 290px;gap:20px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:14px 14px 120px;}}
+
+/* CARD */
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-icon{width:34px;height:34px;border-radius:9px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:16px 20px;}
+@media(max-width:768px){.card-body{padding:13px 15px;}.card-head{padding:13px 15px;}}
+
+/* ABOUT */
+.about-text{font-size:14px;color:var(--ink2);line-height:1.75;}
+
+/* ACCORDION - What's Included */
+.accordion-item{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px;}
+.accordion-trigger{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;background:white;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--ink);
+  transition:background .15s;text-align:left;gap:10px;
+}
+.accordion-trigger:hover{background:var(--bg);}
+.accordion-trigger.open{background:var(--teal-soft);color:var(--teal);}
+.acc-icon{font-size:18px;flex-shrink:0;}
+.acc-arr{font-size:14px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+.accordion-trigger.open .acc-arr{transform:rotate(180deg);color:var(--teal);}
+.accordion-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.accordion-body.open{max-height:500px;}
+.acc-items{padding:4px 16px 14px;}
+.acc-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);}
+.acc-item:last-child{border:none;}
+.acc-check{color:var(--green);font-size:13px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.acc-text{font-size:13px;color:var(--ink2);line-height:1.45;}
+
+/* Not included */
+.excl-wrap{margin-top:14px;padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;}
+.excl-title{font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+.excl-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#7f1d1d;padding:3px 0;}
+.excl-x{font-weight:800;flex-shrink:0;}
+
+/* PRICE CALCULATOR */
+.calc-intro{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.calc-section{margin-bottom:18px;}
+.calc-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px;display:flex;align-items:center;gap:4px;}
+.calc-req{color:var(--brand);}
+
+/* Chips — compact, no price shown */
+.calc-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.calc-chip{
+  padding:7px 14px;
+  border:1.5px solid var(--line);
+  border-radius:100px;
+  cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;
+  color:var(--ink2);background:white;
+  transition:all .15s;
+  user-select:none;white-space:nowrap;
+}
+.calc-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
+.calc-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;}
+
+
+
+
+/* PROVIDER TYPE */
+.prov-option{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:16px;border:2px solid var(--line);
+  border-radius:14px;cursor:pointer;transition:all .18s;
+  background:white;
+}
+.prov-option:hover{border-color:var(--teal);background:var(--teal-soft);}
+.prov-option.active{border-color:var(--brand);background:var(--brand-soft);}
+.prov-radio{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--line);flex-shrink:0;margin-top:2px;
+  transition:all .15s;position:relative;
+}
+.prov-option.active .prov-radio{
+  border-color:var(--brand);background:var(--brand);
+}
+.prov-option.active .prov-radio::after{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:8px;height:8px;border-radius:50%;background:white;
+}
+.prov-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.prov-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.prov-option.active .prov-title{color:var(--brand);}
+
+/* STEPS */
+.steps-list{display:flex;flex-direction:column;}
+.step-item{display:flex;gap:12px;padding:12px 0;position:relative;}
+.step-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:46px;bottom:-4px;width:2px;background:var(--line);}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* BEFORE/AFTER */
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ba-card{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--line);}
+.ba-label{padding:6px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;}
+.ba-label.before{background:#fee2e2;color:#c53030;}
+.ba-label.after{background:var(--green-soft);color:#27ae60;}
+.ba-img{width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg);}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.faq-arr{flex-shrink:0;transition:transform .2s;color:var(--muted);font-size:16px;}
+.faq-item.open .faq-arr{transform:rotate(180deg);}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:200px;padding-top:7px;}
+
+/* SIMILAR */
+.sim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;display:block;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);}
+.sim-icon{font-size:24px;margin-bottom:5px;}
+.sim-name{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.3;}
+.sim-price{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+
+/* RATINGS */
+.rating-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--ink);flex-shrink:0;}
+.rating-stars{color:var(--yellow);font-size:14px;}
+.rating-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.rbar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.rbar-track{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+
+/* DESKTOP BOOKING CARD */
+.book-card{position:sticky;top:76px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px;}
+.book-price-disp{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:white;line-height:1;}
+.book-price-disp sub{font-size:13px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-note-sm{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+.book-meta{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.scroll-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;}
+.scroll-btn:hover{background:var(--brand2);}
+.book-trust{padding:12px 20px;display:flex;flex-direction:column;gap:6px;}
+.book-trust-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;}
+
+/* MOBILE BAR */
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{display:flex;align-items:center;justify-content:space-between;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:11px 16px calc(11px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;}
+  .mob-price{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--teal);}
+  .mob-price sub{font-size:11px;color:var(--muted);}
+  .mob-btn{padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+
+/* Provider option spacing */
+.prov-option{display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.prov-option:hover{border-color:var(--teal);background:var(--teal-soft);}
+.prov-option.active{border-color:var(--brand);background:var(--brand-soft);}
+.prov-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;margin-top:2px;transition:all .15s;position:relative;}
+.prov-option.active .prov-radio{border-color:var(--brand);background:var(--brand);}
+.prov-option.active .prov-radio::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:white;}
+.prov-info .prov-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.prov-info .prov-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.prov-option.active .prov-title{color:var(--brand);}
+
+.ksvc-chip{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;cursor:pointer;transition:all .18s;background:white;}
+.ksvc-chip:hover{border-color:var(--teal);background:var(--teal-soft);}
+.ksvc-chip.active{border-color:var(--brand);background:var(--brand-soft);}
+.ksvc-check{font-size:20px;flex-shrink:0;color:var(--muted);width:24px;text-align:center;transition:all .15s;}
+.ksvc-chip.active .ksvc-check{color:var(--brand);}
+.ksvc-info{flex:1;}
+.ksvc-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ksvc-chip.active .ksvc-name{color:var(--brand);}
+.ksvc-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.ksvc-price{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--teal);flex-shrink:0;}
+.ksvc-chip.active .ksvc-price{color:var(--brand);}
+</style>
+</head>
+<body>
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<div class="svc-hero">
+  <div class="hero-inner">
+    <div class="hero-icon">📷</div>
+    <div>
+      <div class="hero-cat">Repairs</div>
+      <div class="hero-name">Cctv</div>
+      <div class="hero-tagline">Security cameras installed and configured at home</div>
+      <div class="hero-pills">
+        <div class="pill">⏱ 2–4 hours</div>
+        <div class="pill green">✅ Verified Pro</div>
+        <div class="pill">💯 Satisfaction Promise</div>
+        <div class="pill">from ₹899</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+<div class="svc-left">
+
+<!-- About -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">📋</div><div class="card-title">About This Service</div></div>
+  <div class="card-body"><p class="about-text">A CCTV technician arrives with drilling tools, cable management equipment, and connectors. You need to have your cameras and DVR/NVR purchased and ready. The technician handles site planning, mounting, cable routing, DVR setup, and mobile app configuration.</p></div>
+</div>
+
+
+
+<!-- Price Calculator -->
+<div class="card" id="calcCard">
+  <div class="card-head"><div class="card-icon">🧮</div><div class="card-title">Select Your Requirements &amp; See Price</div></div>
+  <div class="card-body" style="padding-top:0;">
+
+    <!-- Sticky price bar -->
+    <div style="position:sticky;top:60px;z-index:100;background:linear-gradient(135deg,#0d3d47,var(--teal));margin:0 -20px 16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Estimated Total</div>
+        <div id="stickyPrice" style="font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:white;line-height:1;">…</div>
+        <div id="stickyNote" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Select services below</div>
+      </div>
+      <button id="stickyBookBtn" onclick="bookNow()" disabled style="padding:10px 18px;background:var(--brand);color:white;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;opacity:.4;white-space:nowrap;transition:all .2s;">Book Now →</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Visit fee is included. Select the work — for technician prep only.</p>
+
+    <!-- Visit Required -->
+    <div class="ksvc-chip active" id="chip-visit" style="margin-bottom:16px;cursor:default;">
+      <div class="ksvc-check" style="color:var(--brand);">●</div>
+      <div class="ksvc-info">
+        <div class="ksvc-name">🏠 Technician Visit Required</div>
+        <div class="ksvc-desc">Visit &amp; inspection · Certified CCTV technician · All tools included</div>
+      </div>
+      <div class="ksvc-price" id="visitPriceDisplay" style="color:var(--brand);">…</div>
+    </div>
+
+    <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Select Work Needed</div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <!-- CCTV Camera Installation -->
+      <div class="ksvc-chip" data-svc="camera" onclick="toggleCCTVSvc(this)">
+        <div class="ksvc-check" id="chk-camera">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">📷 CCTV Camera Installation</div>
+          <div class="ksvc-desc">Indoor &amp; outdoor installation · Dome &amp; bullet camera fitting · Wall &amp; ceiling mounting · Camera angle adjustment</div>
+        </div>
+      </div>
+      <!-- Camera count sub-panel -->
+      <div id="cameraPanel" style="display:none;margin-left:12px;padding:14px 16px;background:var(--bg);border-radius:12px;border:1.5px solid var(--line);">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Number of cameras</div>
+        <div style="display:flex;align-items:center;gap:0;">
+          <button onclick="changeCamCount(-1)" style="width:40px;height:40px;border:2px solid var(--line);border-radius:10px 0 0 10px;background:white;font-size:22px;cursor:pointer;color:var(--teal);">−</button>
+          <div id="camCount" style="min-width:48px;height:40px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:800;">2</div>
+          <button onclick="changeCamCount(1)" style="width:40px;height:40px;border:2px solid var(--line);border-radius:0 10px 10px 0;background:white;font-size:22px;cursor:pointer;color:var(--teal);">+</button>
+          <span style="font-size:12px;color:var(--muted);margin-left:12px;">cameras × ₹300 each</span>
+        </div>
+      </div>
+
+      <!-- DVR/NVR Setup -->
+      <div class="ksvc-chip" data-svc="dvr" onclick="toggleCCTVSvc(this)">
+        <div class="ksvc-check" id="chk-dvr">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">💾 DVR/NVR Setup</div>
+          <div class="ksvc-desc">DVR/NVR installation &amp; configuration · Hard disk installation · Camera connectivity · Recording configuration</div>
+        </div>
+      </div>
+
+      <!-- Wiring & Connectivity -->
+      <div class="ksvc-chip" data-svc="wiring" onclick="toggleCCTVSvc(this)">
+        <div class="ksvc-check" id="chk-wiring">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">📡 Wiring &amp; Connectivity</div>
+          <div class="ksvc-desc">Cable routing &amp; connection · Power supply setup · Connector fitting · Basic cable management</div>
+        </div>
+      </div>
+
+      <!-- Mobile & Remote Access -->
+      <div class="ksvc-chip" data-svc="mobile" onclick="toggleCCTVSvc(this)">
+        <div class="ksvc-check" id="chk-mobile">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">📱 Mobile &amp; Remote Access Setup</div>
+          <div class="ksvc-desc">Mobile app configuration · Remote viewing setup · Wi-Fi/network support · User account setup guidance</div>
+        </div>
+      </div>
+
+      <!-- System Testing -->
+      <div class="ksvc-chip" data-svc="testing" onclick="toggleCCTVSvc(this)">
+        <div class="ksvc-check" id="chk-testing">☐</div>
+        <div class="ksvc-info">
+          <div class="ksvc-name">✅ System Testing</div>
+          <div class="ksvc-desc">Camera visibility · Night vision check · Recording &amp; playback testing · Power &amp; connectivity verification</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- What's Included -->
+<div class="card" id="includedCard">
+  <div class="card-head"><div class="card-icon">✅</div><div class="card-title">What's Included</div></div>
+  <div class="card-body" style="padding-top:12px;">
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">📷</span> CCTV Camera Installation</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Indoor CCTV camera installation</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Outdoor CCTV camera installation</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Dome and bullet camera fitting</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Wall and ceiling mounting</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Camera angle adjustment</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">💾</span> DVR/NVR Setup</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">DVR/NVR installation and configuration</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Hard disk installation support</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Camera connectivity setup</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Recording configuration</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">📡</span> Wiring &amp; Connectivity</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Cable routing and connection</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Power supply setup</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Connector fitting</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Basic cable management</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">📱</span> Mobile &amp; Remote Access Setup</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Mobile app configuration</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Remote viewing setup</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Wi-Fi / network connection support</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">User account setup guidance</span></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <button class="accordion-trigger" onclick="toggleAcc(this)">
+        <span><span class="acc-icon">✅</span> System Testing</span>
+        <span class="acc-arr">▾</span>
+      </button>
+      <div class="accordion-body"><div class="acc-items">
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Camera visibility testing</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Night vision checking</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Recording and playback testing</span></div>
+        <div class="acc-item"><span class="acc-check">✓</span><span class="acc-text">Power and connectivity verification</span></div>
+      </div></div>
+    </div>
+
+    <!-- What's Not Included -->
+    <div style="margin-top:14px;padding:14px 16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+      <div style="font-size:11px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">What's Not Included</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Cost of CCTV cameras and accessories</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Internet / Wi-Fi installation</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Major civil work or concealed wiring</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Network switch or router replacement</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>High-rise scaffolding work</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Electrical rewiring</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Data recovery from damaged hard disks</div>
+        <div style="display:flex;gap:8px;font-size:12px;color:#7f1d1d;"><span style="font-weight:800;flex-shrink:0;">✗</span>Annual maintenance unless separately booked</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="card">
+  <div class="card-head"><div class="card-icon">💡</div><div class="card-title">Benefits of Professional CCTV Installation</div></div>
+  <div class="card-body">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Enhances home and office security</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Professionally installed cameras cover blind spots and give you complete peace of mind.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Enables 24/7 surveillance</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Your property is monitored round the clock — day and night, with night vision cameras.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Provides remote monitoring access</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Watch your home or office live from anywhere in the world via your mobile phone.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Helps prevent theft and unauthorized access</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Visible cameras act as a deterrent — significantly reducing the risk of break-ins.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Ensures proper camera positioning and recording</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Technician angles cameras for maximum coverage — no blind spots left uncovered.</div></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 0;"><span style="color:var(--green);font-size:14px;font-weight:800;flex-shrink:0;">✓</span><div><div style="font-size:13px;font-weight:700;color:var(--ink);">Improves overall safety and peace of mind</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Know your family, staff, and assets are safe — whether you're home or away.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⚡</div><div class="card-title">How CCTV Installation Works</div></div>
+  <div class="card-body"><div class="steps-list">
+    <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Booking &amp; Requirement Discussion</div><div class="step-desc">Choose the number of cameras and explain your security requirements — indoor, outdoor, or both.</div></div></div>
+    <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Site Inspection</div><div class="step-desc">Technician inspects the property and suggests suitable camera placement for best coverage.</div></div></div>
+    <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Installation &amp; Wiring</div><div class="step-desc">Cameras, DVR/NVR, and wiring are installed and connected properly using the technician's tools.</div></div></div>
+    <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Configuration Setup</div><div class="step-desc">Recording, mobile viewing, remote access, and storage settings are configured on your phone.</div></div></div>
+    <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Final Testing &amp; Demo</div><div class="step-desc">Complete system tested — camera visibility, night vision, recording, playback. Basic usage demo given.</div></div></div>
+  </div></div>
+</div>
+
+<!-- Ratings -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
+  <div class="card-body">
+    <div class="rating-row">
+      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.7</div><div class="rating-stars">★★★★★</div><div class="rating-count">890 reviews</div></div>
+      <div style="flex:1;">
+        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:75%"></div></div></div>
+        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:17%"></div></div></div>
+        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:5%"></div></div></div>
+        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
+        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card">
+  <div class="card-head"><div class="card-icon">💬</div><div class="card-title">Frequently Asked Questions</div></div>
+  <div class="card-body" style="padding-top:6px;">
+    <div class="faq-item" id="faq0"><div class="faq-q" onclick="tFaq(0)">Which CCTV cameras are commonly installed?<span class="faq-arr">›</span></div><div class="faq-a">Dome cameras, Bullet cameras, Wi-Fi cameras, PTZ cameras, and Night vision cameras are all commonly supported.</div></div>
+    <div class="faq-item" id="faq1"><div class="faq-q" onclick="tFaq(1)">Can CCTV cameras be viewed on mobile phones?<span class="faq-arr">›</span></div><div class="faq-a">Yes, most modern CCTV systems support remote mobile viewing. The technician sets up the app and remote access on your phone.</div></div>
+    <div class="faq-item" id="faq2"><div class="faq-q" onclick="tFaq(2)">Is internet required for CCTV cameras?<span class="faq-arr">›</span></div><div class="faq-a">Internet is needed for remote viewing. Local recording to DVR/NVR works without internet — you can view footage on-site anytime.</div></div>
+    <div class="faq-item" id="faq3"><div class="faq-q" onclick="tFaq(3)">How long is CCTV footage stored?<span class="faq-arr">›</span></div><div class="faq-a">Storage duration depends on hard disk size and recording settings — usually 7–30 days. Ask the technician for advice on storage capacity.</div></div>
+    <div class="faq-item" id="faq4"><div class="faq-q" onclick="tFaq(4)">Are wiring and installation materials included?<span class="faq-arr">›</span></div><div class="faq-a">Basic installation materials may be included. Additional wiring, long cable runs, or special accessories may cost extra — confirmed before work starts.</div></div>
+    <div class="faq-item" id="faq5"><div class="faq-q" onclick="tFaq(5)">Can old CCTV systems be repaired or upgraded?<span class="faq-arr">›</span></div><div class="faq-a">Yes, technicians can often repair existing cameras, upgrade DVR/NVR, or add cameras to an existing system.</div></div>
+    <div class="faq-item" id="faq6"><div class="faq-q" onclick="tFaq(6)">Is night vision available in CCTV cameras?<span class="faq-arr">›</span></div><div class="faq-a">Yes, most CCTV cameras include infrared night vision support — confirm with the brand before purchasing.</div></div>
+    <div class="faq-item" id="faq7"><div class="faq-q" onclick="tFaq(7)">Is there warranty on installation services?<span class="faq-arr">›</span></div><div class="faq-a">Many providers offer limited warranty on installation work and supported devices. Ask your technician for specific terms.</div></div>
+  </div>
+</div>
+
+<!-- Similar Services -->
+<div class="card">
+  <div class="card-head"><div class="card-icon">🔍</div><div class="card-title">Similar Services</div></div>
+  <div class="card-body"><div class="sim-grid">
+    <a class="sim-card" href="svc-plumber.html"><div class="sim-icon">🔧</div><div class="sim-name">Plumber</div><div class="sim-price">from ₹499</div></a>
+<a class="sim-card" href="svc-electrician.html"><div class="sim-icon">⚡</div><div class="sim-name">Electrician</div><div class="sim-price">from ₹499</div></a>
+<a class="sim-card" href="svc-carpenter.html"><div class="sim-icon">🪚</div><div class="sim-name">Carpenter</div><div class="sim-price">from ₹599</div></a>
+<a class="sim-card" href="svc-painter.html"><div class="sim-icon">🎨</div><div class="sim-name">Painter</div><div class="sim-price">from ₹699</div></a>
+
+  </div></div>
+</div>
+
+</div><!-- svc-left -->
+
+<!-- Desktop booking card -->
+<div class="svc-right">
+  <div class="book-card">
+    <div class="book-top">
+      <div class="book-price-disp" id="desktopPrice">₹0 <sub>select options</sub></div>
+      <div class="book-note-sm">Updates as you select</div>
+    </div>
+    <div class="book-meta">
+      <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">2–4 hours</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.7 (890)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
+    </div>
+    <button class="scroll-btn" onclick="scrollToCalc()">Select Options &amp; Book →</button>
+    <div class="book-trust">
+      <div class="book-trust-item">✅ Background-verified professional</div>
+      <div class="book-trust-item">🔒 Pay after service</div>
+      <div class="book-trust-item">🔄 Free reschedule (2hrs notice)</div>
+      <div class="book-trust-item">⭐ Satisfaction guaranteed</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- svc-main -->
+
+<!-- Mobile sticky bar -->
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-price" id="mobPrice">₹0 <sub>select options</sub></div>
+    <div style="font-size:10px;color:var(--muted);">⭐ 4.7 · 890 reviews</div>
+  </div>
+  <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+if(!firebase.apps.length) firebase.initializeApp({
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var cctvSelected = {};
+var camCount = 1;
+var VISIT_PRICE = 0;
+
+function toggleCCTVSvc(el) {
+  var svc = el.dataset.svc;
+  var chk = document.getElementById('chk-' + svc);
+  var camPanel = document.getElementById('cameraCountPanel');
+  if (el.classList.contains('active')) {
+    el.classList.remove('active'); delete cctvSelected[svc];
+    if (chk) chk.textContent = '☐';
+    if (svc === 'camera' && camPanel) camPanel.style.display = 'none';
+  } else {
+    el.classList.add('active'); cctvSelected[svc] = 1;
+    if (chk) chk.textContent = '☑';
+    if (svc === 'camera' && camPanel) camPanel.style.display = 'block';
+  }
+}
+
+function changeCamCount(delta) {
+  camCount = Math.max(1, Math.min(16, camCount + delta));
+  var el = document.getElementById('camCount'); if(el) el.textContent = camCount;
+}
+
+function updateCCTVPrice() { updatePrice(); }
+
+function updatePrice() {
+  var fmt = VISIT_PRICE > 0 ? '₹' + VISIT_PRICE.toLocaleString('en-IN') : '…';
+  var note = VISIT_PRICE > 0 ? 'Technician visit fee' : 'Price loading…';
+  var enabled = VISIT_PRICE > 0;
+  var vd = document.getElementById('visitPriceDisplay'); if(vd) vd.textContent = VISIT_PRICE > 0 ? '₹' + VISIT_PRICE.toLocaleString('en-IN') : '…';
+  ['stickyPrice','totalPrice'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=fmt; });
+  ['stickyNote','priceNote'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=note; });
+  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>estimated</sub>';
+  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>estimated</sub>';
+  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid){
+    var b=document.getElementById(bid); if(!b) return;
+    b.disabled=!enabled; b.style.opacity=enabled?'1':'0.4'; b.style.cursor=enabled?'pointer':'not-allowed';
+  });
+}
+
+updatePrice();
+
+
+function toggleAcc(btn){
+  var body=btn.nextElementSibling,isOpen=btn.classList.contains('open');
+  document.querySelectorAll('.accordion-trigger.open').forEach(function(b){b.classList.remove('open');b.nextElementSibling.classList.remove('open');});
+  if(!isOpen){btn.classList.add('open');body.classList.add('open');}
+}
+function tFaq(i){var el=document.getElementById('faq'+i);if(el)el.classList.toggle('open');}
+function scrollToCalc(){document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
+
+
+function bookNow() {
+  if (VISIT_PRICE === 0) { showToast('⚠️ Price still loading, please wait'); return; }
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ service:'CCTV', services: Object.keys(cctvSelected), cameras: camCount, price: String(VISIT_PRICE), icon:'📷', summary: (function(){ var _s=Object.keys(cctvSelected).map(function(k){ return 'CCTV > '+k; }); if(camCount>1) _s.push('CCTV > '+camCount+' cameras'); return _s; })() }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=CCTV';
+  if (user) { window.location.href = url; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+}
+
+firebase.auth().onAuthStateChanged(function(u) {
+  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+
+// ── HS Firebase Price Sync (SVC014) ────────────────────────────────────────
+(function(){
+  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  function getToken(cb){
+    if(_tok){cb(_tok);return;}
+    var x=new XMLHttpRequest();
+    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
+    x.onerror=function(){cb('');};
+    x.send(JSON.stringify({returnSecureToken:true}));
+  }
+  function applyPrices(d){
+    if(!d || d.error) return;
+    var p = 0;
+    // Priority order: visit.visit → visit.price → svc.visit → base
+    if(d.visit && d.visit.visit !== undefined) p = parseInt(d.visit.visit);
+    else if(d.visit && d.visit.price !== undefined) p = parseInt(d.visit.price);
+    else if(d.svc && d.svc.visit !== undefined) p = parseInt(d.svc.visit);
+    else if(d.base !== undefined) p = parseInt(d.base);
+    if(p > 0){ VISIT_PRICE = p; }
+    if(d.base !== undefined){
+      document.querySelectorAll('.pill').forEach(function(pl){
+        if(pl.textContent.indexOf('from')>=0 && pl.textContent.indexOf('₹')>=0)
+          pl.textContent = 'from ₹'+parseInt(d.base).toLocaleString('en-IN');
+      });
+    }
+    if(typeof updatePrice==='function') updatePrice();
+  }  function load(){
+    getToken(function(tok){
+      var url=_DB+'/hs_service_prices/SVC015.json'+(tok?'?auth='+tok:'');
+      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
+      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      xhr.onerror=function(){};xhr.send();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  else{load();}
+  setInterval(load,30000);
+  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
+})();
+</script>
+</body>
+</html>

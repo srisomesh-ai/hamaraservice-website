@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>HS Auth Test</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+body{font-family:monospace;padding:20px;background:#111;color:#0f0;font-size:14px;}
+.err{color:#f55;} .ok{color:#0f0;} .warn{color:#ff0;}
+</style>
+</head>
+<body>
+<h2 style="color:white">HamaraService — Auth Debug</h2>
+<div id="log"></div>
+<script>
+function log(msg, cls) {
+  var d = document.createElement('div');
+  d.className = cls || '';
+  d.textContent = new Date().toISOString().substr(11,8) + ' — ' + msg;
+  document.getElementById('log').appendChild(d);
+}
+
+log('Firebase initializing...');
+
+firebase.initializeApp({
+  apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:        "hamaraservice-s009.firebaseapp.com",
+  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "hamaraservice-s009",
+  storageBucket:     "hamaraservice-s009.firebasestorage.app",
+  messagingSenderId: "1064274729048",
+  appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+var auth = firebase.auth();
+
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(function(){ log('Persistence set to LOCAL', 'ok'); })
+  .catch(function(e){ log('Persistence error: ' + e.message, 'err'); });
+
+log('Waiting for onAuthStateChanged...');
+
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    log('USER SIGNED IN: ' + user.email + ' (uid: ' + user.uid + ')', 'ok');
+    log('Auth provider: ' + (user.providerData[0] ? user.providerData[0].providerId : 'unknown'), 'ok');
+  } else {
+    log('NO USER — onAuthStateChanged returned null', 'warn');
+    log('This means: no session exists OR session could not be restored', 'warn');
+  }
+});
+
+// Also check currentUser immediately
+setTimeout(function(){
+  log('currentUser after 1s: ' + (auth.currentUser ? auth.currentUser.email : 'NULL'), auth.currentUser ? 'ok' : 'warn');
+}, 1000);
+
+setTimeout(function(){
+  log('currentUser after 3s: ' + (auth.currentUser ? auth.currentUser.email : 'NULL'), auth.currentUser ? 'ok' : 'warn');
+}, 3000);
+</script>
+</body>
+</html>

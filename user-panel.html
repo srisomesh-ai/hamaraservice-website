@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>My Account — HamaraService</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand3:#ff8c3a;--brand-bg:#fff3eb;--brand-border:rgba(232,101,26,.18);
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;--teal:#1B6B7A;--teal2:#134f5c;
+  --line:#e2e8f0;--bg:#f0f7f9;--white:#fff;
+  --green:#00956a;--green-bg:#eaf8f2;--green-border:rgba(0,149,106,.18);
+  --blue:#1B4FFF;--blue-bg:#eef2ff;
+  --yellow:#d97706;--yellow-bg:#fffbeb;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;
+  --r:12px;--r2:18px;--r3:24px;
+  --sh:0 2px 12px rgba(0,0,0,.06);
+  --sh2:0 8px 28px rgba(0,0,0,.10);
+  --sh3:0 24px 60px rgba(0,0,0,.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:200;background:var(--teal);border-bottom:none;height:62px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-box{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-box svg{width:19px;height:19px;fill:white;}
+.logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;letter-spacing:-.3px;}
+.logo-name span{color:#ffb07a;}
+.btn-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.85);text-decoration:none;padding:7px 13px;border-radius:9px;border:1.5px solid rgba(255,255,255,.25);transition:all .2s;}
+.btn-back:hover{border-color:rgba(255,255,255,.6);color:white;background:rgba(255,255,255,.1);}
+
+/* AUTH GATE */
+#authGate{display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,#0d2d35,#1B6B7A);}
+.auth-card{background:var(--white);border-radius:var(--r3);border:1px solid var(--line);box-shadow:var(--sh3);padding:40px 36px;width:100%;max-width:420px;animation:slideUp .4s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.auth-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;}
+.auth-logo-mark{width:60px;height:60px;background:var(--teal);border-radius:18px;display:flex;align-items:center;justify-content:center;}
+.auth-logo-mark svg{width:34px;height:34px;fill:white;}
+.auth-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ink);text-align:center;letter-spacing:-.4px;}
+.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-top:4px;}
+.auth-tabs{display:flex;background:var(--bg);border-radius:var(--r);padding:3px;margin-bottom:20px;}
+.auth-tab{flex:1;padding:9px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:9px;transition:all .2s;}
+.auth-tab.active{background:var(--white);color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.1);}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
+.field input,.field select{padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:all .18s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--brand);background:var(--white);box-shadow:0 0 0 4px var(--brand-bg);}
+.field input::placeholder{color:var(--muted);font-weight:400;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-primary{width:100%;padding:14px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px;box-shadow:0 4px 14px rgba(232,101,26,.28);}
+.btn-primary:hover{background:var(--brand2);transform:translateY(-1px);}
+.btn-primary:active{transform:scale(.98);}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
+.divider-line{flex:1;height:1px;background:var(--line);}
+.divider-text{font-size:12px;font-weight:600;color:var(--muted);}
+.btn-google{width:100%;padding:13px;background:var(--white);color:var(--ink);border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.btn-google:hover{border-color:var(--ink2);box-shadow:var(--sh);background:var(--bg);}
+.btn-google svg{width:20px;height:20px;flex-shrink:0;}
+.auth-err{display:none;background:var(--brand-bg);border:1px solid var(--brand-border);border-radius:var(--r);padding:10px 14px;font-size:13px;font-weight:500;color:var(--brand);margin-bottom:12px;}
+.auth-form-section{display:none;}
+.auth-form-section.active{display:block;}
+.forgot-link{font-size:12px;font-weight:600;color:var(--brand);cursor:pointer;text-align:right;margin-top:-8px;margin-bottom:12px;}
+.pw-strength{height:3px;border-radius:100px;background:var(--line);margin-top:5px;overflow:hidden;}
+.pw-bar{height:100%;width:0;border-radius:100px;transition:all .3s;}
+.pw-bar.weak{background:#ef4444;width:33%;}
+.pw-bar.medium{background:var(--yellow);width:66%;}
+.pw-bar.strong{background:var(--green);width:100%;}
+.pw-label{font-size:10px;font-weight:600;color:var(--muted);margin-top:2px;}
+
+/* MAIN PANEL */
+#mainPanel{display:none;}
+
+/* USER HERO */
+.user-hero{background:linear-gradient(135deg,#0d3d47 0%,#1B6B7A 60%,#0d3d47 100%);padding:28px 20px 80px;position:relative;overflow:hidden;}
+.user-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 10% 50%,rgba(232,101,26,.22) 0%,transparent 60%);pointer-events:none;}
+.hero-inner{max-width:900px;margin:0 auto;position:relative;}
+.user-info-row{display:flex;align-items:center;gap:16px;}
+.user-avatar-big{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand3));display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:white;flex-shrink:0;border:3px solid rgba(255,255,255,.15);overflow:hidden;}
+.user-avatar-big img{width:100%;height:100%;object-fit:cover;}
+.user-details{flex:1;min-width:0;}
+.user-greeting{font-size:12px;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:3px;}
+.user-name-big{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:white;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-meta-row{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;}
+.user-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);}
+.user-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.btn-logout-hero{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:9px;border:1.5px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;flex-shrink:0;white-space:nowrap;}
+.btn-logout-hero:hover{border-color:rgba(255,255,255,.4);color:white;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px;}
+.stat-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r2);padding:14px 12px;text-align:center;}
+.stat-val{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:white;}
+.stat-lbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* TABS */
+.tabs-wrap{background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:62px;z-index:100;box-shadow:var(--sh);}
+.tabs-inner{max-width:900px;margin:0 auto;display:flex;padding:0 20px;overflow-x:auto;scrollbar-width:none;}
+.tabs-inner::-webkit-scrollbar{display:none;}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .2s;margin-bottom:-1px;}
+.tab-btn:hover{color:var(--ink);}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-icon{font-size:15px;}
+.tab-badge{background:var(--brand);color:white;font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px;margin-left:2px;}
+
+/* PANEL BODY */
+.panel-body{max-width:900px;margin:0 auto;padding:24px 20px 80px;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden;}
+.card-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.card-title-group{display:flex;align-items:center;gap:10px;}
+.card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.card-icon.red{background:var(--brand-bg);}
+.card-icon.green{background:var(--green-bg);}
+.card-icon.blue{background:var(--blue-bg);}
+.card-icon.yellow{background:var(--yellow-bg);}
+.card-icon.purple{background:var(--purple-bg);}
+.card-ttl{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.card-sub{font-size:12px;color:var(--muted);margin-top:1px;}
+.card-body{padding:16px 18px;}
+
+/* BOOKING ITEMS */
+.booking-item{background:var(--white);border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s;}
+.booking-item:hover{box-shadow:var(--sh2);}
+.bi-head{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line);}
+.bi-emoji{font-size:28px;width:48px;height:48px;background:var(--brand-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.bi-info{flex:1;min-width:0;}
+.bi-service{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bi-id{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px;}
+.bi-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;flex-shrink:0;}
+.bi-badge.confirmed{background:var(--green-bg);color:var(--green);}
+.bi-badge.pending{background:var(--yellow-bg);color:var(--yellow);}
+.bi-badge.completed{background:var(--blue-bg);color:var(--blue);}
+.bi-badge.cancelled{background:var(--bg);color:var(--muted);}
+.bi-badge.active{background:var(--brand-bg);color:var(--brand);}
+.bi-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.bi-body{padding:14px 18px;}
+.bi-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(min-width:480px){.bi-meta{grid-template-columns:repeat(3,1fr);}}
+.bi-meta-item{display:flex;flex-direction:column;gap:2px;}
+.bi-meta-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.bi-meta-val{font-size:13px;font-weight:600;color:var(--ink);}
+.bi-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg);}
+.bi-price{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:var(--brand);}
+.bi-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.bi-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;}
+.bi-btn.outline{background:var(--white);color:var(--ink2);border:1.5px solid var(--line);}
+.bi-btn.outline:hover{border-color:var(--ink);color:var(--ink);}
+.bi-btn.solid-red{background:var(--brand);color:white;}
+.bi-btn.solid-red:hover{background:var(--brand2);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:50px 20px;}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.4;}
+.empty-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:var(--ink2);margin-bottom:8px;}
+.empty-sub{font-size:14px;color:var(--muted);max-width:280px;margin:0 auto 20px;}
+.btn-book-now{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 4px 14px rgba(232,101,26,.28);}
+.btn-book-now:hover{background:var(--brand2);transform:translateY(-1px);}
+
+/* WALLET */
+.wallet-hero{background:linear-gradient(135deg,#0f1117,#1a2040);border-radius:var(--r3);padding:28px 24px;margin-bottom:16px;position:relative;overflow:hidden;}
+.wallet-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(27,79,255,.25) 0%,transparent 55%);pointer-events:none;}
+.wh-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;position:relative;}
+.wh-amount{font-family:'Sora',sans-serif;font-size:40px;font-weight:800;color:white;letter-spacing:-1px;position:relative;}
+.wh-currency{font-size:20px;font-weight:600;opacity:.5;margin-right:3px;}
+.wh-actions{display:flex;gap:10px;margin-top:20px;position:relative;}
+.wh-btn{flex:1;padding:11px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;border:none;}
+.wh-btn.add{background:var(--brand);color:white;}
+.wh-btn.add:hover{background:var(--brand2);}
+.wh-btn.ghost{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.15);}
+.wh-btn.ghost:hover{background:rgba(255,255,255,.18);}
+.txn-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
+.txn-item:last-child{border:none;}
+.txn-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.txn-info{flex:1;min-width:0;}
+.txn-title{font-size:14px;font-weight:600;color:var(--ink);}
+.txn-date{font-size:12px;color:var(--muted);margin-top:1px;}
+.txn-amt{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;flex-shrink:0;}
+.txn-amt.credit{color:var(--green);}
+.txn-amt.debit{color:var(--brand);}
+
+/* ADD MONEY MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;animation:fadeInBg .2s ease;}
+@keyframes fadeInBg{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--white);border-radius:var(--r3) var(--r3) 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:slideUpMini .3s ease;}
+@keyframes slideUpMini{from{transform:translateY(60px)}to{transform:none}}
+.modal-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+.amount-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.amount-chip{padding:8px 14px;border:1.5px solid var(--line);border-radius:100px;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .15s;background:var(--white);}
+.amount-chip:hover,.amount-chip.sel{border-color:var(--brand);color:var(--brand);background:var(--brand-bg);}
+.btn-cancel{width:100%;padding:12px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:8px;}
+
+/* PROFILE */
+.avatar-edit{display:flex;flex-direction:column;align-items:center;margin-bottom:22px;}
+.avatar-wrap{position:relative;width:88px;height:88px;}
+.avatar-img{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand3));display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:34px;font-weight:800;color:white;border:4px solid var(--white);box-shadow:var(--sh2);overflow:hidden;}
+.avatar-img img{width:100%;height:100%;object-fit:cover;}
+.avatar-change-btn{position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--brand);border-radius:50%;border:2.5px solid var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all .15s;}
+.avatar-change-btn:hover{background:var(--brand2);transform:scale(1.1);}
+.avatar-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-top:12px;}
+.avatar-id{font-size:12px;font-weight:600;color:var(--muted);margin-top:3px;}
+.profile-field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.profile-field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
+.profile-field input,.profile-field select{padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);outline:none;transition:all .18s;-webkit-appearance:none;}
+.profile-field input:focus,.profile-field select:focus{border-color:var(--brand);background:var(--white);box-shadow:0 0 0 4px var(--brand-bg);}
+.profile-field input[readonly]{background:var(--bg);color:var(--muted);cursor:default;}
+.field-hint{font-size:11px;color:var(--muted);margin-top:3px;}
+.profile-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.save-btn{width:100%;padding:14px;background:var(--brand);color:white;border:none;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(232,101,26,.28);margin-top:6px;}
+.save-btn:hover{background:var(--brand2);transform:translateY(-1px);}
+.save-btn.blue{background:var(--blue);box-shadow:0 4px 14px rgba(27,79,255,.25);}
+.save-btn.blue:hover{background:#1340dd;}
+.danger-zone{border:1.5px solid var(--brand-border);border-radius:var(--r2);padding:18px;margin-top:14px;}
+.dz-title{font-size:13px;font-weight:700;color:var(--brand);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.dz-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:var(--white);color:var(--ink2);width:100%;margin-bottom:8px;transition:all .15s;}
+.dz-btn:last-child{margin:0;}
+.dz-btn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-bg);}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.filter-bar::-webkit-scrollbar{display:none;}
+.filter-chip{padding:7px 14px;border:1.5px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s;background:var(--white);}
+.filter-chip:hover{border-color:var(--ink);color:var(--ink);}
+.filter-chip.active{border-color:var(--teal);color:var(--teal);background:var(--teal-soft,#e6f4f6);}
+
+/* SECTION TITLE */
+.section-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.3px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.section-title a{font-size:12px;font-weight:700;color:var(--brand);text-decoration:none;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 20px;border-radius:100px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.25);z-index:9999;display:none;animation:toastIn .25s ease;white-space:nowrap;max-width:calc(100vw - 40px);text-align:center;}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+@media(max-width:480px){
+  .auth-card{padding:24px 18px;}
+  .wh-amount{font-size:32px;}
+  .stats-row{gap:7px;}
+  .stat-val{font-size:17px;}
+  .user-name-big{font-size:17px;}
+  .btn-logout-hero span{display:none;}
+}
+
+/* ═══ MOBILE BODY SAFE AREA ═══ */
+@media(max-width:768px){
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom));overscroll-behavior-y:none;}
+  .panel-body{padding:16px 14px 100px;}
+  .card-body{padding:14px;}
+  .card-head{padding:13px 14px;}
+  .user-hero{padding:20px 16px 60px;}
+  .stats-row{gap:8px;}
+  .stat-val{font-size:17px;}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom));}
+}
+
+/* ═══ MOBILE BOTTOM NAV ═══ */
+.mob-bottom-nav{display:none;}
+@media(min-width:769px){.mob-bottom-nav{display:none !important;}}
+@media(max-width:768px){
+  .mob-bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    height:calc(64px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:white;border-top:1px solid var(--line);
+    box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;
+    align-items:center;justify-content:space-around;
+  }
+  .mob-nav-item{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;flex:1;padding:8px 4px;text-decoration:none;color:var(--muted);
+    font-size:10px;font-weight:600;letter-spacing:.2px;transition:color .15s;
+    -webkit-tap-highlight-color:transparent;position:relative;
+  }
+  .mob-nav-item svg{width:22px;height:22px;transition:transform .15s;}
+  .mob-nav-item:active svg{transform:scale(.85);}
+  .mob-nav-item.active{color:var(--teal);}
+  .mob-nav-item.active svg{color:var(--teal);}
+  .mob-nav-center{color:transparent !important;pointer-events:auto;margin-top:-28px;}
+  .mob-nav-center span{color:var(--teal);font-size:9px;font-weight:700;margin-top:30px;display:block;text-align:center;}
+  .mob-nav-fab{
+    width:54px;height:54px;
+    background:linear-gradient(135deg,var(--brand),#ff8c3a);
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(232,101,26,.45);position:absolute;top:-14px;
+    transition:transform .15s,box-shadow .15s;
+  }
+  .mob-nav-center:active .mob-nav-fab{transform:scale(.9);box-shadow:0 2px 8px rgba(232,101,26,.3);}
+  .mob-nav-fab svg{width:24px;height:24px;color:white;stroke:white;}
+}
+
+
+/* ── Loading overlay ─────────────────────────────── */
+#loadingOverlay{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#loadingOverlay.hidden{display:none;}
+.ld-spinner{width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:var(--teal,#1B6B7A);border-radius:50%;animation:ld-spin .7s linear infinite;}
+@keyframes ld-spin{to{transform:rotate(360deg);}}
+
+/* ── Pane header ─────────────────────────────────── */
+.pane-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.pane-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--ink,#1a1a2e);}
+.btn-refresh{display:flex;align-items:center;gap:5px;padding:8px 14px;background:var(--teal,#1B6B7A);color:white;border:none;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-refresh:disabled{opacity:.6;}
+
+/* ── Section header ──────────────────────────────── */
+.section-title{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:12px;}
+.section-title a{font-size:12px;color:var(--teal,#1B6B7A);text-decoration:none;font-weight:700;}
+
+/* ── Desktop sidebar ─────────────────────────────── */
+.desktop-sidebar{display:none;}
+@media(min-width:768px){
+  .desktop-sidebar{
+    display:flex;position:fixed;top:0;left:0;bottom:0;
+    width:240px;background:linear-gradient(180deg,#0d2d35 0%,#1B6B7A 100%);
+    flex-direction:column;z-index:200;box-shadow:4px 0 24px rgba(0,0,0,.15);
+  }
+  #mainPanel{margin-left:240px;}
+  .panel-body{padding:20px 24px 40px;}
+  .user-hero{padding:28px 32px 72px;}
+  .tabs-wrap{padding:0 24px;}
+  .mob-bottom-nav{display:none !important;}
+  .toast{bottom:auto !important;top:20px;right:20px;left:auto;transform:none;}
+  .modal-overlay{align-items:center;}
+  .modal-box{border-radius:16px;max-width:520px;padding:28px;}
+}
+.sb-brand{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:white;}
+.sb-logo span{color:#ffb07a;}
+.sb-user{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;}
+.sb-av{width:36px;height:36px;border-radius:50%;background:#E8651A;color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;overflow:hidden;}
+.sb-av img{width:100%;height:100%;object-fit:cover;}
+.sb-uname{font-size:12px;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sb-uid{font-size:10px;color:rgba(255,255,255,.4);}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 0;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:13px;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;border-left:3px solid transparent;transition:all .12s;}
+.sb-item:hover{background:rgba(255,255,255,.08);color:white;}
+.sb-item.active{background:rgba(255,255,255,.12);color:white;border-left-color:#ffb07a;font-weight:700;}
+.sb-ico{font-size:16px;width:20px;text-align:center;}
+.sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);}
+.sb-out{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700;color:rgba(255,255,255,.4);cursor:pointer;background:none;border:none;font-family:inherit;}
+.sb-out:hover{background:rgba(255,80,80,.15);color:#fca5a5;}
+
+/* ── Booking item cards ──────────────────────────── */
+.booking-item{background:white;border-radius:16px;border:1.5px solid #e2e8f0;box-shadow:0 1px 8px rgba(0,0,0,.06);margin-bottom:14px;overflow:hidden;}
+.bi-head{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e2e8f0;}
+.bi-emoji{font-size:26px;flex-shrink:0;width:34px;text-align:center;}
+.bi-info{flex:1;min-width:0;}
+.bi-service{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bi-id{font-size:10px;color:#718096;margin-top:2px;}
+.bi-badge{display:flex;align-items:center;gap:5px;flex-shrink:0;padding:5px 11px;border-radius:100px;font-size:11px;font-weight:700;}
+.bi-badge.confirmed,.bi-badge.accepted,.bi-badge.active,.bi-badge.assigned{background:#dcfce7;color:#16a34a;}
+.bi-badge.pending,.bi-badge.searching{background:#fffbeb;color:#d97706;}
+.bi-badge.otp_sent,.bi-badge.payment_pending{background:#eff6ff;color:#2563eb;}
+.bi-badge.completed,.bi-badge.paid{background:#e6f4f6;color:#1B6B7A;}
+.bi-badge.cancelled{background:#fee2e2;color:#ef4444;}
+.bi-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.bi-body{padding:12px 16px;}
+.bi-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.bi-meta-item{display:flex;flex-direction:column;gap:2px;}
+.bi-meta-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#718096;}
+.bi-meta-val{font-size:13px;font-weight:600;color:#1a1a2e;}
+.bi-footer{padding:12px 16px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.bi-price{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:#1B6B7A;}
+.bi-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.bi-btn{padding:8px 13px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.bi-btn.outline{background:white;border:1.5px solid #e2e8f0;color:#1a1a2e;}
+.bi-btn.solid-green{background:#16a34a;color:white;}
+.bi-btn.solid-red{background:#fee2e2;color:#ef4444;border:1.5px solid #fecaca;}
+.empty-state{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:44px;margin-bottom:12px;}
+.empty-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;margin-bottom:6px;}
+.empty-sub{font-size:13px;color:#718096;line-height:1.5;margin-bottom:16px;}
+.btn-book-now{display:inline-block;padding:12px 28px;background:#E8651A;color:white;border-radius:100px;font-size:14px;font-weight:700;text-decoration:none;}
+
+/* ── Profile page fixes ─────────────────────────────────────────────── */
+.profile-field label{font-size:11px;font-weight:800;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;}
+.profile-field input,.profile-field select{
+  padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;
+  font-size:14px;color:var(--ink);background:var(--white);
+  outline:none;transition:border .15s;width:100%;font-family:inherit;}
+.profile-field input:focus,.profile-field select:focus{border-color:var(--teal);}
+.profile-field input[readonly]{background:#f8fafc;color:var(--muted);}
+.field-hint{font-size:11px;color:var(--muted);margin-top:3px;}
+@media(max-width:400px){.profile-field-row{grid-template-columns:1fr;}}
+.avatar-edit{padding:18px;background:var(--teal-soft,#e6f4f6);border-radius:14px;}
+#pane-profile .card{max-width:600px;margin-left:auto;margin-right:auto;}
+</style>
+  <!-- Razorpay Payment Gateway SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+<div id="loadingOverlay"><div class="ld-spinner"></div><div style="font-size:13px;color:#9ca3af;font-family:sans-serif;">Loading…</div></div>
+
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-box">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </div>
+    <span class="logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="btn-back" id="backBtn" href="index.html">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Home
+  </a>
+</header>
+
+<!-- AUTH GATE -->
+<div id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </div>
+      <div>
+        <div class="auth-title">My Account</div>
+        <div class="auth-sub">Sign in to manage bookings &amp; more</div>
+      </div>
+    </div>
+
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="divider"><div class="divider-line"></div><span class="divider-text">or use email</span><div class="divider-line"></div></div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <div id="authErr" class="auth-err"></div>
+
+    <!-- LOGIN -->
+    <div id="loginForm" class="auth-form-section active">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPwd" placeholder="Your password" autocomplete="current-password"/>
+      </div>
+      <div class="forgot-link" onclick="forgotPassword()">Forgot password?</div>
+      <button class="btn-primary" onclick="doEmailLogin()">Sign In →</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" class="auth-form-section">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="Raj Kumar" autocomplete="name"/>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Mobile</label>
+          <input type="tel" id="regPhone" placeholder="9876543210" maxlength="10"/>
+        </div>
+        <div class="field">
+          <label>City</label>
+          <input type="text" id="regCity" placeholder="Mumbai"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="regPwd" placeholder="Min 8 characters" oninput="checkPwStrength(this.value)" autocomplete="new-password"/>
+        <div class="pw-strength"><div class="pw-bar" id="pwBar"></div></div>
+        <div class="pw-label" id="pwLabel"></div>
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div id="mainPanel">
+  <!-- DESKTOP SIDEBAR -->
+  <nav class="desktop-sidebar">
+    <div class="sb-brand"><div class="sb-logo">Hamara<span>Service</span></div></div>
+    <div class="sb-user">
+      <div class="sb-av" id="sbAv">U</div>
+      <div style="min-width:0;"><div class="sb-uname" id="sbName">—</div><div class="sb-uid" id="sbId">—</div></div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-item active" data-tab="bookings" onclick="switchTab(this)"><span class="sb-ico">📋</span> My Bookings</div>
+      <div class="sb-item" data-tab="history" onclick="switchTab(this)"><span class="sb-ico">🕑</span> History</div>
+      <div class="sb-item" data-tab="profile" onclick="switchTab(this)"><span class="sb-ico">👤</span> Profile</div>
+      <div class="sb-item" onclick="location.href='index.html'"><span class="sb-ico">🏠</span> Back to Home</div>
+      <div class="sb-item" onclick="location.href='user-booking.html'"><span class="sb-ico">➕</span> Book a Service</div>
+    </div>
+    <div class="sb-foot"><button class="sb-out" onclick="doLogout()">↩ Sign Out</button></div>
+  </nav>
+
+  <div class="user-hero">
+    <div class="hero-inner">
+      <div class="user-info-row">
+        <div class="user-avatar-big" id="heroPanelAvatar">U</div>
+        <div class="user-details">
+          <div class="user-greeting">Welcome back 👋</div>
+          <div class="user-name-big" id="heroPanelName">Loading…</div>
+          <div class="user-meta-row">
+            <span class="user-badge"><span class="user-badge-dot"></span>Verified</span>
+            <span class="user-badge" id="heroPanelId" style="font-size:10px">—</span>
+          </div>
+        </div>
+        <button class="btn-logout-hero" onclick="doLogout()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">Bookings</div></div>
+        <div class="stat-box"><div class="stat-val" id="statActive">0</div><div class="stat-lbl">Active</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs-inner">
+      <button class="tab-btn active" data-tab="bookings" onclick="switchTab(this)">
+        <span class="tab-icon">📋</span> Bookings
+        <span class="tab-badge" id="activeBookingBadge" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" data-tab="history" onclick="switchTab(this)">
+        <span class="tab-icon">🕑</span> History
+      </button>
+      <button class="tab-btn" data-tab="profile" onclick="switchTab(this)">
+        <span class="tab-icon">👤</span> Profile
+      </button>
+    </div>
+  </div>
+
+  <div class="panel-body">
+
+    <!-- BOOKINGS -->
+    <div class="tab-pane active" id="pane-bookings">
+      <div class="pane-header">
+        <div class="pane-title">My Bookings</div>
+        <button id="refreshBtn" class="btn-refresh" onclick="refreshUserData()">
+          <span id="refreshIcon" style="display:inline-block;">🔄</span> Refresh
+        </button>
+      </div>
+      <div style="font-size:12px;color:var(--muted,#718096);margin-bottom:14px;">Active &amp; Upcoming · <a href="user-booking.html" style="color:#1B6B7A;font-weight:700;text-decoration:none;">+ New Booking</a></div>
+      <div id="activeBookingsList"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="tab-pane" id="pane-history">
+      <div class="section-title">Booking History</div>
+      <div class="filter-bar">
+        <div class="filter-chip active" onclick="filterHistory('all',this)">All</div>
+        <div class="filter-chip" onclick="filterHistory('completed',this)">Completed</div>
+        <div class="filter-chip" onclick="filterHistory('cancelled',this)">Cancelled</div>
+        <div class="filter-chip" onclick="filterHistory('confirmed',this)">Confirmed</div>
+      </div>
+      <div id="historyList"></div>
+    </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="tab-pane" id="pane-profile">
+      <div class="card">
+        <div class="card-body">
+          <div class="avatar-edit">
+            <div class="avatar-wrap">
+              <div class="avatar-img" id="profileAvatarBig">U</div>
+              <div class="avatar-change-btn" onclick="document.getElementById('avatarInput').click()" title="Change photo">✏️</div>
+              <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarChange(this)"/>
+            </div>
+            <div class="avatar-name" id="profileDisplayName">—</div>
+            <div class="avatar-id" id="profileDisplayId">Member ID</div>
+          </div>
+
+          <div class="profile-field">
+            <label>Full Name</label>
+            <input type="text" id="pName" placeholder="Your full name"/>
+          </div>
+          <div class="profile-field-row">
+            <div class="profile-field">
+              <label>Mobile</label>
+              <input type="tel" id="pPhone" placeholder="10-digit mobile"/>
+            </div>
+            <div class="profile-field">
+              <label>City</label>
+              <input type="text" id="pCity" placeholder="Mumbai"/>
+            </div>
+          </div>
+          <div class="profile-field">
+            <label>Email</label>
+            <input type="email" id="pEmail" readonly/>
+            <div class="field-hint">Email is linked to login — cannot be changed here.</div>
+          </div>
+          <div class="profile-field">
+            <label>Gender</label>
+            <select id="pGender">
+              <option value="">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="profile-field">
+            <label>Default Address</label>
+            <input type="text" id="pAddress" placeholder="Home / work address"/>
+          </div>
+          <button class="save-btn" onclick="saveProfile()">💾 Save Changes</button>
+        </div>
+      </div>
+
+      <!-- PASSWORD UPDATE CARD -->
+      <div class="card" id="securityCard">
+        <div class="card-head">
+          <div class="card-title-group">
+            <div class="card-icon blue">🔐</div>
+            <div><div class="card-ttl">Update Login Password</div><div class="card-sub">Change the password used to sign in</div></div>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- Email/password user: show full form -->
+          <div id="pwUpdateForm">
+            <div style="background:var(--blue-bg);border:1.5px solid rgba(27,79,255,.15);border-radius:var(--r);padding:11px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;">
+              <span style="font-size:16px;flex-shrink:0;">🔒</span>
+              <div style="font-size:12px;font-weight:500;color:var(--blue);line-height:1.5;">This password is used to <strong>sign in with your email</strong> at HamaraService. Keep it strong and don't share it with anyone.</div>
+            </div>
+
+            <div class="profile-field">
+              <label>Current Password</label>
+              <div style="position:relative;">
+                <input type="password" id="currentPwd" placeholder="Enter your current password" autocomplete="current-password"
+                  style="padding-right:44px;"
+                  oninput="clearPwUpdateErr()"/>
+                <button type="button" onclick="togglePwVis('currentPwd',this)"
+                  style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:2px;">👁</button>
+              </div>
+            </div>
+
+            <div class="profile-field" style="margin-top:4px;">
+              <label>New Password</label>
+              <div style="position:relative;">
+                <input type="password" id="newPwd" placeholder="Min 8 characters" autocomplete="new-password"
+                  style="padding-right:44px;"
+                  oninput="checkPwStrength2(this.value); clearPwUpdateErr()"/>
+                <button type="button" onclick="togglePwVis('newPwd',this)"
+                  style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:2px;">👁</button>
+              </div>
+              <div class="pw-strength" style="margin-top:6px;"><div class="pw-bar" id="pwBar2"></div></div>
+              <div class="pw-label" id="pwLabel2"></div>
+            </div>
+
+            <div class="profile-field" style="margin-top:4px;">
+              <label>Confirm New Password</label>
+              <div style="position:relative;">
+                <input type="password" id="confirmPwd" placeholder="Re-enter new password" autocomplete="new-password"
+                  style="padding-right:44px;"
+                  oninput="checkConfirmPwd(); clearPwUpdateErr()"/>
+                <button type="button" onclick="togglePwVis('confirmPwd',this)"
+                  style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:2px;">👁</button>
+              </div>
+              <div id="confirmPwdHint" style="font-size:11px;font-weight:600;margin-top:3px;min-height:14px;"></div>
+            </div>
+
+            <div id="pwUpdateErr" style="display:none;background:var(--brand-bg);border:1px solid var(--brand-border);border-radius:var(--r);padding:10px 14px;font-size:13px;font-weight:500;color:var(--brand);margin-bottom:10px;"></div>
+            <div id="pwUpdateOk"  style="display:none;background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r);padding:10px 14px;font-size:13px;font-weight:600;color:var(--green);margin-bottom:10px;">✅ Password updated successfully! Use your new password next time you sign in.</div>
+
+            <button class="save-btn blue" id="pwUpdateBtn" onclick="changePassword()">🔑 Update Password</button>
+          </div>
+
+          <!-- Google / social user: info banner -->
+          <div id="pwGoogleNote" style="display:none;">
+            <div style="background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r2);padding:20px 18px;text-align:center;">
+              <div style="font-size:36px;margin-bottom:10px;">🔑</div>
+              <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;">Password managed by Google</div>
+              <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;">You signed in with Google. To change your password, visit your <strong>Google Account settings</strong>.</div>
+              <a href="https://myaccount.google.com/security" target="_blank" rel="noopener"
+                style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;transition:all .2s;"
+                onmouseover="this.style.borderColor='#4285F4';this.style.color='#4285F4';"
+                onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--ink)';">
+                <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Manage Google Account →
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="danger-zone">
+        <div class="dz-title">⚠️ Account Actions</div>
+        <button class="dz-btn" onclick="doLogout()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          Sign Out
+        </button>
+        <button class="dz-btn" onclick="showToast('📧 Request sent to support@hamaraservice.in')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>
+          Request Account Deletion
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD MONEY MODAL -->
+<div class="modal-overlay" id="addMoneyModal" onclick="closeAddMoneyBg(event)">
+  <div class="modal-box">
+    <div class="modal-title">Add Money to Wallet</div>
+    <div class="modal-sub">Choose amount or enter custom</div>
+    <div class="amount-chips">
+      <div class="amount-chip" onclick="setAmount(100,this)">₹100</div>
+      <div class="amount-chip" onclick="setAmount(250,this)">₹250</div>
+      <div class="amount-chip" onclick="setAmount(500,this)">₹500</div>
+      <div class="amount-chip" onclick="setAmount(1000,this)">₹1000</div>
+    </div>
+    <div class="field">
+      <label>Amount (₹)</label>
+      <input type="number" id="customAmount" placeholder="Enter amount" min="1" max="50000"/>
+    </div>
+    <button class="btn-primary" onclick="confirmAddMoney()">Proceed to Pay →</button>
+    <button class="btn-cancel" onclick="closeAddMoney()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ╔══════════════════════════════════════════════╗
+// ║  PASTE YOUR FIREBASE CONFIG HERE             ║
+// ╚══════════════════════════════════════════════╝
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:        "hamaraservice-s009.firebaseapp.com",
+  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "hamaraservice-s009",
+  storageBucket:     "hamaraservice-s009.firebasestorage.app",
+  messagingSenderId: "1064274729048",
+  appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+const fbAuth = firebase.auth();
+const fbDB   = firebase.database();
+// Force LOCAL persistence so session survives page navigation
+fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
+
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
+// ── STATE ──────────────────────────────────────
+let currentUser    = null;
+let currentProfile = null;
+let allBookings    = [];
+
+const ACTIVE_ST  = ['confirmed','pending','active','searching','accepted','assigned','otp_sent','payment_pending'];
+const HISTORY_ST = ['completed','cancelled','rejected'];
+
+// ── AUTH STATE ─────────────────────────────────
+fbAuth.onAuthStateChanged(async fbUser => {
+  if (fbUser) {
+    currentUser = fbUser;
+    // Check if user came from booking page — redirect back after login
+    const afterLogin = sessionStorage.getItem('hs_after_login');
+    if (afterLogin) {
+      sessionStorage.removeItem('hs_after_login');
+      window.location.replace(afterLogin);
+      return;
+    }
+    await loadUserData(fbUser);
+    startBookingListener(fbUser.uid);
+    // After login/register, open the tab from URL param
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (urlTab && ['bookings','history','profile'].includes(urlTab)) {
+      const btn = document.querySelector(`.tab-btn[data-tab="${urlTab}"]`);
+      if (btn) switchTab(btn, true);
+    }
+  } else {
+    currentUser = currentProfile = null;
+    allBookings = [];
+    showGate();
+  }
+});
+
+
+function showGate() {
+  var ov = document.getElementById('loadingOverlay');
+  if (ov) ov.classList.add('hidden');
+  document.getElementById('authGate').style.display = 'flex';
+  document.getElementById('mainPanel').style.display = 'none';
+  var nav = document.querySelector('.mob-bottom-nav');
+  if (nav) nav.style.display = 'none';
+}
+function showPanel() {
+  var ov = document.getElementById('loadingOverlay');
+  if (ov) ov.classList.add('hidden');
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('mainPanel').style.display = 'block';
+  var nav = document.querySelector('.mob-bottom-nav');
+  if (nav) nav.style.display = 'flex';
+  updateSidebarUser();
+}
+
+// ── AUTH TABS ──────────────────────────────────
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').classList.toggle('active', tab==='login');
+  document.getElementById('registerForm').classList.toggle('active', tab==='register');
+  clearAuthErr();
+}
+function showAuthErr(msg) { const e=document.getElementById('authErr'); e.textContent=msg; e.style.display='block'; }
+function clearAuthErr()   { document.getElementById('authErr').style.display='none'; }
+
+// ── GOOGLE SIGN-IN ─────────────────────────────
+async function signInGoogle() {
+  try {
+    await fbAuth.signInWithPopup(googleProvider);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user')
+      showAuthErr('Google sign-in failed. Please try again.');
+  }
+}
+
+// ── EMAIL LOGIN ────────────────────────────────
+async function doEmailLogin() {
+  clearAuthErr();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd   = document.getElementById('loginPwd').value;
+  if (!email) { showAuthErr('Please enter your email.'); return; }
+  if (!pwd)   { showAuthErr('Please enter your password.'); return; }
+  try {
+    await fbAuth.signInWithEmailAndPassword(email, pwd);
+  } catch(e) {
+    const m = { 'auth/user-not-found':'No account with this email. Please register.', 'auth/wrong-password':'Incorrect password. Try again.', 'auth/invalid-email':'Invalid email format.', 'auth/too-many-requests':'Too many attempts. Please wait.' };
+    showAuthErr(m[e.code] || 'Sign-in failed. Please try again.');
+  }
+}
+
+// ── REGISTER ───────────────────────────────────
+async function doRegister() {
+  clearAuthErr();
+  const name  = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const city  = document.getElementById('regCity').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pwd   = document.getElementById('regPwd').value;
+  if (!name)        { showAuthErr('Enter your full name.'); return; }
+  if (!email)       { showAuthErr('Enter your email address.'); return; }
+  if (pwd.length<8) { showAuthErr('Password must be at least 8 characters.'); return; }
+  try {
+    const cred = await fbAuth.createUserWithEmailAndPassword(email, pwd);
+    await cred.user.updateProfile({ displayName: name });
+    const profile = {
+      uid: cred.user.uid,
+      id:  'HS-CU-' + Date.now().toString(36).toUpperCase(),
+      name, phone, city, email,
+      photoURL: '',
+      provider: 'email',
+      registeredAt: new Date().toISOString(),
+      wallet: 0
+    };
+    await fbDB.ref('customers/' + cred.user.uid).set(profile);
+  } catch(e) {
+    const m = { 'auth/email-already-in-use':'Email already registered. Please sign in.', 'auth/invalid-email':'Invalid email.', 'auth/weak-password':'Password too weak.' };
+    showAuthErr(m[e.code] || 'Registration failed: ' + (e.message || ''));
+  }
+}
+
+// ── FORGOT PASSWORD ────────────────────────────
+async function forgotPassword() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) { showAuthErr('Enter your email above, then click Forgot password.'); return; }
+  try { await fbAuth.sendPasswordResetEmail(email); showToast('📧 Reset email sent! Check your inbox.'); clearAuthErr(); }
+  catch(e) { showAuthErr('Could not send reset email. Check the address.'); }
+}
+
+// ── LOGOUT ─────────────────────────────────────
+async function doLogout() {
+  if (!confirm('Sign out of your account?')) return;
+  // Clear ALL local cache BEFORE sign-out so next user sees nothing
+  clearLocalUserCache(currentUser ? currentUser.uid : null);
+  try { await fbAuth.signOut(); } catch(e) {}
+  currentUser = currentProfile = null;
+  allBookings = [];
+  showGate();
+  showToast('\uD83D\uDC4B Signed out successfully');
+}
+
+// Wipe every user-keyed local cache entry so no data leaks to the next user
+function clearLocalUserCache(uid) {
+  // Always remove the shared legacy keys (no UID — root cause of the data leak bug)
+  localStorage.removeItem('hs_current_customer');
+  localStorage.removeItem('hs_customer_bookings');
+  // Also remove any UID-keyed cache created by this session
+  if (uid) {
+    localStorage.removeItem('hs_bk_' + uid);
+    localStorage.removeItem('hs_profile_' + uid);
+    localStorage.removeItem('hs_wallet_' + uid);
+  }
+}
+
+// ── LOAD USER DATA ─────────────────────────────
+async function loadUserData(fbUser) {
+  // Safety timeout — never leave user on loading screen forever
+  const _loadTimeout = setTimeout(function(){
+    var ov = document.getElementById('loadingOverlay');
+    if (ov && !ov.classList.contains('hidden')) {
+      ov.classList.add('hidden');
+      showToast('⚠️ Slow connection — some data may not load');
+    }
+  }, 8000);
+
+  try {
+    const snap = await fbDB.ref('customers/' + fbUser.uid).once('value');
+    let profile = snap.exists() ? snap.val() : null;
+
+    // Block deleted / banned accounts immediately
+    if (profile && (profile.deleted || profile.banned)) {
+      showGate();
+      try { await fbAuth.signOut(); } catch(e){}
+      currentUser = currentProfile = null; allBookings = [];
+      const subEl = document.querySelector('.auth-sub');
+      if (subEl) subEl.textContent = (profile && profile.banned)
+        ? '⛔ Account suspended. Contact support.'
+        : '⛔ Account not found. Please register.';
+      switchAuthTab('register');
+      return;
+    }
+
+    if (!snap.exists()) {
+      profile = {
+        uid: fbUser.uid,
+        id:  'HS-CU-' + Date.now().toString(36).toUpperCase(),
+        name: fbUser.displayName || '',
+        email: fbUser.email || '',
+        phone: fbUser.phoneNumber || '',
+        city: '', photoURL: fbUser.photoURL || '',
+        provider: fbUser.providerData[0]?.providerId || 'email',
+        registeredAt: new Date().toISOString(), wallet: 0
+      };
+      await fbDB.ref('customers/' + fbUser.uid).set(profile);
+    }
+    clearTimeout(_loadTimeout);
+    currentProfile = profile;
+    showPanel();
+    // Cache profile under UID-keyed key only — never the shared key
+    localStorage.setItem('hs_profile_' + fbUser.uid, JSON.stringify(profile));
+    renderProfile(profile);
+
+    // Show correct password section based on provider
+    const isGoogle = (profile.provider||'').includes('google') ||
+      (currentUser && currentUser.providerData && currentUser.providerData.some(p => p.providerId === 'google.com'));
+    const pwForm   = document.getElementById('pwUpdateForm');
+    const pwGoogle = document.getElementById('pwGoogleNote');
+    if (pwForm)   pwForm.style.display   = isGoogle ? 'none'  : 'block';
+    if (pwGoogle) pwGoogle.style.display = isGoogle ? 'block' : 'none';
+    // Keep card always visible
+    const sc = document.getElementById('securityCard');
+    if (sc) sc.style.display = 'block';
+
+    // ── Load bookings from BOTH Firebase paths — no localStorage ─────────────
+    let fbBks = [];
+    try {
+      const bkSnap = await fbDB.ref('bookings')
+        .orderByChild('customerId').equalTo(fbUser.uid).once('value');
+      if (bkSnap.exists()) bkSnap.forEach(c => { const v=c.val(); if(v&&v.id) fbBks.push(v); });
+    } catch(e) {
+      const bkAll = await fbDB.ref('bookings').once('value');
+      if (bkAll.exists()) bkAll.forEach(c => {
+        const v=c.val();
+        if (v && (v.customerId===fbUser.uid||v.uid===fbUser.uid)) fbBks.push(v);
+      });
+    }
+    try {
+      const abSnap = await fbDB.ref('active_bookings').once('value');
+      if (abSnap.exists()) {
+        abSnap.forEach(c => {
+          const v=c.val(); if(!v) return;
+          if ((v.customerId||v.uid||'') !== fbUser.uid) return;
+          const bkId = v.id||c.key; if(!bkId) return;
+          const ei = fbBks.findIndex(b=>b.id===bkId);
+          if (ei===-1) fbBks.push(Object.assign({},v,{id:bkId}));
+          else fbBks[ei]=Object.assign({},fbBks[ei],v,{id:bkId});
+        });
+      }
+    } catch(e){}
+    const _seen = new Set();
+    fbBks = fbBks.filter(b=>{ const k=b.id; if(!k||_seen.has(k)) return false; _seen.add(k); return true; });
+    allBookings = fbBks.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
+    renderBookings(); renderHistory();
+    
+    // Check for payment_pending bookings and OTP data on page load
+    checkForPendingPayments();
+    
+    // Clear any stale payment or OTP modals from previous sessions
+    clearStaleModals();
+
+    // Wallet — load async, don't block main render
+    fbDB.ref('transactions/' + fbUser.uid).once('value').then(txSnap => {
+      transactions = [];
+      if (txSnap.exists()) txSnap.forEach(c => transactions.push(c.val()));
+      transactions.sort((a,b) => (b.ts||0)-(a.ts||0));
+      updateStats();
+    }).catch(()=>{});
+  } catch(e) {
+    clearTimeout(_loadTimeout);
+    console.warn('loadUserData:', e);
+    loadFallbackView(currentProfile || {});
+  }
+}
+
+function loadFallbackView(profile) {
+  // Safety check: never load data if we have no UID (would show wrong user's data)
+  if (!profile || (!profile.uid && !profile.id)) {
+    showGate(); return;
+  }
+  currentProfile = profile;
+  renderProfile(profile);
+  // Read bookings from UID-keyed cache only — never the shared 'hs_customer_bookings' key
+  allBookings = [];
+  renderBookings(); renderHistory(); updateStats();
+  if (currentUser) loadUserData(currentUser).catch(()=>{});
+}
+
+function mergeBks(fb, ls) {
+  const m = {};
+  ls.forEach(b => { if(b.id) m[b.id]=b; });
+  fb.forEach(b => { if(b.id) m[b.id]={...(m[b.id]||{}),...b}; });
+  return Object.values(m).sort((a,b) => new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
+}
+
+// ── RENDER PROFILE ─────────────────────────────
+function renderProfile(p) {
+  if (!p) return;
+  const letter = (p.name || p.email || 'U').charAt(0).toUpperCase();
+
+  // Hero avatar
+  const ha = document.getElementById('heroPanelAvatar');
+  ha.innerHTML = p.photoURL ? `<img src="${p.photoURL}" alt="" onerror="this.parentElement.textContent='${letter}'"/>` : letter;
+  document.getElementById('heroPanelName').textContent = p.name || p.email || 'User';
+  document.getElementById('heroPanelId').textContent   = p.id || p.uid || '—';
+
+  // Profile tab avatar
+  const pa = document.getElementById('profileAvatarBig');
+  pa.innerHTML = p.photoURL ? `<img src="${p.photoURL}" alt="" onerror="this.parentElement.textContent='${letter}'"/>` : letter;
+  document.getElementById('profileDisplayName').textContent = p.name || '—';
+  document.getElementById('profileDisplayId').textContent   = p.id || p.uid || '—';
+
+  document.getElementById('pName').value    = p.name    || '';
+  document.getElementById('pPhone').value   = p.phone   || '';
+  document.getElementById('pCity').value    = p.city    || '';
+  document.getElementById('pEmail').value   = p.email   || '';
+  document.getElementById('pAddress').value = p.address || '';
+  document.getElementById('pGender').value  = p.gender  || '';
+}
+
+async function saveProfile() {
+  if (!currentProfile) { showToast('⚠️ Not logged in'); return; }
+  const up = {
+    name:    document.getElementById('pName').value.trim(),
+    phone:   document.getElementById('pPhone').value.trim(),
+    city:    document.getElementById('pCity').value.trim(),
+    gender:  document.getElementById('pGender').value,
+    address: document.getElementById('pAddress').value.trim(),
+  };
+  if (!up.name) { showToast('⚠️ Name is required'); return; }
+  currentProfile = {...currentProfile, ...up};
+  const uid = currentUser ? currentUser.uid : currentProfile.uid;
+  if (uid) {
+    await fbDB.ref('customers/' + uid).update(up);
+    if (currentUser) await currentUser.updateProfile({ displayName: up.name }).catch(()=>{});
+  }
+  // Cache under UID-keyed key — never the shared 'hs_current_customer' key
+  const _saveUid = currentUser ? currentUser.uid : (currentProfile ? currentProfile.uid : null);
+  if (_saveUid) { try { localStorage.setItem('hs_profile_' + _saveUid, JSON.stringify(currentProfile)); } catch(e){} }
+  renderProfile(currentProfile);
+  updateStats();
+  showToast('✅ Profile saved!');
+}
+
+async function changePassword() {
+  clearPwUpdateErr();
+  document.getElementById('pwUpdateOk').style.display = 'none';
+
+  if (!currentUser) { showPwUpdateErr('⚠️ Not signed in. Please log in again.'); return; }
+
+  const currentPwdEl = document.getElementById('currentPwd');
+  const newPwdEl     = document.getElementById('newPwd');
+  const confirmPwdEl = document.getElementById('confirmPwd');
+
+  const currentPwd = currentPwdEl ? currentPwdEl.value : '';
+  const pwd        = newPwdEl     ? newPwdEl.value     : '';
+  const confirmPwd = confirmPwdEl ? confirmPwdEl.value  : '';
+
+  if (!currentPwd) { showPwUpdateErr('⚠️ Enter your current password first.'); currentPwdEl && currentPwdEl.focus(); return; }
+  if (pwd.length < 8) { showPwUpdateErr('⚠️ New password must be at least 8 characters.'); newPwdEl && newPwdEl.focus(); return; }
+  if (pwd !== confirmPwd) { showPwUpdateErr('⚠️ New passwords do not match.'); confirmPwdEl && confirmPwdEl.focus(); return; }
+  if (pwd === currentPwd) { showPwUpdateErr('⚠️ New password must be different from current.'); newPwdEl && newPwdEl.focus(); return; }
+
+  const btn = document.getElementById('pwUpdateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Updating…'; }
+
+  try {
+    // Re-authenticate with current password first (Firebase requirement)
+    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPwd);
+    await currentUser.reauthenticateWithCredential(credential);
+
+    // Now update the password
+    await currentUser.updatePassword(pwd);
+
+    // Clear fields
+    if (currentPwdEl) currentPwdEl.value = '';
+    if (newPwdEl)     newPwdEl.value     = '';
+    if (confirmPwdEl) confirmPwdEl.value  = '';
+    const bar = document.getElementById('pwBar2');
+    if (bar) bar.className = 'pw-bar';
+    const lbl = document.getElementById('pwLabel2');
+    if (lbl) lbl.textContent = '';
+    const hint = document.getElementById('confirmPwdHint');
+    if (hint) { hint.textContent = ''; hint.style.color = ''; }
+
+    document.getElementById('pwUpdateOk').style.display = 'block';
+    showToast('✅ Password updated! Use your new password next time.');
+  } catch(e) {
+    const msgs = {
+      'auth/wrong-password':        '❌ Current password is incorrect. Please try again.',
+      'auth/requires-recent-login': '⚠️ Session expired. Sign out and sign back in, then try again.',
+      'auth/weak-password':         '❌ New password is too weak. Use a mix of letters, numbers & symbols.',
+      'auth/too-many-requests':     '⚠️ Too many attempts. Please wait a moment and try again.',
+      'auth/invalid-credential':    '❌ Current password is incorrect. Please try again.',
+    };
+    showPwUpdateErr(msgs[e.code] || ('❌ ' + (e.message || 'Could not update password. Try again.')));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔑 Update Password'; }
+  }
+}
+
+// ── PASSWORD UI HELPERS ────────────────────────
+function showPwUpdateErr(msg) {
+  const el = document.getElementById('pwUpdateErr');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function clearPwUpdateErr() {
+  const el = document.getElementById('pwUpdateErr');
+  if (el) el.style.display = 'none';
+  const ok = document.getElementById('pwUpdateOk');
+  if (ok) ok.style.display = 'none';
+}
+function togglePwVis(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+}
+function checkConfirmPwd() {
+  const np = document.getElementById('newPwd');
+  const cp = document.getElementById('confirmPwd');
+  const hint = document.getElementById('confirmPwdHint');
+  if (!np || !cp || !hint) return;
+  if (!cp.value) { hint.textContent = ''; return; }
+  if (np.value === cp.value) {
+    hint.textContent = '✅ Passwords match';
+    hint.style.color = 'var(--green)';
+  } else {
+    hint.textContent = '❌ Passwords do not match';
+    hint.style.color = '#ef4444';
+  }
+}
+
+function handleAvatarChange(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const d = e.target.result;
+    document.getElementById('profileAvatarBig').innerHTML = `<img src="${d}" alt=""/>`;
+    document.getElementById('heroPanelAvatar').innerHTML  = `<img src="${d}" alt=""/>`;
+    showToast('🖼️ Photo updated (add Firebase Storage to persist)');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── BOOKINGS RENDER ────────────────────────────
+function renderBookings() {
+  const el = document.getElementById('activeBookingsList');
+  const active = allBookings.filter(b => ACTIVE_ST.includes((b.status||'confirmed').toLowerCase()));
+  const badge = document.getElementById('activeBookingBadge');
+  badge.textContent  = active.length;
+  badge.style.display = active.length ? 'inline' : 'none';
+  updateStats();
+  if (!active.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No active bookings</div><div class="empty-sub">Book a service and it'll appear here.</div><a class="btn-book-now" href="user-booking.html">🔍 Book a Service</a></div>`;
+    return;
+  }
+  console.log('Active bookings to render:', active.map(b => ({id: b.id, status: b.status})));
+  el.innerHTML = active.map(b => bkCard(b, true)).join('');
+}
+
+function renderHistory(filter='all') {
+  const el = document.getElementById('historyList');
+  const normSt = s => {
+    const m = {completed:'completed',cancelled:'cancelled',rejected:'cancelled',
+               payment_cancelled:'cancelled',provider_cancelled:'cancelled'};
+    return m[(s||'').toLowerCase()] || (s||'').toLowerCase();
+  };
+  let list = allBookings.filter(b => !ACTIVE_ST.includes((b.status||'confirmed').toLowerCase()));
+  if (filter !== 'all') list = list.filter(b => normSt(b.status) === filter);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🕑</div><div class="empty-title">No history ${filter!=='all'?'for "'+filter+'"':''}</div><div class="empty-sub">Completed &amp; cancelled bookings appear here.</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(b => bkCard(b, false)).join('');
+}
+
+function filterHistory(f, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHistory(f);
+}
+
+function bkCard(b, isActive) {
+  const stMap = {confirmed:'confirmed',pending:'pending',active:'active',searching:'pending',completed:'completed',cancelled:'cancelled',accepted:'confirmed',assigned:'confirmed',rejected:'cancelled'};
+  const stCls = stMap[(b.status||'confirmed').toLowerCase()] || 'confirmed';
+  const emoji  = b.emoji || getSvcEmoji(b.service || b.serviceName || '');
+  const name   = b.service || b.serviceName || 'Service Booking';
+  const id     = b.id || '—';
+  const price  = b.price ? '₹'+b.price : '—';
+  const date   = b.date  ? fmtDate(b.date) : '—';
+  const time   = b.time  || b.bookTime || '—';
+  const prov   = b.providerName || b.assignedProvider || '—';
+  const addr   = (b.address || b.location || '—').slice(0,55);
+  const status = (b.status || 'Confirmed').replace(/_/g,' ');
+
+  console.log('Creating card for booking:', {id: id, status: b.status, isActive: isActive});
+  
+  let acts = '';
+  if (b.status === 'payment_pending') {
+    acts = '<button class="bi-btn solid-green" onclick="handlePaymentFromCard(\'' + id + '\')">💳 Pay Now</button>';
+    acts += '<button class="bi-btn outline" onclick="rebookSvc(\'' + (b.service||'') + '\')">🔄 Rebook</button>';
+  } else if (isActive) {
+    acts = '<button class="bi-btn outline" onclick="trackBk(\'' + id + '\')">📍 Track</button>';
+    acts += '<button class="bi-btn outline" onclick="showToast(\'📞 +91-1800-XXX-XXXX\')">Help</button>';
+    acts += '<button class="bi-btn solid-red" onclick="cancelBk(\'' + id + '\')">Cancel</button>';
+  } else {
+    acts = '<button class="bi-btn outline" onclick="rebookSvc(\'' + (b.service||'') + '\')">🔄 Rebook</button>';
+  }
+
+  return `<div class="booking-item">
+    <div class="bi-head">
+      <div class="bi-emoji">${emoji}</div>
+      <div class="bi-info"><div class="bi-service">${name}</div><div class="bi-id">ID: ${id}</div></div>
+      <div class="bi-badge ${stCls}"><span class="bi-dot"></span>${status}</div>
+    </div>
+    <div class="bi-body">
+      <div class="bi-meta">
+        <div class="bi-meta-item"><span class="bi-meta-label">Date</span><span class="bi-meta-val">${date}</span></div>
+        <div class="bi-meta-item"><span class="bi-meta-label">Time</span><span class="bi-meta-val">${time}</span></div>
+        <div class="bi-meta-item"><span class="bi-meta-label">Provider</span><span class="bi-meta-val">${prov}</span></div>
+        <div class="bi-meta-item" style="grid-column:1/-1"><span class="bi-meta-label">Address</span><span class="bi-meta-val">${addr}${addr.length===55?'…':''}</span></div>
+      </div>
+    </div>
+    <div class="bi-footer"><div class="bi-price">${price}</div><div class="bi-actions">${acts}</div></div>
+  </div>`;
+}
+
+function getSvcEmoji(n) {
+  const m={clean:'🧹',plumb:'🔧',electric:'⚡',paint:'🎨',pest:'🐛',ac:'❄️',car:'🚗',salon:'✂️',laundry:'👕',cook:'👨‍🍳',yoga:'🧘',tutor:'📚',massage:'💆',move:'🚚',dog:'🐕',garden:'🌿',computer:'💻',cctv:'📷'};
+  const l=(n||'').toLowerCase();
+  for(const[k,v]of Object.entries(m))if(l.includes(k))return v;
+  return '🛠️';
+}
+
+function fmtDate(d) {
+  try { const dt=new Date(d); return isNaN(dt)?d:dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+  catch(e){return d;}
+}
+
+function cancelBk(id) {
+  const bk = allBookings.find(b=>b.id===id); if (!bk) return;
+  const st = (bk.status||'').toLowerCase();
+  if (st==='otp_sent'||st==='payment_pending') {
+    showToast('⛔ Job in progress — contact support: 8985849710'); return;
+  }
+  if (st==='accepted'||st==='confirmed') {
+    const ref = bk.acceptedAt||bk.createdAt;
+    const unlockAt = ref ? new Date(ref).getTime()+2*60*60*1000 : 0;
+    if (unlockAt && Date.now()<unlockAt) {
+      const rem = Math.ceil((unlockAt-Date.now())/60000);
+      showToast('⏳ Wait '+rem+' more min — provider may still be on the way'); return;
+    }
+  }
+  if (!confirm('Cancel this booking?')) return;
+  allBookings = allBookings.map(b=>b.id===id?Object.assign({},b,{status:'cancelled'}):b);
+  fbDB.ref('bookings/'+id).update({status:'cancelled',cancelledAt:new Date().toISOString(),cancelledBy:'customer'});
+  fbDB.ref('active_bookings/'+id).update({status:'cancelled'});
+  renderBookings(); renderHistory(); showToast('❌ Booking cancelled');
+}
+function trackBk(id) {
+  const bk = allBookings.find(b => b.id === id);
+  if (!bk) { showToast('Booking not found'); return; }
+  openCustomerTrackView(bk);
+}
+function rebookSvc(svc)  { window.location.href='user-booking.html'+(svc?'?service='+encodeURIComponent(svc):''); }
+
+// ── STATS ──────────────────────────────────────
+function updateStats() {
+  const active = allBookings.filter(b => ACTIVE_ST.includes((b.status||'confirmed').toLowerCase()));
+  document.getElementById('statTotal').textContent  = allBookings.length;
+  document.getElementById('statActive').textContent = active.length;
+
+}
+
+
+// ── REAL-TIME BOOKING LISTENER ─────────────────
+function startBookingListener(uid) {
+  // Listen for changes to THIS user's bookings on Firebase
+  fbDB.ref('bookings').orderByChild('customerId').equalTo(uid).on('child_changed', snap => {
+    const up = snap.val();
+    if (!up || !up.id) return;
+    const idx = allBookings.findIndex(b=>b.id===up.id);
+    if(idx>=0) allBookings[idx]={...allBookings[idx],...up}; else allBookings.unshift(up);
+    renderBookings(); renderHistory();
+    const st = (up.status||'').toLowerCase();
+    if(['confirmed','accepted','assigned'].includes(st))
+      showToast('\uD83C\uDF89 Your booking was accepted by a professional!');
+    else if(st === 'otp_sent') {
+      console.log('Status changed to otp_sent, showing OTP modal for booking:', up.id);
+      handleOtpSent(up);
+    }
+    else if(st === 'payment_pending') {
+      console.log('Status changed to payment_pending, showing payment dialog for booking:', up.id);
+      handlePaymentRequest(up);
+    }
+    else if(st === 'completed')
+      showToast('\u2705 Service completed! Thank you for using HamaraService.');
+  });
+  // Also listen for job_otp updates — SCOPED to this customer only.
+  // Previously this listened on the whole 'job_otp' node, exposing every
+  // customer's OTP to every signed-in client. Filter server-side by uid.
+  // Note: requires .indexOn ["customerId"] on /job_otp in Firebase rules
+  // for performance, and customerId must be present on each OTP record
+  // (provider-dashboard now writes it).
+  fbDB.ref('job_otp').orderByChild('customerId').equalTo(uid).on('child_added', snap => {
+    const otpData = snap.val();
+    if (!otpData || !otpData.bookingId) return;
+    const bk = allBookings.find(b => b.id === otpData.bookingId);
+    // Show OTP for pending or otp_sent status (handles race condition where OTP data arrives before status update)
+    if (bk && currentUser && (bk.status === 'pending' || bk.status === 'otp_sent')) {
+      console.log('Firebase OTP added: showing OTP modal for booking:', bk.id, 'Status:', bk.status);
+      handleOtpSent(Object.assign({}, bk, {otp: otpData.otp, otpData: otpData}));
+    } else if (bk && currentUser && bk.status === 'payment_pending') {
+      console.log('Firebase OTP added but booking is payment_pending: showing payment dialog for booking:', bk.id);
+      // If already payment_pending, show payment dialog directly
+      handlePaymentRequest(bk);
+    } else {
+      console.log('Firebase OTP added but booking not in correct status:', bk?.id, 'Status:', bk?.status);
+    }
+  });
+  fbDB.ref('job_otp').orderByChild('customerId').equalTo(uid).on('child_changed', snap => {
+    const otpData = snap.val();
+    if (!otpData || !otpData.bookingId) return;
+    if (otpData.status === 'verified') {
+      const bkIdx2 = allBookings.findIndex(b => b.id === otpData.bookingId);
+      if (bkIdx2 >= 0) {
+        allBookings[bkIdx2] = Object.assign({}, allBookings[bkIdx2], {status:'payment_pending'});
+        renderBookings();
+        handlePaymentRequest(Object.assign({}, allBookings[bkIdx2], {status:'payment_pending'}));
+      } else {
+        // Booking not in memory — load from Firebase and show popup
+        fbDB.ref('bookings/' + otpData.bookingId).once('value').then(bkSnap => {
+          const bkData = bkSnap.exists() ? bkSnap.val() : {id:otpData.bookingId};
+          const filled = Object.assign({}, bkData, {status:'payment_pending'});
+          allBookings.unshift(filled);
+          renderBookings();
+          handlePaymentRequest(filled);
+        }).catch(()=>{});
+      }
+    }
+  });
+  // New bookings added
+  fbDB.ref('bookings').orderByChild('customerId').equalTo(uid).on('child_added', snap => {
+    const bk = snap.val();
+    if (!bk || !bk.id) return;
+    if (!allBookings.find(b => b.id === bk.id)) {
+      allBookings.unshift(bk);
+      allBookings.sort((a,b) => new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
+      renderBookings(); renderHistory(); updateStats();
+    }
+  });
+
+  // active_bookings/ child_added
+  fbDB.ref('active_bookings').on('child_added', snap => {
+    const bk = snap.val(); if (!bk) return;
+    const bkId = bk.id || snap.key;
+    if ((bk.customerId||bk.uid||'') !== uid) return;
+    if (!allBookings.find(b=>b.id===bkId)) {
+      allBookings.unshift(Object.assign({},bk,{id:bkId}));
+      allBookings.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
+      renderBookings(); renderHistory(); updateStats();
+    }
+  });
+
+  // job_otp/ child_added — fires when provider clicks Complete Job
+  fbDB.ref('job_otp').on('child_added', snap => {
+    const d = snap.val(); if (!d||!d.otp) return;
+    const bkId = d.bookingId || snap.key;
+    const isOurBooking = (d.customerId||d.uid||'') === uid
+                      || allBookings.some(b => b.id === bkId);
+    if (!isOurBooking) return;
+    // Don't show OTP for already paid/completed bookings (child_added replays history)
+    const bk = allBookings.find(b => b.id === bkId);
+    const st = (bk?.status || d.status || '').toLowerCase();
+    if (['paid','completed','cancelled','rejected','verified'].includes(st)) return;
+    showOtpModal(bkId, d.otp, d);
+  });
+
+  // job_otp/ child_changed — fires when provider verifies OTP
+  fbDB.ref('job_otp').on('child_changed', snap => {
+    const d = snap.val(); if (!d) return;
+    if (d.status !== 'verified') return;
+    const bkId = d.bookingId || snap.key;
+
+    function _doPaymentPopup() {
+      closeOtpModal();
+      const bkIdx = allBookings.findIndex(b => b.id === bkId);
+      if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, allBookings[bkIdx], {status:'payment_pending'});
+      const bk = bkIdx >= 0 ? allBookings[bkIdx]
+               : {id:bkId, status:'payment_pending', amount:d.amount||0, service:d.service||''};
+      renderBookings();
+      handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
+    }
+
+    // Check by customerId first (most reliable)
+    if ((d.customerId||d.uid||'') === uid) { _doPaymentPopup(); return; }
+
+    // Check by bookingId in allBookings
+    if (allBookings.some(b => b.id === bkId)) { _doPaymentPopup(); return; }
+
+    // allBookings might be empty — verify this booking belongs to us via Firebase
+    fbDB.ref('bookings/' + bkId).once('value').then(bkSnap => {
+      if (!bkSnap.exists()) return; // booking not found
+      const bkData = bkSnap.val();
+      // Check customerId on the booking itself
+      if ((bkData.customerId||bkData.uid||'') === uid || bkData.customerId === currentUser?.uid) {
+        // Add to allBookings and show popup
+        if (!allBookings.find(b => b.id === bkId)) allBookings.unshift(bkData);
+        _doPaymentPopup();
+      }
+    }).catch(()=>{});
+  });
+
+    // active_bookings/ child_changed
+  fbDB.ref('active_bookings').on('child_changed', snap => {
+    const bk = snap.val(); if (!bk) return;
+    const bkId = bk.id || snap.key;
+    // Match by customerId OR by booking being in this customer's list
+    const isOurs = (bk.customerId||bk.uid||'') === uid
+                || allBookings.some(b => b.id === bkId);
+    if (!isOurs) return;
+    const idx = allBookings.findIndex(b=>b.id===bkId);
+    if (idx>=0) allBookings[idx]=Object.assign({},allBookings[idx],bk,{id:bkId});
+    else allBookings.unshift(Object.assign({},bk,{id:bkId}));
+    allBookings.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
+    renderBookings(); renderHistory(); updateStats();
+    const st=(bk.status||'').toLowerCase();
+    if(st==='accepted') showToast('🎉 Provider accepted your booking!');
+    else if(st==='otp_sent') {
+      // Only show OTP if not already paid
+      const curBk = allBookings.find(b=>b.id===bkId);
+      if (!curBk || !['paid','completed'].includes((curBk.status||'').toLowerCase()))
+        fetchAndShowOTP(bkId);
+    }
+    else if(st==='payment_pending') {
+      // OTP verified — show payment popup
+      const bkFull = allBookings.find(b=>b.id===bkId);
+      if (bkFull) handlePaymentRequest(Object.assign({},bkFull,{status:'payment_pending'}));
+    }
+  });
+}
+
+// ── Clear any stale modals from previous sessions ──────────────────────────
+function clearStaleModals() {
+  const paymentModal = document.getElementById('paymentRequestModal');
+  const otpModal = document.getElementById('otpDisplayModal');
+  const reviewModal = document.getElementById('reviewModal');
+  
+  if (paymentModal) {
+    paymentModal.style.display = 'none';
+    console.log('Cleared stale payment modal');
+  }
+  if (otpModal) {
+    otpModal.style.display = 'none';
+    console.log('Cleared stale OTP modal');
+  }
+  if (reviewModal) {
+    reviewModal.style.display = 'none';
+    console.log('Cleared stale review modal');
+  }
+}
+
+// ── Check for pending payments on page load ──────────────────────────────────
+function checkForPendingPayments() {
+  const pendingPayments = allBookings.filter(b => b.status === 'payment_pending');
+  if (pendingPayments.length > 0) {
+    // Show payment dialog for the first pending payment
+    const booking = pendingPayments[0];
+    setTimeout(() => handlePaymentRequest(booking), 1000); // Small delay to ensure page is loaded
+  }
+  
+  // Also check for pending or otp_sent bookings and show OTP modal if needed
+  const otpReadyBookings = allBookings.filter(b => b.status === 'pending' || b.status === 'otp_sent');
+  if (otpReadyBookings.length > 0) {
+    // Check if any of these bookings have OTP data in Firebase
+    otpReadyBookings.forEach(booking => {
+      fbDB.ref('job_otp/' + booking.id).once('value', snap => {
+        const otpData = snap.val();
+        if (otpData && otpData.otp) {
+          console.log('Found OTP data for booking on page load:', booking.id);
+          setTimeout(() => handleOtpSent(booking), 500);
+        }
+      });
+    });
+  }
+}
+
+// ── Customer sees 4-digit OTP code ────────────────────────────────────────────
+function handleOtpSent(bk) {
+  // Safety check: Only show OTP for pending or otp_sent status (handles race conditions)
+  if (bk && bk.status !== 'pending' && bk.status !== 'otp_sent') {
+    console.log('Preventing OTP modal for booking with wrong status:', bk.id, 'Status:', bk.status);
+    return;
+  }
+  console.log('Showing OTP modal for booking:', bk.id, 'Status:', bk.status);
+  // Fetch OTP from Firebase
+  fbDB.ref('job_otp/' + bk.id).once('value', snap => {
+    const otpData = snap.val();
+    if (!otpData || !otpData.otp) {
+      console.log('No OTP data found for booking:', bk.id);
+      return;
+    }
+    console.log('OTP data found, showing modal for booking:', bk.id);
+    showOtpModal(bk, otpData.otp);
+  });
+}
+
+function showOtpModal(bk, otp) {
+  let modal = document.getElementById('otpDisplayModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'otpDisplayModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:white;border-radius:20px;padding:32px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="font-size:48px;margin-bottom:12px;">🔐</div>
+      <h2 style="font-size:20px;font-weight:800;color:#0f1117;margin-bottom:8px;">Job Completion Code</h2>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;">Share this code with your service provider to confirm job completion.</p>
+      <div style="background:#f7f8fc;border:2px dashed #e5e7eb;border-radius:16px;padding:20px;margin-bottom:16px;">
+        <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#E8251A;font-family:monospace;">${otp}</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:8px;">${bk.service || 'Service'} · ${bk.id}</div>
+      </div>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:20px;">Provider: <strong style="color:#0f1117;">${bk.providerName || '—'}</strong></p>
+      <button onclick="document.getElementById('otpDisplayModal').style.display='none';" style="width:100%;padding:14px;background:#E8251A;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Got it</button>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+// ── Customer payment ───────────────────────────────────────────────────────────
+// ── Active booking being paid ─────────────────────────────────────────────────
+let _paymentBk = null;
+
+function handlePaymentFromCard(bookingId) {
+  const booking = allBookings.find(b => b.id === bookingId);
+  if (booking) {
+    handlePaymentRequest(booking);
+  } else {
+    console.error('Booking not found for payment:', bookingId);
+    showToast('⚠️ Booking not found. Please refresh the page.');
+  }
+}
+
+function handlePaymentRequest(bk) {
+  // Safety check: Only show payment for payment_pending status
+  if (bk && bk.status !== 'payment_pending') {
+    console.log('Preventing payment dialog for non-payment_pending booking:', bk.id, 'Status:', bk.status);
+    return;
+  }
+  console.log('Showing payment dialog for booking:', bk.id, 'Status:', bk.status);
+  _paymentBk = bk;
+  let modal = document.getElementById('paymentRequestModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'paymentRequestModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box;';
+    document.body.appendChild(modal);
+  }
+  const amount = bk.amount || bk.priceVal || 0;
+  modal.innerHTML = `
+    <div style="background:white;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button onclick="document.getElementById('paymentRequestModal').style.display='none';" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;line-height:1;">✕</button>
+      </div>
+      <div style="font-size:48px;margin-bottom:12px;">💳</div>
+      <h2 style="font-size:20px;font-weight:800;color:#0f1117;margin-bottom:8px;">Payment Due</h2>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;">Your service is complete. Pay securely to close the job.</p>
+      <div style="background:#f7f8fc;border-radius:14px;padding:18px;margin-bottom:20px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">
+          <span style="color:#6b7280;">Service</span><span style="font-weight:700;">${bk.service||'—'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">
+          <span style="color:#6b7280;">Provider</span><span style="font-weight:700;">${bk.providerName||'—'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;">
+          <span style="font-size:15px;font-weight:800;">Total Amount</span>
+          <span style="font-size:22px;font-weight:900;color:#E8251A;">₹${amount}</span>
+        </div>
+      </div>
+      <button id="rzpPayBtn" onclick="startRazorpayPayment()" style="width:100%;padding:16px;background:#E8251A;color:white;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;letter-spacing:.3px;">
+        🔒 Pay ₹${amount} Securely
+      </button>
+      <p style="font-size:12px;color:#9ca3af;margin-bottom:8px;">Secured by Razorpay · UPI · Cards · Netbanking</p>
+      <p style="font-size:11px;color:#d1d5db;">Booking ID: ${bk.id}</p>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+async function startRazorpayPayment() {
+  const bk = _paymentBk;
+  if (!bk) return;
+  // IMPORTANT: re-query the button each time we update it. The payment modal
+  // is rebuilt by handlePaymentRequest on every invocation, so any reference
+  // captured at function start may be a now-detached DOM node by the time
+  // the Razorpay handler/dismiss callbacks fire.
+  const setBtn = (text, disabled) => {
+    const b = document.getElementById('rzpPayBtn');
+    if (b) { b.textContent = text; b.disabled = !!disabled; }
+  };
+  const resetBtn = () => setBtn('🔒 Pay ₹' + (bk.amount||0) + ' Securely', false);
+  setBtn('Creating order...', true);
+
+  try {
+    // Step 1: Create order on your server
+    const res = await fetch('/api/create-order.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookingId:  bk.id,
+        amount:     bk.amount || bk.priceVal || 0,
+        service:    bk.service || '',
+        customerId: currentUser ? currentUser.uid : '',
+        providerId: bk.providerId || '',
+      })
+    });
+    const order = await res.json();
+    if (!order.order_id) throw new Error(order.error || 'Failed to create order');
+
+    // Step 2: Open Razorpay checkout popup
+    const rzpOptions = {
+      key:         order.key_id,
+      amount:      order.amount,
+      currency:    'INR',
+      name:        'HamaraService',
+      description: bk.service || 'Home Service',
+      image:       'https://hamaraservice.in/icon.png',
+      order_id:    order.order_id,
+      prefill: {
+        name:  currentProfile ? (currentProfile.name || '') : '',
+        email: currentUser   ? (currentUser.email  || '') : '',
+        contact: bk.phone || (currentProfile ? currentProfile.phone || '' : ''),
+      },
+      theme: { color: '#E8251A' },
+      modal: { ondismiss: function() {
+        resetBtn();
+        showToast('Payment cancelled. You can pay again from your bookings.');
+      }},
+      handler: async function(response) {
+        // Razorpay handler fires ONLY on successful payment
+        // Write paid status to Firebase immediately — don't wait for server verification
+        const paidAt = new Date().toISOString();
+        const payUpdate = {
+          status:          'paid',
+          paidAt:          paidAt,
+          paymentMethod:   'razorpay',
+          txnId:           response.razorpay_payment_id,
+          razorpayOrderId: response.razorpay_order_id,
+        };
+        // Update both Firebase paths immediately
+        fbDB.ref('bookings/' + bk.id).update(payUpdate)
+          .then(function(){ console.log('[Pay] Firebase bookings updated'); })
+          .catch(function(e){ console.warn('[Pay] bookings update failed:', e.message); });
+        fbDB.ref('active_bookings/' + bk.id).update(payUpdate)
+          .catch(function(e){ console.warn('[Pay] active_bookings update failed:', e.message); });
+
+        // Update in-memory immediately so UI reflects paid
+        const paidBk = Object.assign({}, bk, payUpdate);
+        const bkIdx = allBookings.findIndex(b => b.id === bk.id);
+        if (bkIdx >= 0) allBookings[bkIdx] = paidBk;
+        renderBookings(); renderHistory();
+
+        // Close payment modal
+        const modal = document.getElementById('paymentRequestModal');
+        if (modal) modal.style.display = 'none';
+        showToast('✅ Payment of ₹' + (bk.amount||0) + ' successful!');
+
+        // Step 3: Also verify on server (for records/commission — non-blocking)
+        setBtn('Paid ✓', true);
+        fetch('/api/verify-payment.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature:  response.razorpay_signature,
+            booking_id:          bk.id,
+            amount:              bk.amount || bk.priceVal || 0,
+            provider_id:         bk.providerId || '',
+            customer_id:         currentUser ? currentUser.uid : '',
+          })
+        }).then(function(r){ return r.json(); })
+          .then(function(result) {
+            if (result && result.success) {
+              // Update Firebase with commission details from server
+              fbDB.ref('bookings/' + bk.id).update({
+                providerEarning: result.providerEarning || 0,
+                commissionAmt:   result.commissionAmt   || 0,
+                verified:        true,
+              }).catch(function(){});
+              console.log('[Pay] Server verification OK');
+            }
+          })
+          .catch(function(e){ console.warn('[Pay] Server verify failed (payment still recorded):', e.message); });
+
+        // Show review after 1.5s
+        setTimeout(function(){ showReviewModal(paidBk); }, 1500);
+      }
+    };
+
+    const rzp = new Razorpay(rzpOptions);
+    rzp.on('payment.failed', function(resp) {
+      showToast('❌ Payment failed: ' + (resp.error.description || 'Try again'));
+      resetBtn();
+    });
+    rzp.open();
+
+  } catch(err) {
+    showToast('⚠️ Could not start payment. Check connection and try again.');
+    console.error('Payment error:', err);
+    resetBtn();
+  }
+}
+
+// processPayment replaced by Razorpay checkout (startRazorpayPayment)
+
+// ── Review modal after payment ─────────────────────────────────────────────────
+function showReviewModal(bk) {
+  let modal = document.getElementById('reviewModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'reviewModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+    document.body.appendChild(modal);
+  }
+  let selStars = 0;
+  modal.innerHTML = `
+    <div style="background:white;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="font-size:48px;margin-bottom:12px;">⭐</div>
+      <h2 style="font-size:20px;font-weight:800;color:#0f1117;margin-bottom:6px;">Rate your experience</h2>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:6px;">How was <strong>${bk.providerName||'the provider'}</strong>?</p>
+      <p style="font-size:13px;color:#9ca3af;margin-bottom:20px;">${bk.service||''}</p>
+      <div id="reviewStars" style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;">
+        ${[1,2,3,4,5].map(n => `<span data-star="${n}" onclick="setReviewStar(${n})" style="font-size:36px;cursor:pointer;transition:.2s;filter:grayscale(1);">★</span>`).join('')}
+      </div>
+      <textarea id="reviewText" placeholder="Tell us about your experience... (optional)" rows="3" style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;margin-bottom:16px;"></textarea>
+      <button id="submitReviewBtn" onclick="submitReview('${bk.id}','${bk.providerName||''}')" style="width:100%;padding:14px;background:#e5e7eb;color:#9ca3af;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;" disabled>Select a rating to submit</button>
+      <button onclick="document.getElementById('reviewModal').style.display='none';" style="width:100%;padding:12px;background:transparent;border:none;color:#9ca3af;font-size:14px;cursor:pointer;margin-top:8px;">Skip for now</button>
+    </div>`;
+  modal.style.display = 'flex';
+  window._reviewBookingId = bk.id;
+}
+
+function setReviewStar(n) {
+  window._reviewStars = n;
+  document.querySelectorAll('#reviewStars span').forEach((el, i) => {
+    el.style.filter = i < n ? 'none' : 'grayscale(1)';
+    el.style.transform = i < n ? 'scale(1.1)' : 'scale(1)';
+  });
+  const btn = document.getElementById('submitReviewBtn');
+  if (btn) {
+    btn.disabled = false;
+    btn.style.background = '#E8251A';
+    btn.style.color = 'white';
+    btn.style.cursor = 'pointer';
+    btn.textContent = 'Submit Review';
+  }
+}
+
+function submitReview(bookingId, providerName) {
+  const stars = window._reviewStars || 0;
+  if (!stars) { showToast('Please select a rating'); return; }
+  const text = (document.getElementById('reviewText')||{value:''}).value.trim();
+  const bkForReview = allBookings.find(b => b.id === bookingId) || {};
+  const review = {
+    bookingId:    bookingId,
+    providerName: providerName,
+    providerId:   bkForReview.providerId || '',
+    stars:        stars,
+    text:         text || 'Great service!',
+    date:         new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}),
+    customerId:   currentUser ? currentUser.uid : '',
+    customerName: currentProfile ? (currentProfile.name || 'Customer') : 'Customer',
+    submittedAt:  new Date().toISOString()
+  };
+  fbDB.ref('reviews/' + bookingId).set(review);
+  if (review.providerId) {
+    fbDB.ref('provider_reviews/' + review.providerId + '/' + bookingId).set(review);
+  }
+  fbDB.ref('bookings/' + bookingId).update({reviewed: true, reviewStars: stars});
+  const modal = document.getElementById('reviewModal');
+  if (modal) modal.style.display = 'none';
+  showToast('⭐ Thank you for your review!');
+}
+
+// ── TABS ───────────────────────────────────────
+function switchTab(btn, noScroll) {
+  var tab = btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item[data-tab]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('[data-tab="'+tab+'"]').forEach(b => b.classList.add('active'));
+  var pane = document.getElementById('pane-'+tab);
+  if (pane) pane.classList.add('active');
+  if (!noScroll) {
+    var wrap = document.querySelector('.tabs-wrap');
+    if (wrap) window.scrollTo({top: wrap.offsetTop - 70, behavior: 'smooth'});
+  }
+}
+
+// ── PASSWORD STRENGTH ──────────────────────────
+function checkPwStrength(val)  { pwStr(val,'pwBar','pwLabel'); }
+function checkPwStrength2(val) { pwStr(val,'pwBar2','pwLabel2'); }
+function pwStr(val, barId, lblId) {
+  const bar=document.getElementById(barId);
+  const strong=/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#]).{8,}$/.test(val);
+  const medium=val.length>=8;
+  bar.className = val ? (strong?'pw-bar strong':medium?'pw-bar medium':'pw-bar weak') : 'pw-bar';
+  if(lblId){ const l=document.getElementById(lblId); l.textContent=val?(strong?'Strong 💪':medium?'Medium':'Weak'):''; l.style.color=strong?'var(--green)':medium?'var(--yellow)':'#ef4444'; }
+}
+
+// ── TOAST ──────────────────────────────────────
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3500);
+}
+
+// ── Customer tracking — see provider coming to you ───────────────────────────
+let _trackMap = null, _trackProvMarker = null, _trackTimer = null;
+
+function openCustomerTrackView(bk) {
+  let modal = document.getElementById('custTrackOverlay');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'custTrackOverlay';
+    modal.style.cssText = 'position:fixed;inset:0;background:#0f1117;z-index:9999;display:flex;flex-direction:column;font-family:inherit;';
+    document.body.appendChild(modal);
+  }
+  const custLat = bk.customerLat || bk.lat;
+  const custLng = bk.customerLng || bk.lng;
+  modal.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:#1a1a2e;border-bottom:1px solid rgba(255,255,255,.08);">
+      <button onclick="closeCustomerTrackView();" style="width:36px;height:36px;background:rgba(255,255,255,.1);border:none;color:white;border-radius:50%;font-size:18px;cursor:pointer;flex-shrink:0;">&#x2190;</button>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:800;color:white;">${bk.service || 'Your Booking'}</div>
+        <div id="trackStatusTxt" style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">Locating provider…</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;color:rgba(255,255,255,.4);">Amount</div>
+        <div style="font-size:14px;font-weight:800;color:#00ff88;">&#x20B9;${bk.amount || bk.priceVal || '—'}</div>
+      </div>
+    </div>
+    <div id="custTrackMapEl" style="flex:1;min-height:200px;"></div>
+    <div style="background:#1a1a2e;border-top:1px solid rgba(255,255,255,.08);padding:14px 18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;">Provider</div>
+          <div style="font-size:14px;font-weight:700;color:white;">${bk.providerName || '—'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div id="trackEtaTxt" style="font-size:15px;font-weight:800;color:#00ff88;"></div>
+          <div id="trackDistTxt" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;"></div>
+        </div>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+
+  setTimeout(() => {
+    const mapEl = document.getElementById('custTrackMapEl');
+    if (!mapEl || !window.L) {
+      const st = document.getElementById('trackStatusTxt');
+      if (st) st.textContent = 'Map unavailable — check internet';
+      return;
+    }
+    if (_trackMap) { _trackMap.remove(); _trackMap = null; _trackProvMarker = null; }
+    _trackMap = L.map(mapEl, { zoomControl: true, attributionControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(_trackMap);
+
+    if (custLat && custLng) {
+      const homeIco = L.divIcon({ html: '<div style="font-size:28px;">&#x1F3E0;</div>', className: '', iconSize: [28,28], iconAnchor: [14,28] });
+      L.marker([custLat, custLng], { icon: homeIco }).addTo(_trackMap).bindPopup('Your Location').openPopup();
+      _trackMap.setView([custLat, custLng], 14);
+    }
+
+    if (_trackTimer) clearInterval(_trackTimer);
+    _trackTimer = setInterval(() => {
+      if (!document.getElementById('custTrackOverlay')) { clearInterval(_trackTimer); return; }
+      fbDB.ref('tracking/' + bk.id + '/provider').once('value', snap => {
+        const d = snap.val();
+        if (!d || !d.lat) return;
+        const pLat = d.lat, pLng = d.lng;
+        const provIco = L.divIcon({ html: '<div style="font-size:26px;">&#x1F477;</div>', className: '', iconSize: [26,26], iconAnchor: [13,26] });
+        if (!_trackProvMarker) {
+          _trackProvMarker = L.marker([pLat, pLng], { icon: provIco }).addTo(_trackMap);
+        } else { _trackProvMarker.setLatLng([pLat, pLng]); }
+        const st = document.getElementById('trackStatusTxt');
+        if (st) st.textContent = '&#x1F697; Provider is on the way';
+        if (custLat && custLng) {
+          const R=6371, dL=(custLat-pLat)*Math.PI/180, dN=(custLng-pLng)*Math.PI/180;
+          const a=Math.sin(dL/2)**2+Math.cos(pLat*Math.PI/180)*Math.cos(custLat*Math.PI/180)*Math.sin(dN/2)**2;
+          const dist = R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+          const eta  = Math.max(1, Math.round(dist * 3.5));
+          const etaEl = document.getElementById('trackEtaTxt');
+          const distEl = document.getElementById('trackDistTxt');
+          if (etaEl) etaEl.textContent = '~' + eta + ' min';
+          if (distEl) distEl.textContent = dist.toFixed(1) + ' km away';
+          _trackMap.fitBounds([[pLat,pLng],[custLat,custLng]], { padding:[60,60], maxZoom:16 });
+        }
+      });
+    }, 5000);
+  }, 150);
+}
+
+function closeCustomerTrackView() {
+  if (_trackTimer) { clearInterval(_trackTimer); _trackTimer = null; }
+  if (_trackMap)   { _trackMap.remove(); _trackMap = null; _trackProvMarker = null; }
+  const m = document.getElementById('custTrackOverlay');
+  if (m) m.remove();
+}
+
+
+// ── Sidebar user sync ────────────────────────────────────────────────────────
+function updateSidebarUser() {
+  const p = currentProfile; if (!p) return;
+  const av = document.getElementById('sbAv');
+  const nm = document.getElementById('sbName');
+  const id = document.getElementById('sbId');
+  if (nm) nm.textContent = p.name || 'Customer';
+  if (id) id.textContent = p.id   || '';
+  if (av) {
+    if (p.photoURL) av.innerHTML = '<img src="'+p.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    else av.textContent = (p.name||'U')[0].toUpperCase();
+  }
+}
+
+// ── Refresh ──────────────────────────────────────────────────────────────────
+async function refreshUserData() {
+  const btn  = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  if (btn) btn.disabled = true;
+  if (icon) icon.style.animation = 'ld-spin .7s linear infinite';
+  try {
+    if (currentUser) { await loadUserData(currentUser); showToast('✅ Refreshed'); }
+  } catch(e) { showToast('⚠️ Refresh failed'); }
+  finally {
+    if (btn) btn.disabled = false;
+    if (icon) icon.style.animation = '';
+  }
+}
+
+// ── OTP helpers ──────────────────────────────────────────────────────────────
+function fetchAndShowOTP(bkId) {
+  // Don't show OTP if booking is already paid/completed
+  const bk = allBookings.find(b => b.id === bkId);
+  const st = (bk?.status || '').toLowerCase();
+  if (['paid','completed','cancelled','rejected'].includes(st)) return;
+  fbDB.ref('job_otp/' + bkId).once('value').then(snap => {
+    const d = snap.val();
+    if (d && d.otp) showOtpModal(bkId, d.otp, d);
+  }).catch(()=>{});
+}
+
+var _otpPollTimer = null;
+
+function _startOtpPoller(bkId) {
+  _stopOtpPoller();
+  console.log('[OTP Poll] Starting poller for:', bkId);
+  _otpPollTimer = setInterval(function() {
+    fbDB.ref('job_otp/' + bkId).once('value').then(function(snap) {
+      if (!snap.exists()) {
+        // Record deleted — provider verified OTP
+        console.log('[OTP Poll] Record gone — triggering payment for:', bkId);
+        _stopOtpPoller();
+        closeOtpModal();
+        const bkIdx = allBookings.findIndex(b => b.id === bkId);
+        const bk = bkIdx >= 0 ? allBookings[bkIdx] : {id:bkId, status:'payment_pending'};
+        if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, bk, {status:'payment_pending'});
+        handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
+        return;
+      }
+      const d = snap.val();
+      if (d && d.status === 'verified') {
+        console.log('[OTP Poll] Status=verified — triggering payment for:', bkId);
+        _stopOtpPoller();
+        closeOtpModal();
+        const bkIdx = allBookings.findIndex(b => b.id === bkId);
+        const bk = bkIdx >= 0 ? allBookings[bkIdx] : {id:bkId, status:'payment_pending', service:d.service||''};
+        if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, bk, {status:'payment_pending'});
+        handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
+      }
+    }).catch(function(){});
+  }, 2000); // poll every 2 seconds
+}
+
+function _stopOtpPoller() {
+  if (_otpPollTimer) { clearInterval(_otpPollTimer); _otpPollTimer = null; }
+}
+
+function showOtpModal(bkId, otp, otpData) {
+  closeOtpModal();
+  const bk       = allBookings.find(b=>b.id===bkId) || {id:bkId};
+  const service  = (otpData&&otpData.service)      || bk.service      || 'Service';
+  const provider = (otpData&&otpData.providerName) || bk.providerName || '—';
+  const modal    = document.createElement('div');
+  modal.id = 'otpDisplayModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+  modal.innerHTML = `<div style="background:white;border-radius:22px;padding:32px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3);">
+    <div style="font-size:52px;margin-bottom:10px;">🔐</div>
+    <h2 style="font-size:19px;font-weight:800;color:#0f1117;margin-bottom:6px;">Job Completion Code</h2>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">Read this code to your provider</p>
+    <div style="background:#f0f9ff;border:2px dashed #1B6B7A;border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="font-size:54px;font-weight:900;letter-spacing:14px;color:#1B6B7A;font-family:monospace;user-select:all;">${otp}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:6px;">${service} · ${bkId}</div>
+    </div>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:16px;">Provider: <strong>${provider}</strong></p>
+    <div style="font-size:11px;color:#1B6B7A;background:#e6f4f6;border-radius:9px;padding:9px;margin-bottom:12px;">⏳ Waiting for provider to enter this code…</div>
+    <button onclick="closeOtpModal()" style="width:100%;padding:12px;background:white;border:1.5px solid #e5e7eb;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;color:#9ca3af;">Dismiss</button>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function closeOtpModal() {
+  _stopOtpPoller();
+  const m = document.getElementById('otpDisplayModal');
+  if (m) m.remove();
+}
+
+// ── Cancel button with 2-hour timer ──────────────────────────────────────────
+var _cancelTimers = {};
+function buildCancelBtn(b) {
+  const id = b.id || '';
+  const st = (b.status||'').toLowerCase();
+  if (!id || st==='otp_sent'||st==='payment_pending'||st==='completed'||st==='cancelled') return '';
+  if (st==='searching'||st==='pending') {
+    return '<button class="bi-btn solid-red" data-bid="'+id+'" onclick="cancelBk(this.dataset.bid)">❌ Cancel</button>';
+  }
+  if (st==='accepted'||st==='confirmed') {
+    const ref      = b.acceptedAt||b.createdAt||new Date().toISOString();
+    const unlockAt = new Date(ref).getTime() + 2*60*60*1000;
+    if (Date.now() >= unlockAt) {
+      return '<button class="bi-btn solid-red" data-bid="'+id+'" onclick="cancelBk(this.dataset.bid)">❌ Cancel</button>';
+    }
+    setTimeout(()=>startCancelCountdown(id, unlockAt), 80);
+    return '<button class="bi-btn outline" id="cbtn-'+id+'" disabled style="min-width:120px;font-size:10px;cursor:not-allowed;opacity:.75;">⏳ --:--</button>';
+  }
+  return '';
+}
+function startCancelCountdown(id, unlockAt) {
+  if (_cancelTimers[id]) clearInterval(_cancelTimers[id]);
+  function tick() {
+    const btn = document.getElementById('cbtn-'+id);
+    if (!btn) { clearInterval(_cancelTimers[id]); delete _cancelTimers[id]; return; }
+    const rem = unlockAt - Date.now();
+    if (rem <= 0) {
+      clearInterval(_cancelTimers[id]); delete _cancelTimers[id];
+      btn.disabled=false; btn.className='bi-btn solid-red'; btn.style.cssText='';
+      btn.removeAttribute('id'); btn.innerHTML='❌ Cancel';
+      btn.setAttribute('data-bid',id); btn.onclick=function(){cancelBk(this.dataset.bid);};
+      return;
+    }
+    const hh=Math.floor(rem/3600000), mm=Math.floor((rem%3600000)/60000), ss=Math.floor((rem%60000)/1000);
+    const p=n=>(n<10?'0':'')+n;
+    btn.textContent=(hh>0?hh+'h ':'')+p(mm)+'m '+p(ss)+'s';
+  }
+  tick(); _cancelTimers[id]=setInterval(tick,1000);
+}
+</script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-bottom-nav">
+  <a class="mob-nav-item" href="index.html">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="mob-nav-item" href="user-booking.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Services</span>
+  </a>
+  <a class="mob-nav-item mob-nav-center" href="user-booking.html">
+    <div class="mob-nav-fab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    </div>
+    <span>Book Now</span>
+  </a>
+  <a class="mob-nav-item active" href="user-panel.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span>Bookings</span>
+  </a>
+  <a class="mob-nav-item active" href="user-panel.html?tab=profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Account</span>
+  </a>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Service Details – Hamara Service</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{
+  --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
+  --teal:#1B6B7A;--teal2:#134f5c;--teal-soft:#e6f4f6;
+  --ink:#1a1a2e;--ink2:#2d3748;--muted:#718096;
+  --line:#e2e8f0;--bg:#f0f7f9;--white:#fff;
+  --green:#2ecc71;--green-soft:#e8f8f0;
+  --yellow:#f59e0b;
+  --r:12px;--r2:20px;--r3:32px;
+  --sh:0 2px 16px rgba(0,0,0,.07);
+  --sh2:0 8px 32px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden;}
+
+/* ── HEADER ── */
+header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-logo-box svg{width:18px;height:18px;fill:white;}
+.hdr-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;}
+.hdr-logo-name span{color:#ffb07a;}
+.hdr-back{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600;text-decoration:none;padding:8px 14px;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;transition:all .2s;}
+.hdr-back:hover{background:rgba(255,255,255,.15);color:white;}
+
+/* ── HERO BANNER ── */
+.svc-hero{
+  background:linear-gradient(135deg,#0d3d47 0%,var(--teal) 100%);
+  padding:40px 24px 60px;position:relative;overflow:hidden;
+}
+.svc-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none;}
+.svc-hero-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:24px;}
+.svc-hero-icon{font-size:72px;flex-shrink:0;filter:drop-shadow(0 8px 20px rgba(0,0,0,.3));}
+.svc-hero-text{}
+.svc-hero-cat{font-size:12px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;}
+.svc-hero-name{font-family:'Sora',sans-serif;font-size:clamp(26px,5vw,44px);font-weight:800;color:white;letter-spacing:-.5px;margin-bottom:10px;}
+.svc-hero-tagline{font-size:16px;color:rgba(255,255,255,.6);font-weight:400;margin-bottom:20px;}
+.svc-hero-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.svc-pill{padding:6px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:12px;font-weight:600;color:rgba(255,255,255,.85);}
+.svc-pill.green{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#7fffc4;}
+
+/* ── MAIN LAYOUT ── */
+.svc-main{max-width:900px;margin:0 auto;padding:32px 24px 100px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;}
+@media(max-width:768px){.svc-main{grid-template-columns:1fr;padding:20px 16px 100px;}}
+
+/* ── CARDS ── */
+.card{background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh);margin-bottom:20px;overflow:hidden;}
+.card-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+.card-head-icon{width:40px;height:40px;border-radius:10px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.card-head-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
+.card-body{padding:20px 24px;}
+@media(max-width:768px){.card-body{padding:16px;}.card-head{padding:16px;}}
+
+/* ── WHAT'S INCLUDED ── */
+.include-list{display:flex;flex-direction:column;gap:10px;}
+.include-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--bg);border-radius:10px;}
+.include-check{width:22px;height:22px;border-radius:50%;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;font-weight:800;margin-top:1px;}
+.include-text{font-size:14px;font-weight:500;color:var(--ink2);line-height:1.5;}
+
+/* ── NOT INCLUDED ── */
+.exclude-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.exclude-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);}
+.exclude-x{color:#fc8181;font-weight:800;flex-shrink:0;}
+
+/* ── PROCESS STEPS ── */
+.process-steps{display:flex;flex-direction:column;gap:0;}
+.process-step{display:flex;gap:16px;padding:16px 0;position:relative;}
+.process-step:not(:last-child)::before{content:'';position:absolute;left:19px;top:52px;bottom:-8px;width:2px;background:var(--line);}
+.ps-num{width:38px;height:38px;border-radius:50%;background:var(--teal);color:white;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ps-body{}
+.ps-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.ps-desc{font-size:13px;color:var(--muted);line-height:1.55;}
+
+/* ── BEFORE / AFTER ── */
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ba-card{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--line);}
+.ba-label{padding:8px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;}
+.ba-label.before{background:#fee2e2;color:#c53030;}
+.ba-label.after{background:var(--green-soft);color:#27ae60;}
+.ba-img{width:100%;height:140px;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg);}
+@media(max-width:480px){.before-after{grid-template-columns:1fr;}}
+
+/* ── FAQ ── */
+.faq-item{border-bottom:1px solid var(--line);padding:16px 0;}
+.faq-item:last-child{border:none;}
+.faq-q{font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.faq-q svg{flex-shrink:0;transition:transform .2s;color:var(--muted);}
+.faq-item.open .faq-q svg{transform:rotate(180deg);}
+.faq-a{font-size:13px;color:var(--muted);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;}
+.faq-item.open .faq-a{max-height:200px;padding-top:10px;}
+
+/* ── STICKY BOOKING CARD ── */
+.book-card{position:sticky;top:80px;background:white;border-radius:var(--r2);border:1px solid var(--line);box-shadow:var(--sh2);overflow:hidden;}
+.book-card-top{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:24px;}
+.book-price{font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:white;line-height:1;}
+.book-price sub{font-size:16px;font-weight:500;color:rgba(255,255,255,.6);}
+.book-price-note{font-size:12px;color:rgba(255,255,255,.5);margin-top:4px;}
+.book-meta{display:flex;flex-direction:column;gap:10px;padding:20px 24px;border-bottom:1px solid var(--line);}
+.book-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;}
+.book-meta-label{color:var(--muted);font-weight:500;}
+.book-meta-val{font-weight:700;color:var(--ink);}
+.book-btn{width:100%;padding:17px;background:var(--brand);color:white;border:none;border-radius:0;font-family:'Sora',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px;}
+.book-btn:hover{background:var(--brand2);}
+.book-trust{padding:14px 24px;display:flex;flex-direction:column;gap:8px;}
+.book-trust-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:500;}
+
+/* ── MOBILE STICKY BOOK BAR ── */
+.mob-book-bar{display:none;}
+@media(max-width:768px){
+  .mob-book-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    position:fixed;bottom:0;left:0;right:0;
+    background:white;border-top:1px solid var(--line);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    box-shadow:0 -4px 20px rgba(0,0,0,.10);
+    z-index:9999;
+  }
+  .mob-book-price{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--teal);}
+  .mob-book-price sub{font-size:12px;font-weight:500;color:var(--muted);}
+  .mob-book-btn{padding:13px 28px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+  .book-card{display:none;}
+}
+
+/* ── RATING ── */
+.rating-row{display:flex;align-items:center;gap:12px;padding:16px 24px;background:var(--bg);border-radius:var(--r);}
+.rating-num{font-family:'Sora',sans-serif;font-size:40px;font-weight:800;color:var(--ink);}
+.rating-stars{color:var(--yellow);font-size:20px;letter-spacing:2px;}
+.rating-count{font-size:13px;color:var(--muted);margin-top:2px;}
+.rating-bars{flex:1;}
+.rbar-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.rbar-track{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:3px;background:var(--yellow);}
+
+/* ── SIMILAR SERVICES ── */
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+.sim-card{background:white;border:1.5px solid var(--line);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;display:block;}
+.sim-card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--sh);}
+.sim-icon{font-size:32px;margin-bottom:8px;}
+.sim-name{font-size:12px;font-weight:700;color:var(--ink2);}
+.sim-price{font-size:11px;color:var(--green);font-weight:600;margin-top:2px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:12px 22px;border-radius:100px;font-size:14px;font-weight:500;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="hdr-logo" href="index.html">
+    <div class="hdr-logo-box"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    <span class="hdr-logo-name">Hamara<span>Service</span></span>
+  </a>
+  <a class="hdr-back" href="index.html">← Home</a>
+</header>
+
+<!-- Hero — filled by JS -->
+<div class="svc-hero" id="svcHero">
+  <div class="svc-hero-inner">
+    <div class="svc-hero-icon" id="heroIcon">🔧</div>
+    <div class="svc-hero-text">
+      <div class="svc-hero-cat" id="heroCat">Loading…</div>
+      <div class="svc-hero-name" id="heroName">Service Details</div>
+      <div class="svc-hero-tagline" id="heroTagline">Professional service at your doorstep</div>
+      <div class="svc-hero-pills" id="heroPills"></div>
+    </div>
+  </div>
+</div>
+
+<div class="svc-main">
+  <div class="svc-left">
+
+    <!-- Description -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">📋</div>
+        <div class="card-head-title">About This Service</div>
+      </div>
+      <div class="card-body">
+        <p id="svcDescription" style="font-size:15px;color:var(--ink2);line-height:1.75;"></p>
+      </div>
+    </div>
+
+    <!-- What's included -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">✅</div>
+        <div class="card-head-title">What's Included</div>
+      </div>
+      <div class="card-body">
+        <div class="include-list" id="includeList"></div>
+        <div class="exclude-list" id="excludeList"></div>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">⚡</div>
+        <div class="card-head-title">How It Works</div>
+      </div>
+      <div class="card-body">
+        <div class="process-steps" id="processSteps"></div>
+      </div>
+    </div>
+
+    <!-- Before / After -->
+    <div class="card" id="baCard">
+      <div class="card-head">
+        <div class="card-head-icon">📸</div>
+        <div class="card-head-title">Before & After</div>
+      </div>
+      <div class="card-body">
+        <div class="before-after" id="beforeAfter"></div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;">Actual results from verified HamaraService professionals</p>
+      </div>
+    </div>
+
+    <!-- Ratings -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">⭐</div>
+        <div class="card-head-title">Customer Ratings</div>
+      </div>
+      <div class="card-body">
+        <div class="rating-row" id="ratingRow"></div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">💬</div>
+        <div class="card-head-title">Frequently Asked Questions</div>
+      </div>
+      <div class="card-body" style="padding-top:8px;">
+        <div id="faqList"></div>
+      </div>
+    </div>
+
+    <!-- Similar services -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">🔍</div>
+        <div class="card-head-title">Similar Services</div>
+      </div>
+      <div class="card-body">
+        <div class="sim-grid" id="simGrid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sticky booking card (desktop) -->
+  <div class="svc-right">
+    <div class="book-card">
+      <div class="book-card-top">
+        <div class="book-price" id="bookPrice">₹499 <sub>onwards</sub></div>
+        <div class="book-price-note" id="bookPriceNote">Final price shared after inspection</div>
+      </div>
+      <div class="book-meta" id="bookMeta"></div>
+      <button class="book-btn" onclick="bookNow()">Book Now →</button>
+      <div class="book-trust">
+        <div class="book-trust-item">✅ Background-verified professional</div>
+        <div class="book-trust-item">🔒 Secure payment after service</div>
+        <div class="book-trust-item">🔄 Free reschedule up to 2 hours before</div>
+        <div class="book-trust-item">⭐ Satisfaction guaranteed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile sticky book bar -->
+<div class="mob-book-bar">
+  <div>
+    <div class="mob-book-price" id="mobBookPrice">₹499 <sub>onwards</sub></div>
+    <div style="font-size:11px;color:var(--muted);">⭐ 4.8 · 1,200+ bookings</div>
+  </div>
+  <button class="mob-book-btn" onclick="bookNow()">Book Now →</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Firebase ─────────────────────────────────────────────────────
+var FIREBASE_CONFIG = {
+  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:"hamaraservice-s009.firebaseapp.com",
+  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"hamaraservice-s009",
+  storageBucket:"hamaraservice-s009.firebasestorage.app",
+  messagingSenderId:"1064274729048",
+  appId:"1:1064274729048:web:86643c95419e9dc881d22d"
+};
+if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+var fbAuth = firebase.auth();
+
+// ── Full service catalog with detail data ─────────────────────────
+var SERVICE_DETAILS = {
+  "House Maid":{ icon:"🧹", cat:"Home Cleaning", price:499, unit:"per visit", minHours:2, duration:"2–4 hours",
+    tagline:"Daily housekeeping to keep your home spotless",
+    desc:"Our trained house maids handle all daily cleaning tasks — sweeping, mopping, dusting, and waste disposal. They follow a systematic room-by-room approach ensuring no corner is missed.",
+    includes:["Sweeping & wet mopping all floors","Dusting furniture, shelves & ceiling fans","Cleaning kitchen counter & sink","Bathroom toilet & washbasin wipe-down","Waste bin emptying & disposal","Window sill & door handle cleaning"],
+    excludes:["Deep scrubbing (separate Deep Cleaning service)","Washing clothes or utensils","Outside balcony or terrace"],
+    steps:[{t:"Arrival & briefing",d:"Professional arrives on time and reviews your checklist."},{t:"Room-by-room cleaning",d:"Systematic sweep, mop, dust — starting from bedrooms to kitchen."},{t:"Bathroom & kitchen",d:"Wipe-down of surfaces, sink, toilet seat and mirrors."},{t:"Final check",d:"Walk-through with you before marking job complete."}],
+    faqs:[{q:"Do I need to provide cleaning supplies?",a:"No. Our professionals bring their own eco-friendly cleaning supplies and equipment."},{q:"Can I book a regular daily maid?",a:"Yes! After your first booking you can set a recurring schedule — daily, alternate days, or weekly."},{q:"What if something gets damaged?",a:"All our professionals are insured. Raise a complaint within 24 hours and we'll resolve it."},{q:"How many rooms does one visit cover?",a:"Standard 2-4 hours covers up to a 3BHK. Larger homes may need 2 slots."}],
+    rating:4.8, ratingCount:2840, before:"🏠", after:"✨",
+    similar:["Deep Cleaning","Bathroom Cleaning","Kitchen Cleaning"]
+  },
+  "Deep Cleaning":{ icon:"🧽", cat:"Home Cleaning", price:999, unit:"per session", minHours:4, duration:"4–8 hours",
+    tagline:"Full home deep clean — every surface, every corner",
+    desc:"Our deep cleaning service covers everything your regular maid misses. We scrub tiles, degrease the chimney, clean inside cabinets, wash windows, and sanitise bathrooms and kitchen thoroughly.",
+    includes:["Full floor scrubbing with machine","Inside cabinet & wardrobe cleaning","Kitchen chimney & stove degreasing","Bathroom tile scrubbing & descaling","Window glass & frame cleaning","Sofa & mattress vacuuming","Ceiling fan blade & AC filter cleaning","Balcony & terrace sweep"],
+    excludes:["Upholstery shampooing (separate service)","Pest control","Outside building facade"],
+    steps:[{t:"Pre-inspection",d:"Team assesses home size and creates a task plan."},{t:"Kitchen deep clean",d:"Chimney, stove, tiles, sink, and all surfaces degreased."},{t:"Bathroom descale",d:"Tiles, fixtures, and glass cleaned with descaling solution."},{t:"Rooms & furniture",d:"Wardrobes, shelves, fans, AC filters thoroughly cleaned."},{t:"Floor scrubbing",d:"Machine scrubbing for all floors, grout lines included."},{t:"Final walkthrough",d:"Photo documentation and your sign-off."}],
+    faqs:[{q:"How often should I do a deep clean?",a:"Every 3–6 months is recommended. Many customers book quarterly."},{q:"Do I need to be home?",a:"Yes, for the first booking. After that you can share access instructions."},{q:"How many people come?",a:"Typically 2–4 professionals depending on home size."},{q:"What products do you use?",a:"We use professional-grade, pet-safe, non-toxic cleaning solutions."}],
+    rating:4.9, ratingCount:1920, before:"🏚️", after:"🏡",
+    similar:["House Maid","Bathroom Cleaning","Kitchen Cleaning"]
+  },
+  "Bathroom Cleaning":{ icon:"🚿", cat:"Home Cleaning", price:399, unit:"per bathroom", minHours:1, duration:"45 min – 1.5 hours",
+    tagline:"Sparkling bathroom with zero effort from you",
+    desc:"Our bathroom specialists scrub tiles, descale fixtures, clean the toilet bowl, and leave your bathroom smelling fresh. We use professional-grade descaling agents to remove hard water stains.",
+    includes:["Toilet bowl scrubbing & disinfection","Tile scrubbing & grout cleaning","Shower glass descaling","Washbasin & tap cleaning","Mirror polishing","Floor scrubbing & disinfection","Exhaust fan cleaning","Air freshener application"],
+    excludes:["Plumbing repairs","Window glass outside","Painting or re-grouting"],
+    steps:[{t:"Apply descaling solution",d:"Solution applied to tiles, fixtures, and toilet bowl — left to work."},{t:"Scrub & clean",d:"Professional scrubs all surfaces with appropriate tools."},{t:"Rinse & disinfect",d:"All surfaces rinsed and disinfected with antibacterial solution."},{t:"Polish & finish",d:"Mirror, taps and fittings polished to shine."}],
+    faqs:[{q:"How long does it take per bathroom?",a:"45 minutes to 1.5 hours depending on size and condition."},{q:"Is it safe for septic systems?",a:"Yes. All our cleaning agents are septic-safe."},{q:"Can you remove heavy water stains?",a:"Yes. We use professional descaling acids for stubborn mineral deposits."}],
+    rating:4.7, ratingCount:3100, before:"🚽", after:"🪥",
+    similar:["Deep Cleaning","House Maid","Kitchen Cleaning"]
+  },
+  "AC Cleaning":{ icon:"❄️", cat:"Appliance Care", price:799, unit:"per AC unit", minHours:1, duration:"45 min – 1.5 hours",
+    tagline:"Clean AC = better cooling + lower electricity bills",
+    desc:"A dirty AC filter reduces efficiency by up to 25%. Our technicians dismantle and wash filters, clean coils, clear drainage pipes, and test performance — restoring your AC to peak efficiency.",
+    includes:["Filter removal, wash & dry","Indoor unit coil cleaning","Drainage pipe flush & check","Fan blade cleaning","Outer casing wipe-down","Performance test (temperature check)","Gas pressure check (basic)"],
+    excludes:["Gas refill (separate AC Repair service)","Outdoor unit cleaning","PCB or electrical repairs"],
+    steps:[{t:"Inspection",d:"Technician inspects unit for blockages, leaks, and filter condition."},{t:"Filter cleaning",d:"Filters removed, washed with water and dried."},{t:"Coil & drain cleaning",d:"Evaporator coil and drain pan cleaned to remove mold and debris."},{t:"Reassembly & test",d:"Unit reassembled, switched on and tested for temperature performance."}],
+    faqs:[{q:"How often should AC be cleaned?",a:"At least once before summer (March–April) and once mid-season."},{q:"Will the AC work better after?",a:"Yes. Most customers report 1–3°C better cooling and lower power bills."},{q:"Do I need to switch off main power?",a:"Yes. Please ensure the main switch is accessible before the technician arrives."}],
+    rating:4.8, ratingCount:2200, before:"😰", after:"❄️",
+    similar:["AC Repair","Home Appliance Repair","Water Purifier Service"]
+  },
+  "Plumber":{ icon:"🔧", cat:"Repairs", price:499, unit:"per visit", minHours:1, duration:"30 min – 3 hours",
+    tagline:"Fix leaks, blockages & plumbing issues fast",
+    desc:"Our licensed plumbers handle everything from dripping taps to major pipe leaks, blocked drains, geyser installation, and flush tank repairs. All work is guaranteed for 30 days.",
+    includes:["Tap & faucet repair or replacement","Pipe leak detection and repair","Drain unblocking","Flush tank repair","Geyser connection (basic)","Kitchen/bathroom fixtures installation","Water pressure issues"],
+    excludes:["Major pipeline replacement","Civil work or wall cutting","RO or water purifier installation"],
+    steps:[{t:"Diagnosis",d:"Plumber identifies the root cause of the issue."},{t:"Quotation",d:"Transparent estimate given before any work begins."},{t:"Repair",d:"Fix carried out using quality spare parts."},{t:"Testing",d:"Water flow tested and area cleaned up."}],
+    faqs:[{q:"What if the problem recurs?",a:"30-day service guarantee. We'll return and fix it at no extra charge."},{q:"Do you supply spare parts?",a:"Yes. Parts are charged at MRP and shown to you before installation."},{q:"Can you fix things in the evening?",a:"Yes. We have morning, afternoon, and evening slots available."}],
+    rating:4.7, ratingCount:4100, before:"💧", after:"🔧",
+    similar:["Electrician","Carpenter","Home Appliance Repair"]
+  },
+  "Electrician":{ icon:"⚡", cat:"Repairs", price:499, unit:"per visit", minHours:1, duration:"30 min – 3 hours",
+    tagline:"Safe, certified electrical repairs at home",
+    desc:"Our certified electricians handle wiring issues, switch and socket replacements, fan installations, MCB trips, and more. All work follows safety standards and is tested before leaving.",
+    includes:["Switch & socket repair/replacement","Fan installation & repair","Light fixture installation","MCB/fuse box issues","Wiring fault diagnosis","Inverter/battery connection","Extension board installation"],
+    excludes:["Heavy industrial wiring","Generator installation","Solar panel wiring"],
+    steps:[{t:"Safety check",d:"Electrician checks main board and identifies the fault."},{t:"Quotation",d:"Clear estimate provided before starting work."},{t:"Repair",d:"Certified work done using ISI-marked components."},{t:"Test & sign-off",d:"All repaired circuits tested and demonstrated before leaving."}],
+    faqs:[{q:"Are your electricians certified?",a:"Yes. All are ITI-certified with 2+ years of experience."},{q:"Do you handle emergency calls?",a:"Yes. We offer same-day emergency bookings for urgent issues."},{q:"What safety precautions do you take?",a:"Main power is isolated before any work. All components are ISI-marked."}],
+    rating:4.8, ratingCount:3800, before:"🔌", after:"⚡",
+    similar:["Plumber","Carpenter","CCTV Installation"]
+  },
+  "Car Wash":{ icon:"🚗", cat:"Vehicle Care", price:499, unit:"per car", minHours:1, duration:"45 min – 1.5 hours",
+    tagline:"Showroom-clean car at your doorstep",
+    desc:"Our mobile car wash team comes to your home or office. We use foam wash, microfiber wipes, and tyre dressing to leave your car spotless inside and out.",
+    includes:["Exterior foam wash & rinse","Tyre and rim cleaning","Door sill wiping","Interior vacuum","Dashboard & console wipe","Window glass cleaning (inside + out)","Air freshener"],
+    excludes:["Ceramic coating","Scratch removal or dent repair","Engine bay cleaning"],
+    steps:[{t:"Exterior wash",d:"High-foam wash applied, scrubbed and rinsed with low-pressure water."},{t:"Tyre & rims",d:"Tyres scrubbed and dressed. Rims cleaned of brake dust."},{t:"Interior vacuum",d:"Seats, floor mats, and boot vacuumed."},{t:"Wipe & finish",d:"Dashboard, console, and glass cleaned. Air freshener applied."}],
+    faqs:[{q:"Do you use a lot of water?",a:"We use waterless or low-water techniques — safe for apartments."},{q:"Is the team insured?",a:"Yes. Any accidental damage during wash is covered."},{q:"Can I book weekly?",a:"Yes. Weekly subscription saves you 20%."}],
+    rating:4.6, ratingCount:1800, before:"🚗💨", after:"🚗✨",
+    similar:["Bike Wash","4 Wheeler Mechanic","2 Wheeler Mechanic"]
+  },
+  "Doctor Visit":{ icon:"👨‍⚕️", cat:"Medical", price:699, unit:"per consultation", minHours:0.5, duration:"20–40 minutes",
+    tagline:"MBBS doctor consultation at your home",
+    desc:"Consult a qualified MBBS doctor without leaving home. Our doctors carry basic diagnostic equipment and can prescribe medication, recommend tests, and provide a digital prescription.",
+    includes:["Physical examination","Blood pressure, temperature, SpO2 check","Diagnosis and medical advice","Digital prescription","Referral letter if specialist needed","Basic first aid if required"],
+    excludes:["Blood sample collection (separate service)","Specialist consultation","ICU or emergency care"],
+    steps:[{t:"Booking confirmation",d:"Doctor confirmed and ETA shared via SMS."},{t:"Arrival & examination",d:"Doctor examines and takes medical history."},{t:"Diagnosis",d:"Condition explained in simple terms."},{t:"Prescription & follow-up",d:"Digital prescription sent. Follow-up advice given."}],
+    faqs:[{q:"Are the doctors MBBS qualified?",a:"Yes. All doctors are MBBS with minimum 3 years of clinical experience."},{q:"What can they treat at home?",a:"Fever, cold, infections, BP, diabetes check-ups, minor injuries, and more."},{q:"Can they prescribe controlled medicines?",a:"Doctors can prescribe standard medicines. Controlled substances require specialist review."}],
+    rating:4.9, ratingCount:1100, before:"🤒", after:"😊",
+    similar:["Nurse Visit","Lab Test Collection","Elderly Care"]
+  },
+  "Pest Control":{ icon:"🐛", cat:"Pest Control", price:799, unit:"per treatment", minHours:1, duration:"1–2 hours",
+    tagline:"Safe, effective pest elimination for your home",
+    desc:"Our certified pest control technicians use WHO-approved chemicals to eliminate cockroaches, rodents, termites, mosquitoes, and bedbugs. Treatment is safe for children and pets after drying.",
+    includes:["Cockroach gel treatment (kitchen & bathrooms)","Rodent bait stations","Mosquito spray (interior)","Termite borate spray (wood joints)","Bedbug treatment (on request)","Service report & follow-up advice"],
+    excludes:["Fumigation (separate service)","Agricultural or commercial-scale treatment","Bird & reptile removal"],
+    steps:[{t:"Inspection",d:"Technician identifies pest species and infestation level."},{t:"Preparation advice",d:"You're asked to clear kitchen shelves and cover food."},{t:"Treatment",d:"Chemical application in targeted areas using safe equipment."},{t:"Safety brief",d:"Re-entry time given (usually 30–60 min). Tips for prevention shared."}],
+    faqs:[{q:"Is it safe for kids and pets?",a:"Yes, after the drying period (30–60 minutes). Keep kids and pets out during treatment."},{q:"How long does the effect last?",a:"Cockroach treatment lasts 3–6 months. Rodent control is ongoing."},{q:"Do I need to vacate the house?",a:"Only for 30–60 minutes during and after treatment."}],
+    rating:4.7, ratingCount:2300, before:"🐛", after:"🏠",
+    similar:["Deep Cleaning","House Maid","Gardener"]
+  },
+};
+
+// Default detail for unlisted services
+function getDefaultDetail(name, cat, icon, price) {
+  return {
+    icon: icon||'🔧', cat: cat||'Home Services', price: price||499,
+    unit: 'per visit', minHours: 1, duration: '1–2 hours',
+    tagline: 'Professional ' + name + ' service at your doorstep',
+    desc: 'Our trained and background-verified professionals provide high-quality ' + name + ' service. All work is done to your satisfaction with a 100% guarantee.',
+    includes: ['Professional-grade tools & equipment','Trained & background-verified professional','Work completion report','30-day service guarantee'],
+    excludes: ['Major repairs beyond scope of service','Spare parts (charged separately at MRP)'],
+    steps: [
+      {t:'Booking confirmed',d:'Professional assigned and ETA shared.'},
+      {t:'Arrival & assessment',d:'Professional checks the work area and confirms scope.'},
+      {t:'Service delivery',d:'Work carried out professionally.'},
+      {t:'Completion',d:'Walk-through done and your satisfaction confirmed.'}
+    ],
+    faqs: [
+      {q:'How do I reschedule?',a:'You can reschedule up to 2 hours before the appointment from your booking panel.'},
+      {q:'What if I\'m not satisfied?',a:'We offer free re-service within 48 hours if you\'re not satisfied.'}
+    ],
+    rating: 4.7, ratingCount: 800, before:'📦', after:'✅',
+    similar: []
+  };
+}
+
+// Full catalog (same as index.html)
+var ALL_SVCS = [
+  {icon:"🧹",name:"House Maid",cat:"Home Cleaning",price:499},
+  {icon:"🧽",name:"Deep Cleaning",cat:"Home Cleaning",price:999},
+  {icon:"🚿",name:"Bathroom Cleaning",cat:"Home Cleaning",price:399},
+  {icon:"🍳",name:"Kitchen Cleaning",cat:"Home Cleaning",price:699},
+  {icon:"🛋️",name:"Sofa / Carpet Cleaning",cat:"Home Cleaning",price:599},
+  {icon:"👔",name:"Laundry / Ironing",cat:"Home Cleaning",price:299},
+  {icon:"❄️",name:"AC Cleaning",cat:"Appliance Care",price:799},
+  {icon:"🔩",name:"AC Repair",cat:"Appliance Care",price:599},
+  {icon:"🫙",name:"Home Appliance Repair",cat:"Appliance Care",price:599},
+  {icon:"💧",name:"Water Purifier Service",cat:"Appliance Care",price:499},
+  {icon:"🔧",name:"Plumber",cat:"Repairs",price:499},
+  {icon:"⚡",name:"Electrician",cat:"Repairs",price:499},
+  {icon:"🪚",name:"Carpenter",cat:"Repairs",price:599},
+  {icon:"🎨",name:"Painter",cat:"Repairs",price:699},
+  {icon:"📷",name:"CCTV Installation",cat:"Repairs",price:899},
+  {icon:"☀️",name:"Solar Panel Cleaning",cat:"Repairs",price:699},
+  {icon:"🚗",name:"Car Wash",cat:"Vehicle Care",price:499},
+  {icon:"🏍️",name:"Bike Wash",cat:"Vehicle Care",price:199},
+  {icon:"🔧",name:"4 Wheeler Mechanic",cat:"Vehicle Care",price:599},
+  {icon:"🛵",name:"2 Wheeler Mechanic",cat:"Vehicle Care",price:299},
+  {icon:"🐛",name:"Pest Control",cat:"Pest Control",price:799},
+  {icon:"🍱",name:"Cook / Cooking Person",cat:"Cooking",price:799},
+  {icon:"✂️",name:"Haircut (Men)",cat:"Beauty & Wellness",price:199},
+  {icon:"💇",name:"Haircut (Women)",cat:"Beauty & Wellness",price:349},
+  {icon:"💆",name:"Full Body Massage",cat:"Beauty & Wellness",price:999},
+  {icon:"💪",name:"Gym / Fitness Trainer",cat:"Beauty & Wellness",price:999},
+  {icon:"👨‍⚕️",name:"Doctor Visit",cat:"Medical",price:699},
+  {icon:"💉",name:"Nurse Visit",cat:"Medical",price:399},
+  {icon:"🧪",name:"Lab Test Collection",cat:"Medical",price:199},
+  {icon:"👶",name:"Babysitter / Nanny",cat:"Care Services",price:599},
+  {icon:"🧓",name:"Elderly Care",cat:"Care Services",price:799},
+  {icon:"🌱",name:"Gardener",cat:"Outdoor",price:399},
+  {icon:"🚙",name:"Driver",cat:"Outdoor",price:699},
+  {icon:"💂",name:"Security Guard",cat:"Security",price:899},
+];
+
+var currentServiceName = '';
+var currentDetail = null;
+
+// ── Load page ─────────────────────────────────────────────────────
+(function init(){
+  var params = new URLSearchParams(window.location.search);
+  var serviceName = decodeURIComponent(params.get('service') || '');
+  if(!serviceName){ window.location.href = 'index.html'; return; }
+  currentServiceName = serviceName;
+
+  // Find in catalog
+  var catalogItem = ALL_SVCS.find(function(s){ return s.name === serviceName; });
+  var detail = SERVICE_DETAILS[serviceName] || getDefaultDetail(
+    serviceName,
+    catalogItem ? catalogItem.cat : '',
+    catalogItem ? catalogItem.icon : '🔧',
+    catalogItem ? catalogItem.price : 499
+  );
+  currentDetail = detail;
+
+  document.title = serviceName + ' – Hamara Service';
+  renderPage(serviceName, detail);
+})();
+
+function renderPage(name, d) {
+  // Hero
+  document.getElementById('heroIcon').textContent = d.icon;
+  document.getElementById('heroCat').textContent = d.cat;
+  document.getElementById('heroName').textContent = name;
+  document.getElementById('heroTagline').textContent = d.tagline;
+  document.getElementById('heroPills').innerHTML =
+    '<div class="svc-pill">⏱ Min ' + d.minHours + (d.minHours === 0.5 ? ' hour' : ' hours') + '</div>' +
+    '<div class="svc-pill">⏳ ' + d.duration + '</div>' +
+    '<div class="svc-pill green">✅ Verified Pro</div>' +
+    '<div class="svc-pill">🛡 30-day guarantee</div>';
+
+  // Description
+  document.getElementById('svcDescription').textContent = d.desc;
+
+  // Price
+  var priceStr = '₹' + d.price + ' <sub>' + d.unit + '</sub>';
+  document.getElementById('bookPrice').innerHTML = priceStr;
+  document.getElementById('mobBookPrice').innerHTML = '₹' + d.price + ' <sub>' + d.unit + '</sub>';
+  document.getElementById('bookPriceNote').textContent = 'Inclusive of all charges';
+
+  // Book meta
+  document.getElementById('bookMeta').innerHTML =
+    '<div class="book-meta-row"><span class="book-meta-label">⏱ Minimum duration</span><span class="book-meta-val">' + d.duration + '</span></div>' +
+    '<div class="book-meta-row"><span class="book-meta-label">👤 Team size</span><span class="book-meta-val">1–2 professionals</span></div>' +
+    '<div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">' + d.rating + ' (' + d.ratingCount.toLocaleString() + ' reviews)</span></div>' +
+    '<div class="book-meta-row"><span class="book-meta-label">📦 Equipment</span><span class="book-meta-val">Provided by us</span></div>';
+
+  // Includes
+  document.getElementById('includeList').innerHTML = d.includes.map(function(i){
+    return '<div class="include-item"><div class="include-check">✓</div><div class="include-text">' + i + '</div></div>';
+  }).join('');
+
+  // Excludes
+  if(d.excludes && d.excludes.length) {
+    document.getElementById('excludeList').innerHTML =
+      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:16px;margin-bottom:8px;">Not included</div>' +
+      d.excludes.map(function(e){ return '<div class="exclude-item"><span class="exclude-x">✗</span>' + e + '</div>'; }).join('');
+  }
+
+  // Process steps
+  document.getElementById('processSteps').innerHTML = d.steps.map(function(s, i){
+    return '<div class="process-step"><div class="ps-num">' + (i+1) + '</div><div class="ps-body"><div class="ps-title">' + s.t + '</div><div class="ps-desc">' + s.d + '</div></div></div>';
+  }).join('');
+
+  // Before / After
+  document.getElementById('beforeAfter').innerHTML =
+    '<div class="ba-card"><div class="ba-label before">Before</div><div class="ba-img">' + d.before + '</div></div>' +
+    '<div class="ba-card"><div class="ba-label after">After</div><div class="ba-img">' + d.after + '</div></div>';
+
+  // Ratings
+  document.getElementById('ratingRow').innerHTML =
+    '<div style="text-align:center;padding-right:20px;">' +
+      '<div class="rating-num">' + d.rating + '</div>' +
+      '<div class="rating-stars">★★★★★</div>' +
+      '<div class="rating-count">' + d.ratingCount.toLocaleString() + ' reviews</div>' +
+    '</div>' +
+    '<div class="rating-bars" style="flex:1;">' +
+      ['5','4','3','2','1'].map(function(n, i){
+        var widths = ['72','18','6','2','2'];
+        return '<div class="rbar-row">' + n + '★ <div class="rbar-track"><div class="rbar-fill" style="width:' + widths[i] + '%"></div></div></div>';
+      }).join('') +
+    '</div>';
+
+  // FAQ
+  document.getElementById('faqList').innerHTML = d.faqs.map(function(f, i){
+    return '<div class="faq-item" id="faq'+i+'">' +
+      '<div class="faq-q" onclick="toggleFaq('+i+')">' + f.q +
+        '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</div>' +
+      '<div class="faq-a">' + f.a + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Similar services
+  var simNames = d.similar.length ? d.similar : ALL_SVCS.filter(function(s){ return s.cat === d.cat && s.name !== name; }).slice(0,6).map(function(s){ return s.name; });
+  document.getElementById('simGrid').innerHTML = simNames.map(function(sn){
+    var s = ALL_SVCS.find(function(x){ return x.name === sn; }) || {icon:'🔧', name:sn, price:499};
+    return '<a class="sim-card" onclick="openService(\'' + encodeURIComponent(sn) + '\')">' +
+      '<div class="sim-icon">' + s.icon + '</div>' +
+      '<div class="sim-name">' + sn + '</div>' +
+      '<div class="sim-price">from ₹' + s.price + '</div>' +
+    '</a>';
+  }).join('');
+}
+
+function toggleFaq(i) {
+  var el = document.getElementById('faq' + i);
+  if(el) el.classList.toggle('open');
+}
+
+function openService(slug) {
+  window.location.href = 'service-detail.html?service=' + slug;
+}
+
+function bookNow() {
+  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
+  var url = 'user-booking.html?service=' + encodeURIComponent(currentServiceName);
+  if(user) {
+    window.location.href = url;
+  } else {
+    sessionStorage.setItem('hs_after_login', url);
+    window.location.href = 'user-panel.html?tab=login';
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.style.display = 'none'; }, 3000);
+}
+
+// Auth
+fbAuth.onAuthStateChanged(function(user){
+  if(user) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:user.uid,name:user.displayName||'',email:user.email||''}));
+  else sessionStorage.removeItem('hs_current_customer');
+});
+</script>
+</body>
+</html>
