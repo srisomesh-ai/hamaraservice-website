@@ -773,7 +773,18 @@ function doRegister() {
       photoURL:'', provider:'email',
       registeredAt:new Date().toISOString()
     };
-    return fbDB.ref('customers/'+u.uid).set(profile).then(function(){ return id; });
+    // Write to DB via REST so we can see exact error
+    var dbUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/'+u.uid+'.json';
+    return u.getIdToken().then(function(token) {
+      return fetch(dbUrl + '?auth=' + token, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+    }).then(function(res) {
+      if (!res.ok) return res.text().then(function(t){ throw new Error('DB write failed: ' + t); });
+      return id;
+    });
   }).then(function(id) {
     _inProgress = false;
     btn.classList.remove('loading'); btn.disabled=false;
