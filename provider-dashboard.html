@@ -5462,35 +5462,38 @@ function dashBuildGrid() {
 }
 
 function dashPreloadCurrentServices() {
-  if (!currentProvider || !currentProvider.services) return;
-  currentProvider.services.forEach(function(svc){
-    var chip = document.querySelector('#dashSvcGrid .dash-chip');
-    // find by name
-    var chips = document.querySelectorAll('#dashSvcGrid .dash-chip');
-    chips.forEach(function(c){
-      if (c.querySelector('.dash-chip-name') && c.querySelector('.dash-chip-name').textContent === svc.name) {
-        c.classList.add('selected');
-        var pan = document.getElementById('dpan_'+svc.name.replace(/\W/g,'_'));
-        if (pan) {
-          pan.classList.add('open');
-          (svc.subRates||[]).forEach(function(sr){
-            var chk = document.getElementById('dchk_'+(sr.key||'').replace(/__/g,'__'));
-            if (chk) chk.checked = true;
-            var inp = pan.querySelector('input.dash-subitem-inp[data-key="'+sr.key+'"]');
-            if (inp) inp.value = sr.rate || inp.value;
-          });
-        }
-      }
+  // Use P — same provider object used throughout dashboard
+  var P = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
+  if (!P || !P.services || !P.services.length) return;
+  P.services.forEach(function(svc){
+    document.querySelectorAll('#dashSvcGrid .dash-chip').forEach(function(c){
+      var nameEl = c.querySelector('.dash-chip-name');
+      if (!nameEl || nameEl.textContent !== svc.name) return;
+      c.classList.add('selected');
+      var pan = document.getElementById('dpan_'+svc.name.replace(/\W/g,'_'));
+      if (!pan) return;
+      pan.classList.add('open');
+      (svc.subRates||[]).forEach(function(sr){
+        var chk = document.getElementById('dchk_'+sr.key);
+        if (chk) chk.checked = true;
+        var inp = pan.querySelector('input.dash-subitem-inp[data-key="'+sr.key+'"]');
+        if (inp && sr.rate) inp.value = sr.rate;
+      });
     });
   });
 }
 
 function dashSaveSvcs() {
-  if (!currentProvider || !currentProvider.id) { showToast('❌ Provider not loaded'); return; }
+  // Use P — the provider object used throughout this dashboard
+  var P = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
+  if (!P || !P.id) { showToast('❌ Provider not loaded'); return; }
+
   var result = [];
   var chips = document.querySelectorAll('#dashSvcGrid .dash-chip.selected');
   chips.forEach(function(chip){
-    var svcName = chip.querySelector('.dash-chip-name').textContent;
+    var nameEl = chip.querySelector('.dash-chip-name');
+    if (!nameEl) return;
+    var svcName = nameEl.textContent;
     var pan = document.getElementById('dpan_'+svcName.replace(/\W/g,'_'));
     var subRates = [];
     if (pan) {
@@ -5507,16 +5510,15 @@ function dashSaveSvcs() {
   var status = document.getElementById('dashSaveStatus');
   if (status) status.textContent = '⏳ Saving...';
 
-  fbWrite('providers/'+currentProvider.id+'/services', result)
-    .then(function(){
-      currentProvider.services = result;
-      if (status) status.textContent = '✅ Saved '+result.length+' services';
-      showToast('✅ Services updated!');
-    })
-    .catch(function(){
-      if (status) status.textContent = '❌ Save failed';
-      showToast('❌ Failed to save');
-    });
+  // Save to Firebase using dashboard's fbWrite
+  fbWrite('providers/'+P.id+'/services', result);
+
+  // Update localStorage so it persists on refresh
+  P.services = result;
+  localStorage.setItem('hs_current_provider', JSON.stringify(P));
+
+  if (status) status.textContent = '✅ Saved '+result.length+' services!';
+  showToast('✅ Services updated!');
 }
 </script>
 
