@@ -764,7 +764,7 @@ const FIREBASE_CONFIG = {
 if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 const fbAuth = firebase.auth();
 const fbDB   = firebase.database();
-// Force LOCAL persistence so session survives page navigation
+// Force LOCAL persistence so session survives page navigation  
 fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
 
 const googleProvider = new firebase.auth.GoogleAuthProvider();
