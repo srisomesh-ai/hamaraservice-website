@@ -404,6 +404,119 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 .psvc-summary{padding:8px 12px;font-size:12px;font-weight:700;color:var(--teal,#1B6B7A);
   background:#e6f4f6;border-radius:10px;margin-bottom:10px;text-align:center;}
 .psvc-price-note{font-size:11px;color:#94a3b8;text-align:right;margin-bottom:6px;}
+
+/* ── My Services Page ─────────────────────────────────────────── */
+#svcGrid{display:block;}
+.svc-chip{border:2px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+.svc-chip.selected{border-color:var(--green);background:var(--green-light);}
+.svc-chip:hover:not(.selected){border-color:var(--teal);background:var(--teal-light);}
+.svc-icon{font-size:26px;margin-bottom:5px;}
+.svc-name{font-size:12px;font-weight:800;color:var(--text);}
+.svc-price-input{display:none;margin-top:8px;padding:7px 8px;width:100%;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;border:2px solid var(--border);border-radius:8px;outline:none;text-align:center;background:white;}
+.svc-chip.selected .svc-price-input{display:block;border-color:var(--green);}
+#regMap{width:100%;height:250px;border-radius:12px;border:2px solid var(--border);margin-bottom:12px;}
+.step-nav{display:flex;gap:12px;justify-content:flex-end;margin-top:8px;}
+.snb{padding:12px 28px;border-radius:11px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;border:none;}
+.snb.back{background:var(--bg);color:var(--muted);border:2px solid var(--border);}
+.snb.back:hover{border-color:var(--teal);color:var(--teal);}
+.snb.next{background:linear-gradient(135deg,var(--brand),var(--brand2));color:white;box-shadow:0 3px 14px rgba(232,101,26,0.3);}
+.snb.next:hover{transform:translateY(-2px);}
+.snb.submit{background:linear-gradient(135deg,var(--green),#34d058);color:white;box-shadow:0 3px 14px rgba(30,168,75,0.3);}
+.snb.submit:hover{transform:translateY(-2px);}
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.summary-row:last-child{border:none;}
+.summary-label{color:var(--muted);font-weight:700;flex-shrink:0;margin-right:12px;}
+.summary-value{font-weight:800;color:var(--text);text-align:right;}
+.success-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid var(--green);padding:40px;text-align:center;max-width:540px;margin:0 auto;}
+.success-id{font-family:'Baloo 2',sans-serif;font-size:32px;font-weight:800;color:var(--red);background:var(--red-light);border-radius:12px;padding:10px 22px;display:inline-block;margin:12px 0;}
+.success-steps{display:flex;flex-direction:column;gap:8px;text-align:left;margin:20px 0;background:var(--bg);border-radius:12px;padding:18px;}
+.success-step{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--text);}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--teal);cursor:pointer;box-shadow:0 2px 6px rgba(27,107,122,0.4);}
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:12px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 28px rgba(0,0,0,0.2);white-space:nowrap;max-width:90vw;}
+
+/* ── Unified registration fields ──────────────────────────── */
+.field-wrap        { display:flex; flex-direction:column; gap:5px; }
+.field-label       { font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.4px; }
+.field-inp         { padding:11px 14px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s, box-shadow .2s; background:#fafafa; width:100%; box-sizing:border-box; }
+.field-inp:focus   { border-color:var(--teal); box-shadow:0 0 0 3px rgba(27,107,122,.1); background:white; }
+.field-inp.valid   { border-color:#16a34a !important; box-shadow:0 0 0 3px rgba(22,163,74,.1) !important; }
+.field-inp.invalid { border-color:var(--brand) !important; box-shadow:0 0 0 3px rgba(232,101,26,.1) !important; }
+@media(max-width:600px){ .field-wrap { grid-column:1/-1 !important; } }
+/* ═══ MOBILE APP FEEL ═══ */
+@media(max-width:768px){
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom));overscroll-behavior-y:none;}
+  header{padding:0 16px;}
+  .hero-band{padding:24px 16px;}
+  .main{padding:20px 14px 100px;}
+  .login-card{padding:24px 18px;}
+  .form-card{padding:20px 16px;}
+  .tab-btn{font-size:13px;padding:11px 8px;}
+}
+/* ═══ MOBILE BOTTOM NAV ═══ */
+.mob-bottom-nav{display:none;}
+@media(min-width:769px){.mob-bottom-nav{display:none !important;}}
+@media(max-width:768px){
+  .mob-bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    height:calc(64px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:white;border-top:1px solid #e2e8f0;
+    box-shadow:0 -4px 20px rgba(0,0,0,.10);z-index:9999;
+    align-items:center;justify-content:space-around;
+    font-family:'DM Sans',sans-serif;
+  }
+  .mob-nav-item{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;flex:1;padding:8px 4px;text-decoration:none;color:#718096;
+    font-size:10px;font-weight:600;letter-spacing:.2px;transition:color .15s;
+    -webkit-tap-highlight-color:transparent;position:relative;
+  }
+  .mob-nav-item svg{width:22px;height:22px;transition:transform .15s;}
+  .mob-nav-item:active svg{transform:scale(.85);}
+  .mob-nav-item.active{color:#1B6B7A;}
+  .mob-nav-item.active svg{color:#1B6B7A;}
+  .mob-nav-center{color:transparent !important;pointer-events:auto;margin-top:-28px;}
+  .mob-nav-center span{color:#1B6B7A;font-size:9px;font-weight:700;margin-top:30px;display:block;text-align:center;}
+  .mob-nav-fab{
+    width:54px;height:54px;
+    background:linear-gradient(135deg,#E8651A,#ff8c3a);
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(232,101,26,.45);position:absolute;top:-14px;
+    transition:transform .15s;
+  }
+  .mob-nav-center:active .mob-nav-fab{transform:scale(.9);}
+  .mob-nav-fab svg{width:24px;height:24px;color:white;stroke:white;}
+}
+
+
+  /* ── Sub-category panel ──────────────────────────────── */
+  .svc-subpanel{display:none;grid-column:1/-1;background:white;border:2px solid var(--green);border-radius:14px;padding:16px;margin-bottom:8px;}
+  .svc-subpanel.show{display:block;}
+  .svc-subpanel-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .svc-subpanel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+  .svc-subitem{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;background:#f9fafb;}
+  .svc-subitem-name{font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:2px;line-height:1.3;}
+  .svc-subitem-customer{font-size:10px;color:#718096;margin-bottom:6px;}
+  .svc-subitem-customer b{color:#1B6B7A;}
+  .svc-subitem-inp{width:100%;padding:5px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;text-align:center;outline:none;background:white;}
+  .svc-subitem-inp:focus{border-color:#1B6B7A;}
+  .svc-subitem-lbl{font-size:9px;color:#718096;text-align:center;margin-top:3px;}
+  .svc-chip .svc-price-badge{display:none;position:absolute;top:-6px;right:-6px;background:#1B6B7A;color:white;font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;white-space:nowrap;}
+  .svc-chip.selected .svc-price-badge{display:block;background:#2ecc71;}
+  .svc-firebase-banner{background:#e6f4f6;border:1.5px solid #1B6B7A;border-radius:10px;padding:10px 14px;font-size:12px;color:#1B6B7A;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* ── Step 2: Service Selection ─────────────────────────────────────── */
+#svcGrid{display:block !important;}
+
+/* Service group card */
+.svc-group{border:2px solid #e2e8f0;border-radius:14px;margin-bottom:10px;background:#fff;}
+
+/* Collapsed header */
+#page-services .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.svc-save-btn{background:var(--teal,#1B6B7A);color:white;border:none;border-radius:10px;padding:13px 28px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;}
+.svc-save-btn:hover{opacity:.9;}
+
 </style>
 </head>
 <script>window.HS_SOUND_ROLE='provider';</script>
@@ -435,6 +548,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
     <div class="nav-item" onclick="showPage('profile')"><span class="nav-icon">👤</span>My Profile</div>
     <div class="nav-item" onclick="showPage('availability')"><span class="nav-icon">📅</span>Availability</div>
     <div class="nav-item" onclick="showPage('location')"><span class="nav-icon">📍</span>Update Location</div>
+    <div class="nav-item" onclick="showPage('services')"><span class="nav-icon">🛠️</span>My Services</div>
     <div class="nav-item" onclick="showPage('ratings')"><span class="nav-icon">⭐</span>Ratings</div>
     <div class="nav-item" onclick="showPage('notifications')"><span class="nav-icon">🔔</span>Notifications<span class="nav-badge" id="notifBadge">0</span></div>
   </nav>
@@ -4210,6 +4324,1248 @@ function showJobTakenPopup(provName) {
   document.body.appendChild(ov);
   document.getElementById('_jtcClose').onclick = function(){ ov.remove(); };
 }
+
+
+// ══════════════════════════════════════════════════════════════════
+// MY SERVICES PAGE — provider-dashboard.html
+// ══════════════════════════════════════════════════════════════════
+
+var SVC_SUBCATS = {
+  'House Maid':            { id:'SVC001', subs:[
+    {k:'sweep.1bhk',name:'Sweeping – 1 BHK',    def:149},
+    {k:'sweep.2bhk',name:'Sweeping – 2 BHK',    def:249},
+    {k:'sweep.3bhk',name:'Sweeping – 3 BHK',    def:349},
+    {k:'dust.1bhk', name:'Dusting – 1 BHK',     def:199},
+    {k:'dishes.daily',name:'Dishwashing – Daily',def:149},
+  ]},
+  'Deep Cleaning':         { id:'SVC002', subs:[
+    {k:'bhk.1bhk',  name:'With Material – 1 BHK',   def:999},
+    {k:'bhk.2bhk',  name:'With Material – 2 BHK',   def:1499},
+    {k:'bhk.3bhk',  name:'With Material – 3 BHK',   def:1999},
+    {k:'without.1bhk',name:'Without Material – 1 BHK',def:749},
+    {k:'without.2bhk',name:'Without Material – 2 BHK',def:1124},
+  ]},
+  'Bathroom Cleaning':     { id:'SVC003', subs:[
+    {k:'with.perBath',   name:'With Material (per bathroom)',   def:399},
+    {k:'without.perBath',name:'Without Material (per bathroom)',def:299},
+    {k:'addon.bathtub',  name:'Bathtub Deep Clean',            def:199},
+    {k:'addon.shower',   name:'Glass Shower Cabin',            def:149},
+  ]},
+  'Kitchen Cleaning':      { id:'SVC004', subs:[
+    {k:'with.tiles',   name:'Tiles & Walls',          def:199},
+    {k:'with.cabinets',name:'Cabinets',                def:249},
+    {k:'with.stove',   name:'Stove & Countertop',      def:249},
+    {k:'without.tiles',name:'Tiles (manpower)',        def:149},
+    {k:'without.stove',name:'Stove (manpower)',        def:187},
+  ]},
+  'Sofa / Carpet Cleaning':{ id:'SVC005', subs:[
+    {k:'sofa.1seater',     name:'Sofa – 1 Seater',        def:399},
+    {k:'sofa.2seater',     name:'Sofa – 2 Seater',        def:599},
+    {k:'sofa.3seater',     name:'Sofa – 3 Seater',        def:799},
+    {k:'carpet.small',     name:'Carpet – Small',         def:399},
+    {k:'carpet.large',     name:'Carpet – Large',         def:899},
+    {k:'mattress.with',    name:'Mattress (per item)',     def:299},
+  ]},
+  'AC Cleaning':           { id:'SVC007B', subs:[
+    {k:'svc.filter',      name:'Filter Clean (1 Ton)',    def:399},
+    {k:'svc.deepclean',   name:'Deep Clean (1.5 Ton)',    def:799},
+    {k:'svc.outdoor',     name:'Outdoor Unit',            def:399},
+  ]},
+  'AC Repair':             { id:'SVC007C', subs:[
+    {k:'svc.gas',         name:'Gas Refill',              def:1200},
+    {k:'svc.notcooling',  name:'Not Cooling',             def:499},
+    {k:'svc.notstarting', name:'Not Starting',            def:499},
+    {k:'svc.water',       name:'Water Leakage',           def:399},
+  ]},
+  'Plumber':               { id:'SVC010', subs:[
+    {k:'svc.leak',        name:'Pipe Leak Fix',           def:199},
+    {k:'svc.blockage',    name:'Blockage / Drain',        def:299},
+    {k:'svc.toilet',      name:'Toilet Repair',           def:249},
+    {k:'svc.tapfit',      name:'Tap Repair / Fit',        def:249},
+    {k:'svc.motor',       name:'Motor / Pump Install',    def:399},
+  ]},
+  'Electrician':           { id:'SVC011', subs:[
+    {k:'svc.mcb',         name:'MCB / Fuse Fix',          def:199},
+    {k:'svc.fan',         name:'Fan Install / Repair',    def:299},
+    {k:'svc.light',       name:'Light Fitting',           def:199},
+    {k:'svc.wiring',      name:'Wiring Work',             def:299},
+  ]},
+  'Carpenter':             { id:'SVC012', subs:[
+    {k:'svc.door',        name:'Door Repair',             def:299},
+    {k:'svc.furniture',   name:'Furniture Repair',        def:349},
+    {k:'svc.wardrobe',    name:'Wardrobe Install',        def:349},
+    {k:'svc.assembly',    name:'Furniture Assembly',      def:499},
+  ]},
+  'Pest Control':          { id:'SVC018', subs:[
+    {k:'pest.cockroach',  name:'Cockroach Control',       def:999},
+    {k:'pest.rodent',     name:'Rat / Rodent Control',    def:1299},
+    {k:'pest.mosquito',   name:'Mosquito Control',        def:999},
+    {k:'pest.termite',    name:'Termite Control',         def:2499},
+    {k:'pest.bedbug',     name:'Bed Bug Treatment',       def:1999},
+    {k:'pest.general',    name:'General Full Home',       def:1999},
+  ]},
+  'Cook / Cooking Person': { id:'SVC019', subs:[
+    {k:'svc.breakfast',   name:'Breakfast Cooking',       def:299},
+    {k:'svc.lunch',       name:'Lunch Cooking',           def:399},
+    {k:'svc.dinner',      name:'Dinner Cooking',          def:349},
+    {k:'svc.fullday',     name:'Full Day Cook',           def:799},
+    {k:'svc.party',       name:'Party / Function',        def:1499},
+  ]},
+  'Haircut (Men)':         { id:'SVC023', subs:[
+    {k:'svc.haircut',     name:'Haircut',                 def:249},
+    {k:'svc.shave',       name:'Clean Shave',             def:199},
+    {k:'svc.beardtrim',   name:'Beard Trim',              def:199},
+    {k:'svc.combo',       name:'Grooming Combo',          def:999},
+  ]},
+  'Haircut (Women)':       { id:'SVC024', subs:[
+    {k:'cut.trim',        name:'Trim / Basic Cut',        def:349},
+    {k:'facial.basic',    name:'Basic Facial',            def:499},
+    {k:'makeup.party',    name:'Party Makeup',            def:1499},
+  ]},
+  'Full Body Massage':     { id:'SVC025', subs:[
+    {k:'base.price',      name:'Per Session (base)',      def:999},
+  ]},
+  'Doctor Visit':          { id:'SVC026', subs:[
+    {k:'visit.general',   name:'General Consultation',    def:599},
+    {k:'visit.elderly',   name:'Elderly Check-Up',        def:799},
+    {k:'visit.urgent',    name:'Urgent / Emergency',      def:999},
+  ]},
+  'Nurse Visit':           { id:'SVC027', subs:[
+    {k:'svc.injection',   name:'Injection / Vaccination', def:399},
+    {k:'svc.dressing',    name:'Wound Dressing',          def:499},
+    {k:'svc.fullday',     name:'Full Day Nurse (8 hrs)',  def:1999},
+  ]},
+  'Car Wash':              { id:'SVC016', subs:[
+    {k:'car.exterior',    name:'Exterior Car Cleaning',   def:299},
+    {k:'car.interior',    name:'Interior Cleaning',       def:249},
+    {k:'car.premium',     name:'Premium Cleaning',        def:499},
+  ]},
+  'Bike Wash':             { id:'SVC016B', subs:[
+    {k:'svc.bike_exterior',name:'Exterior Bike Clean',    def:149},
+    {k:'svc.bike_chain',   name:'Chain & Engine Area',    def:99},
+    {k:'svc.bike_premium', name:'Premium Bike Wash',      def:199},
+  ]},
+  '4 Wheeler Mechanic':    { id:'SVC017C', subs:[
+    {k:'svc.car_service',   name:'General Car Service',   def:599},
+    {k:'svc.car_oilchange', name:'Oil & Filter Change',   def:499},
+    {k:'svc.car_battery',   name:'Battery Check',         def:399},
+  ]},
+  '2 Wheeler Mechanic':    { id:'SVC017B', subs:[
+    {k:'svc.bike_service',  name:'General Bike Service',  def:299},
+    {k:'svc.bike_oilchange',name:'Engine Oil Change',     def:249},
+    {k:'svc.bike_tyre',     name:'Tyre Puncture / Change',def:149},
+  ]},
+  'Security Guard':        { id:'SVC020', subs:[
+    {k:'type.daytime',    name:'Daytime Guard (8 hrs)',   def:899},
+    {k:'type.nighttime',  name:'Night Guard (8 hrs)',     def:999},
+    {k:'type.fullday',    name:'Full Day Guard (12 hrs)', def:1699},
+    {k:'type.bouncer',    name:'Event Bouncer',           def:1299},
+  ]},
+  'Driver':                { id:'SVC021', subs:[
+    {k:'car.local',       name:'Car – Local / City',      def:299},
+    {k:'car.fullday',     name:'Car – Full Day (8 hrs)',  def:699},
+    {k:'auto.local',      name:'Auto – Local',            def:199},
+  ]},
+  'Gym / Fitness Trainer': { id:'SVC022', subs:[
+    {k:'svc.weightloss',  name:'Weight Loss Training',    def:599},
+    {k:'svc.muscle',      name:'Muscle Building',         def:649},
+    {k:'svc.yoga',        name:'Yoga & Flexibility',      def:499},
+    {k:'svc.monthly',     name:'Monthly Package',         def:5999},
+  ]},
+  'Babysitter / Nanny':    { id:'SVC029', subs:[
+    {k:'care.half',       name:'Half Day (4 hrs)',        def:599},
+    {k:'care.fullday',    name:'Full Day (8–10 hrs)',     def:999},
+    {k:'care.monthly',    name:'Monthly Nanny',           def:18999},
+  ]},
+  'Elderly Care':          { id:'SVC030', subs:[
+    {k:'care.half',       name:'Half Day Care (4 hrs)',   def:799},
+    {k:'care.fullday',    name:'Full Day Care (8 hrs)',   def:1299},
+    {k:'care.monthly',    name:'Monthly Plan',            def:24999},
+  ]},
+};
+
+function buildServices(){ return [
+{id:"SVC001",icon:"\ud83e\uddf9",name:"House Maid",cat:"Home Cleaning",tasks:[
+  {n:"Sweeping & Mopping",k:"sweep",variants:[
+    {key:"1bhk",lbl:"1 BHK",def:149},
+    {key:"2bhk",lbl:"2 BHK",def:249},
+    {key:"3bhk",lbl:"3 BHK",def:349},
+    {key:"4bhk",lbl:"4 BHK",def:449},
+    {key:"villa",lbl:"Villa / Bungalow",def:599},
+    {key:"studio",lbl:"Studio / 1 Room",def:99}
+  ]},
+  {n:"Dusting (incl. Sweeping & Mopping)",k:"dust",variants:[
+    {key:"1bhk",lbl:"1 BHK",def:199},
+    {key:"2bhk",lbl:"2 BHK",def:329},
+    {key:"3bhk",lbl:"3 BHK",def:449},
+    {key:"4bhk",lbl:"4 BHK",def:579},
+    {key:"villa",lbl:"Villa / Bungalow",def:749},
+    {key:"studio",lbl:"Studio / 1 Room",def:149}
+  ]},
+  {n:"Dishwashing",k:"dishes",variants:[
+    {key:"daily",lbl:"Daily (home)",def:149},
+    {key:"people",lbl:"Small gathering (10-20 people)",def:249},
+    {key:"event",lbl:"Party / Event (20-50 people)",def:499},
+    {key:"marriage",lbl:"Marriage / Big function (50+ people)",def:999}
+  ]},
+  {n:"Folding Clothes",k:"clothes",variants:[
+    {key:"base",lbl:"Standard",def:99}
+  ]},
+  {n:"Laundry (Washing)",k:"laundry",variants:[
+    {key:"base",lbl:"Standard",def:149}
+  ]}
+]},
+{id:"SVC002",icon:"\ud83e\uddfd",name:"Deep Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"Property Size",k:"bhk",variants:[
+    {key:"studio",lbl:"Studio / 1 Room",def:799},
+    {key:"1bhk",lbl:"1 BHK",def:999},
+    {key:"2bhk",lbl:"2 BHK",def:1499},
+    {key:"3bhk",lbl:"3 BHK",def:1999},
+    {key:"4bhk",lbl:"4 BHK+",def:2499},
+    {key:"rooms",lbl:"Individual Rooms",def:499}
+  ]},
+  {n:"Optional Add-ons",k:"extras",variants:[
+    {key:"mattress",lbl:"Mattress Shampooing",def:299},
+    {key:"carpet",lbl:"Carpet Cleaning",def:399},
+    {key:"sofashampoo",lbl:"Sofa Shampoo",def:499},
+    {key:"balcony",lbl:"Balcony Cleaning",def:199},
+    {key:"watertank",lbl:"Water Tank Cleaning",def:599},
+    {key:"pest",lbl:"Pest Control (Basic Spray)",def:799}
+  ]},
+  {n:"Home Condition",k:"condition",variants:[
+    {key:"regular",lbl:"Regular",def:0},
+    {key:"moderate",lbl:"Moderately Dirty",def:0},
+    {key:"dirty",lbl:"Heavy Dirty +\u20b9200",def:200},
+    {key:"renovation",lbl:"Post Renovation +\u20b9500",def:500}
+  ]}
+]},
+{id:"SVC003",icon:"\ud83d\udebf",name:"Bathroom Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"With Material (per bathroom)",k:"with",variants:[
+    {key:"perBath",lbl:"Per Bathroom (With Material)",def:399}
+  ]},
+  {n:"Without Material (per bathroom)",k:"without",variants:[
+    {key:"perBath",lbl:"Per Bathroom (Without Material)",def:299}
+  ]},
+  {n:"Condition",k:"condition",variants:[
+    {key:"normal",lbl:"Normal / Clean",def:0},
+    {key:"moderate",lbl:"Moderately Dirty",def:0},
+    {key:"dirty",lbl:"Very Dirty +\u20b9100",def:100},
+    {key:"mold",lbl:"Mold / Fungus +\u20b9150",def:150}
+  ]},
+  {n:"Add-ons",k:"addon",variants:[
+    {key:"bathtub",lbl:"Bathtub Deep Clean",def:199},
+    {key:"shower",lbl:"Glass Shower Cabin",def:149}
+  ]}
+]},
+{id:"SVC004",icon:"\ud83c\udf73",name:"Kitchen Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"Items to Clean",k:"svc",variants:[
+    {key:"tiles",lbl:"Wall Tiles",def:199},
+    {key:"cabinets",lbl:"Cabinets (Inside)",def:249},
+    {key:"chimney",lbl:"Chimney / Hood",def:199},
+    {key:"sink",lbl:"Sink & Drain",def:149},
+    {key:"stove",lbl:"Stove & Counter",def:249},
+    {key:"floor",lbl:"Floor Scrub",def:149}
+  ]},
+  {n:"Condition",k:"grease",variants:[
+    {key:"light",lbl:"Light / Regular",def:0},
+    {key:"heavy",lbl:"Heavy Grease / Long Overdue +\u20b9200",def:200}
+  ]}
+]},
+{id:"SVC005",icon:"\ud83d\udecb\ufe0f",name:"Sofa / Carpet Cleaning",cat:"Home Cleaning",tasks:[
+  {n:"Sofa Type",k:"sofa",variants:[
+    {key:"1seater",lbl:"1 Seater",def:599},
+    {key:"2seater",lbl:"2 Seater",def:899},
+    {key:"3seater",lbl:"3 Seater",def:1199},
+    {key:"lshape",lbl:"L-Shape Sofa",def:1499},
+    {key:"5plus",lbl:"5+ Seater / Large",def:1799}
+  ]},
+  {n:"Carpet / Rug",k:"carpet",variants:[
+    {key:"small",lbl:"Small Carpet",def:399},
+    {key:"medium",lbl:"Medium Carpet",def:599},
+    {key:"large",lbl:"Large Carpet",def:799},
+    {key:"rug",lbl:"Rug Cleaning",def:249}
+  ]},
+  {n:"Mattress",k:"mattress",variants:[
+    {key:"mattress",lbl:"Mattress Cleaning",def:599}
+  ]},
+  {n:"Extras",k:"stain",variants:[
+    {key:"heavy",lbl:"Heavy Stain Removal +\u20b9200",def:200}
+  ]}
+]},
+{id:"SVC006",icon:"\ud83d\udc54",name:"Laundry & Ironing",cat:"Home Cleaning",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"wash",lbl:"Washing (Machine wash)",def:199},
+    {key:"dry",lbl:"Drying & Hanging",def:99},
+    {key:"fold",lbl:"Folding & Arranging",def:99},
+    {key:"iron",lbl:"Ironing / Pressing",def:149},
+    {key:"handwash",lbl:"Hand Wash (Delicates)",def:149}
+  ]}
+]},
+{id:"SVC007",icon:"\u2744\ufe0f",name:"AC Cleaning & Repair",cat:"Appliance Care",tasks:[
+  {n:"Cleaning Type",k:"clean",variants:[
+    {key:"filter",lbl:"Filter Cleaning",def:399},
+    {key:"deepclean",lbl:"Deep AC Cleaning",def:799},
+    {key:"outdoor",lbl:"Outdoor Unit Cleaning",def:399},
+    {key:"gas",lbl:"Gas Top-Up / Refill",def:1200}
+  ]},
+  {n:"Repair Type",k:"repair",variants:[
+    {key:"notcooling",lbl:"Not Cooling / Weak Cooling",def:499},
+    {key:"notstarting",lbl:"Not Starting / No Power",def:499},
+    {key:"water",lbl:"Water Leaking",def:399},
+    {key:"noise",lbl:"Unusual Noise / Vibration",def:399},
+    {key:"pcb",lbl:"PCB / Board Repair",def:999},
+    {key:"install",lbl:"New Installation",def:1499}
+  ]}
+]},
+{id:"SVC007B",icon:"\ud83c\udf2c\ufe0f",name:"AC Cleaning",cat:"Appliance Care",tasks:[
+  {n:"Cleaning Type",k:"clean",variants:[
+    {key:"filter",lbl:"Filter Cleaning",def:399},
+    {key:"deepclean",lbl:"Deep AC Cleaning",def:799},
+    {key:"outdoor",lbl:"Outdoor Unit Cleaning",def:399},
+    {key:"cassette",lbl:"Cassette / Ducted Unit",def:999}
+  ]},
+  {n:"AC Type",k:"actype",variants:[
+    {key:"split",lbl:"Split AC",def:0},
+    {key:"window",lbl:"Window AC",def:0},
+    {key:"cassette",lbl:"Cassette / Ducted +\u20b9200",def:200},
+    {key:"portable",lbl:"Portable AC",def:0}
+  ]}
+]},
+{id:"SVC007C",icon:"\ud83d\udd27",name:"AC Repair",cat:"Appliance Care",tasks:[
+  {n:"Repair Type",k:"repair",variants:[
+    {key:"notcooling",lbl:"Not Cooling / Weak Cooling",def:499},
+    {key:"notstarting",lbl:"Not Starting / No Power",def:499},
+    {key:"water",lbl:"Water Leaking",def:399},
+    {key:"noise",lbl:"Noise / Vibration",def:399},
+    {key:"gas",lbl:"Gas Refill / Top-Up",def:1299},
+    {key:"pcb",lbl:"PCB / Board Repair",def:999},
+    {key:"install",lbl:"New Installation",def:1499}
+  ]}
+]},
+{id:"SVC008",icon:"\ud83d\udd0c",name:"Home Appliance Repair",cat:"Appliance Care",tasks:[
+  {n:"Appliance Type",k:"appliance",variants:[
+    {key:"washingmachine",lbl:"Washing Machine",def:599},
+    {key:"refrigerator",lbl:"Refrigerator / Fridge",def:599},
+    {key:"geyser",lbl:"Geyser / Water Heater",def:499},
+    {key:"microwave",lbl:"Microwave Oven",def:499},
+    {key:"chimney",lbl:"Kitchen Chimney",def:499},
+    {key:"dishwasher",lbl:"Dishwasher",def:549},
+    {key:"mixer",lbl:"Mixer / Grinder",def:349},
+    {key:"waterpurifier",lbl:"Water Purifier",def:399},
+    {key:"tv",lbl:"TV / LED",def:549}
+  ]}
+]},
+{id:"SVC009",icon:"\ud83d\udca7",name:"Water Purifier Service",cat:"Appliance Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"routine",lbl:"Routine Service & Checkup",def:399},
+    {key:"filter",lbl:"Filter Replacement",def:299},
+    {key:"membrane",lbl:"RO Membrane Replacement",def:499},
+    {key:"nowater",lbl:"No Water Output",def:499},
+    {key:"leaking",lbl:"Leaking",def:349},
+    {key:"taste",lbl:"Taste / Smell Issue",def:349},
+    {key:"uvlamp",lbl:"UV Lamp Replace",def:299},
+    {key:"notstarting",lbl:"Not Starting",def:349},
+    {key:"install",lbl:"New Installation",def:699}
+  ]}
+]},
+{id:"SVC010",icon:"\ud83d\udd27",name:"Plumber",cat:"Repairs",tasks:[
+  {n:"Job Type",k:"svc",variants:[
+    {key:"leak",lbl:"Tap / Pipe Leaking",def:199},
+    {key:"blockage",lbl:"Blocked Drain / Pipeline",def:299},
+    {key:"toilet",lbl:"Toilet / Flush Tank",def:249},
+    {key:"tapfit",lbl:"Tap / Faucet Replacement",def:249},
+    {key:"shower",lbl:"Shower / Geyser Pipe",def:249},
+    {key:"motor",lbl:"Water Motor / Pump",def:599},
+    {key:"tank",lbl:"Overhead Tank",def:399},
+    {key:"bathroom",lbl:"Bathroom Plumbing",def:349},
+    {key:"newpipe",lbl:"New Pipe Laying",def:499}
+  ]}
+]},
+{id:"SVC011",icon:"\u26a1",name:"Electrician",cat:"Repairs",tasks:[
+  {n:"Job Type",k:"svc",variants:[
+    {key:"mcb",lbl:"MCB / Fuse Tripping",def:199},
+    {key:"switch",lbl:"Switch / Socket / Plug",def:199},
+    {key:"fan",lbl:"Fan Installation / Repair",def:299},
+    {key:"light",lbl:"Light / LED Fitting",def:199},
+    {key:"wiring",lbl:"Wiring Fault / Power Failure",def:399},
+    {key:"geyser",lbl:"Geyser Wiring",def:349},
+    {key:"db",lbl:"Distribution Board / DB",def:499},
+    {key:"inverter",lbl:"Inverter / UPS",def:399},
+    {key:"backup",lbl:"Power Backup Setup",def:599},
+    {key:"cctv",lbl:"CCTV Wiring",def:349}
+  ]}
+]},
+{id:"SVC012",icon:"\ud83e\ude9a",name:"Carpenter",cat:"Repairs",tasks:[
+  {n:"Job Type",k:"svc",variants:[
+    {key:"door",lbl:"Door Repair / Adjustment",def:299},
+    {key:"furniture",lbl:"Furniture Repair",def:349},
+    {key:"wardrobe",lbl:"Wardrobe / Almirah Repair",def:349},
+    {key:"assembly",lbl:"Furniture Assembly",def:499},
+    {key:"window",lbl:"Window / Shutter Repair",def:299},
+    {key:"shelves",lbl:"Shelf / Rack Fitting",def:349},
+    {key:"lock",lbl:"Lock / Handle Replacement",def:199},
+    {key:"bed",lbl:"Bed / Cot Repair",def:399},
+    {key:"modular",lbl:"Modular Kitchen Work",def:799}
+  ]}
+]},
+{id:"SVC013",icon:"\ud83c\udfa8",name:"Painter",cat:"Repairs",tasks:[
+  {n:"Room Painting (with Labour)",k:"rooms",variants:[
+    {key:"pricePerRoom",lbl:"Price Per Room",def:999}
+  ]},
+  {n:"Add-ons",k:"extras",variants:[
+    {key:"crack_filling",lbl:"Crack Filling / Putty",def:299},
+    {key:"primer_coat",lbl:"Primer Coat",def:199},
+    {key:"texture",lbl:"Texture / Designer Finish",def:499},
+    {key:"ceiling",lbl:"Ceiling Only",def:699},
+    {key:"exterior",lbl:"Exterior Wall",def:1499},
+    {key:"wood",lbl:"Wood / Furniture Paint",def:399},
+    {key:"touchup",lbl:"Touch-Up / Patches",def:299}
+  ]}
+]},
+{id:"SVC014",icon:"\ud83d\udcf7",name:"CCTV Installation",cat:"Repairs",tasks:[
+  {n:"Camera Installation",k:"camera",variants:[
+    {key:"camera",lbl:"Per Camera Installation",def:999}
+  ]},
+  {n:"Additional Services",k:"svc",variants:[
+    {key:"dvr",lbl:"DVR / NVR Setup",def:499},
+    {key:"wiring",lbl:"Wiring & Connectivity",def:399},
+    {key:"mobile",lbl:"Mobile App / Remote Access",def:299},
+    {key:"testing",lbl:"Testing & Configuration",def:199}
+  ]}
+]},
+{id:"SVC015",icon:"\u2600\ufe0f",name:"Solar Panel Service",cat:"Repairs",tasks:[
+  {n:"Panel Cleaning",k:"clean",variants:[
+    {key:"p4",lbl:"Up to 4 Panels",def:299},
+    {key:"p8",lbl:"Up to 8 Panels",def:499},
+    {key:"p12",lbl:"Up to 12 Panels",def:699},
+    {key:"p20",lbl:"Up to 20 Panels",def:999}
+  ]},
+  {n:"Other Services",k:"svc",variants:[
+    {key:"inspection",lbl:"System Inspection & Health Check",def:499},
+    {key:"repair",lbl:"Fault Diagnosis & Repair",def:799},
+    {key:"inverter",lbl:"Inverter Repair",def:599},
+    {key:"battery",lbl:"Battery Service",def:499},
+    {key:"amc",lbl:"AMC Contract (Annual)",def:2999}
+  ]}
+]},
+{id:"SVC016",icon:"\ud83d\ude97",name:"Car / Bike Wash",cat:"Vehicle Care",tasks:[
+  {n:"Car Wash Type",k:"car",variants:[
+    {key:"exterior",lbl:"Exterior Car Wash",def:299},
+    {key:"interior",lbl:"Interior Cleaning",def:249},
+    {key:"premium",lbl:"Premium Full Wash",def:499},
+    {key:"finishing",lbl:"Final Finishing / Wax",def:149}
+  ]},
+  {n:"Car Type",k:"cartype",variants:[
+    {key:"hatchback",lbl:"Hatchback",def:0},
+    {key:"sedan",lbl:"Sedan",def:0},
+    {key:"suv",lbl:"SUV +\u20b9100",def:100},
+    {key:"largsuv",lbl:"Large SUV / XUV +\u20b9150",def:150},
+    {key:"luxury",lbl:"Luxury / Premium +\u20b9200",def:200}
+  ]},
+  {n:"Bike Wash",k:"bike",variants:[
+    {key:"bike_exterior",lbl:"Bike Exterior Wash",def:149},
+    {key:"bike_chain",lbl:"Chain + Lubrication",def:99},
+    {key:"bike_seat",lbl:"Seat Polish",def:79},
+    {key:"bike_premium",lbl:"Premium Bike Full Wash",def:199}
+  ]}
+]},
+{id:"SVC016B",icon:"\ud83c\udfcd\ufe0f",name:"Bike Wash",cat:"Vehicle Care",tasks:[
+  {n:"Wash Type",k:"wash",variants:[
+    {key:"exterior",lbl:"Exterior Bike Wash",def:149},
+    {key:"premium",lbl:"Premium Full Wash",def:249},
+    {key:"chain",lbl:"Chain Clean & Lube",def:99},
+    {key:"seat",lbl:"Seat Polish",def:79}
+  ]},
+  {n:"Bike Type",k:"biketype",variants:[
+    {key:"standard",lbl:"Standard / 125cc",def:0},
+    {key:"premium",lbl:"Premium / 200cc+",def:50},
+    {key:"superbike",lbl:"Superbike / 500cc+",def:150}
+  ]}
+]},
+{id:"SVC017",icon:"\ud83d\udd29",name:"Car & Bike Mechanic",cat:"Vehicle Care",tasks:[
+  {n:"Car Service",k:"car",variants:[
+    {key:"car_service",lbl:"General Service",def:799},
+    {key:"car_oilchange",lbl:"Oil Change",def:349},
+    {key:"car_battery",lbl:"Battery Replace",def:599},
+    {key:"car_brake",lbl:"Brake Service",def:499},
+    {key:"car_tyre",lbl:"Tyre Change",def:299},
+    {key:"car_ac",lbl:"Car AC Service",def:799},
+    {key:"car_engine",lbl:"Engine Check / Diagnostics",def:499}
+  ]},
+  {n:"Bike Service",k:"bike",variants:[
+    {key:"bike_service",lbl:"General Service",def:399},
+    {key:"bike_oilchange",lbl:"Oil Change",def:149},
+    {key:"bike_tyre",lbl:"Tyre Change",def:199},
+    {key:"bike_chain",lbl:"Chain Replace",def:149},
+    {key:"bike_brake",lbl:"Brake Service",def:199},
+    {key:"bike_battery",lbl:"Battery Replace",def:299}
+  ]}
+]},
+{id:"SVC017B",icon:"\ud83c\udfcd\ufe0f",name:"Bike Mechanic",cat:"Vehicle Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"service",lbl:"General Service",def:399},
+    {key:"oilchange",lbl:"Oil Change",def:149},
+    {key:"tyre",lbl:"Tyre Change",def:199},
+    {key:"chain",lbl:"Chain Replace",def:149},
+    {key:"brake",lbl:"Brake Service",def:199},
+    {key:"battery",lbl:"Battery Replace",def:299},
+    {key:"carburetor",lbl:"Carburetor Clean",def:249},
+    {key:"electrical",lbl:"Electrical Fault",def:299},
+    {key:"puncture",lbl:"Puncture Repair",def:99},
+    {key:"fullservice",lbl:"Full Service Package",def:699}
+  ]}
+]},
+{id:"SVC017C",icon:"\ud83d\ude97",name:"Car Mechanic",cat:"Vehicle Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"service",lbl:"General Service",def:799},
+    {key:"oilchange",lbl:"Oil Change",def:349},
+    {key:"battery",lbl:"Battery Replace",def:599},
+    {key:"brake",lbl:"Brake Service",def:499},
+    {key:"tyre",lbl:"Tyre Change",def:299},
+    {key:"ac",lbl:"Car AC Service",def:799},
+    {key:"engine",lbl:"Engine Check / Diagnostics",def:499},
+    {key:"electrical",lbl:"Electrical Fault",def:399},
+    {key:"inspection",lbl:"Full Vehicle Inspection",def:999},
+    {key:"denting",lbl:"Denting & Painting (Minor)",def:1499}
+  ]}
+]},
+{id:"SVC018",icon:"\ud83e\udeb2",name:"Pest Control",cat:"Home Services",tasks:[
+  {n:"Pest Type",k:"pest",variants:[
+    {key:"cockroach",lbl:"Cockroach Control",def:999},
+    {key:"rodent",lbl:"Rat / Rodent Control",def:1299},
+    {key:"mosquito",lbl:"Mosquito Control / Fogging",def:999},
+    {key:"termite",lbl:"Termite Treatment",def:2499},
+    {key:"bedbug",lbl:"Bed Bug Treatment",def:1499},
+    {key:"ants",lbl:"Ants Control",def:799},
+    {key:"lizard",lbl:"Lizard Repellent",def:799},
+    {key:"flies",lbl:"Flies / Mosquito Spray",def:799},
+    {key:"general",lbl:"General Pest Spray (All)",def:1299}
+  ]},
+  {n:"Property Size",k:"size",variants:[
+    {key:"1bhk",lbl:"1 BHK / Studio",def:0},
+    {key:"2bhk",lbl:"2 BHK",def:0},
+    {key:"3bhk",lbl:"3 BHK +\u20b9300",def:300},
+    {key:"4bhk",lbl:"4 BHK+ +\u20b9600",def:600},
+    {key:"office",lbl:"Office / Commercial",def:0}
+  ]}
+]},
+{id:"SVC019",icon:"\ud83c\udf71",name:"Cook / Cooking Person",cat:"Cooking",tasks:[
+  {n:"Meal Service",k:"svc",variants:[
+    {key:"breakfast",lbl:"Breakfast Only",def:299},
+    {key:"lunch",lbl:"Lunch Only",def:399},
+    {key:"dinner",lbl:"Dinner Only",def:349},
+    {key:"twotime",lbl:"Two Meals (Lunch + Dinner)",def:599},
+    {key:"fullday",lbl:"Full Day (All 3 Meals)",def:799},
+    {key:"party",lbl:"Party / Event Cooking",def:1499},
+    {key:"monthly",lbl:"Monthly Package",def:6999}
+  ]},
+  {n:"Cooking Style",k:"style",variants:[
+    {key:"regular",lbl:"Regular Home Style",def:0},
+    {key:"restaurant",lbl:"Restaurant / Special Style +\u20b9200",def:200}
+  ]}
+]},
+{id:"SVC020",icon:"\ud83d\udc82",name:"Security Guard & Bouncers",cat:"Security",tasks:[
+  {n:"Guard Type",k:"svc",variants:[
+    {key:"daytime",lbl:"Daytime Guard (8-hour shift)",def:899},
+    {key:"nighttime",lbl:"Night Guard (8-hour shift)",def:999},
+    {key:"fullday",lbl:"Full Day Guard (12-hour shift)",def:1699},
+    {key:"event",lbl:"Event Security Guard",def:1299},
+    {key:"office",lbl:"Office / Shop Security",def:899}
+  ]}
+]},
+{id:"SVC021",icon:"\ud83d\ude97",name:"Driver Service",cat:"Outdoor",tasks:[
+  {n:"Trip Type",k:"car",variants:[
+    {key:"local",lbl:"Local / City Trips",def:299},
+    {key:"fullday",lbl:"Full Day Driver (8 hrs)",def:699},
+    {key:"outstation",lbl:"Outstation / Long Trip",def:999},
+    {key:"monthly",lbl:"Monthly Regular Driver",def:8999},
+    {key:"event",lbl:"Event / Wedding Driver",def:799}
+  ]}
+]},
+{id:"SVC022",icon:"\ud83d\udcaa",name:"Fitness Trainer",cat:"Beauty & Wellness",tasks:[
+  {n:"Training Type",k:"svc",variants:[
+    {key:"weightloss",lbl:"Weight Loss Training",def:699},
+    {key:"muscle",lbl:"Muscle Building / Strength",def:699},
+    {key:"yoga",lbl:"Yoga & Flexibility",def:599},
+    {key:"zumba",lbl:"Zumba / Dance Fitness",def:599},
+    {key:"rehab",lbl:"Rehabilitation / Injury Recovery",def:799},
+    {key:"senior",lbl:"Senior / Elder Fitness",def:599},
+    {key:"monthly",lbl:"Monthly Package (Daily)",def:5999}
+  ]}
+]},
+{id:"SVC023",icon:"\u2702\ufe0f",name:"Men's Haircut at Home",cat:"Beauty & Wellness",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"haircut",lbl:"Haircut",def:249},
+    {key:"shave",lbl:"Clean Shave",def:199},
+    {key:"beard",lbl:"Beard Trim & Styling",def:199},
+    {key:"colour",lbl:"Hair Colour / Black Dye",def:399},
+    {key:"highlights",lbl:"Highlights",def:599},
+    {key:"massage",lbl:"Head Massage",def:149},
+    {key:"cleanup",lbl:"Face Cleanup",def:299}
+  ]}
+]},
+{id:"SVC024",icon:"\ud83d\udc87",name:"Women's Haircut & Beauty",cat:"Beauty & Wellness",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"haircut",lbl:"Haircut",def:349},
+    {key:"blowdry",lbl:"Hair Wash & Blow Dry",def:399},
+    {key:"colour",lbl:"Hair Colour & Highlights",def:599},
+    {key:"threading",lbl:"Threading (Eyebrow)",def:99},
+    {key:"waxing",lbl:"Full Body Waxing",def:399},
+    {key:"facial",lbl:"Facial",def:499},
+    {key:"mani",lbl:"Manicure / Pedicure",def:399},
+    {key:"makeup",lbl:"Makeup (Event / Wedding)",def:1499}
+  ]}
+]},
+{id:"SVC025",icon:"\ud83d\udc86",name:"Full Body Massage",cat:"Beauty & Wellness",tasks:[
+  {n:"Massage Type",k:"svc",variants:[
+    {key:"relaxation",lbl:"Relaxation Full Body",def:999},
+    {key:"deep",lbl:"Deep Tissue / Swedish",def:1299},
+    {key:"back",lbl:"Back & Shoulder Massage",def:699},
+    {key:"head",lbl:"Head & Scalp Massage",def:499},
+    {key:"couple",lbl:"Couple Massage",def:1799}
+  ]}
+]},
+{id:"SVC026",icon:"\ud83e\ude7a",name:"Doctor Visit at Home",cat:"Medical",tasks:[
+  {n:"Consultation Type",k:"svc",variants:[
+    {key:"general",lbl:"General Physician",def:599},
+    {key:"chronic",lbl:"Chronic Illness Follow-Up",def:699},
+    {key:"elderly",lbl:"Elderly Health Check-Up",def:799},
+    {key:"paeds",lbl:"Child / Paediatric",def:649},
+    {key:"fever",lbl:"Fever / Cold / Flu",def:549},
+    {key:"injection",lbl:"Injection / Vaccination",def:399}
+  ]}
+]},
+{id:"SVC027",icon:"\ud83c\udfe5",name:"Nurse Visit at Home",cat:"Medical",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"injection",lbl:"Injection / Vaccination",def:399},
+    {key:"dressing",lbl:"Wound Dressing / Stitch Care",def:499},
+    {key:"iv",lbl:"IV Drip / Infusion",def:699},
+    {key:"catheter",lbl:"Catheter Care",def:799},
+    {key:"bp",lbl:"BP / Sugar Monitoring",def:299},
+    {key:"physio",lbl:"Physiotherapy Session",def:699}
+  ]}
+]},
+{id:"SVC028",icon:"\ud83d\udd2c",name:"Lab Test Collection at Home",cat:"Medical",tasks:[
+  {n:"Test Type",k:"svc",variants:[
+    {key:"blood",lbl:"Blood Test (Basic)",def:99},
+    {key:"urine",lbl:"Urine Test",def:49},
+    {key:"healthcheckup",lbl:"Full Health Checkup",def:149},
+    {key:"diabetes",lbl:"Diabetes Panel",def:99},
+    {key:"thyroid",lbl:"Thyroid Panel",def:79},
+    {key:"vitamin",lbl:"Vitamin D / B12",def:99},
+    {key:"womens",lbl:"Women's Health Panel",def:149},
+    {key:"senior",lbl:"Senior Citizen Package",def:149}
+  ]}
+]},
+{id:"SVC029",icon:"\ud83d\udc76",name:"Babysitter / Nanny",cat:"Care Services",tasks:[
+  {n:"Duration / Type",k:"svc",variants:[
+    {key:"half",lbl:"Half Day (4 hrs)",def:599},
+    {key:"fullday",lbl:"Full Day (8-10 hrs)",def:999},
+    {key:"overnight",lbl:"Overnight (10 PM - 8 AM)",def:1499},
+    {key:"event",lbl:"Event / Party Babysitter",def:799},
+    {key:"nanny",lbl:"Experienced Nanny (Full Day)",def:1299}
+  ]}
+]},
+{id:"SVC030",icon:"\ud83e\uddd3",name:"Elderly Care",cat:"Care Services",tasks:[
+  {n:"Care Type",k:"svc",variants:[
+    {key:"companion",lbl:"Companion Care (4 hrs)",def:799},
+    {key:"personal",lbl:"Personal Care (4-6 hrs)",def:999},
+    {key:"fullday",lbl:"Full Day Care (8-10 hrs)",def:1499},
+    {key:"nightcare",lbl:"Night Care (10 PM - 6 AM)",def:1299},
+    {key:"hospital",lbl:"Hospital / Clinic Attendant",def:1199}
+  ]}
+]},
+{id:"SVC031",icon:"\ud83d\udd0b",name:"Inverter Service",cat:"Appliance Care",tasks:[
+  {n:"Service Type",k:"svc",variants:[
+    {key:"battery_check",lbl:"Battery Check & Service",def:299},
+    {key:"battery_replace",lbl:"Battery Replacement",def:3999},
+    {key:"not_charging",lbl:"Not Charging",def:399},
+    {key:"not_starting",lbl:"Not Starting / No Power",def:399},
+    {key:"beeping",lbl:"Beeping / Alarm Issues",def:299},
+    {key:"install",lbl:"New Inverter Installation",def:799},
+    {key:"amc",lbl:"Annual Maintenance Contract",def:999}
+  ]}
+]},
+{id:"SVC032",icon:"\ud83e\uded9",name:"Mixer Grinder Repair",cat:"Appliance Care",tasks:[
+  {n:"Problem Type",k:"svc",variants:[
+    {key:"not_starting",lbl:"Not Starting",def:299},
+    {key:"noisy",lbl:"Noisy / Vibrating",def:249},
+    {key:"jar_leak",lbl:"Jar Leaking",def:199},
+    {key:"blade",lbl:"Blade / Coupler Issue",def:199},
+    {key:"burnt_smell",lbl:"Burnt Smell / Overheating",def:349},
+    {key:"speed",lbl:"Speed / Switch Problem",def:249},
+    {key:"motor",lbl:"Motor Repair / Replace",def:499},
+    {key:"service",lbl:"General Service & Cleaning",def:199}
+  ]}
+]},
+]; }
+
+// ── Service selection state ───────────────────────────────────────────────────
+var _portalSel = {};        // { "SVC001_sweep_1bhk": true, ... }
+var _portalFBPx = {};       // Firebase prices { SVC001: { sweep: { 1bhk: 149 } } }
+var _portalCurCat = 'All';
+var _portalPxLoaded = false; // separate flag — not on the prices object
+
+function _loadFirebasePrices(cb) {
+  var API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  // Get anonymous token first
+  var x = new XMLHttpRequest();
+  x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+API,true);
+  x.setRequestHeader('Content-Type','application/json');
+  x.onload = function(){
+    try {
+      var tok = JSON.parse(x.responseText).idToken || '';
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', DB+'/hs_service_prices.json?auth='+tok, true);
+      xhr.timeout = 6000;
+      xhr.onload = function(){
+        try { _fbPrices = JSON.parse(xhr.responseText) || {}; } catch(e) {}
+        if (cb) cb();
+      };
+      xhr.onerror = function(){ if (cb) cb(); };
+      xhr.send();
+    } catch(e) { if (cb) cb(); }
+  };
+  x.onerror = function(){ if (cb) cb(); };
+  x.send(JSON.stringify({returnSecureToken:true}));
+}
+
+function buildDashSvcGrid(){
+  var grid = document.getElementById('svcDashGrid');
+  if (!grid) return;
+
+  // Add Firebase banner
+  if (!document.getElementById('svcsFirebaseBanner')) {
+    var banner = document.createElement('div');
+    banner.id = 'fbPriceBanner';
+    banner.className = 'svc-firebase-banner';
+    banner.innerHTML = '⏳ Loading live prices from Firebase…';
+    grid.parentNode.insertBefore(banner, grid);
+  }
+
+  // Category tabs
+  var tabsId = 'svcDashCatTabs';
+  if (!document.getElementById(tabsId)) {
+    var tabsWrap = document.createElement('div');
+    tabsWrap.id = tabsId;
+    tabsWrap.style.cssText = 'display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;';
+    grid.parentNode.insertBefore(tabsWrap, grid);
+  }
+
+  // Load Firebase prices then render
+  _loadFirebasePrices(function(){
+    var banner2 = document.getElementById('svcsFirebaseBanner');
+    if (banner2) banner2.innerHTML = '✅ Live prices loaded — set your rate for each sub-service below';
+    _renderPortalCatTabs();
+    _renderPortalChips();
+  });
+}
+
+function _renderPortalCatTabs() {
+  var wrap = document.getElementById('svcDashCatTabs');
+  if (!wrap) return;
+  var cats = ['All'];
+  SERVICES.forEach(function(s){ if(s.cat && cats.indexOf(s.cat)===-1) cats.push(s.cat); });
+  wrap.innerHTML = '';
+  cats.forEach(function(c){
+    var btn = document.createElement('button');
+    btn.textContent = c === 'All' ? '⭐ All' : c;
+    btn.style.cssText = 'padding:6px 13px;border:2px solid '+(c===_portalActiveCat?'var(--teal)':'var(--border)')+';border-radius:100px;background:'+(c===_portalActiveCat?'var(--teal)':'var(--bg)')+';color:'+(c===_portalActiveCat?'white':'var(--muted)')+';font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;';
+    btn.onclick = function(){ setPortalCat(c); };
+    wrap.appendChild(btn);
+  });
+}
+
+function setPortalCat(cat) {
+  _portalActiveCat = cat;
+  _renderPortalCatTabs();
+  _renderPortalChips();
+}
+
+function _renderPortalChips() {
+  var grid = document.getElementById('svcDashGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  var filtered = _portalActiveCat === 'All' ? SERVICES : SERVICES.filter(function(s){ return s.cat === _portalActiveCat; });
+
+  filtered.forEach(function(s) {
+    // Main chip
+    var chip = document.createElement('div');
+    chip.className = 'svc-chip';
+    chip.dataset.name = s.name;
+    chip.dataset.icon = s.icon;
+    chip.style.cssText = 'position:relative;';
+
+    // Price badge (shown when selected)
+    var subConf = SVC_SUBCATS[s.name];
+    chip.innerHTML = '<div class="svc-icon">'+s.icon+'</div>'
+      + '<div class="svc-name">'+s.name+'</div>'
+      + '<div style="font-size:9px;color:#718096;margin-top:3px;">from ₹'+s.defaultPrice+'</div>'
+      + '<div class="svc-price-badge" id="badge-'+s.name.replace(/\s/g,'_')+'">✓ Selected</div>';
+
+    // Toggle selection + sub-panel
+    chip.onclick = function() {
+      var wasSelected = chip.classList.contains('selected');
+      chip.classList.toggle('selected');
+      var subPanel = document.getElementById('subpanel-' + s.name.replace(/\s/g,'_'));
+      if (subPanel) {
+        subPanel.classList.toggle('show', !wasSelected);
+        if (!wasSelected) {
+          setTimeout(function(){ subPanel.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 50);
+        }
+      }
+    };
+    grid.appendChild(chip);
+
+    // Sub-category panel — shown after chip
+    if (subConf && subConf.subs && subConf.subs.length > 0) {
+      var panel = document.createElement('div');
+      panel.className = 'svc-subpanel';
+      panel.id = 'subpanel-' + s.name.replace(/\s/g,'_');
+
+      var panelHtml = '<div class="svc-subpanel-title">'+s.icon+' '+s.name+' — Set Your Rate Per Sub-Service</div>';
+      panelHtml += '<div class="svc-subpanel-grid">';
+
+      subConf.subs.forEach(function(sub) {
+        var livePrice = _getSubPrice(subConf.id, sub.k);
+        var custPrice = livePrice !== null ? livePrice : sub.def;
+        var provDef   = Math.round(custPrice * 0.7); // provider gets ~70% by default
+        panelHtml += '<div class="svc-subitem">'
+          + '<div class="svc-subitem-name">'+sub.name+'</div>'
+          + '<div class="svc-subitem-customer">Customer pays: <b>₹'+custPrice+'</b></div>'
+          + '<input class="svc-subitem-inp" type="number" value="'+provDef+'" min="1"'
+          + ' data-subkey="'+sub.k+'" data-custprice="'+custPrice+'"'
+          + ' placeholder="Your rate" onclick="event.stopPropagation()" />'
+          + '<div class="svc-subitem-lbl">Your rate (₹)</div>'
+          + '</div>';
+      });
+
+      panelHtml += '</div>';
+      panel.innerHTML = panelHtml;
+      grid.appendChild(panel);
+    } else {
+      // No sub-cats — just a simple price input panel
+      var panel2 = document.createElement('div');
+      panel2.className = 'svc-subpanel';
+      panel2.id = 'subpanel-' + s.name.replace(/\s/g,'_');
+      panel2.innerHTML = '<div class="svc-subpanel-title">'+s.icon+' '+s.name+' — Set Your Rate</div>'
+        + '<div style="display:flex;align-items:center;gap:12px;padding:4px 0;">'
+        + '<span style="font-size:13px;color:#718096;">Customer pays: <b style="color:#1B6B7A;">from ₹'+s.defaultPrice+'</b></span>'
+        + '<div><input class="svc-subitem-inp" type="number" value="'+Math.round(s.defaultPrice*0.7)+'" min="1"'
+        + ' data-subkey="base" data-custprice="'+s.defaultPrice+'" placeholder="Your rate"'
+        + ' style="width:110px;" onclick="event.stopPropagation()" />'
+        + '<div class="svc-subitem-lbl">Your rate (₹)</div></div>'
+        + '</div>';
+      grid.appendChild(panel2);
+    }
+  });
+}
+
+var _portalSel = {};        // { "SVC001_sweep_1bhk": true, ... }
+var _portalFBPx = {};       // Firebase prices { SVC001: { sweep: { 1bhk: 149 } } }
+var _portalCurCat = 'All';
+var _portalPxLoaded = false; // separate flag — not on the prices object
+
+function _pxGet(svcId, taskKey, varKey, fallback) {
+  var d = _portalFBPx[svcId];
+  if (d && d[taskKey] && d[taskKey][varKey] != null) return d[taskKey][varKey];
+  return fallback || 0;
+}
+function _pxComm(svcId) {
+  var d = _portalFBPx[svcId];
+  return (d && d.commission != null) ? Number(d.commission) : 15;
+}
+
+function _portalToggleVariant(svcId, taskKey, varKey) {
+  var k = svcId + '_' + taskKey + '_' + varKey;
+  _portalSel[k] = !_portalSel[k];
+  var row = document.getElementById('vr_' + k);
+  if (row) {
+    row.classList.toggle('sel', !!_portalSel[k]);
+    var chk = row.querySelector('.var-chk');
+    if (chk) chk.checked = !!_portalSel[k];
+  }
+  _portalUpdateCnt(svcId);
+}
+
+function _portalSelAll(svcId, taskKey) {
+  var SVCS = buildServices();
+  var svc = SVCS.find(function(s){ return s.id === svcId; });
+  if (!svc) return;
+  var task = svc.tasks.find(function(t){ return t.k === taskKey; });
+  if (!task) return;
+  var allSel = task.variants.every(function(v){
+    return _portalSel[svcId + '_' + taskKey + '_' + v.key];
+  });
+  task.variants.forEach(function(v) {
+    var k = svcId + '_' + taskKey + '_' + v.key;
+    _portalSel[k] = !allSel;
+    var row = document.getElementById('vr_' + k);
+    if (row) {
+      row.classList.toggle('sel', !allSel);
+      var chk = row.querySelector('.var-chk');
+      if (chk) chk.checked = !allSel;
+    }
+  });
+  _portalUpdateCnt(svcId);
+}
+
+function _portalUpdateCnt(svcId) {
+  var SVCS = buildServices();
+  var svc = SVCS.find(function(s){ return s.id === svcId; }); if (!svc) return;
+  var cnt = 0;
+  svc.tasks.forEach(function(t){
+    t.variants.forEach(function(v){
+      if (_portalSel[svcId + '_' + t.k + '_' + v.key]) cnt++;
+    });
+  });
+  var el = document.getElementById('pcnt2_' + svcId);
+  if (el) { el.textContent = cnt; el.className = 'svc-cnt2' + (cnt === 0 ? ' zero' : ''); }
+  // Summary bar
+  var total = Object.values(_portalSel).filter(Boolean).length;
+  var bar = document.getElementById('svcSelBar');
+  if (bar) bar.textContent = total === 0
+    ? 'Tap any service to expand, then tick the variants you offer'
+    : total + ' sub-service(s) selected — you can always update this later';
+}
+
+function _portalToggleGroup(svcId) {
+  var hdr  = document.getElementById('phdr2_' + svcId);
+  var list = document.getElementById('ptl2_' + svcId);
+  if (!hdr || !list) return;
+  var open = hdr.classList.contains('open');
+  hdr.classList.toggle('open', !open);
+  list.classList.toggle('open', !open);
+}
+
+function _portalSetCat(el) {
+  _portalCurCat = decodeURIComponent(el.dataset.cat);
+  buildPortalSvcGrid();
+}
+
+function buildPortalSvcGrid() {
+  var grid = document.getElementById('svcDashGrid');
+  if (!grid) return;
+  var SVCS = buildServices();
+
+  // Category tabs
+  var cats = ['All'];
+  SVCS.forEach(function(s){ if (s.cat && cats.indexOf(s.cat) === -1) cats.push(s.cat); });
+  var tabsEl = document.getElementById('portalCatTabs');
+  if (!tabsEl) {
+    tabsEl = document.createElement('div');
+    tabsEl.id = 'portalCatTabs';
+    tabsEl.className = 'cat-tabs2';
+    grid.parentNode.insertBefore(tabsEl, grid);
+  }
+  var tabHtml = ''; cats.forEach(function(c){
+    tabHtml += '<div class="cat-tab2' + (c === _portalCurCat ? ' active' : '') + '" data-cat="' + encodeURIComponent(c) + '" onclick="_portalSetCat(decodeURIComponent(this.dataset.cat))">' + c + '</div>';
+  });
+  tabsEl.innerHTML = tabHtml;
+
+  // Summary bar
+  var bar = document.getElementById('svcSelBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'svcSelBar';
+    bar.className = 'svc-sel-bar';
+    grid.parentNode.insertBefore(bar, grid);
+  }
+  var totalSel = Object.values(_portalSel).filter(Boolean).length;
+  bar.textContent = totalSel === 0
+    ? 'Tap any service to expand, then tick the variants you offer'
+    : totalSel + ' sub-service(s) selected';
+
+  // Price column note
+  var note = document.getElementById('priceNote');
+  if (!note) {
+    note = document.createElement('div');
+    note.id = 'priceNote';
+    note.className = 'price-col-note';
+    note.innerHTML = 'Customer pays <span style="color:var(--muted)">→</span> <span style="color:#27ae60;font-weight:900">You receive</span>';
+    grid.parentNode.insertBefore(note, grid);
+  }
+
+  // Filter
+  var filtered = _portalCurCat === 'All'
+    ? SVCS : SVCS.filter(function(s){ return s.cat === _portalCurCat; });
+
+  grid.innerHTML = filtered.map(function(g) {
+    var commPct = _pxComm(g.id);
+    var earnPct = 100 - commPct;
+    var cnt = Object.keys(_portalSel).filter(function(k){
+      return k.indexOf(g.id + '_') === 0 && _portalSel[k];
+    }).length;
+
+    var taskHtml = g.tasks.map(function(t) {
+      var varHtml = t.variants.map(function(v) {
+        var k = g.id + '_' + t.k + '_' + v.key;
+        var custP = _pxGet(g.id, t.k, v.key, v.def || 0);
+        var earnP = Math.round(custP * earnPct / 100);
+        var isSel = !!_portalSel[k];
+        return '<div class="var-row' + (isSel ? ' sel' : '') + '" id="vr_' + k + '"'
+          + ' data-sid="' + g.id + '" data-tk="' + t.k + '" data-vk="' + v.key + '"'
+          + ' onclick="_portalToggleVariant(this.dataset.sid,this.dataset.tk,this.dataset.vk)">'
+          + '<input class="var-chk" type="checkbox"' + (isSel ? ' checked' : '') + ' onclick="event.stopPropagation()">'
+          + '<div class="var-info"><div class="var-lbl">' + v.lbl + '</div></div>'
+          + (custP > 0
+            ? '<div class="var-price"><div class="var-cust">&#8377;' + custP + '</div>'
+              + '<div class="var-earn">&#8377;' + earnP + '</div></div>'
+            : '')
+          + '</div>';
+      }).join('');
+
+      return '<div class="task-block2">'
+        + '<div class="task-name2">' + t.n
+        + '<span class="sel-all-btn2" data-sid="' + g.id + '" data-tk="' + t.k + '" onclick="event.stopPropagation();_portalSelAll(this.dataset.sid,this.dataset.tk)">Select all</span>'
+        + '</div>'
+        + '<div class="var-grid">' + varHtml + '</div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="svc-group">'
+      + '<div class="svc-hdr2' + (cnt > 0 ? ' open' : '') + '" id="phdr2_' + g.id + '"'
+      + ' data-gid="' + g.id + '" onclick="_portalToggleGroup(this.dataset.gid)">'
+      + '<div class="svc-ico2">' + g.icon + '</div>'
+      + '<div class="svc-meta2">'
+      + '<div class="svc-title2">' + g.name + '</div>'
+      + '<div class="svc-sub2">' + g.cat + ' · You earn ' + earnPct + '% · '
+      + g.tasks.reduce(function(s,t){return s+t.variants.length;},0) + ' job types</div>'
+      + '</div>'
+      + '<div class="svc-right2">'
+      + '<span class="svc-cnt2' + (cnt === 0 ? ' zero' : '') + '" id="pcnt2_' + g.id + '">' + cnt + '</span>'
+      + '<span class="svc-chev2">▶</span>'
+      + '</div></div>'
+      + '<div class="svc-tasklist' + (cnt > 0 ? ' open' : '') + '" id="ptl2_' + g.id + '">' + taskHtml + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Restore open state after re-render
+  Object.keys(_openGroups).forEach(function(gid) {
+    var hdr = document.getElementById('phdr2_' + gid);
+    var lst = document.getElementById('ptl2_' + gid);
+    if (hdr) hdr.classList.add('open');
+    if (lst) lst.classList.add('open');
+  });
+
+  // Fetch live prices from Firebase (once only)
+  if (!_portalPxLoaded) {
+    _portalPxLoaded = true;
+    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_=' + Date.now())
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data && typeof data === 'object') {
+          _portalFBPx = data; // prices replaced, flag is separate — safe
+          buildPortalSvcGrid(); // re-render once with live prices
+        }
+      }).catch(function(){});
+  }
+}
+
+// Replace getSelectedServices to use new selection
+function getSelectedServices() {
+  var result = [];
+  var SVCS = buildServices();
+  SVCS.forEach(function(g) {
+    var commPct = _pxComm(g.id);
+    var earnPct = 100 - commPct;
+    var subRates = [];
+    g.tasks.forEach(function(t) {
+      t.variants.forEach(function(v) {
+        var k = g.id + '_' + t.k + '_' + v.key;
+        if (!_portalSel[k]) return;
+        var custP = _pxGet(g.id, t.k, v.key, v.def || 0);
+        subRates.push({
+          key: k, svcId: g.id, taskKey: t.k, varKey: v.key,
+          label: t.n + ' — ' + v.lbl,
+          custPrice: custP,
+          rate: Math.round(custP * earnPct / 100)
+        });
+      });
+    });
+    if (!subRates.length) return;
+    result.push({
+      name: g.name, icon: g.icon, id: g.id,
+      price: subRates[0].rate,
+      subRates: subRates
+    });
+  });
+  return result;
+}
+
+function buildDashSvcGrid() {
+  var banner = document.getElementById('svcsFirebaseBanner');
+  _loadFirebasePrices(function() {
+    if (banner) banner.innerHTML = '✅ Live prices loaded';
+    _dashRenderCatTabs();
+    _dashRenderChips();
+    _loadProviderCurrentServices();
+  });
+}
+
+function _dashRenderCatTabs() {
+  var wrap = document.getElementById('svcDashCatTabs');
+  if (!wrap) return;
+  var cats = ['All'];
+  var SVCS = buildServices();
+  SVCS.forEach(function(s){ if(s.cat && cats.indexOf(s.cat)===-1) cats.push(s.cat); });
+  wrap.innerHTML = '';
+  cats.forEach(function(c){
+    var btn = document.createElement('button');
+    btn.textContent = c === 'All' ? '⭐ All' : c;
+    btn.style.cssText = 'padding:6px 13px;border:2px solid '+(c===_portalActiveCat?'var(--teal,#1B6B7A)':'#e2e8f0')+';border-radius:100px;background:'+(c===_portalActiveCat?'var(--teal,#1B6B7A)':'#f8fafc')+';color:'+(c===_portalActiveCat?'white':'#718096')+';font-family:DM Sans,sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;';
+    btn.onclick = function(){ _portalActiveCat = c; _dashRenderCatTabs(); _dashRenderChips(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function _dashRenderChips() {
+  var grid = document.getElementById('svcDashGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  var SVCS = buildServices();
+  var filtered = _portalActiveCat === 'All' ? SVCS : SVCS.filter(function(s){ return s.cat === _portalActiveCat; });
+
+  filtered.forEach(function(s) {
+    var chip = document.createElement('div');
+    chip.className = 'svc-chip';
+    chip.dataset.name = s.name;
+    var subConf = SVC_SUBCATS[s.name];
+    chip.innerHTML = '<div class="svc-icon">'+s.icon+'</div>'
+      + '<div class="svc-name">'+s.name+'</div>'
+      + '<div style="font-size:9px;color:#718096;margin-top:3px;">from ₹'+s.defaultPrice+'</div>'
+      + '<div class="svc-price-badge" id="dbadge-'+s.name.replace(/\s/g,'_')+'">✓</div>';
+
+    chip.onclick = function() {
+      var wasSelected = chip.classList.contains('selected');
+      chip.classList.toggle('selected');
+      var subPanel = document.getElementById('dsubpanel-' + s.name.replace(/\s/g,'_'));
+      if (subPanel) {
+        subPanel.classList.toggle('show', !wasSelected);
+        if (!wasSelected) setTimeout(function(){ subPanel.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 50);
+      }
+    };
+    grid.appendChild(chip);
+
+    // Sub-panel
+    var panel = document.createElement('div');
+    panel.className = 'svc-subpanel';
+    panel.id = 'dsubpanel-' + s.name.replace(/\s/g,'_');
+    var ph = '<div class="svc-subpanel-title">'+s.icon+' '+s.name+' — Select what you offer</div>';
+    ph += '<div class="svc-subpanel-grid">';
+
+    if (subConf && subConf.subs && subConf.subs.length > 0) {
+      subConf.subs.forEach(function(sub) {
+        var custP = _pxGet(subConf.id, sub.k, 'price', sub.def) || sub.def;
+        var provDef = Math.round(custP * 0.7);
+        var k = (subConf.id||s.name)+'_'+sub.k+'_price';
+        ph += '<div class="svc-subitem">'
+          + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+          + '<input type="checkbox" data-key="'+k+'" onclick="event.stopPropagation();toggleDashSub(this,\''+s.name+'\')"/>'
+          + '<div class="svc-subitem-name">'+sub.name+'</div></div>'
+          + '<div class="svc-subitem-customer">Customer pays: <b>₹'+custP+'</b></div>'
+          + '<input class="svc-subitem-inp" type="number" value="'+provDef+'" min="1"'
+          + ' data-subkey="'+k+'" data-custprice="'+custP+'"'
+          + ' placeholder="Your rate" onclick="event.stopPropagation()" />'
+          + '<div class="svc-subitem-lbl">Your rate (₹)</div>'
+          + '</div>';
+      });
+    } else {
+      var custP2 = s.defaultPrice;
+      ph += '<div class="svc-subitem">'
+        + '<div class="svc-subitem-customer">Customer pays: <b>₹'+custP2+'</b></div>'
+        + '<input class="svc-subitem-inp" type="number" value="'+Math.round(custP2*0.7)+'" min="1"'
+        + ' data-subkey="'+s.name+'_base" data-custprice="'+custP2+'"'
+        + ' placeholder="Your rate" onclick="event.stopPropagation()" />'
+        + '<div class="svc-subitem-lbl">Your rate (₹)</div></div>';
+    }
+    ph += '</div>';
+    panel.innerHTML = ph;
+    grid.appendChild(panel);
+  });
+}
+
+function toggleDashSub(chk, svcName) {
+  var chip = document.querySelector('.svc-chip[data-name="'+svcName+'"]');
+  if (chip && chk.checked) chip.classList.add('selected');
+}
+
+function _loadProviderCurrentServices() {
+  if (!currentProvider || !currentProvider.id) return;
+  var svcs = currentProvider.services || [];
+  if (!svcs.length) return;
+  svcs.forEach(function(svc) {
+    var chip = document.querySelector('.svc-chip[data-name="'+svc.name+'"]');
+    if (chip) {
+      chip.classList.add('selected');
+      var panel = document.getElementById('dsubpanel-' + svc.name.replace(/\s/g,'_'));
+      if (panel) {
+        panel.classList.add('show');
+        (svc.subRates||[]).forEach(function(sr) {
+          var chk = panel.querySelector('input[type="checkbox"][data-key="'+sr.key+'"]');
+          if (chk) chk.checked = true;
+          var inp = panel.querySelector('input.svc-subitem-inp[data-subkey="'+sr.key+'"]');
+          if (inp) inp.value = sr.rate;
+        });
+      }
+    }
+  });
+}
+
+function saveDashServices() {
+  if (!currentProvider || !currentProvider.id) { showToast('❌ Provider not loaded'); return; }
+  var result = [];
+  var SVCS = buildServices();
+  SVCS.forEach(function(s) {
+    var chip = document.querySelector('.svc-chip[data-name="'+s.name+'"]');
+    if (!chip || !chip.classList.contains('selected')) return;
+    var panel = document.getElementById('dsubpanel-' + s.name.replace(/\s/g,'_'));
+    var subRates = [];
+    if (panel) {
+      panel.querySelectorAll('input.svc-subitem-inp').forEach(function(inp) {
+        var chkEl = panel.querySelector('input[type="checkbox"][data-key="'+inp.dataset.subkey+'"]');
+        if (chkEl && !chkEl.checked) return;
+        subRates.push({
+          key: inp.dataset.subkey,
+          custPrice: parseInt(inp.dataset.custprice)||0,
+          rate: parseInt(inp.value)||0,
+          label: inp.closest('.svc-subitem') ? (inp.closest('.svc-subitem').querySelector('.svc-subitem-name')||{textContent:s.name}).textContent : s.name
+        });
+      });
+    }
+    result.push({ name:s.name, icon:s.icon, id:s.id||s.name, price:subRates.length?subRates[0].rate:s.defaultPrice, subRates:subRates });
+  });
+
+  if (!result.length) { showToast('⚠️ Select at least one service'); return; }
+
+  var status = document.getElementById('svcSaveStatus');
+  if (status) status.textContent = '⏳ Saving...';
+
+  fbWrite('providers/'+currentProvider.id+'/services', result, function(err) {
+    if (err) {
+      if (status) status.textContent = '❌ Save failed: ' + err;
+      showToast('❌ Failed to save services');
+    } else {
+      currentProvider.services = result;
+      if (status) status.textContent = '✅ Services saved! ('+result.length+' services)';
+      showToast('✅ Services updated successfully!');
+    }
+  });
+}
+
+
+// Hook: init My Services on first visit
+document.addEventListener('hs_page_services', function() {
+  if (!_dashSvcsLoaded) {
+    _dashSvcsLoaded = true;
+    _portalActiveCat = 'All';
+    buildDashSvcGrid();
+  }
+});
+
+var _dashSvcsLoaded = false;
+
 </script>
 
 <!-- ══ OTP REQUEST MODAL (Provider side — enter code customer tells them) ══ -->
@@ -4275,6 +5631,20 @@ function showJobTakenPopup(provName) {
      Detection: screen width ≤ 768px OR touch device
      ═══════════════════════════════════════════════════════════════ -->
 
+
+  <!-- MY SERVICES PAGE -->
+  <div class="page" id="page-services">
+    <div style="max-width:700px;margin:0 auto;">
+      <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:4px;">🛠️ My Services</div>
+      <div style="font-size:13px;color:#718096;font-weight:600;margin-bottom:16px;">Select the services you offer and your rate for each variant. Tap a service to expand it.</div>
+      <div id="svcsFirebaseBanner" style="background:#e6f4ea;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;color:#1B6B7A;margin-bottom:12px;">⏳ Loading live prices...</div>
+      <div id="svcDashCatTabs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;"></div>
+      <div class="svc-grid" id="svcDashGrid"></div>
+      <button class="svc-save-btn" onclick="saveDashServices()">💾 Save My Services</button>
+      <div id="svcSaveStatus" style="text-align:center;font-size:13px;font-weight:700;margin-top:10px;color:#1B6B7A;"></div>
+    </div>
+  </div>
+
 <!-- Mobile Bottom Navigation Bar -->
 <nav id="mobileNav" class="mob-nav" style="display:none;">
   <div class="mob-nav-item active" id="mni-overview" onclick="mobNav('overview')">
@@ -4332,6 +5702,10 @@ function showJobTakenPopup(provName) {
     <div class="mob-more-btn" onclick="mobNav('location');mobCloseMore()">
       <div class="mob-more-btn-icon">📍</div>
       <div class="mob-more-btn-label">Location</div>
+    </div>
+    <div class="mob-more-btn" onclick="mobNav('services');mobCloseMore()">
+      <div class="mob-more-btn-icon">🛠️</div>
+      <div class="mob-more-btn-label">My Services</div>
     </div>
     <div class="mob-more-btn" onclick="mobNav('notifications');mobCloseMore()">
       <div class="mob-more-btn-icon">🔔</div>
