@@ -5007,6 +5007,17 @@ var _portalCurCat = 'All';
 var _portalPxLoaded = false; // separate flag — not on the prices object
 
 function _loadFirebasePrices(cb) {
+  // Use dashboard's fbRead which works with FB_URL
+  var url = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_='+Date.now();
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && typeof d === 'object') { _fbPrices = d; }
+      if (cb) cb();
+    })
+    .catch(function(){ if (cb) cb(); });
+}
+function _loadFirebasePrices_DISABLED(cb) {
   var API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
   var DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
   // Get anonymous token first
@@ -5029,6 +5040,7 @@ function _loadFirebasePrices(cb) {
   };
   x.onerror = function(){ if (cb) cb(); };
   x.send(JSON.stringify({returnSecureToken:true}));
+}
 }
 
 function buildDashSvcGrid(){
@@ -5542,15 +5554,14 @@ function saveDashServices() {
   var status = document.getElementById('svcSaveStatus');
   if (status) status.textContent = '⏳ Saving...';
 
-  fbWrite('providers/'+currentProvider.id+'/services', result, function(err) {
-    if (err) {
-      if (status) status.textContent = '❌ Save failed: ' + err;
-      showToast('❌ Failed to save services');
-    } else {
-      currentProvider.services = result;
-      if (status) status.textContent = '✅ Services saved! ('+result.length+' services)';
-      showToast('✅ Services updated successfully!');
-    }
+  // fbWrite in dashboard is async, no callback
+  fbWrite('providers/'+currentProvider.id+'/services', result).then(function() {
+    currentProvider.services = result;
+    if (status) status.textContent = '✅ Services saved! ('+result.length+' services)';
+    showToast('✅ Services updated successfully!');
+  }).catch(function(err) {
+    if (status) status.textContent = '❌ Save failed';
+    showToast('❌ Failed to save services');
   });
 }
 
