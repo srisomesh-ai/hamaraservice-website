@@ -764,7 +764,7 @@ const FIREBASE_CONFIG = {
 if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 const fbAuth = firebase.auth();
 const fbDB   = firebase.database();
-// Force LOCAL persistence so session survives page navigation  
+// Force LOCAL persistence so session survives page navigation
 fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
 
 const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -799,9 +799,16 @@ fbAuth.onAuthStateChanged(async fbUser => {
       if (btn) switchTab(btn, true);
     }
   } else {
-    currentUser = currentProfile = null;
-    allBookings = [];
-    showGate();
+    // Firebase fires null FIRST before restoring the session from storage.
+    // Wait 2s before showing gate — if user is logged in, the real callback
+    // fires within milliseconds and calls loadUserData instead.
+    setTimeout(function() {
+      if (!currentUser) {
+        currentProfile = null;
+        allBookings = [];
+        showGate();
+      }
+    }, 2000);
   }
 });
 
