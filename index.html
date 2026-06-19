@@ -1304,7 +1304,7 @@ function _getLiveCatalog(){
     if(s&&s.length>0) return s.filter(function(x){return x.status!=='inactive';}).map(function(x){
       var m=HS_CATALOG.find(function(m){return m.name===x.name||(m.id&&m.id===x.id);})||{};
       return {id:x.id,icon:x.icon||m.icon||'🔧',name:x.name||m.name,
-              cat:x.cat||m.cat||'Other',price:x.userPrice||x.defaultPrice||m.price||499,keywords:m.keywords||[]};
+              cat:x.cat||m.cat||'Other',price:x.userPrice||x.defaultPrice||m.price||499,keywords:m.keywords||[],image:x.image||m.image||''};
     });
   }catch(e){}
   return HS_CATALOG;
@@ -1317,7 +1317,7 @@ function _buildAllServices(catalog) {
   ALL_SERVICES.length = 0;
   catalog.forEach(function(s) {
     ALL_SERVICES.push({name:s.name, emoji:s.icon||s.emoji||'🔧',
-      price:s.price, cat:s.cat||'Other', id:s.id, keywords:s.keywords||[]});
+      price:s.price, cat:s.cat||'Other', id:s.id, keywords:s.keywords||[], image:s.image||''});
   });
 }
 
