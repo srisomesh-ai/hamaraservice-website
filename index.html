@@ -1925,7 +1925,7 @@ function renderServicesGrid() {
   grid.innerHTML = toShow.map(function(s){
     var slug = encodeURIComponent(s.name);
     return '<div class="svc-card" onclick="openService(\'' + slug + '\')">'  
-      + '<div class="svc-card-img">' + (s.icon||s.emoji||'🔧') + '</div>'
+      + '<div class="svc-card-img">' + (s.image ? '<img src="'+s.image+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.parentNode.innerHTML=(s&&s.icon?s.icon:\'🔧\')">' : (s.icon||s.emoji||'🔧')) + '</div>'
       + '<div class="svc-card-info">'
         + '<div class="svc-name">' + s.name + '</div>'
         + '<div class="svc-price-tag" id="ptag-'+s.id+'">' + (s.price > 0 ? 'from ₹'+s.price.toLocaleString('en-IN') : '…') + '</div>'
