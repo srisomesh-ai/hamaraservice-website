@@ -1,2 +1,2 @@
-# HamaraService Website
-Auto-deploy active. Every GitHub push deploys to Hostinger automatically.
+# HamaraService
+Auto-deploy active via new webhook.
