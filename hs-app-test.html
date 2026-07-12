@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>HamaraService — App Test</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --brand:#E8651A;--brand2:#C9510F;--brand-soft:#FFF3EB;
+  --teal:#1B6B7A;--teal2:#134F5C;--teal-soft:#E6F4F6;
+  --ink:#1A1A2E;--ink2:#2D3748;--muted:#718096;
+  --line:#E2E8F0;--bg:#F0F7F9;--white:#FFFFFF;
+  --green:#2ECC71;--green-soft:#E8F8F0;
+  --yellow:#F59E0B;--red:#E53E3E;--red-soft:#FEE2E2;
+}
+body{font-family:'DM Sans',sans-serif;background:#1a1a2e;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:0;}
+
+/* ── PHONE SHELL ── */
+.phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;}
+@media(min-width:480px){
+  .phone{max-width:390px;min-height:844px;max-height:844px;border-radius:44px;margin:20px auto;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+  body{padding:20px;}
+}
+
+/* ── STATUS BAR ── */
+.status-bar{background:var(--teal);height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;}
+.status-time{color:white;font-size:15px;font-weight:700;}
+.status-icons{color:white;font-size:12px;gap:4px;display:flex;align-items:center;}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden;}
+.screen.active{display:flex;}
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll-body::-webkit-scrollbar{display:none;}
+
+/* ── APP HEADER ── */
+.app-bar{background:var(--teal);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.app-bar-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:white;}
+.app-bar-sub{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px;}
+.app-logo{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:white;}
+.app-logo span{color:#ffb07a;}
+.back-btn{color:white;font-size:13px;font-weight:600;padding:5px 10px;border:1.5px solid rgba(255,255,255,.3);border-radius:8px;cursor:pointer;background:none;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{background:white;border-top:1.5px solid var(--line);display:flex;padding:8px 0 max(8px,env(safe-area-inset-bottom));flex-shrink:0;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;transition:all .15s;}
+.nav-icon{font-size:20px;line-height:1;}
+.nav-label{font-size:10px;font-weight:600;color:var(--muted);}
+.nav-item.active .nav-label{color:var(--brand);}
+.nav-item.active .nav-icon{transform:scale(1.1);}
+
+/* ── CARDS ── */
+.card{background:white;border-radius:16px;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;}
+.card-pad{padding:14px;}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:14px;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;}
+.btn-primary{background:var(--brand);color:white;}
+.btn-primary:active{background:var(--brand2);}
+.btn-teal{background:var(--teal);color:white;}
+.btn-teal:active{background:var(--teal2);}
+.btn-outline{background:white;color:var(--teal);border:2px solid var(--teal);}
+.btn-green{background:var(--green);color:white;}
+.btn-red{background:var(--red);color:white;}
+.btn-sm{padding:9px 16px;width:auto;font-size:13px;border-radius:9px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* ── INPUTS ── */
+.inp-group{margin-bottom:12px;}
+.inp-label{font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:5px;display:block;}
+.inp{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:11px;font-size:14px;font-family:'DM Sans',sans-serif;background:white;outline:none;color:var(--ink);}
+.inp:focus{border-color:var(--teal);}
+
+/* ── CHIPS ── */
+.chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{padding:6px 13px;border:1.5px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;background:white;transition:all .15s;white-space:nowrap;}
+.chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);}
+
+/* ── SERVICE CARDS ── */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
+.svc-card{background:white;border-radius:16px;border:1px solid var(--line);overflow:hidden;cursor:pointer;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+.svc-card:active{transform:scale(.97);}
+.svc-img{height:80px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:36px;}
+.svc-img img{width:100%;height:100%;object-fit:cover;}
+.svc-info{padding:10px 10px 12px;}
+.svc-name{font-size:12px;font-weight:800;color:var(--ink);line-height:1.3;margin-bottom:3px;}
+.svc-price{font-size:11px;font-weight:700;color:var(--brand);}
+.svc-btn{display:block;text-align:center;background:var(--brand);color:white;font-size:11px;font-weight:700;padding:6px;margin-top:6px;border-radius:7px;}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#0d3d47,var(--teal));padding:20px 16px 28px;}
+.hero-row{display:flex;align-items:center;gap:12px;}
+.hero-icon{font-size:44px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25));}
+.hero-cat{font-size:9px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;}
+.hero-name{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:white;margin-bottom:4px;}
+.hero-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.hero-pill{padding:3px 9px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:10px;font-weight:600;color:rgba(255,255,255,.85);}
+
+/* ── RADAR ── */
+.radar-wrap{display:flex;flex-direction:column;align-items:center;padding:30px 20px;}
+.radar-ring{position:relative;width:220px;height:220px;margin:0 auto 24px;}
+.radar-circle{position:absolute;border-radius:50%;border:1.5px solid rgba(27,107,122,.2);top:50%;left:50%;transform:translate(-50%,-50%);}
+.radar-dot{position:absolute;width:16px;height:16px;background:var(--teal);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(27,107,122,.2);}
+.radar-pulse{position:absolute;width:220px;height:220px;border-radius:50%;border:2px solid var(--teal);top:0;left:0;animation:pulse 2s ease-out infinite;opacity:0;}
+@keyframes pulse{0%{transform:scale(.1);opacity:.8;}100%{transform:scale(1);opacity:0;}}
+.radar-status{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:6px;}
+.radar-sub{font-size:13px;color:var(--muted);text-align:center;}
+
+/* ── OTP POPUP ── */
+.otp-overlay{position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.otp-card{background:white;border-radius:20px;overflow:hidden;width:100%;max-width:320px;}
+.otp-head{background:var(--teal);padding:20px;text-align:center;}
+.otp-head-icon{font-size:36px;margin-bottom:8px;}
+.otp-head-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:white;}
+.otp-head-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;}
+.otp-body{padding:20px;}
+.otp-digits{display:flex;gap:8px;justify-content:center;margin:14px 0;}
+.otp-digit{width:54px;height:62px;border:2px solid var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:30px;font-weight:900;color:var(--ink);background:var(--green-soft);}
+.otp-warn{background:rgba(245,158,11,.1);border-radius:9px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start;margin-top:12px;}
+.otp-warn-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.otp-warn-text{font-size:11px;color:var(--yellow);font-weight:600;line-height:1.4;}
+
+/* ── STEP ── */
+.step-list{padding:0 16px;}
+.step-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+.step-item:last-child{border-bottom:none;}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--teal-soft);color:var(--teal);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Sora',sans-serif;}
+.step-title{font-size:13px;font-weight:700;color:var(--ink);}
+.step-desc{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4;}
+
+/* ── RATING STARS ── */
+.stars{display:flex;gap:6px;justify-content:center;margin:16px 0;}
+.star{font-size:36px;cursor:pointer;transition:transform .1s;}
+.star:active{transform:scale(1.2);}
+
+/* ── BOOKING CARD ── */
+.bk-card{background:white;border-radius:14px;border:1px solid var(--line);padding:14px;margin-bottom:10px;cursor:pointer;}
+.bk-status{display:inline-block;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:800;margin-bottom:8px;}
+.bk-svc{font-size:14px;font-weight:800;color:var(--ink);}
+.bk-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+.bk-price{font-size:16px;font-weight:800;color:var(--brand);margin-top:8px;}
+
+/* ── PROVIDER JOB CARD ── */
+.job-card{background:white;border-radius:14px;border:1px solid var(--line);padding:14px;margin-bottom:10px;}
+.job-new{border-left:4px solid var(--brand);}
+.job-accepted{border-left:4px solid var(--green);}
+.job-svc{font-size:15px;font-weight:800;color:var(--ink);}
+.job-addr{font-size:12px;color:var(--muted);margin-top:3px;}
+.job-price{font-size:18px;font-weight:800;color:var(--teal);margin:8px 0;}
+.job-row{display:flex;gap:8px;margin-top:10px;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-title{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--muted);line-height:1.5;}
+
+/* ── TOAST ── */
+.toast{position:absolute;bottom:80px;left:16px;right:16px;background:var(--ink);color:white;padding:12px 16px;border-radius:11px;font-size:13px;font-weight:600;text-align:center;z-index:200;transition:opacity .3s;pointer-events:none;}
+.toast.hide{opacity:0;}
+
+/* ── SPINNER ── */
+.spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SLOT GRID ── */
+.slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;}
+.slot{padding:10px 6px;border:1.5px solid var(--line);border-radius:9px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:var(--ink2);background:white;transition:all .15s;}
+.slot.active{border-color:var(--teal);background:var(--teal-soft);color:var(--teal);}
+.slot:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── PAYMENT BILL ── */
+.bill-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
+.bill-row:last-child{border-bottom:none;}
+.bill-total{font-size:16px;font-weight:800;color:var(--ink);}
+.bill-amt{font-size:16px;font-weight:800;color:var(--brand);}
+
+/* ── PROFILE ── */
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:28px;font-family:'Sora',sans-serif;font-weight:800;color:var(--teal);margin:0 auto 12px;}
+.profile-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);text-align:center;}
+.profile-email{font-size:13px;color:var(--muted);text-align:center;margin-top:4px;}
+
+/* ── MODE SWITCHER ── */
+.mode-bar{background:var(--ink);padding:8px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.mode-label{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;}
+.mode-btns{display:flex;gap:6px;}
+.mode-btn{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);background:none;color:rgba(255,255,255,.6);}
+.mode-btn.active{background:var(--brand);border-color:var(--brand);color:white;}
+
+/* ── SECTION ── */
+.section{padding:14px 14px 0;}
+.section-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--ink);margin-bottom:10px;}
+
+/* ── PROVIDER OTP INPUT ── */
+.otp-input-row{display:flex;gap:8px;justify-content:center;margin:16px 0;}
+.otp-in{width:54px;height:62px;border:2px solid var(--line);border-radius:12px;text-align:center;font-family:'Sora',sans-serif;font-size:28px;font-weight:900;color:var(--ink);outline:none;}
+.otp-in:focus{border-color:var(--teal);}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:800;}
+.badge-orange{background:var(--brand-soft);color:var(--brand);}
+.badge-green{background:var(--green-soft);color:var(--green);}
+.badge-teal{background:var(--teal-soft);color:var(--teal);}
+.badge-yellow{background:rgba(245,158,11,.1);color:var(--yellow);}
+.badge-red{background:var(--red-soft);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-time" id="clock">9:41</span>
+    <div class="status-icons"><span id="user-badge" style="font-size:10px;background:rgba(255,255,255,.15);padding:2px 8px;border-radius:100px;font-weight:700;"></span></div>
+  </div>
+
+  <!-- Mode Switcher -->
+  <div class="mode-bar">
+    <span class="mode-label">MODE:</span>
+    <div class="mode-btns">
+      <button class="mode-btn active" id="mode-cust" onclick="switchMode('customer')">👤 Customer</button>
+      <button class="mode-btn" id="mode-prov" onclick="switchMode('provider')">🔧 Provider</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════ -->
+  <!-- CUSTOMER SCREENS                     -->
+  <!-- ════════════════════════════════════ -->
+
+  <!-- SCREEN: Customer Login -->
+  <div class="screen active" id="screen-cust-login" style="background:var(--bg);">
+    <div style="background:linear-gradient(135deg,#0d3d47,var(--teal));padding:40px 24px 32px;">
+      <div style="text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🏠</div>
+        <div class="app-logo" style="font-size:24px;margin-bottom:6px;">Hamara <span>Service</span></div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6);">Home services at your doorstep</div>
+      </div>
+    </div>
+    <div class="scroll-body" style="padding:24px 16px;">
+      <div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--ink);margin-bottom:4px;">Welcome back</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Sign in to book services</div>
+      <div class="inp-group">
+        <label class="inp-label">Email</label>
+        <input class="inp" type="email" id="cust-email" placeholder="your@email.com" value="test@customer.com"/>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">Password</label>
+        <input class="inp" type="password" id="cust-password" placeholder="••••••••" value="test123"/>
+      </div>
+      <div id="cust-login-err" style="color:var(--red);font-size:12px;margin-bottom:12px;display:none;"></div>
+      <button class="btn btn-primary" id="cust-login-btn" onclick="custLogin()">Sign In</button>
+      <div style="text-align:center;margin-top:14px;">
+        <span style="font-size:13px;color:var(--muted);">No account? </span>
+        <span style="font-size:13px;color:var(--teal);font-weight:700;cursor:pointer;" onclick="showScreen('screen-cust-register')">Register</span>
+      </div>
+      <div style="text-align:center;margin-top:20px;padding:12px;background:var(--teal-soft);border-radius:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:4px;">🧪 TEST CREDENTIALS</div>
+        <div style="font-size:11px;color:var(--teal);">Email: test@customer.com | Pass: test123</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Customer Register -->
+  <div class="screen" id="screen-cust-register">
+    <div class="app-bar">
+      <button class="back-btn" onclick="showScreen('screen-cust-login')">← Back</button>
+      <div class="app-bar-title">Create Account</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll-body" style="padding:16px;">
+      <div class="inp-group"><label class="inp-label">Full Name *</label><input class="inp" id="reg-name" placeholder="Your name"/></div>
+      <div class="inp-group"><label class="inp-label">Email *</label><input class="inp" type="email" id="reg-email" placeholder="email@example.com"/></div>
+      <div class="inp-group"><label class="inp-label">Phone *</label><input class="inp" type="tel" id="reg-phone" placeholder="9876543210"/></div>
+      <div class="inp-group"><label class="inp-label">City</label><input class="inp" id="reg-city" placeholder="Visakhapatnam"/></div>
+      <div class="inp-group"><label class="inp-label">Password *</label><input class="inp" type="password" id="reg-pass" placeholder="Min 6 characters"/></div>
+      <div id="reg-err" style="color:var(--red);font-size:12px;margin-bottom:12px;display:none;"></div>
+      <button class="btn btn-primary" onclick="custRegister()">Create Account</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Customer Home -->
+  <div class="screen" id="screen-cust-home">
+    <div style="background:linear-gradient(135deg,#0d3d47,var(--teal));padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;">Good morning 👋</div>
+          <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:white;" id="home-user-name">Customer</div>
+        </div>
+        <div class="app-logo" style="font-size:14px;">Hamara <span>Service</span></div>
+      </div>
+      <!-- Search bar -->
+      <div style="background:rgba(255,255,255,.15);border-radius:11px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+        <span style="color:rgba(255,255,255,.6);">🔍</span>
+        <span style="font-size:13px;color:rgba(255,255,255,.5);">Search services...</span>
+      </div>
+    </div>
+    <div class="scroll-body">
+      <!-- Category tabs -->
+      <div style="padding:12px 14px 0;overflow-x:auto;white-space:nowrap;">
+        <div class="chip-row" id="cat-tabs" style="flex-wrap:nowrap;padding-bottom:2px;"></div>
+      </div>
+      <!-- Service grid -->
+      <div class="svc-grid" id="svc-grid"></div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="custTab('home')"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+      <div class="nav-item" onclick="custTab('bookings')"><div class="nav-icon">📋</div><div class="nav-label">Bookings</div></div>
+      <div class="nav-item" onclick="custTab('account')"><div class="nav-icon">👤</div><div class="nav-label">Account</div></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Service Detail -->
+  <div class="screen" id="screen-svc-detail">
+    <div class="hero" id="svc-hero">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <button class="back-btn" onclick="showScreen('screen-cust-home')">← Home</button>
+        <div class="app-logo" style="font-size:13px;">Hamara <span>Service</span></div>
+      </div>
+      <div class="hero-row">
+        <div class="hero-icon" id="svc-hero-icon">🧹</div>
+        <div>
+          <div class="hero-cat" id="svc-hero-cat">Home Cleaning</div>
+          <div class="hero-name" id="svc-hero-name">House Maid</div>
+          <div class="hero-pills">
+            <span class="hero-pill">✓ Verified</span>
+            <span class="hero-pill">⭐ 4.8</span>
+            <span class="hero-pill">⏱ Same Day</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-body">
+      <!-- Task selection -->
+      <div class="section" style="margin-top:12px;">
+        <div class="section-title">Select Tasks</div>
+        <div id="svc-tasks"></div>
+      </div>
+      <!-- Price bar -->
+      <div style="padding:14px;">
+        <div class="card" style="background:linear-gradient(135deg,#0d3d47,var(--teal));padding:14px;border:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Estimated Total</div>
+              <div style="font-family:'Sora',sans-serif;font-size:26px;font-weight:900;color:white;" id="svc-total">₹0</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.5);" id="svc-task-count">Select tasks above</div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="svc-book-btn" onclick="goToBooking()" disabled style="opacity:.4;">Book Now →</button>
+          </div>
+        </div>
+      </div>
+      <!-- How it works -->
+      <div class="section">
+        <div class="section-title">How It Works</div>
+        <div class="step-list">
+          <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Select tasks & book slot</div><div class="step-desc">Choose what you need and pick a convenient time</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Provider accepts</div><div class="step-desc">Nearby verified provider accepts your booking</div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Work done + OTP</div><div class="step-desc">Provider shares OTP when job is complete</div></div></div>
+          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Pay & rate</div><div class="step-desc">Pay securely and rate your experience</div></div></div>
+        </div>
+      </div>
+      <div style="height:24px;"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Booking Flow -->
+  <div class="screen" id="screen-booking">
+    <div class="app-bar">
+      <button class="back-btn" onclick="showScreen('screen-svc-detail')">← Back</button>
+      <div><div class="app-bar-title">Book Service</div><div class="app-bar-sub" id="booking-svc-name">House Maid</div></div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll-body" style="padding:14px;">
+      <!-- Date -->
+      <div class="card card-pad" style="margin-bottom:12px;">
+        <div class="section-title" style="margin-bottom:10px;">📅 Select Date</div>
+        <div class="slot-grid" id="date-slots"></div>
+      </div>
+      <!-- Time -->
+      <div class="card card-pad" style="margin-bottom:12px;">
+        <div class="section-title" style="margin-bottom:10px;">⏰ Select Time</div>
+        <div class="slot-grid" id="time-slots"></div>
+      </div>
+      <!-- Address -->
+      <div class="card card-pad" style="margin-bottom:12px;">
+        <div class="section-title" style="margin-bottom:10px;">📍 Service Address</div>
+        <div class="inp-group"><label class="inp-label">Full Address *</label><input class="inp" id="bk-address" placeholder="House no, Street, Area"/></div>
+        <div class="inp-group"><label class="inp-label">Landmark</label><input class="inp" id="bk-landmark" placeholder="Near..."/></div>
+        <div class="inp-group"><label class="inp-label">City</label><input class="inp" id="bk-city" placeholder="Visakhapatnam" value="Visakhapatnam"/></div>
+      </div>
+      <!-- Summary -->
+      <div class="card card-pad" style="margin-bottom:16px;">
+        <div class="section-title" style="margin-bottom:10px;">📋 Booking Summary</div>
+        <div class="bill-row"><span>Service</span><span id="bk-sum-svc" style="font-weight:700;">House Maid</span></div>
+        <div class="bill-row"><span>Tasks</span><span id="bk-sum-tasks" style="font-weight:700;">—</span></div>
+        <div class="bill-row"><span>Date & Time</span><span id="bk-sum-dt" style="font-weight:700;">—</span></div>
+        <div class="bill-row" style="border-top:2px solid var(--line);margin-top:4px;padding-top:10px;">
+          <span class="bill-total">Total</span>
+          <span class="bill-amt" id="bk-sum-total">₹0</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="confirm-btn" onclick="confirmBooking()">✅ Confirm Booking</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Radar -->
+  <div class="screen" id="screen-radar">
+    <div class="app-bar">
+      <div></div>
+      <div class="app-bar-title">Finding Provider</div>
+      <div></div>
+    </div>
+    <div class="scroll-body">
+      <div class="radar-wrap">
+        <div class="radar-ring">
+          <div class="radar-circle" style="width:60px;height:60px;"></div>
+          <div class="radar-circle" style="width:120px;height:120px;"></div>
+          <div class="radar-circle" style="width:180px;height:180px;"></div>
+          <div class="radar-circle" style="width:220px;height:220px;"></div>
+          <div class="radar-pulse"></div>
+          <div class="radar-dot"></div>
+          <!-- Provider dot (shows when accepted) -->
+          <div id="prov-dot" style="position:absolute;width:28px;height:28px;background:var(--green);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:14px;top:20%;left:70%;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.2);">🔧</div>
+        </div>
+        <div class="radar-status" id="radar-status">Searching for providers...</div>
+        <div class="radar-sub" id="radar-sub">Looking within 5km radius</div>
+        <div style="margin-top:16px;padding:12px 16px;background:var(--teal-soft);border-radius:11px;text-align:center;" id="radar-info">
+          <div style="font-size:12px;color:var(--teal);font-weight:600;" id="radar-booking-id">Booking ID: —</div>
+        </div>
+        <div id="radar-accepted-card" style="display:none;width:100%;margin-top:16px;">
+          <div class="card card-pad" style="border-left:4px solid var(--green);">
+            <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px;">✅ PROVIDER ACCEPTED</div>
+            <div style="font-size:15px;font-weight:800;color:var(--ink);" id="radar-prov-name">Provider</div>
+            <div style="font-size:12px;color:var(--muted);">is on the way to you</div>
+          </div>
+        </div>
+      </div>
+      <!-- OTP Popup (hidden by default) -->
+      <div class="otp-overlay" id="otp-popup" style="display:none;">
+        <div class="otp-card">
+          <div class="otp-head">
+            <div class="otp-head-icon">🔐</div>
+            <div class="otp-head-title">Job Completion OTP</div>
+            <div class="otp-head-sub" id="otp-service-name">Share with provider</div>
+          </div>
+          <div class="otp-body">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px;">Your OTP Code</div>
+            <div class="otp-digits" id="otp-digits"></div>
+            <div class="otp-warn">
+              <div class="otp-warn-icon">⚠️</div>
+              <div class="otp-warn-text">Only share after work is completed to your satisfaction</div>
+            </div>
+            <button class="btn btn-outline" style="margin-top:14px;" onclick="dismissOtp()">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Payment -->
+  <div class="screen" id="screen-payment">
+    <div class="app-bar">
+      <div></div>
+      <div class="app-bar-title">Complete Payment</div>
+      <div></div>
+    </div>
+    <div class="scroll-body" style="padding:14px;">
+      <div style="text-align:center;padding:20px 0 16px;">
+        <div style="font-size:48px;margin-bottom:8px;">💳</div>
+        <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);">Pay for your service</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;" id="pay-svc-name">House Maid</div>
+      </div>
+      <div class="card card-pad" style="margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:10px;">Bill Summary</div>
+        <div class="bill-row"><span>Service Amount</span><span id="pay-base" style="font-weight:700;">₹0</span></div>
+        <div class="bill-row" id="pay-comm-row"><span>Platform Fee (10%)</span><span id="pay-comm" style="color:var(--muted);">₹0</span></div>
+        <div class="bill-row" style="border-top:2px solid var(--line);margin-top:4px;padding-top:10px;">
+          <span class="bill-total">You Pay</span>
+          <span class="bill-amt" id="pay-total">₹0</span>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">Provider receives: <span id="pay-provider-gets" style="font-weight:700;color:var(--green);">₹0</span></div>
+      </div>
+      <div class="card card-pad" style="margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:10px;">Payment Method</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div class="chip active" id="pay-upi" onclick="selectPayMethod('upi')">📱 UPI</div>
+          <div class="chip" id="pay-card" onclick="selectPayMethod('card')">💳 Card</div>
+          <div class="chip" id="pay-cash" onclick="selectPayMethod('cash')">💵 Cash</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="pay-btn" onclick="processPayment()">Pay Now</button>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted);">🔒 Secured by Razorpay</div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Review -->
+  <div class="screen" id="screen-review">
+    <div class="app-bar">
+      <div></div>
+      <div class="app-bar-title">Rate Your Experience</div>
+      <div></div>
+    </div>
+    <div class="scroll-body" style="padding:20px 16px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:56px;margin-bottom:12px;">⭐</div>
+        <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);">How was your service?</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;" id="review-provider-name">Your provider did their best</div>
+      </div>
+      <div class="stars" id="review-stars">
+        <span class="star" data-v="1" onclick="setRating(1)">☆</span>
+        <span class="star" data-v="2" onclick="setRating(2)">☆</span>
+        <span class="star" data-v="3" onclick="setRating(3)">☆</span>
+        <span class="star" data-v="4" onclick="setRating(4)">☆</span>
+        <span class="star" data-v="5" onclick="setRating(5)">☆</span>
+      </div>
+      <div style="text-align:center;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:16px;" id="rating-label">Tap to rate</div>
+      <div class="inp-group">
+        <label class="inp-label">Comment (optional)</label>
+        <textarea class="inp" id="review-comment" rows="3" placeholder="Share your experience..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+      <button class="btn btn-outline" style="margin-top:8px;" onclick="skipReview()">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Customer Bookings -->
+  <div class="screen" id="screen-cust-bookings">
+    <div class="app-bar">
+      <div></div>
+      <div class="app-bar-title">My Bookings</div>
+      <div></div>
+    </div>
+    <div class="scroll-body" style="padding:14px;" id="bookings-list">
+      <div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No bookings yet</div><div class="empty-sub">Your bookings will appear here</div></div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="custTab('home')"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+      <div class="nav-item active" onclick="custTab('bookings')"><div class="nav-icon">📋</div><div class="nav-label">Bookings</div></div>
+      <div class="nav-item" onclick="custTab('account')"><div class="nav-icon">👤</div><div class="nav-label">Account</div></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Customer Account -->
+  <div class="screen" id="screen-cust-account">
+    <div class="app-bar">
+      <div></div>
+      <div class="app-bar-title">My Account</div>
+      <div></div>
+    </div>
+    <div class="scroll-body" style="padding:20px 16px;">
+      <div class="profile-avatar" id="acct-avatar">?</div>
+      <div class="profile-name" id="acct-name">Loading...</div>
+      <div class="profile-email" id="acct-email"></div>
+      <div style="height:20px;"></div>
+      <div class="card">
+        <div style="padding:14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);">
+          <span style="font-size:20px;">📋</span><div><div style="font-size:13px;font-weight:700;">My Bookings</div><div style="font-size:11px;color:var(--muted);">View all your bookings</div></div>
+        </div>
+        <div style="padding:14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);">
+          <span style="font-size:20px;">📍</span><div><div style="font-size:13px;font-weight:700;">Saved Addresses</div><div style="font-size:11px;color:var(--muted);">Manage your locations</div></div>
+        </div>
+        <div style="padding:14px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:20px;">⚙️</span><div><div style="font-size:13px;font-weight:700;">Settings</div><div style="font-size:11px;color:var(--muted);">Notifications & privacy</div></div>
+        </div>
+      </div>
+      <div style="height:16px;"></div>
+      <button class="btn btn-outline" style="border-color:var(--red);color:var(--red);" onclick="custLogout()">Sign Out</button>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="custTab('home')"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+      <div class="nav-item" onclick="custTab('bookings')"><div class="nav-icon">📋</div><div class="nav-label">Bookings</div></div>
+      <div class="nav-item active" onclick="custTab('account')"><div class="nav-icon">👤</div><div class="nav-label">Account</div></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════ -->
+  <!-- PROVIDER SCREENS                     -->
+  <!-- ════════════════════════════════════ -->
+
+  <!-- SCREEN: Provider Login -->
+  <div class="screen" id="screen-prov-login" style="background:var(--bg);">
+    <div style="background:linear-gradient(135deg,#0d2d35,var(--teal2));padding:40px 24px 32px;">
+      <div style="text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🔧</div>
+        <div class="app-logo" style="font-size:22px;margin-bottom:6px;">Provider <span>Portal</span></div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6);">Earn by providing home services</div>
+      </div>
+    </div>
+    <div class="scroll-body" style="padding:24px 16px;">
+      <div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--ink);margin-bottom:24px;">Provider Sign In</div>
+      <div class="inp-group"><label class="inp-label">Email</label><input class="inp" type="email" id="prov-email" placeholder="provider@email.com" value="test@provider.com"/></div>
+      <div class="inp-group"><label class="inp-label">Password</label><input class="inp" type="password" id="prov-password" placeholder="••••••••" value="test123"/></div>
+      <div id="prov-login-err" style="color:var(--red);font-size:12px;margin-bottom:12px;display:none;"></div>
+      <button class="btn btn-teal" onclick="provLogin()">Sign In as Provider</button>
+      <div style="text-align:center;margin-top:20px;padding:12px;background:var(--teal-soft);border-radius:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:4px;">🧪 TEST CREDENTIALS</div>
+        <div style="font-size:11px;color:var(--teal);">Email: test@provider.com | Pass: test123</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Provider Dashboard -->
+  <div class="screen" id="screen-prov-dash">
+    <div style="background:linear-gradient(135deg,#0d2d35,var(--teal2));padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;">Provider Dashboard</div>
+          <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:white;" id="prov-name-dash">Provider</div>
+        </div>
+        <div style="background:var(--green);width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 3px rgba(46,204,113,.3);"></div>
+      </div>
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;" id="prov-stat-jobs">0</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);">Total Jobs</div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;" id="prov-stat-earn">₹0</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);">Earned</div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:white;" id="prov-stat-rating">4.8⭐</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.55);">Rating</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-body">
+      <!-- New Jobs -->
+      <div class="section" style="margin-top:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="section-title" style="margin-bottom:0;">🔔 New Job Requests</div>
+          <span class="badge badge-orange" id="new-jobs-count">0 new</span>
+        </div>
+        <div id="new-jobs-list">
+          <div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">No new jobs</div><div class="empty-sub">New booking requests will appear here instantly</div></div>
+        </div>
+      </div>
+      <!-- Active Jobs -->
+      <div class="section" style="margin-top:4px;">
+        <div class="section-title" style="margin-bottom:10px;">⚡ Active Jobs</div>
+        <div id="active-jobs-list">
+          <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px;">No active jobs</div>
+        </div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="provTab('dashboard')"><div class="nav-icon">📊</div><div class="nav-label">Dashboard</div></div>
+      <div class="nav-item" onclick="provTab('jobs')"><div class="nav-icon">💼</div><div class="nav-label">Jobs</div></div>
+      <div class="nav-item" onclick="provTab('earnings')"><div class="nav-icon">💰</div><div class="nav-label">Earnings</div></div>
+      <div class="nav-item" onclick="provTab('profile')"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Provider OTP Entry -->
+  <div class="screen" id="screen-prov-otp">
+    <div class="app-bar">
+      <button class="back-btn" onclick="showScreen('screen-prov-dash')">← Back</button>
+      <div class="app-bar-title">Enter OTP</div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll-body" style="padding:20px 16px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;margin-bottom:10px;">🔐</div>
+        <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--ink);">Job Completion OTP</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;" id="prov-otp-job">Ask customer for their OTP</div>
+      </div>
+      <div class="card card-pad" style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:12px;">ENTER 4-DIGIT OTP FROM CUSTOMER</div>
+        <div class="otp-input-row">
+          <input class="otp-in" id="otp-in-1" maxlength="1" oninput="otpInput(this,2)" type="tel"/>
+          <input class="otp-in" id="otp-in-2" maxlength="1" oninput="otpInput(this,3)" type="tel"/>
+          <input class="otp-in" id="otp-in-3" maxlength="1" oninput="otpInput(this,4)" type="tel"/>
+          <input class="otp-in" id="otp-in-4" maxlength="1" oninput="otpInput(this,null)" type="tel"/>
+        </div>
+        <div id="otp-err" style="color:var(--red);font-size:12px;text-align:center;display:none;margin-top:8px;"></div>
+      </div>
+      <button class="btn btn-teal" onclick="verifyOtp()">✅ Verify & Complete Job</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Job Completed (Provider) -->
+  <div class="screen" id="screen-job-done">
+    <div class="scroll-body" style="padding:40px 16px;text-align:center;">
+      <div style="font-size:72px;margin-bottom:16px;">🎉</div>
+      <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:8px;">Job Completed!</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:24px;">Waiting for customer payment</div>
+      <div class="card card-pad" style="margin-bottom:20px;text-align:left;">
+        <div class="bill-row"><span>Service Amount</span><span id="done-amount" style="font-weight:700;">₹0</span></div>
+        <div class="bill-row"><span>Platform Fee</span><span id="done-comm" style="color:var(--muted);">₹0</span></div>
+        <div class="bill-row" style="border-top:2px solid var(--line);margin-top:4px;padding-top:10px;">
+          <span class="bill-total">You Receive</span>
+          <span style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--green);" id="done-earn">₹0</span>
+        </div>
+      </div>
+      <div id="done-payment-status" style="padding:12px;background:var(--teal-soft);border-radius:10px;font-size:13px;font-weight:700;color:var(--teal);margin-bottom:20px;">⏳ Waiting for customer to pay...</div>
+      <button class="btn btn-teal" onclick="showScreen('screen-prov-dash')">← Back to Dashboard</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Booking Success -->
+  <div class="screen" id="screen-booking-success">
+    <div class="scroll-body" style="padding:40px 16px;text-align:center;">
+      <div style="font-size:72px;margin-bottom:16px;">✅</div>
+      <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:8px;">Booking Confirmed!</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:8px;">Thank you for using HamaraService</div>
+      <div style="font-size:12px;color:var(--teal);font-weight:700;margin-bottom:24px;" id="success-booking-id">Booking ID: —</div>
+      <div class="card card-pad" style="margin-bottom:20px;text-align:left;">
+        <div class="bill-row"><span>Service</span><span id="success-svc" style="font-weight:700;">—</span></div>
+        <div class="bill-row"><span>Rating</span><span style="font-weight:700;">⭐ 5.0</span></div>
+        <div class="bill-row"><span>Amount</span><span id="success-amt" style="font-weight:700;color:var(--brand);">₹0</span></div>
+      </div>
+      <button class="btn btn-primary" onclick="goHome()">🏠 Back to Home</button>
+      <button class="btn btn-outline" style="margin-top:8px;" onclick="viewBookings()">View My Bookings</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast hide" id="toast"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════════
+firebase.initializeApp({
+  apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+  authDomain:        "hamaraservice-s009.firebaseapp.com",
+  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "hamaraservice-s009",
+  storageBucket:     "hamaraservice-s009.firebasestorage.app",
+  messagingSenderId: "1064274729048",
+  appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
+});
+
+const fbAuth = firebase.auth();
+const fbDB   = firebase.database();
+fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+
+// ══════════════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════════════
+let mode          = 'customer';  // 'customer' | 'provider'
+let currentUser   = null;
+let currentProfile= null;
+let selectedSvc   = null;
+let selectedTasks = {};
+let selectedDate  = null;
+let selectedTime  = null;
+let currentBookingId = null;
+let currentBooking   = null;
+let reviewRating  = 0;
+let payMethod     = 'upi';
+let providerData  = null;
+
+// Listeners
+let radarListener = null;
+let otpListener   = null;
+let jobsListener  = null;
+
+// ══════════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}).replace(' ','').toUpperCase();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ══════════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ══════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
+function switchMode(m){
+  mode = m;
+  document.getElementById('mode-cust').classList.toggle('active', m==='customer');
+  document.getElementById('mode-prov').classList.toggle('active', m==='provider');
+
+  // Cancel any active listeners
+  if(radarListener){ radarListener(); radarListener=null; }
+  if(otpListener){   otpListener();   otpListener=null; }
+  if(jobsListener){  jobsListener();  jobsListener=null; }
+
+  if(m === 'customer'){
+    if(currentUser && currentProfile && currentProfile.type !== 'provider'){
+      showScreen('screen-cust-home');
+    } else {
+      // Sign out provider before switching
+      fbAuth.signOut().then(()=>{
+        currentUser = null; currentProfile = null;
+        showScreen('screen-cust-login');
+      });
+    }
+  } else {
+    if(currentUser && providerData){
+      showScreen('screen-prov-dash');
+      loadProviderDash();
+    } else {
+      fbAuth.signOut().then(()=>{
+        currentUser = null; providerData = null;
+        showScreen('screen-prov-login');
+      });
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════
+fbAuth.onAuthStateChanged(async user => {
+  currentUser = user;
+  if(user) document.getElementById('user-badge').textContent = user.email.split('@')[0];
+  else document.getElementById('user-badge').textContent = '';
+});
+
+async function custLogin(){
+  const email = document.getElementById('cust-email').value.trim();
+  const pass  = document.getElementById('cust-password').value;
+  const btn   = document.getElementById('cust-login-btn');
+  const err   = document.getElementById('cust-login-err');
+  err.style.display='none';
+  btn.textContent='Signing in...'; btn.disabled=true;
+  try {
+    const cred = await fbAuth.signInWithEmailAndPassword(email, pass);
+    currentUser = cred.user;
+    await loadCustProfile(cred.user);
+    showScreen('screen-cust-home');
+    buildHomeScreen();
+    toast('Welcome back! 👋');
+  } catch(e){
+    err.textContent = e.message; err.style.display='block';
+  }
+  btn.textContent='Sign In'; btn.disabled=false;
+}
+
+async function custRegister(){
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const city  = document.getElementById('reg-city').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const err   = document.getElementById('reg-err');
+  if(!name||!email||!phone||!pass){ err.textContent='Please fill all required fields'; err.style.display='block'; return; }
+  err.style.display='none';
+  try {
+    const cred = await fbAuth.createUserWithEmailAndPassword(email, pass);
+    const profile = {
+      uid: cred.user.uid, name, email, phone, city,
+      registeredAt: new Date().toISOString(), wallet: 0,
+      id: 'HS-CU-' + Date.now().toString(36).toUpperCase()
+    };
+    const token = await cred.user.getIdToken();
+    await fetch(`https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/${cred.user.uid}.json?auth=${token}`,
+      {method:'PUT', body: JSON.stringify(profile)});
+    currentUser = cred.user; currentProfile = profile;
+    showScreen('screen-cust-home');
+    buildHomeScreen();
+    toast('Account created! Welcome 🎉');
+  } catch(e){
+    err.textContent = e.message; err.style.display='block';
+  }
+}
+
+async function loadCustProfile(user){
+  try {
+    const snap = await fbDB.ref('customers/' + user.uid).once('value');
+    currentProfile = snap.exists() ? snap.val() : {uid:user.uid, name:user.displayName||user.email.split('@')[0], email:user.email};
+    document.getElementById('home-user-name').textContent = (currentProfile.name||'').split(' ')[0] || 'Customer';
+    document.getElementById('acct-name').textContent  = currentProfile.name || 'Customer';
+    document.getElementById('acct-email').textContent = currentProfile.email || '';
+    const init = (currentProfile.name||'U')[0].toUpperCase();
+    document.getElementById('acct-avatar').textContent = init;
+  } catch(e){}
+}
+
+function custLogout(){
+  fbAuth.signOut().then(()=>{
+    currentUser=null; currentProfile=null; currentBookingId=null;
+    if(radarListener){radarListener();radarListener=null;}
+    if(otpListener){otpListener();otpListener=null;}
+    showScreen('screen-cust-login');
+  });
+}
+
+// ══════════════════════════════════════════════════
+// CUSTOMER NAV TABS
+// ══════════════════════════════════════════════════
+function custTab(tab){
+  if(tab==='home'){showScreen('screen-cust-home'); buildHomeScreen();}
+  else if(tab==='bookings'){showScreen('screen-cust-bookings'); loadMyBookings();}
+  else if(tab==='account'){showScreen('screen-cust-account');}
+}
+
+// ══════════════════════════════════════════════════
+// CATALOG & HOME SCREEN
+// ══════════════════════════════════════════════════
+const CATALOG = [
+  {id:'SVC001',icon:'🧹',name:'House Maid',cat:'Home Cleaning',price:499,image:'/assets/services/SVC001.jpg'},
+  {id:'SVC002',icon:'🧽',name:'Deep Cleaning',cat:'Home Cleaning',price:999,image:'/assets/services/SVC002.jpg'},
+  {id:'SVC003',icon:'🚿',name:'Bathroom Cleaning',cat:'Home Cleaning',price:399,image:'/assets/services/SVC003.jpg'},
+  {id:'SVC004',icon:'🍳',name:'Kitchen Cleaning',cat:'Home Cleaning',price:699,image:'/assets/services/SVC004.jpg'},
+  {id:'SVC005',icon:'🛋️',name:'Sofa/Carpet Cleaning',cat:'Home Cleaning',price:599,image:'/assets/services/SVC005.jpg'},
+  {id:'SVC007',icon:'❄️',name:'AC Cleaning & Repair',cat:'Appliance Care',price:599,image:'/assets/services/SVC007.jpg'},
+  {id:'SVC009',icon:'🫙',name:'Home Appliance Repair',cat:'Appliance Care',price:599,image:'/assets/services/SVC009.jpg'},
+  {id:'SVC011',icon:'🔧',name:'Plumber',cat:'Repairs',price:499,image:'/assets/services/SVC011.jpg'},
+  {id:'SVC012',icon:'⚡',name:'Electrician',cat:'Repairs',price:499,image:'/assets/services/SVC012.jpg'},
+  {id:'SVC013',icon:'🪚',name:'Carpenter',cat:'Repairs',price:599,image:'/assets/services/SVC013.jpg'},
+  {id:'SVC017',icon:'🚗',name:'Car/Bike Wash',cat:'Vehicle Care',price:299,image:'/assets/services/SVC017.jpg'},
+  {id:'SVC021',icon:'🐛',name:'Pest Control',cat:'Pest Control',price:799,image:'/assets/services/SVC021.jpg'},
+  {id:'SVC022',icon:'🍱',name:'Cook',cat:'Cooking',price:799,image:'/assets/services/SVC022.jpg'},
+  {id:'SVC023',icon:'✂️',name:'Haircut (Men)',cat:'Beauty',price:199,image:'/assets/services/SVC023.jpg'},
+  {id:'SVC025',icon:'💆',name:'Massage',cat:'Beauty',price:999,image:'/assets/services/SVC025.jpg'},
+  {id:'SVC027',icon:'👨‍⚕️',name:'Doctor Visit',cat:'Medical',price:699,image:'/assets/services/SVC027.jpg'},
+];
+
+const TASKS = {
+  'House Maid': [{name:'Sweeping & Mopping',price:149},{name:'Dishwashing',price:149},{name:'Dusting',price:99},{name:'Laundry',price:149},{name:'Folding Clothes',price:99}],
+  'Deep Cleaning': [{name:'Full Home Cleaning',price:999},{name:'Bathroom Deep Clean',price:399},{name:'Kitchen Deep Clean',price:499}],
+  'Bathroom Cleaning': [{name:'Standard Cleaning',price:299},{name:'Deep Scrub',price:399},{name:'Tiles & Grout',price:349}],
+  'default': [{name:'Standard Service',price:0},{name:'Premium Service',price:200}],
+};
+
+function getTasksForSvc(name){ return TASKS[name] || TASKS['default']; }
+
+let activeCat = 'All';
+function buildHomeScreen(){
+  // Load live prices from Firebase
+  fbDB.ref('hs_service_prices').once('value').then(snap => {
+    const prices = snap.val() || {};
+    CATALOG.forEach(s => { if(prices[s.id] && prices[s.id].price) s.price = prices[s.id].price; });
+    renderCatalog();
+  }).catch(()=>renderCatalog());
+}
+
+function renderCatalog(){
+  // Category tabs
+  const cats = ['All', ...new Set(CATALOG.map(s=>s.cat))];
+  const tabsEl = document.getElementById('cat-tabs');
+  tabsEl.innerHTML = cats.map(c=>`<div class="chip${c===activeCat?' active':''}" onclick="setCat('${c}')">${c==='All'?'⭐ ':''} ${c}</div>`).join('');
+
+  // Service grid
+  const filtered = activeCat==='All' ? CATALOG : CATALOG.filter(s=>s.cat===activeCat);
+  const grid = document.getElementById('svc-grid');
+  grid.innerHTML = filtered.map(s=>`
+    <div class="svc-card" onclick="openService('${s.id}')">
+      <div class="svc-img">
+        <img src="${s.image}" onerror="this.style.display='none';this.nextSibling.style.display='block'" style="display:${s.image?'block':'none'}"/>
+        <span style="display:${s.image?'none':'block'}">${s.icon}</span>
+      </div>
+      <div class="svc-info">
+        <div class="svc-name">${s.name}</div>
+        <div class="svc-price">from ₹${s.price}</div>
+        <div class="svc-btn">Book →</div>
+      </div>
+    </div>`).join('');
+}
+
+function setCat(c){ activeCat=c; renderCatalog(); }
+
+function openService(id){
+  selectedSvc = CATALOG.find(s=>s.id===id);
+  if(!selectedSvc) return;
+  selectedTasks = {};
+  document.getElementById('svc-hero-icon').textContent = selectedSvc.icon;
+  document.getElementById('svc-hero-name').textContent = selectedSvc.name;
+  document.getElementById('svc-hero-cat').textContent  = selectedSvc.cat;
+
+  // Build task chips
+  const tasks = getTasksForSvc(selectedSvc.name);
+  const tasksEl = document.getElementById('svc-tasks');
+  tasksEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">` +
+    tasks.map((t,i)=>`
+      <div class="card" style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;" id="task-${i}" onclick="toggleTask(${i},'${t.name}',${t.price||selectedSvc.price})">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;" id="task-check-${i}"></div>
+          <div style="font-size:13px;font-weight:700;color:var(--ink);">${t.name}</div>
+        </div>
+        <div style="font-size:13px;font-weight:800;color:var(--teal);">₹${t.price||selectedSvc.price}</div>
+      </div>`).join('') + '</div>';
+
+  updateSvcTotal();
+  showScreen('screen-svc-detail');
+}
+
+function toggleTask(i, name, price){
+  const key = `${i}-${name}`;
+  const chk = document.getElementById(`task-check-${i}`);
+  const card = document.getElementById(`task-${i}`);
+  if(selectedTasks[key]){
+    delete selectedTasks[key];
+    chk.textContent=''; chk.style.background=''; chk.style.borderColor='var(--line)';
+    card.style.borderColor='var(--line)'; card.style.background='';
+  } else {
+    selectedTasks[key] = {name, price};
+    chk.textContent='✓'; chk.style.background='var(--brand)'; chk.style.color='white'; chk.style.border='none';
+    card.style.borderColor='var(--brand)'; card.style.background='var(--brand-soft)';
+  }
+  updateSvcTotal();
+}
+
+function updateSvcTotal(){
+  const tasks = Object.values(selectedTasks);
+  const total = tasks.reduce((s,t)=>s+t.price,0);
+  const count = tasks.length;
+  document.getElementById('svc-total').textContent = '₹' + total;
+  document.getElementById('svc-task-count').textContent = count > 0 ? `${count} task${count>1?'s':''} selected` : 'Select tasks above';
+  const btn = document.getElementById('svc-book-btn');
+  btn.disabled = count===0;
+  btn.style.opacity = count===0 ? '.4' : '1';
+}
+
+// ══════════════════════════════════════════════════
+// BOOKING FLOW
+// ══════════════════════════════════════════════════
+function goToBooking(){
+  if(!currentUser){ showScreen('screen-cust-login'); return; }
+  if(Object.keys(selectedTasks).length===0){ toast('Select at least one task'); return; }
+  buildBookingScreen();
+  showScreen('screen-booking');
+}
+
+function buildBookingScreen(){
+  document.getElementById('booking-svc-name').textContent = selectedSvc.name;
+  document.getElementById('bk-sum-svc').textContent = selectedSvc.name;
+  const tasks = Object.values(selectedTasks);
+  document.getElementById('bk-sum-tasks').textContent = tasks.map(t=>t.name).join(', ');
+  const total = tasks.reduce((s,t)=>s+t.price,0);
+  document.getElementById('bk-sum-total').textContent = '₹'+total;
+
+  // Dates (next 7 days)
+  const dateEl = document.getElementById('date-slots');
+  const dates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(); d.setDate(d.getDate()+i);
+    dates.push({label: i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}), value: d.toISOString().split('T')[0]});
+  }
+  dateEl.innerHTML = dates.map((d,i)=>`<div class="slot${i===0?' active':''}" id="date-${i}" onclick="selectDate('${d.value}',${i})">${d.label}</div>`).join('');
+  selectedDate = dates[0].value;
+
+  // Times
+  const timeEl = document.getElementById('time-slots');
+  const times = ['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM'];
+  timeEl.innerHTML = times.map((t,i)=>`<div class="slot" id="time-${i}" onclick="selectTime('${t}',${i})">${t}</div>`).join('');
+  selectedTime = null;
+  document.getElementById('bk-sum-dt').textContent = '—';
+}
+
+function selectDate(val, i){
+  selectedDate = val;
+  document.querySelectorAll('#date-slots .slot').forEach(s=>s.classList.remove('active'));
+  document.getElementById('date-'+i).classList.add('active');
+  updateBookingSummaryDT();
+}
+
+function selectTime(val, i){
+  selectedTime = val;
+  document.querySelectorAll('#time-slots .slot').forEach(s=>s.classList.remove('active'));
+  document.getElementById('time-'+i).classList.add('active');
+  updateBookingSummaryDT();
+}
+
+function updateBookingSummaryDT(){
+  if(selectedDate && selectedTime)
+    document.getElementById('bk-sum-dt').textContent = selectedDate + ' at ' + selectedTime;
+}
+
+async function confirmBooking(){
+  if(!selectedDate){ toast('Select a date'); return; }
+  if(!selectedTime){ toast('Select a time'); return; }
+  const addr = document.getElementById('bk-address').value.trim();
+  if(!addr){ toast('Enter your address'); return; }
+
+  const btn = document.getElementById('confirm-btn');
+  btn.textContent='Confirming...'; btn.disabled=true;
+
+  const tasks = Object.values(selectedTasks);
+  const total = tasks.reduce((s,t)=>s+t.price,0);
+
+  const booking = {
+    customerId:   currentUser.uid,
+    customerName: currentProfile?.name || currentUser.email,
+    customerPhone:currentProfile?.phone || '',
+    service:      selectedSvc.name,
+    serviceId:    selectedSvc.id,
+    tasks:        tasks,
+    priceVal:     total,
+    price:        total,
+    date:         selectedDate,
+    time:         selectedTime,
+    address:      addr + (document.getElementById('bk-landmark').value ? ', ' + document.getElementById('bk-landmark').value : ''),
+    city:         document.getElementById('bk-city').value,
+    status:       'active',
+    paymentStatus:'pending',
+    createdAt:    new Date().toISOString(),
+    lat:          17.6868,
+    lng:          83.2185,
+  };
+
+  try {
+    const ref  = fbDB.ref('bookings').push();
+    booking.id = ref.key;
+    await ref.set(booking);
+    await fbDB.ref('active_bookings/' + ref.key).set(booking);
+    currentBookingId = ref.key;
+    currentBooking   = booking;
+
+    // Also notify via Cloud Function
+    fetch('https://notifybooking-mlchyp6tra-as.a.run.app',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({bookingId: ref.key, booking})
+    }).catch(()=>{});
+
+    showScreen('screen-radar');
+    startRadarListening();
+    toast('Booking confirmed! 🎉');
+  } catch(e){
+    toast('Error: ' + e.message);
+  }
+  btn.textContent='✅ Confirm Booking'; btn.disabled=false;
+}
+
+// ══════════════════════════════════════════════════
+// RADAR
+// ══════════════════════════════════════════════════
+function startRadarListening(){
+  if(!currentBookingId) return;
+  document.getElementById('radar-booking-id').textContent = 'Booking ID: ' + currentBookingId.slice(-8).toUpperCase();
+
+  // Listen for provider acceptance
+  radarListener = fbDB.ref('active_bookings/' + currentBookingId)
+    .on('value', snap => {
+      if(!snap.exists()) return;
+      const bk = snap.val();
+      currentBooking = bk;
+
+      if(bk.acceptedBy){
+        // Provider accepted
+        document.getElementById('radar-status').textContent = 'Provider Found! 🎉';
+        document.getElementById('radar-sub').textContent = (bk.acceptedBy.name||'Provider') + ' is on the way';
+        const dot = document.getElementById('prov-dot');
+        dot.style.display = 'flex';
+        const card = document.getElementById('radar-accepted-card');
+        card.style.display = 'block';
+        document.getElementById('radar-prov-name').textContent = bk.acceptedBy.name || 'Provider';
+      }
+
+      if(bk.status === 'otp_sent'){
+        // Show OTP popup
+        startOtpListening();
+      }
+
+      if(bk.status === 'payment_pending'){
+        // Go to payment
+        if(radarListener){ fbDB.ref('active_bookings/'+currentBookingId).off('value', radarListener); }
+        goToPayment(bk);
+      }
+    });
+
+  // Also listen on job_otp
+  startOtpListening();
+}
+
+function startOtpListening(){
+  if(!currentUser || !currentBookingId) return;
+  if(otpListener) return; // already listening
+
+  otpListener = fbDB.ref('job_otp')
+    .orderByChild('customerId')
+    .equalTo(currentUser.uid)
+    .on('child_added', snap => {
+      const data = snap.val();
+      if(!data || data.status !== 'waiting') return;
+      showOtpPopup(data.otp, data.service || selectedSvc?.name || 'Service');
+    });
+}
+
+function showOtpPopup(otp, serviceName){
+  document.getElementById('otp-service-name').textContent = 'Share with provider for ' + serviceName;
+  const digits = document.getElementById('otp-digits');
+  digits.innerHTML = String(otp).split('').map(d=>`<div class="otp-digit">${d}</div>`).join('');
+  document.getElementById('otp-popup').style.display = 'flex';
+}
+
+function dismissOtp(){
+  document.getElementById('otp-popup').style.display = 'none';
+}
+
+function goToPayment(bk){
+  currentBooking = bk || currentBooking;
+  const amount = parseInt(currentBooking?.priceVal || currentBooking?.price || 0);
+  const svc    = currentBooking?.service || selectedSvc?.name || '';
+  const commRate = getCommRate(svc);
+  const comm   = Math.round(amount * commRate / 100);
+  const provEarn = amount - comm;
+
+  document.getElementById('pay-svc-name').textContent  = svc;
+  document.getElementById('pay-base').textContent      = '₹' + amount;
+  document.getElementById('pay-comm').textContent      = '₹' + comm + ' (' + commRate + '%)';
+  document.getElementById('pay-total').textContent     = '₹' + amount;
+  document.getElementById('pay-provider-gets').textContent = '₹' + provEarn;
+
+  showScreen('screen-payment');
+}
+
+function getCommRate(svc){
+  const rates = {
+    'House Maid':10,'Deep Cleaning':12,'Bathroom Cleaning':10,'Kitchen Cleaning':12,
+    'Plumber':20,'Electrician':20,'AC Cleaning & Repair':15,'Home Appliance Repair':18,
+    'Pest Control':10,'Car/Bike Wash':10,'Massage':15,'Doctor Visit':15,
+  };
+  return rates[svc] || 10;
+}
+
+function selectPayMethod(m){
+  payMethod = m;
+  ['upi','card','cash'].forEach(x=>{
+    document.getElementById('pay-'+x).classList.toggle('active', x===m);
+  });
+}
+
+async function processPayment(){
+  const btn = document.getElementById('pay-btn');
+  btn.textContent = 'Processing...'; btn.disabled = true;
+
+  // Simulate payment (test mode)
+  await new Promise(r=>setTimeout(r,1500));
+
+  try {
+    const amount = parseInt(currentBooking?.priceVal || currentBooking?.price || 0);
+    const svc    = currentBooking?.service || '';
+    const commRate = getCommRate(svc);
+    const comm   = Math.round(amount * commRate / 100);
+
+    const updates = {
+      status:        'completed',
+      paymentStatus: 'paid',
+      amountPaid:    amount,
+      paymentMethod: payMethod,
+      commissionRate:commRate,
+      platformFee:   comm,
+      providerEarned:amount - comm,
+      paidAt:        new Date().toISOString(),
+    };
+
+    await fbDB.ref('bookings/' + currentBookingId).update(updates);
+    await fbDB.ref('active_bookings/' + currentBookingId).update(updates);
+
+    // Notify provider
+    if(currentBooking?.acceptedBy?.id){
+      await fbDB.ref('providers/' + currentBooking.acceptedBy.id).once('value').then(snap=>{
+        if(snap.exists()){
+          const p = snap.val();
+          const earned = (p.totalEarned||0) + (amount-comm);
+          fbDB.ref('providers/' + currentBooking.acceptedBy.id).update({totalEarned:earned});
+        }
+      });
+    }
+
+    showScreen('screen-review');
+    if(currentBooking?.acceptedBy?.name)
+      document.getElementById('review-provider-name').textContent = currentBooking.acceptedBy.name + ' did a great job!';
+    toast('Payment successful! ✅');
+  } catch(e){
+    toast('Payment error: ' + e.message);
+    btn.textContent = 'Pay Now'; btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// REVIEW
+// ══════════════════════════════════════════════════
+function setRating(val){
+  reviewRating = val;
+  document.querySelectorAll('.star').forEach(s=>{
+    s.textContent = parseInt(s.dataset.v) <= val ? '⭐' : '☆';
+  });
+  const labels = ['','Terrible 😞','Bad 😕','Okay 😐','Good 😊','Excellent 🤩'];
+  document.getElementById('rating-label').textContent = labels[val];
+}
+
+async function submitReview(){
+  if(!reviewRating){ toast('Please rate your experience'); return; }
+  const comment = document.getElementById('review-comment').value.trim();
+  try {
+    await fbDB.ref('reviews/' + currentBookingId).set({
+      bookingId:   currentBookingId,
+      customerId:  currentUser.uid,
+      providerId:  currentBooking?.acceptedBy?.id || '',
+      service:     currentBooking?.service || '',
+      rating:      reviewRating,
+      comment,
+      createdAt:   new Date().toISOString(),
+    });
+    // Update booking
+    await fbDB.ref('bookings/' + currentBookingId).update({rated:true, rating: reviewRating});
+
+    // Update provider rating
+    if(currentBooking?.acceptedBy?.id){
+      const pid = currentBooking.acceptedBy.id;
+      const snap = await fbDB.ref('providers/'+pid).once('value');
+      if(snap.exists()){
+        const p = snap.val();
+        const oldRating = p.rating || 5;
+        const oldCount  = p.reviews || 0;
+        const newRating = ((oldRating * oldCount) + reviewRating) / (oldCount + 1);
+        await fbDB.ref('providers/'+pid).update({rating: parseFloat(newRating.toFixed(1)), reviews: oldCount+1});
+      }
+    }
+
+    showSuccessScreen();
+  } catch(e){ toast('Error: ' + e.message); }
+}
+
+function skipReview(){ showSuccessScreen(); }
+
+function showSuccessScreen(){
+  document.getElementById('success-booking-id').textContent = 'Booking ID: ' + (currentBookingId||'').slice(-8).toUpperCase();
+  document.getElementById('success-svc').textContent = currentBooking?.service || selectedSvc?.name || '';
+  document.getElementById('success-amt').textContent = '₹' + (currentBooking?.priceVal || 0);
+  showScreen('screen-booking-success');
+}
+
+function goHome(){
+  showScreen('screen-cust-home');
+  buildHomeScreen();
+}
+
+function viewBookings(){
+  showScreen('screen-cust-bookings');
+  loadMyBookings();
+}
+
+// ══════════════════════════════════════════════════
+// MY BOOKINGS
+// ══════════════════════════════════════════════════
+async function loadMyBookings(){
+  const el = document.getElementById('bookings-list');
+  el.innerHTML = '<div style="text-align:center;padding:30px;"><div class="spinner"></div></div>';
+
+  if(!currentUser){ el.innerHTML = '<div class="empty"><div class="empty-icon">🔒</div><div class="empty-title">Sign in to see bookings</div></div>'; return; }
+
+  try {
+    const snap = await fbDB.ref('bookings').orderByChild('customerId').equalTo(currentUser.uid).once('value');
+    if(!snap.exists()){ el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No bookings yet</div><div class="empty-sub">Book a service to get started</div></div>'; return; }
+
+    const bookings = [];
+    snap.forEach(c => bookings.push(c.val()));
+    bookings.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+
+    const statusColors = {active:'badge-orange',completed:'badge-green',cancelled:'badge-red',payment_pending:'badge-yellow'};
+    el.innerHTML = bookings.map(b=>`
+      <div class="bk-card" onclick="openBookingDetail('${b.id||b.bookingId||''}')">
+        <div class="badge ${statusColors[b.status]||'badge-teal'}">${b.status||'active'}</div>
+        <div class="bk-svc">${b.service||''}</div>
+        <div class="bk-meta">${b.date||''} ${b.time?'at '+b.time:''}</div>
+        <div class="bk-meta">${b.address||''}</div>
+        <div class="bk-price">₹${b.priceVal||b.price||0}</div>
+        ${b.status==='payment_pending'?`<button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="event.stopPropagation();openPaymentForBooking('${b.id}')">Pay Now →</button>`:''}
+      </div>`).join('');
+  } catch(e){
+    el.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Error loading bookings</div></div>';
+  }
+}
+
+async function openPaymentForBooking(id){
+  try {
+    const snap = await fbDB.ref('bookings/'+id).once('value');
+    if(snap.exists()){
+      currentBookingId = id;
+      currentBooking   = snap.val();
+      goToPayment(currentBooking);
+    }
+  } catch(e){}
+}
+
+function openBookingDetail(id){
+  toast('Booking: ' + id.slice(-8).toUpperCase());
+}
+
+// ══════════════════════════════════════════════════
+// PROVIDER AUTH
+// ══════════════════════════════════════════════════
+async function provLogin(){
+  const email = document.getElementById('prov-email').value.trim();
+  const pass  = document.getElementById('prov-password').value;
+  const err   = document.getElementById('prov-login-err');
+  err.style.display='none';
+  try {
+    const cred = await fbAuth.signInWithEmailAndPassword(email, pass);
+    currentUser = cred.user;
+    // Load provider data
+    const snap = await fbDB.ref('providers').orderByChild('email').equalTo(email).once('value');
+    if(snap.exists()){
+      snap.forEach(c => { providerData = c.val(); });
+    } else {
+      // Fallback — create minimal provider profile
+      providerData = {id: cred.user.uid, name: email.split('@')[0], email, rating: 5.0, reviews: 0, totalEarned: 0, totalJobs: 0};
+    }
+    document.getElementById('prov-name-dash').textContent = (providerData.name||'Provider').split(' ')[0];
+    document.getElementById('prov-stat-earn').textContent = '₹' + (providerData.totalEarned||0);
+    document.getElementById('prov-stat-jobs').textContent = providerData.totalJobs || 0;
+    document.getElementById('prov-stat-rating').textContent = (providerData.rating||5.0).toFixed(1) + '⭐';
+    showScreen('screen-prov-dash');
+    loadProviderDash();
+    toast('Welcome ' + (providerData.name||'Provider').split(' ')[0] + '! 👋');
+  } catch(e){
+    err.textContent = e.message; err.style.display='block';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// PROVIDER DASHBOARD
+// ══════════════════════════════════════════════════
+function provTab(tab){
+  if(tab==='dashboard') showScreen('screen-prov-dash');
+  else if(tab==='jobs') showScreen('screen-prov-dash');
+  else if(tab==='earnings'){
+    toast('Earnings: ₹' + (providerData?.totalEarned||0));
+  } else if(tab==='profile'){
+    toast('Provider: ' + (providerData?.name||''));
+  }
+}
+
+function loadProviderDash(){
+  if(!currentUser) return;
+
+  // Listen to active bookings for new jobs
+  if(jobsListener){ fbDB.ref('active_bookings').off('value'); jobsListener=null; }
+
+  jobsListener = fbDB.ref('active_bookings').on('value', snap => {
+    const newJobs = [];
+    const activeJobs = [];
+
+    if(snap.exists()){
+      snap.forEach(c => {
+        const b = c.val();
+        if(!b || b.status === 'completed' || b.status === 'cancelled') return;
+
+        // Check if provider offers this service (simplified)
+        if(!b.acceptedBy){
+          // Available new job
+          newJobs.push({...b, id: c.key});
+        } else if(b.acceptedBy.id === currentUser.uid || b.acceptedBy === currentUser.uid){
+          // Provider's own active job
+          activeJobs.push({...b, id: c.key});
+        }
+      });
+    }
+
+    // Render new jobs
+    const newEl = document.getElementById('new-jobs-list');
+    document.getElementById('new-jobs-count').textContent = newJobs.length + ' new';
+    if(newJobs.length === 0){
+      newEl.innerHTML = '<div class="empty" style="padding:20px 0;"><div class="empty-icon">🎯</div><div class="empty-title" style="font-size:14px;">No new jobs</div><div class="empty-sub">New requests appear here instantly</div></div>';
+    } else {
+      newEl.innerHTML = newJobs.map(b=>`
+        <div class="job-card job-new">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span class="badge badge-orange">New Request</span>
+            <span style="font-size:11px;color:var(--muted);">${(b.createdAt||'').slice(11,16)}</span>
+          </div>
+          <div class="job-svc">${b.service||''}</div>
+          <div class="job-addr">📍 ${b.address||b.city||''}</div>
+          <div class="job-price">₹${b.priceVal||b.price||0}</div>
+          <div class="job-row">
+            <button class="btn btn-green btn-sm" onclick="acceptJob('${b.id}')">✅ Accept Job</button>
+            <button class="btn btn-outline btn-sm" style="border-color:var(--red);color:var(--red);">❌ Decline</button>
+          </div>
+        </div>`).join('');
+    }
+
+    // Render active jobs
+    const activeEl = document.getElementById('active-jobs-list');
+    if(activeJobs.length === 0){
+      activeEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px;">No active jobs</div>';
+    } else {
+      activeEl.innerHTML = activeJobs.map(b=>`
+        <div class="job-card job-accepted">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span class="badge badge-green">${b.status||'accepted'}</span>
+          </div>
+          <div class="job-svc">${b.service||''}</div>
+          <div class="job-addr">📍 ${b.address||b.city||''} · ${b.customerName||''}</div>
+          <div class="job-price">₹${b.priceVal||b.price||0}</div>
+          ${b.status!=='otp_sent' && b.status!=='payment_pending' ? `<button class="btn btn-teal btn-sm" onclick="sendOtp('${b.id}',${b.priceVal||b.price||0},'${b.service||''}')">🔐 Send OTP to Customer</button>` : ''}
+          ${b.status==='otp_sent' ? `<button class="btn btn-teal btn-sm" onclick="openOtpEntry('${b.id}',${b.priceVal||b.price||0},'${b.service||''}')">🔢 Enter Customer OTP</button>` : ''}
+          ${b.status==='payment_pending' ? `<div class="badge badge-yellow" style="margin-top:8px;">⏳ Waiting for payment</div>` : ''}
+          ${b.status==='completed' ? `<div class="badge badge-green" style="margin-top:8px;">✅ Completed</div>` : ''}
+        </div>`).join('');
+    }
+  });
+}
+
+async function acceptJob(bookingId){
+  if(!currentUser || !providerData) return;
+  try {
+    const acceptedBy = {
+      id:    currentUser.uid,
+      name:  providerData.name || 'Provider',
+      phone: providerData.phone || '',
+      email: currentUser.email,
+    };
+    await fbDB.ref('active_bookings/' + bookingId).update({acceptedBy, status:'accepted', acceptedAt: new Date().toISOString()});
+    await fbDB.ref('bookings/'        + bookingId).update({acceptedBy, status:'accepted', acceptedAt: new Date().toISOString()});
+    toast('Job accepted! 🎉 Head to the location');
+  } catch(e){ toast('Error: ' + e.message); }
+}
+
+async function sendOtp(bookingId, amount, serviceName){
+  const otp = Math.floor(1000 + Math.random() * 9000);
+  try {
+    // Get customer ID
+    const snap = await fbDB.ref('bookings/'+bookingId).once('value');
+    const bk   = snap.val();
+    await fbDB.ref('job_otp/' + bookingId).set({
+      otp, bookingId,
+      service:      serviceName,
+      customerId:   bk?.customerId || '',
+      customer:     bk?.customerName || 'Customer',
+      providerName: providerData?.name || 'Provider',
+      generatedAt:  new Date().toISOString(),
+      status:       'waiting',
+    });
+    await fbDB.ref('active_bookings/' + bookingId).update({status:'otp_sent', otpSentAt: new Date().toISOString()});
+    await fbDB.ref('bookings/'        + bookingId).update({status:'otp_sent', otpSentAt: new Date().toISOString()});
+
+    currentBookingId = bookingId;
+    openOtpEntry(bookingId, amount, serviceName);
+    toast('OTP sent to customer ✅');
+  } catch(e){ toast('Error: ' + e.message); }
+}
+
+function openOtpEntry(bookingId, amount, serviceName){
+  currentBookingId = bookingId;
+  document.getElementById('prov-otp-job').textContent = 'Job: ' + serviceName + ' · ₹' + amount;
+  document.getElementById('otp-in-1').value='';
+  document.getElementById('otp-in-2').value='';
+  document.getElementById('otp-in-3').value='';
+  document.getElementById('otp-in-4').value='';
+  document.getElementById('otp-err').style.display='none';
+  showScreen('screen-prov-otp');
+}
+
+function otpInput(el, nextId){
+  if(el.value && nextId) document.getElementById('otp-in-'+nextId)?.focus();
+}
+
+async function verifyOtp(){
+  const entered = ['otp-in-1','otp-in-2','otp-in-3','otp-in-4'].map(id=>document.getElementById(id).value).join('');
+  if(entered.length < 4){ toast('Enter 4-digit OTP'); return; }
+
+  try {
+    const snap = await fbDB.ref('job_otp/' + currentBookingId).once('value');
+    const data = snap.val();
+    if(!data || String(data.otp) !== String(entered)){
+      const err = document.getElementById('otp-err');
+      err.textContent = '❌ Incorrect OTP. Ask customer to check.';
+      err.style.display = 'block';
+      return;
+    }
+
+    // OTP correct — mark verified
+    await fbDB.ref('job_otp/' + currentBookingId).update({status:'verified', verifiedAt: new Date().toISOString()});
+    await fbDB.ref('active_bookings/' + currentBookingId).update({status:'payment_pending', otpVerifiedAt: new Date().toISOString()});
+    await fbDB.ref('bookings/'        + currentBookingId).update({status:'payment_pending', otpVerifiedAt: new Date().toISOString()});
+
+    // Show job done screen
+    const amount = parseInt(data.custPrice || 0);
+    const bkSnap = await fbDB.ref('bookings/'+currentBookingId).once('value');
+    const bk     = bkSnap.val();
+    const amt    = parseInt(bk?.priceVal || bk?.price || 0);
+    const comm   = Math.round(amt * getCommRate(bk?.service||'') / 100);
+
+    document.getElementById('done-amount').textContent = '₹' + amt;
+    document.getElementById('done-comm').textContent   = '₹' + comm;
+    document.getElementById('done-earn').textContent   = '₹' + (amt - comm);
+
+    showScreen('screen-job-done');
+    toast('OTP verified! ✅ Waiting for payment...');
+
+    // Listen for payment
+    fbDB.ref('bookings/' + currentBookingId).on('value', snap => {
+      if(snap.exists() && snap.val()?.status === 'completed'){
+        document.getElementById('done-payment-status').textContent = '✅ Payment received! Job complete.';
+        document.getElementById('done-payment-status').style.background = 'var(--green-soft)';
+        document.getElementById('done-payment-status').style.color = 'var(--green)';
+        fbDB.ref('bookings/' + currentBookingId).off();
+      }
+    });
+
+  } catch(e){ toast('Error: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hide');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.add('hide'), 3000);
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+showScreen('screen-cust-login');
+buildHomeScreen();
+</script>
+</body>
+</html>
