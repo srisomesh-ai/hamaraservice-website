@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>HamaraService</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --brand:#E8651A;--brand2:#C9510F;--brand-s:#FFF3EB;
+  --teal:#1B6B7A;--teal2:#134F5C;--teal-s:#E6F4F6;
+  --ink:#1A1A2E;--ink2:#2D3748;--muted:#718096;
+  --line:#E2E8F0;--bg:#F0F7F9;--w:#FFFFFF;
+  --green:#2ECC71;--green-s:#E8F8F0;
+  --yellow:#F59E0B;--red:#E53E3E;--red-s:#FEE2E2;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:#0d3d47;display:flex;justify-content:center;align-items:center;}
+#app{width:390px;height:844px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border-radius:44px;box-shadow:0 40px 100px rgba(0,0,0,.7);}
+@media(max-width:420px){#app{width:100vw;height:100dvh;border-radius:0;}body{background:var(--bg);}}
+.scr{display:none;flex-direction:column;position:absolute;inset:0;background:var(--bg);}
+.scr.on{display:flex;}
+.body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.body::-webkit-scrollbar{display:none;}
+/* STATUS BAR */
+.sb{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0;background:var(--teal);}
+.sb-t{color:white;font-size:15px;font-weight:700;}
+.sb-r{display:flex;align-items:center;gap:5px;color:white;font-size:11px;}
+/* MODE BAR */
+.mb{background:#0d1f2d;padding:6px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.mb-l{font-size:10px;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.mb-btns{display:flex;gap:5px;}
+.mb-btn{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);font-family:inherit;}
+.mb-btn.on{background:var(--brand);border-color:var(--brand);color:white;}
+/* TOP BAR */
+.topbar{background:var(--teal);padding:10px 16px 12px;flex-shrink:0;}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;}
+/* BOTTOM NAV */
+.bnav{height:60px;background:white;border-top:1px solid var(--line);display:flex;flex-shrink:0;}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;}
+.bni-ic{font-size:22px;}
+.bni-lb{font-size:10px;font-weight:700;color:var(--muted);}
+.bni.on .bni-lb{color:var(--teal);}
+.bni.on .bni-ic{transform:scale(1.1);}
+/* SEARCH */
+.search-wrap{padding:0 16px 10px;background:var(--teal);}
+.search-box{background:white;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.search-inp{flex:1;border:none;outline:none;font-size:13px;color:var(--ink);font-family:inherit;}
+.search-inp::placeholder{color:var(--muted);}
+/* CAT TABS */
+.cat-tabs{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;background:var(--teal);flex-shrink:0;}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-t{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;flex-shrink:0;}
+.cat-t.on{background:white;color:var(--teal);}
+.cat-t:not(.on){background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);}
+/* BANNERS */
+.banners{display:flex;gap:10px;padding:8px 16px 14px;overflow-x:auto;}
+.banners::-webkit-scrollbar{display:none;}
+.banner{min-width:190px;height:88px;border-radius:16px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;flex-shrink:0;position:relative;overflow:hidden;}
+.banner-em{position:absolute;right:10px;top:6px;font-size:34px;opacity:.9;}
+.banner-t{font-size:13px;font-weight:800;color:white;}
+.banner-s{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px;}
+/* SEC HEADER */
+.sec-h{padding:14px 16px 8px;display:flex;align-items:baseline;justify-content:space-between;}
+.sec-t{font-size:15px;font-weight:800;color:var(--ink);}
+.sec-s{font-size:12px;color:var(--muted);}
+/* TOP PICKS */
+.picks{display:flex;gap:10px;padding:0 16px 14px;overflow-x:auto;}
+.picks::-webkit-scrollbar{display:none;}
+.pick{width:80px;height:88px;border-radius:14px;flex-shrink:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative;overflow:hidden;transition:transform .12s;}
+.pick:active{transform:scale(.95);}
+.pick-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,.05));}
+.pick-ic{font-size:28px;z-index:1;}
+.pick-nm{font-size:10px;font-weight:700;color:white;text-align:center;z-index:1;line-height:1.2;padding:0 4px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+/* SVC GRID */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 20px;}
+.svc-card{border-radius:14px;overflow:hidden;cursor:pointer;aspect-ratio:.85;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:transform .12s;}
+.svc-card:active{transform:scale(.96);}
+.svc-icon-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;}
+.svc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.svc-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.75),transparent);padding:18px 7px 8px;}
+.svc-nm{font-size:11px;font-weight:700;color:white;text-align:center;line-height:1.3;}
+/* HERO */
+.hero{background:linear-gradient(135deg,#0D3D47,var(--teal));padding:14px 16px 22px;flex-shrink:0;}
+.hero-row{display:flex;align-items:center;gap:14px;margin-top:12px;}
+.hero-ic{font-size:50px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3));}
+.hero-cat{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.hero-nm{font-size:21px;font-weight:800;color:white;}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.pill{padding:3px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;font-size:10px;font-weight:600;color:rgba(255,255,255,.9);}
+/* TASK GROUPS */
+.grp-t{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 8px;}
+.task-list{display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+.task-i{background:white;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border:1.5px solid var(--line);transition:all .15s;}
+.task-i.sel{border-color:var(--brand);background:var(--brand-s);}
+.task-left{display:flex;align-items:center;gap:10px;}
+.task-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.task-i.sel .task-chk{background:var(--brand);border-color:var(--brand);color:white;}
+.task-nm{font-size:13px;font-weight:700;color:var(--ink);}
+.task-pr{font-size:13px;font-weight:800;color:var(--teal);}
+.task-i.sel .task-pr{color:var(--brand);}
+.bhk-row{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 14px;}
+.bhk{padding:9px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:12px;font-weight:700;color:var(--ink2);background:white;cursor:pointer;transition:all .15s;text-align:center;}
+.bhk.sel{border-color:var(--teal);background:var(--teal-s);color:var(--teal);}
+/* PRICE BAR */
+.pbar{background:linear-gradient(135deg,#0D3D47,var(--teal));padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin:8px 16px 20px;border-radius:16px;}
+.pbar-amt{font-size:28px;font-weight:900;color:white;}
+.pbar-lbl{font-size:10px;color:rgba(255,255,255,.55);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.pbar-note{font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;}
+/* BUTTONS */
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;}
+.btn-br{background:var(--brand);color:white;}
+.btn-br:active{background:var(--brand2);}
+.btn-tl{background:var(--teal);color:white;}
+.btn-tl:active{background:var(--teal2);}
+.btn-ol{background:white;color:var(--teal);border:2px solid var(--teal);}
+.btn-gr{background:var(--green);color:white;}
+.btn-rd{background:var(--red);color:white;}
+.btn-ol-rd{background:white;color:var(--red);border:2px solid var(--red);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-sm{padding:10px 18px;width:auto;font-size:13px;border-radius:10px;display:inline-block;}
+/* INPUTS */
+.field{margin-bottom:13px;}
+.flbl{font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:5px;display:block;}
+.inp{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;background:white;outline:none;color:var(--ink);}
+.inp:focus{border-color:var(--teal);}
+/* CARDS */
+.card{background:white;border-radius:16px;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.cp{padding:16px;}
+.ct{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:12px;}
+/* SLOTS */
+.slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.slot{padding:10px 6px;border:1.5px solid var(--line);border-radius:10px;text-align:center;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;background:white;transition:all .15s;}
+.slot.sel{border-color:var(--teal);background:var(--teal-s);color:var(--teal);}
+/* BILL */
+.br{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;}
+.br:last-child{border-bottom:none;}
+.bl{color:var(--muted);}
+.bv{font-weight:700;color:var(--ink);}
+.btr{padding:12px 0 0;display:flex;justify-content:space-between;align-items:center;border-top:2px solid var(--line);margin-top:4px;}
+.btl{font-size:16px;font-weight:800;color:var(--ink);}
+.bta{font-size:20px;font-weight:900;color:var(--brand);}
+/* RADAR */
+.r-wrap{display:flex;flex-direction:column;align-items:center;padding:28px 20px;}
+.r-ring{position:relative;width:240px;height:240px;flex-shrink:0;}
+.r-c{position:absolute;border-radius:50%;border:1.5px solid rgba(27,107,122,.18);top:50%;left:50%;transform:translate(-50%,-50%);}
+.r-pulse{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(27,107,122,.5);animation:rp 2.2s ease-out infinite;}
+@keyframes rp{0%{transform:scale(.05);opacity:1;}100%{transform:scale(1);opacity:0;}}
+.r-dot{position:absolute;width:18px;height:18px;background:var(--teal);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 5px rgba(27,107,122,.2);}
+.r-prov{position:absolute;width:30px;height:30px;background:var(--green);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:14px;top:18%;left:65%;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+/* OTP POPUP */
+.otp-ov{position:absolute;inset:0;background:rgba(0,0,0,.72);z-index:99;display:none;align-items:center;justify-content:center;padding:20px;}
+.otp-ov.on{display:flex;}
+.otp-card{background:white;border-radius:22px;overflow:hidden;width:100%;max-width:310px;}
+.otp-hd{background:var(--teal);padding:22px 20px;text-align:center;}
+.otp-digits{display:flex;gap:8px;justify-content:center;margin:14px 0;}
+.otp-d{width:56px;height:64px;border:2.5px solid var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:var(--ink);background:var(--green-s);}
+/* BOOKING CARD */
+.bk-c{background:white;border-radius:14px;border:1px solid var(--line);padding:14px;margin-bottom:10px;cursor:pointer;}
+.bk-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:800;margin-bottom:8px;}
+.s-active{background:var(--brand-s);color:var(--brand);}
+.s-completed{background:var(--green-s);color:var(--green);}
+.s-cancelled{background:var(--red-s);color:var(--red);}
+.s-payment_pending{background:rgba(245,158,11,.1);color:var(--yellow);}
+.s-accepted{background:var(--teal-s);color:var(--teal);}
+.bk-svc{font-size:15px;font-weight:800;color:var(--ink);}
+.bk-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+.bk-pr{font-size:17px;font-weight:800;color:var(--brand);margin-top:8px;}
+/* PROVIDER */
+.ph{background:linear-gradient(135deg,#0D2D35,var(--teal2));padding:16px;flex-shrink:0;}
+.p-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;}
+.p-stat{background:rgba(255,255,255,.1);border-radius:12px;padding:10px;text-align:center;}
+.p-sv{font-size:18px;font-weight:800;color:white;}
+.p-sl{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;}
+.job-c{background:white;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--line);}
+.job-new{border-left:4px solid var(--brand);}
+.job-act{border-left:4px solid var(--green);}
+.job-sv{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:3px;}
+.job-addr{font-size:12px;color:var(--muted);}
+.job-pr{font-size:20px;font-weight:900;color:var(--teal);margin:8px 0;}
+.job-row{display:flex;gap:8px;margin-top:10px;}
+/* OTP INPUT */
+.otp-ir{display:flex;gap:10px;justify-content:center;}
+.oi{width:58px;height:64px;border:2px solid var(--line);border-radius:12px;text-align:center;font-size:28px;font-weight:900;color:var(--ink);outline:none;font-family:inherit;}
+.oi:focus{border-color:var(--teal);}
+.oi.err{border-color:var(--red);}
+/* STARS */
+.stars{display:flex;gap:8px;justify-content:center;}
+.star{font-size:38px;cursor:pointer;transition:transform .1s;}
+.star:active{transform:scale(1.15);}
+/* PROFILE */
+.p-av{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:var(--teal);background:var(--teal-s);border:2px solid var(--teal);margin:0 auto 12px;}
+.pm-i{display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid var(--line);cursor:pointer;}
+.pm-i:last-child{border-bottom:none;}
+.pm-ic{font-size:20px;width:30px;text-align:center;}
+.pm-t{font-size:14px;font-weight:700;color:var(--ink);}
+.pm-s{font-size:12px;color:var(--muted);margin-top:1px;}
+/* GOOGLE BTN */
+.g-btn{width:100%;height:48px;border:1.5px solid var(--line);border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);}
+.g-ic{width:22px;height:22px;background:var(--teal-s);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--teal);}
+.or-div{display:flex;align-items:center;gap:12px;margin:14px 0;}
+.or-line{flex:1;height:1px;background:var(--line);}
+.or-t{font-size:12px;color:var(--muted);font-weight:600;}
+/* BACK BTN */
+.back-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+/* STEP */
+.step-i{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+.step-i:last-child{border-bottom:none;padding-bottom:0;}
+.step-n{width:28px;height:28px;border-radius:50%;background:var(--teal-s);color:var(--teal);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-t{font-size:13px;font-weight:700;color:var(--ink);}
+.step-s{font-size:12px;color:var(--muted);line-height:1.4;margin-top:2px;}
+/* EMPTY */
+.empty{text-align:center;padding:36px 20px;}
+.ei{font-size:52px;margin-bottom:12px;}
+.et{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px;}
+.es{font-size:13px;color:var(--muted);line-height:1.5;}
+/* SPINNER */
+.spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto;}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* TOAST */
+.toast{position:absolute;bottom:72px;left:12px;right:12px;background:rgba(26,26,46,.92);color:white;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;z-index:999;transition:opacity .25s,transform .25s;pointer-events:none;}
+.toast.hide{opacity:0;transform:translateY(8px);}
+</style>
+</head>
+<body>
+<div id="app">
+<!-- Status Bar -->
+<div class="sb"><span class="sb-t" id="clk">9:41</span><div class="sb-r"><span id="mi" style="font-size:9px;background:rgba(255,255,255,.15);padding:2px 7px;border-radius:100px;font-weight:700;"></span></div></div>
+<!-- Mode Bar -->
+<div class="mb"><span class="mb-l">Mode:</span><div class="mb-btns"><button class="mb-btn on" id="mb-c" onclick="setMode('customer')">👤 Customer</button><button class="mb-btn" id="mb-p" onclick="setMode('provider')">🔧 Provider</button></div></div>
+
+<!-- CUSTOMER LOGIN -->
+<div class="scr on" id="s-cl">
+  <div class="body" style="background:linear-gradient(180deg,#0D3D47 40%,var(--bg) 100%);">
+    <div style="text-align:center;padding:44px 24px 28px;">
+      <div style="width:80px;height:80px;background:var(--brand);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(232,101,26,.4);font-size:42px;">🏠</div>
+      <div style="font-size:27px;font-weight:800;color:white;">Hamara<span style="color:var(--brand);">Service</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:4px;">Home services at your doorstep</div>
+    </div>
+    <div style="background:white;border-radius:24px;margin:0 16px 20px;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.12);">
+      <div style="font-size:22px;font-weight:800;color:var(--ink);" id="l-title">Welcome Back!</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px;margin-bottom:18px;" id="l-sub">Sign in to your account</div>
+      <button class="g-btn" onclick="gLogin()"><div class="g-ic">G</div>Continue with Google</button>
+      <div class="or-div"><div class="or-line"></div><span class="or-t">OR</span><div class="or-line"></div></div>
+      <div id="reg-ex" style="display:none;">
+        <div class="field"><label class="flbl">Full Name *</label><input class="inp" id="r-name" placeholder="Your full name"/></div>
+        <div class="field"><label class="flbl">Phone *</label><input class="inp" id="r-phone" type="tel" placeholder="9876543210"/></div>
+        <div class="field"><label class="flbl">City</label><input class="inp" id="r-city" placeholder="Visakhapatnam"/></div>
+      </div>
+      <div class="field"><label class="flbl">Email *</label><input class="inp" id="c-em" type="email" placeholder="email@example.com"/></div>
+      <div class="field"><label class="flbl">Password *</label><input class="inp" id="c-pw" type="password" placeholder="••••••••"/></div>
+      <div id="l-err" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none;"></div>
+      <button class="btn btn-br" id="l-btn" onclick="doLogin()">Sign In</button>
+      <div style="text-align:center;margin-top:13px;font-size:13px;"><span style="color:var(--muted);" id="lt">Don't have an account? </span><span style="color:var(--teal);font-weight:700;cursor:pointer;" onclick="togAuth()">Register</span></div>
+      <div style="margin-top:14px;padding:10px;background:var(--teal-s);border-radius:10px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;color:var(--teal);margin-bottom:3px;">🧪 TEST ACCOUNTS</div>
+        <div style="font-size:11px;color:var(--teal);">Customer: test.customer@hs.com / test123</div>
+        <div style="font-size:11px;color:var(--teal);">Provider: test.provider@hs.com / test123</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMER HOME -->
+<div class="scr" id="s-ch">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <span style="color:var(--brand);font-size:20px;">📍</span>
+        <div><div style="font-size:15px;font-weight:800;color:white;" id="h-city">Visakhapatnam <span style="font-size:12px;">▾</span></div><div style="font-size:11px;color:rgba(255,255,255,.6);">Tap to change</div></div>
+      </div>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;cursor:pointer;" id="h-av" onclick="hTab(2)">U</div>
+    </div>
+  </div>
+  <div class="search-wrap"><div class="search-box"><span style="font-size:16px;opacity:.5;">🔍</span><input class="search-inp" id="h-srch" placeholder="Search for services..." oninput="onSrch(this.value)"/></div></div>
+  <div class="cat-tabs" id="cat-tabs"></div>
+  <div class="body" id="h-body">
+    <div class="banners">
+      <div class="banner" style="background:#0D3D47;"><div class="banner-em">🎉</div><div class="banner-t">₹100 OFF</div><div class="banner-s">On your first booking</div></div>
+      <div class="banner" style="background:#B84600;"><div class="banner-em">🧽</div><div class="banner-t">Deep Clean</div><div class="banner-s">Starting ₹499 only</div></div>
+      <div class="banner" style="background:#1a4d2e;"><div class="banner-em">❄️</div><div class="banner-t">AC Service</div><div class="banner-s">Summer special offer</div></div>
+    </div>
+    <div class="sec-h"><span class="sec-t">🔥 Top Picks</span><span class="sec-s">Most booked</span></div>
+    <div class="picks" id="picks"></div>
+    <div class="sec-h"><span class="sec-t">🛠️ All Services</span><span class="sec-s" id="svc-ct">Loading...</span></div>
+    <div class="svc-grid" id="svc-grid"></div>
+    <div style="height:16px;"></div>
+  </div>
+  <div class="bnav">
+    <div class="bni on" id="bn0" onclick="hTab(0)"><div class="bni-ic">🏠</div><div class="bni-lb">Home</div></div>
+    <div class="bni" id="bn1" onclick="hTab(1)"><div class="bni-ic">📋</div><div class="bni-lb">Bookings</div></div>
+    <div class="bni" id="bn2" onclick="hTab(2)"><div class="bni-ic">👤</div><div class="bni-lb">Profile</div></div>
+  </div>
+</div>
+
+<!-- SERVICE DETAIL -->
+<div class="scr" id="s-sd">
+  <div class="hero" id="svc-hero">
+    <div style="display:flex;align-items:center;justify-content:space-between;"><button class="back-btn" onclick="go('s-ch')">← Home</button><div style="font-size:13px;font-weight:800;color:white;">Hamara<span style="color:#ffb07a;">Service</span></div></div>
+    <div class="hero-row"><div class="hero-ic" id="sd-ic">🧹</div><div><div class="hero-cat" id="sd-cat">Home Cleaning</div><div class="hero-nm" id="sd-nm">House Maid</div><div class="pills"><span class="pill">✓ Verified</span><span class="pill">⭐ 4.8</span><span class="pill">⏱ Same Day</span></div></div></div>
+  </div>
+  <div class="body">
+    <div id="sd-grps"></div>
+    <div class="pbar"><div><div class="pbar-lbl">Estimated Total</div><div class="pbar-amt" id="sd-total">₹0</div><div class="pbar-note" id="sd-note">Select options above</div></div><button class="btn btn-br btn-sm" id="sd-book" onclick="goBook()" disabled style="opacity:.4;">Book Now →</button></div>
+    <div style="padding:0 16px 24px;"><div class="card cp"><div class="ct">⚡ How It Works</div>
+      <div class="step-i"><div class="step-n">1</div><div><div class="step-t">Select & Book</div><div class="step-s">Choose tasks and pick a slot</div></div></div>
+      <div class="step-i"><div class="step-n">2</div><div><div class="step-t">Provider Accepts</div><div class="step-s">Nearby provider accepts instantly</div></div></div>
+      <div class="step-i"><div class="step-n">3</div><div><div class="step-t">Work Done + OTP</div><div class="step-s">Provider shares 4-digit OTP on completion</div></div></div>
+      <div class="step-i"><div class="step-n">4</div><div><div class="step-t">Pay & Rate</div><div class="step-s">Pay securely and share your feedback</div></div></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- BOOKING FLOW -->
+<div class="scr" id="s-bk">
+  <div class="topbar"><div class="topbar-row"><button class="back-btn" onclick="go('s-sd')">← Back</button><div><div style="font-size:15px;font-weight:800;color:white;">Book Service</div><div style="font-size:11px;color:rgba(255,255,255,.6);" id="bk-sl">House Maid</div></div><div style="width:60px;"></div></div></div>
+  <div class="body" style="padding:14px;">
+    <div class="card cp" style="margin-bottom:12px;"><div class="ct">📅 Select Date</div><div class="slot-grid" id="date-g"></div></div>
+    <div class="card cp" style="margin-bottom:12px;"><div class="ct">⏰ Select Time</div><div class="slot-grid" id="time-g"></div></div>
+    <div class="card cp" style="margin-bottom:12px;"><div class="ct">📍 Service Address</div>
+      <div class="field"><label class="flbl">Full Address *</label><input class="inp" id="bk-addr" placeholder="House no, Street, Area"/></div>
+      <div class="field"><label class="flbl">Landmark</label><input class="inp" id="bk-lm" placeholder="Near..."/></div>
+      <div class="field" style="margin-bottom:0;"><label class="flbl">City</label><input class="inp" id="bk-city" value="Visakhapatnam"/></div>
+    </div>
+    <div class="card cp" style="margin-bottom:16px;"><div class="ct">📋 Order Summary</div>
+      <div class="br"><span class="bl">Service</span><span class="bv" id="bk-ss">—</span></div>
+      <div class="br"><span class="bl">Date & Time</span><span class="bv" id="bk-sdt">Select above</span></div>
+      <div class="br"><span class="bl">Items</span><span class="bv" id="bk-si">—</span></div>
+      <div class="btr"><span class="btl">Total</span><span class="bta" id="bk-st">₹0</span></div>
+    </div>
+    <button class="btn btn-br" id="bk-cb" onclick="confirmBk()">✅ Confirm Booking</button>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- RADAR -->
+<div class="scr" id="s-rd">
+  <div class="topbar" style="padding:14px 16px;text-align:center;"><div style="font-size:16px;font-weight:800;color:white;">Finding Provider</div><div style="font-size:11px;color:rgba(255,255,255,.6);" id="rd-bl">Booking ID: —</div></div>
+  <div class="body">
+    <div class="r-wrap">
+      <div class="r-ring">
+        <div class="r-c" style="width:56px;height:56px;"></div>
+        <div class="r-c" style="width:112px;height:112px;"></div>
+        <div class="r-c" style="width:168px;height:168px;"></div>
+        <div class="r-c" style="width:240px;height:240px;"></div>
+        <div class="r-pulse"></div>
+        <div class="r-dot"></div>
+        <div class="r-prov" id="r-pv">🔧</div>
+      </div>
+      <div style="font-size:18px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:6px;" id="rd-st">Searching for providers...</div>
+      <div style="font-size:13px;color:var(--muted);text-align:center;" id="rd-sb">Looking within 5km radius</div>
+      <div id="rd-ac" style="display:none;width:100%;margin-top:16px;"><div class="card cp" style="border-left:4px solid var(--green);"><div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:5px;">✅ PROVIDER ACCEPTED</div><div style="font-size:16px;font-weight:800;color:var(--ink);" id="rd-pn">Provider</div><div style="font-size:12px;color:var(--muted);">is heading to your location</div></div></div>
+      <div style="width:100%;margin-top:14px;padding:12px 16px;background:var(--teal-s);border-radius:12px;text-align:center;"><div style="font-size:12px;font-weight:700;color:var(--teal);" id="rd-info">Booking confirmed · Waiting for provider</div></div>
+    </div>
+  </div>
+  <!-- OTP popup -->
+  <div class="otp-ov" id="otp-pop">
+    <div class="otp-card">
+      <div class="otp-hd"><div style="font-size:38px;margin-bottom:8px;">🔐</div><div style="font-size:18px;font-weight:800;color:white;">Job Completion OTP</div><div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;" id="otp-sv">Share with your provider</div></div>
+      <div style="padding:20px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Your OTP Code</div>
+        <div class="otp-digits" id="otp-digs"></div>
+        <div style="background:rgba(245,158,11,.1);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start;"><span style="font-size:14px;flex-shrink:0;">⚠️</span><span style="font-size:11px;color:var(--yellow);font-weight:600;line-height:1.4;">Only share after the work is done to your satisfaction</span></div>
+        <button class="btn btn-ol" style="margin-top:14px;" onclick="closeOtp()">Dismiss</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT -->
+<div class="scr" id="s-pay">
+  <div class="topbar" style="padding:14px 16px;text-align:center;"><div style="font-size:16px;font-weight:800;color:white;">Complete Payment</div></div>
+  <div class="body" style="padding:16px;">
+    <div style="text-align:center;padding:18px 0 14px;"><div style="font-size:52px;margin-bottom:10px;">💳</div><div style="font-size:20px;font-weight:800;color:var(--ink);">Pay for your service</div><div style="font-size:13px;color:var(--muted);margin-top:4px;" id="pay-sn">House Maid</div></div>
+    <div class="card cp" style="margin-bottom:14px;"><div class="ct">Bill Summary</div>
+      <div class="br"><span class="bl">Service Amount</span><span class="bv" id="pay-base">₹0</span></div>
+      <div class="br"><span class="bl" id="pay-cl">Platform Fee (10%)</span><span class="bv" style="color:var(--muted);" id="pay-comm">₹0</span></div>
+      <div class="btr"><span class="btl">You Pay</span><span class="bta" id="pay-tot">₹0</span></div>
+      <div style="margin-top:10px;text-align:center;font-size:12px;color:var(--muted);">Provider receives: <span style="font-weight:800;color:var(--green);" id="pay-pg">₹0</span></div>
+    </div>
+    <div class="card cp" style="margin-bottom:14px;"><div class="ct">Payment Method</div>
+      <div style="display:flex;gap:8px;"><div class="bhk sel" id="pm-u" onclick="sPm('upi')">📱 UPI</div><div class="bhk" id="pm-c" onclick="sPm('card')">💳 Card</div><div class="bhk" id="pm-ca" onclick="sPm('cash')">💵 Cash</div></div>
+    </div>
+    <button class="btn btn-br" id="pay-btn" onclick="doPay()">Pay Now</button>
+    <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted);">🔒 Secured by Razorpay • Test Mode</div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div class="scr" id="s-rev">
+  <div class="topbar" style="padding:14px 16px;text-align:center;"><div style="font-size:16px;font-weight:800;color:white;">Rate Your Experience</div></div>
+  <div class="body" style="padding:20px 16px;">
+    <div style="text-align:center;margin-bottom:24px;"><div style="font-size:60px;margin-bottom:12px;">⭐</div><div style="font-size:20px;font-weight:800;color:var(--ink);">How was your service?</div><div style="font-size:13px;color:var(--muted);margin-top:6px;" id="rev-pn">Your provider did their best</div></div>
+    <div class="stars" id="stars"><span class="star" onclick="setStar(1)">☆</span><span class="star" onclick="setStar(2)">☆</span><span class="star" onclick="setStar(3)">☆</span><span class="star" onclick="setStar(4)">☆</span><span class="star" onclick="setStar(5)">☆</span></div>
+    <div style="text-align:center;font-size:14px;font-weight:700;color:var(--ink);margin:10px 0 18px;" id="star-lbl">Tap to rate</div>
+    <div class="field"><label class="flbl">Comments (optional)</label><textarea class="inp" id="rev-c" rows="3" placeholder="Share your experience..."></textarea></div>
+    <button class="btn btn-br" onclick="subRev()" style="margin-bottom:10px;">Submit Review</button>
+    <button class="btn btn-ol" onclick="skipRev()">Skip for now</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="scr" id="s-ok">
+  <div class="body" style="padding:40px 16px;text-align:center;">
+    <div style="font-size:80px;margin-bottom:14px;">✅</div>
+    <div style="font-size:24px;font-weight:800;color:var(--ink);margin-bottom:8px;">Booking Confirmed!</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">Thank you for using HamaraService</div>
+    <div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:28px;" id="ok-id">—</div>
+    <div class="card cp" style="text-align:left;margin-bottom:22px;">
+      <div class="br"><span class="bl">Service</span><span class="bv" id="ok-sv">—</span></div>
+      <div class="br"><span class="bl">Rating</span><span class="bv" id="ok-rt">—</span></div>
+      <div class="br" style="border-bottom:none;"><span class="bl">Amount Paid</span><span style="font-size:18px;font-weight:800;color:var(--brand);" id="ok-am">₹0</span></div>
+    </div>
+    <button class="btn btn-br" onclick="goHome()" style="margin-bottom:10px;">🏠 Back to Home</button>
+    <button class="btn btn-ol" onclick="goBks()">View My Bookings</button>
+  </div>
+</div>
+
+<!-- MY BOOKINGS -->
+<div class="scr" id="s-bks">
+  <div class="topbar" style="padding:14px 16px;text-align:center;"><div style="font-size:16px;font-weight:800;color:white;">My Bookings</div></div>
+  <div class="body" style="padding:14px;" id="bk-list"><div class="empty"><div class="ei">📋</div><div class="et">No bookings yet</div><div class="es">Your bookings will appear here</div></div></div>
+  <div class="bnav">
+    <div class="bni" id="bb0" onclick="hTab(0)"><div class="bni-ic">🏠</div><div class="bni-lb">Home</div></div>
+    <div class="bni on" id="bb1" onclick="hTab(1)"><div class="bni-ic">📋</div><div class="bni-lb">Bookings</div></div>
+    <div class="bni" id="bb2" onclick="hTab(2)"><div class="bni-ic">👤</div><div class="bni-lb">Profile</div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="scr" id="s-pr">
+  <div class="topbar" style="padding:14px 16px;text-align:center;"><div style="font-size:16px;font-weight:800;color:white;">My Profile</div></div>
+  <div class="body">
+    <div style="padding:22px 16px 14px;text-align:center;"><div class="p-av" id="pr-av">U</div><div style="font-size:18px;font-weight:800;color:var(--ink);" id="pr-nm">Loading...</div><div style="font-size:13px;color:var(--muted);margin-top:4px;" id="pr-em"></div><div style="font-size:12px;color:var(--teal);font-weight:600;margin-top:4px;" id="pr-ph"></div></div>
+    <div class="card" style="margin:0 16px 14px;">
+      <div class="pm-i" onclick="goBks()"><span class="pm-ic">📋</span><div><div class="pm-t">My Bookings</div><div class="pm-s">View all bookings</div></div><span style="margin-left:auto;color:var(--muted);">›</span></div>
+      <div class="pm-i"><span class="pm-ic">📍</span><div><div class="pm-t">Saved Addresses</div><div class="pm-s">Manage locations</div></div><span style="margin-left:auto;color:var(--muted);">›</span></div>
+      <div class="pm-i"><span class="pm-ic">⭐</span><div><div class="pm-t">My Reviews</div><div class="pm-s">Ratings you gave</div></div><span style="margin-left:auto;color:var(--muted);">›</span></div>
+      <div class="pm-i"><span class="pm-ic">🔔</span><div><div class="pm-t">Notifications</div><div class="pm-s">Push & email settings</div></div><span style="margin-left:auto;color:var(--muted);">›</span></div>
+    </div>
+    <div style="padding:0 16px 24px;"><button class="btn btn-ol-rd" onclick="cLogout()">Sign Out</button></div>
+  </div>
+  <div class="bnav">
+    <div class="bni" id="pb0" onclick="hTab(0)"><div class="bni-ic">🏠</div><div class="bni-lb">Home</div></div>
+    <div class="bni" id="pb1" onclick="hTab(1)"><div class="bni-ic">📋</div><div class="bni-lb">Bookings</div></div>
+    <div class="bni on" id="pb2" onclick="hTab(2)"><div class="bni-ic">👤</div><div class="bni-lb">Profile</div></div>
+  </div>
+</div>
+
+<!-- PROVIDER LOGIN -->
+<div class="scr" id="s-pl">
+  <div class="body" style="background:linear-gradient(180deg,#0D2D35 40%,var(--bg) 100%);">
+    <div style="text-align:center;padding:44px 24px 28px;"><div style="width:80px;height:80px;background:var(--teal);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(27,107,122,.4);font-size:42px;">🔧</div><div style="font-size:24px;font-weight:800;color:white;">Provider <span style="color:#ffb07a;">Portal</span></div><div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:4px;">Earn by providing home services</div></div>
+    <div style="background:white;border-radius:24px;margin:0 16px 20px;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.12);">
+      <div style="font-size:22px;font-weight:800;color:var(--ink);">Provider Sign In</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px;margin-bottom:18px;">Access your provider dashboard</div>
+      <div class="field"><label class="flbl">Email *</label><input class="inp" id="p-em" type="email" placeholder="provider@email.com"/></div>
+      <div class="field"><label class="flbl">Password *</label><input class="inp" id="p-pw" type="password" placeholder="••••••••"/></div>
+      <div id="p-err" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none;"></div>
+      <button class="btn btn-tl" onclick="pLogin()">Sign In as Provider</button>
+      <div style="margin-top:14px;padding:10px;background:var(--teal-s);border-radius:10px;text-align:center;"><div style="font-size:10px;font-weight:700;color:var(--teal);margin-bottom:3px;">🧪 TEST</div><div style="font-size:11px;color:var(--teal);">test.provider@hs.com / test123</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROVIDER DASHBOARD -->
+<div class="scr" id="s-pd">
+  <div class="ph">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div><div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:700;">Provider Dashboard</div><div style="font-size:17px;font-weight:800;color:white;" id="pd-nm">Provider</div></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(46,204,113,.3);"></div><span style="font-size:11px;color:rgba(255,255,255,.7);">Online</span></div>
+    </div>
+    <div class="p-stats"><div class="p-stat"><div class="p-sv" id="ps-j">0</div><div class="p-sl">Total Jobs</div></div><div class="p-stat"><div class="p-sv" id="ps-e">₹0</div><div class="p-sl">Earned</div></div><div class="p-stat"><div class="p-sv" id="ps-r">—</div><div class="p-sl">Rating</div></div></div>
+  </div>
+  <div class="body" style="padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:var(--ink);">🔔 New Requests</div><span style="background:var(--brand-s);color:var(--brand);font-size:10px;font-weight:800;padding:3px 9px;border-radius:100px;" id="nj-b">0 new</span></div>
+    <div id="nj-l"><div class="empty" style="padding:20px 0;"><div class="ei" style="font-size:36px;">🎯</div><div class="et" style="font-size:14px;">No new jobs</div><div class="es" style="font-size:12px;">New requests appear here instantly</div></div></div>
+    <div style="font-size:15px;font-weight:800;color:var(--ink);margin:16px 0 10px;">⚡ Active Jobs</div>
+    <div id="aj-l"><div style="font-size:12px;color:var(--muted);text-align:center;padding:12px 0;">No active jobs</div></div>
+    <div style="height:16px;"></div>
+  </div>
+  <div class="bnav">
+    <div class="bni on" onclick="pTab(0)"><div class="bni-ic">📊</div><div class="bni-lb">Dashboard</div></div>
+    <div class="bni" onclick="pTab(1)"><div class="bni-ic">💼</div><div class="bni-lb">Jobs</div></div>
+    <div class="bni" onclick="pTab(2)"><div class="bni-ic">💰</div><div class="bni-lb">Earnings</div></div>
+    <div class="bni" onclick="pTab(3)"><div class="bni-ic">👤</div><div class="bni-lb">Profile</div></div>
+  </div>
+</div>
+
+<!-- PROVIDER OTP ENTRY -->
+<div class="scr" id="s-po">
+  <div class="topbar"><div class="topbar-row"><button class="back-btn" onclick="go('s-pd')">← Back</button><div style="font-size:15px;font-weight:800;color:white;">Enter OTP</div><div style="width:60px;"></div></div></div>
+  <div class="body" style="padding:24px 16px;">
+    <div style="text-align:center;margin-bottom:28px;"><div style="font-size:52px;margin-bottom:12px;">🔐</div><div style="font-size:20px;font-weight:800;color:var(--ink);">Verify Job Completion</div><div style="font-size:13px;color:var(--muted);margin-top:6px;" id="po-j">Ask the customer for their OTP</div></div>
+    <div class="card cp" style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;">Enter 4-Digit OTP From Customer</div>
+      <div class="otp-ir"><input class="oi" id="oi1" maxlength="1" type="tel" oninput="oNav(this,'oi2')"/><input class="oi" id="oi2" maxlength="1" type="tel" oninput="oNav(this,'oi3')" onkeydown="oBk(event,'oi1')"/><input class="oi" id="oi3" maxlength="1" type="tel" oninput="oNav(this,'oi4')" onkeydown="oBk(event,'oi2')"/><input class="oi" id="oi4" maxlength="1" type="tel" onkeydown="oBk(event,'oi3')"/></div>
+      <div id="oi-err" style="color:var(--red);font-size:12px;text-align:center;margin-top:10px;display:none;"></div>
+    </div>
+    <button class="btn btn-tl" onclick="verOtp()">✅ Verify & Complete Job</button>
+  </div>
+</div>
+
+<!-- PROVIDER JOB DONE -->
+<div class="scr" id="s-pdn">
+  <div class="body" style="padding:40px 16px;text-align:center;">
+    <div style="font-size:72px;margin-bottom:16px;">🎉</div>
+    <div style="font-size:22px;font-weight:800;color:var(--ink);margin-bottom:8px;">Job Completed!</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Waiting for customer payment</div>
+    <div class="card cp" style="text-align:left;margin-bottom:20px;">
+      <div class="br"><span class="bl">Service Amount</span><span class="bv" id="dn-am">₹0</span></div>
+      <div class="br"><span class="bl">Platform Commission</span><span class="bv" style="color:var(--muted);" id="dn-co">₹0</span></div>
+      <div class="btr"><span class="btl">You Receive</span><span style="font-size:22px;font-weight:900;color:var(--green);" id="dn-er">₹0</span></div>
+    </div>
+    <div id="dn-ps" style="padding:14px;background:var(--teal-s);border-radius:12px;font-size:13px;font-weight:700;color:var(--teal);margin-bottom:20px;">⏳ Waiting for customer to pay...</div>
+    <button class="btn btn-tl" onclick="go('s-pd')">← Back to Dashboard</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hide" id="toast"></div>
+<script>
+// ── FIREBASE ──────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',
+  authDomain:'hamaraservice-s009.firebaseapp.com',
+  databaseURL:'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:'hamaraservice-s009',
+  storageBucket:'hamaraservice-s009.firebasestorage.app',
+  messagingSenderId:'1064274729048',
+  appId:'1:1064274729048:web:86643c95419e9dc881d22d'
+});
+const auth = firebase.auth();
+const db   = firebase.database();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+
+// ── STATE ─────────────────────────────────────────────
+let MODE='customer', cUser=null, cProf=null, pData=null;
+let selSvc=null, selOpts={}, selDate=null, selTime=null;
+let bkId=null, bkData=null, starR=0, payM='upi';
+let listeners=[], isReg=false, activeCat=0;
+let aOtpBkId=null, aOtpAmt=0, aOtpSvc='';
+const DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+// ── CATALOG (matches Flutter hs_catalog.dart) ────────
+const CATS=['All','Cleaning','Repairs','Vehicle','Health','Beauty','Care'];
+const TP=['SVC001','SVC002','SVC007','SVC012','SVC011','SVC017','SVC025'];
+const SVCS=[
+  {id:'SVC001',icon:'🧹',name:'House Maid',       cat:'Cleaning',color:'#E3F2FD',img:'/assets/services/SVC001.jpg',
+   groups:[{title:'Select Tasks',style:'task',items:[{key:'sweep',name:'Sweeping & Mopping',ico:'🧹',price:0},{key:'dust',name:'Dusting',ico:'🪣',price:0},{key:'dish',name:'Dishwashing',ico:'🍽️',price:0},{key:'fold',name:'Folding Clothes',ico:'👗',price:0},{key:'laun',name:'Laundry (Washing)',ico:'👚',price:0}]}]},
+  {id:'SVC002',icon:'🧽',name:'Deep Cleaning',    cat:'Cleaning',color:'#E8F5E9',img:'/assets/services/SVC002.jpg',
+   groups:[{title:'Home Size — With Material & Equipment',style:'bhk',items:[{key:'studio',name:'Studio / 1 Room',price:0},{key:'1bhk',name:'1 BHK',price:0},{key:'2bhk',name:'2 BHK',price:0},{key:'3bhk',name:'3 BHK',price:0},{key:'4bhk',name:'4 BHK+',price:0}]}]},
+  {id:'SVC003',icon:'🚿',name:'Bathroom Cleaning',cat:'Cleaning',color:'#F3E5F5',img:'/assets/services/SVC003.jpg',
+   groups:[{title:'Per Bathroom — With Material',style:'bhk',items:[{key:'per',name:'Per Bathroom',price:0}]},{title:'Add-ons',style:'task',items:[{key:'bathtub',name:'Bathtub Deep Clean',ico:'🛁',price:0},{key:'shower',name:'Glass Shower Cabin',ico:'🚿',price:0}]}]},
+  {id:'SVC004',icon:'🍳',name:'Kitchen Cleaning', cat:'Cleaning',color:'#FFF8E1',img:'/assets/services/SVC004.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'basic',name:'Basic Kitchen Clean',ico:'🧽',price:0},{key:'deep',name:'Deep Kitchen Clean',ico:'🍳',price:0},{key:'chimney',name:'Chimney Cleaning',ico:'🔥',price:0}]}]},
+  {id:'SVC005',icon:'🛋️',name:'Sofa / Carpet',   cat:'Cleaning',color:'#E0F7FA',img:'/assets/services/SVC005.jpg',
+   groups:[{title:'Select Item',style:'bhk',items:[{key:'sofa2',name:'2-Seater Sofa',price:0},{key:'sofa3',name:'3-Seater Sofa',price:0},{key:'sofa5',name:'5-Seater Sofa',price:0},{key:'carpet',name:'Carpet (per sq ft)',price:0}]}]},
+  {id:'SVC006',icon:'🧴',name:'Laundry / Ironing',cat:'Cleaning',color:'#EDE7F6',img:'/assets/services/SVC006.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'wash',name:'Washing (per kg)',ico:'👚',price:0},{key:'iron',name:'Ironing (per piece)',ico:'👔',price:0},{key:'fold',name:'Fold & Pack',ico:'🗂️',price:0}]}]},
+  {id:'SVC007',icon:'❄️',name:'AC Service',       cat:'Repairs', color:'#E3F2FD',img:'/assets/services/SVC007.jpg',
+   groups:[{title:'Select Service Type',style:'bhk',items:[{key:'clean',name:'AC Cleaning',price:0},{key:'repair',name:'AC Repair',price:0},{key:'gas',name:'Gas Refilling',price:0},{key:'install',name:'New AC Installation',price:0}]}]},
+  {id:'SVC009',icon:'🔧',name:'Appliance Repair', cat:'Repairs', color:'#FBE9E7',img:'/assets/services/SVC009.jpg',
+   groups:[{title:'Select Appliance',style:'bhk',items:[{key:'wash',name:'Washing Machine',price:0},{key:'fridge',name:'Fridge / Refrigerator',price:0},{key:'micro',name:'Microwave Oven',price:0},{key:'geyser',name:'Water Heater / Geyser',price:0}]}]},
+  {id:'SVC012',icon:'⚡',name:'Electrician',      cat:'Repairs', color:'#FFF9C4',img:'/assets/services/SVC012.jpg',
+   groups:[{title:'Select Work',style:'task',items:[{key:'sw',name:'Switch / Socket Repair',ico:'🔌',price:0},{key:'fan',name:'Fan Installation',ico:'💨',price:0},{key:'light',name:'Light Fitting',ico:'💡',price:0},{key:'mcb',name:'MCB / Wiring Issue',ico:'⚡',price:0}]}]},
+  {id:'SVC011',icon:'🔧',name:'Plumber',          cat:'Repairs', color:'#E1F5FE',img:'/assets/services/SVC011.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'leak',name:'Pipe Leak / Repair',ico:'💧',price:0},{key:'tap',name:'Tap / Faucet Issue',ico:'🚿',price:0},{key:'drain',name:'Drain Unblocking',ico:'🪣',price:0},{key:'toilet',name:'Toilet / Flush Issue',ico:'🚽',price:0}]}]},
+  {id:'SVC013',icon:'🔨',name:'Carpenter',        cat:'Repairs', color:'#EFEBE9',img:'/assets/services/SVC013.jpg',
+   groups:[{title:'Select Work',style:'task',items:[{key:'fix',name:'Furniture Repair',ico:'🪑',price:0},{key:'door',name:'Door / Window Fix',ico:'🚪',price:0},{key:'fit',name:'New Fitting',ico:'🔨',price:0}]}]},
+  {id:'SVC014',icon:'🎨',name:'Painter',          cat:'Repairs', color:'#FCE4EC',img:'/assets/services/SVC014.jpg',
+   groups:[{title:'Select Work',style:'bhk',items:[{key:'room',name:'Per Room',price:0},{key:'home',name:'Full Home',price:0},{key:'touch',name:'Touch-Up / Patch',price:0}]}]},
+  {id:'SVC017',icon:'🚗',name:'Car / Bike Wash',  cat:'Vehicle', color:'#E8EAF6',img:'/assets/services/SVC017.jpg',
+   groups:[{title:'Select Vehicle',style:'bhk',items:[{key:'car_e',name:'Car — Exterior Only',price:0},{key:'car_f',name:'Car — Full (Int + Ext)',price:0},{key:'bike',name:'Bike / Scooter',price:0},{key:'suv',name:'SUV / MUV',price:0}]}]},
+  {id:'SVC019',icon:'🔩',name:'Car Mechanic',     cat:'Vehicle', color:'#ECEFF1',img:'/assets/services/SVC019.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'oil',name:'Oil & Filter Change',ico:'🛢️',price:0},{key:'brake',name:'Brake Service',ico:'🔴',price:0},{key:'diag',name:'Engine Diagnostics',ico:'🔍',price:0},{key:'tyre',name:'Tyre Service',ico:'⭕',price:0}]}]},
+  {id:'SVC027',icon:'👨‍⚕️',name:'Doctor Visit',  cat:'Health',  color:'#E3F2FD',img:'/assets/services/SVC027.jpg',
+   groups:[{title:'Select Consultation',style:'bhk',items:[{key:'gp',name:'General Physician',price:0},{key:'peds',name:'Paediatrician',price:0},{key:'sr',name:'Senior Citizen Special',price:0}]}]},
+  {id:'SVC028',icon:'💉',name:'Nurse Visit',      cat:'Health',  color:'#F3E5F5',img:'/assets/services/SVC028.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'inj',name:'Injection',ico:'💉',price:0},{key:'dress',name:'Wound Dressing',ico:'🩹',price:0},{key:'iv',name:'IV / Drip',ico:'🩸',price:0}]}]},
+  {id:'SVC025',icon:'💆',name:'Massage',          cat:'Beauty',  color:'#F3E5F5',img:'/assets/services/SVC025.jpg',
+   groups:[{title:'Select Massage Type',style:'bhk',items:[{key:'sw',name:'Swedish Relaxation',price:0},{key:'deep',name:'Deep Tissue',price:0},{key:'head',name:'Head Massage',price:0},{key:'foot',name:'Foot Reflexology',price:0}]}]},
+  {id:'SVC024',icon:'💇',name:'Women Beauty',     cat:'Beauty',  color:'#FCE4EC',img:'/assets/services/SVC024.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'cut',name:'Haircut & Styling',ico:'✂️',price:0},{key:'color',name:'Hair Colour',ico:'🎨',price:0},{key:'facial',name:'Facial',ico:'✨',price:0},{key:'mani',name:'Manicure / Pedicure',ico:'💅',price:0}]}]},
+  {id:'SVC023',icon:'💈',name:'Men Haircut',      cat:'Beauty',  color:'#E8EAF6',img:'/assets/services/SVC023.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'cut',name:'Haircut',ico:'✂️',price:0},{key:'shave',name:'Shave / Beard Trim',ico:'🪒',price:0},{key:'both',name:'Haircut + Shave',ico:'💈',price:0}]}]},
+  {id:'SVC030',icon:'👶',name:'Babysitter',       cat:'Care',    color:'#FFF8E1',img:'/assets/services/SVC030.jpg',
+   groups:[{title:'Select Hours',style:'bhk',items:[{key:'h2',name:'2 Hours',price:0},{key:'h4',name:'4 Hours',price:0},{key:'h8',name:'Full Day',price:0},{key:'night',name:'Overnight',price:0}]}]},
+  {id:'SVC031',icon:'🧓',name:'Elderly Care',     cat:'Care',    color:'#E8F5E9',img:'/assets/services/SVC031.jpg',
+   groups:[{title:'Select Hours',style:'bhk',items:[{key:'h4',name:'4 Hours',price:0},{key:'h8',name:'8 Hours',price:0},{key:'live',name:'Live-in Care',price:0}]}]},
+  {id:'SVC021',icon:'🐛',name:'Pest Control',     cat:'Cleaning',color:'#EFEBE9',img:'/assets/services/SVC021.jpg',
+   groups:[{title:'Select Pest Type',style:'bhk',items:[{key:'cock',name:'Cockroach Control',price:0},{key:'term',name:'Termite Treatment',price:0},{key:'mosq',name:'Mosquito Control',price:0},{key:'rats',name:'Rodent Control',price:0}]}]},
+  {id:'SVC032',icon:'🌿',name:'Gardener',         cat:'Cleaning',color:'#E8F5E9',img:'/assets/services/SVC032.jpg',
+   groups:[{title:'Select Service',style:'task',items:[{key:'trim',name:'Trimming & Pruning',ico:'✂️',price:0},{key:'plant',name:'Planting',ico:'🌱',price:0},{key:'lawn',name:'Lawn Mowing',ico:'🌿',price:0}]}]},
+];
+
+// Commission rates — matches payment_screen.dart
+function cRate(s){
+  const r={'House Maid':10,'Deep Cleaning':12,'Bathroom Cleaning':10,'Kitchen Cleaning':12,'Sofa / Carpet':10,'Laundry / Ironing':10,'AC Service':15,'Appliance Repair':18,'Electrician':20,'Plumber':20,'Carpenter':12,'Painter':12,'Car / Bike Wash':10,'Car Mechanic':15,'Doctor Visit':15,'Nurse Visit':15,'Massage':15,'Women Beauty':12,'Men Haircut':12,'Babysitter':10,'Elderly Care':10,'Pest Control':10,'Gardener':10};
+  return r[s]||10;
+}
+
+// ── CLOCK ─────────────────────────────────────────────
+function tick(){const t=new Date();document.getElementById('clk').textContent=t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}).replace(' ','');}
+setInterval(tick,1000);tick();
+
+// ── NAVIGATION ────────────────────────────────────────
+function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));const el=document.getElementById(id);if(el)el.classList.add('on');}
+
+function setMode(m){
+  MODE=m;
+  document.getElementById('mb-c').classList.toggle('on',m==='customer');
+  document.getElementById('mb-p').classList.toggle('on',m==='provider');
+  document.getElementById('mi').textContent=m==='customer'?'👤 Customer':'🔧 Provider';
+  clrListeners();
+  if(m==='customer'){if(cUser&&cProf){go('s-ch');buildHome();}else{auth.signOut().then(()=>{cUser=null;cProf=null;go('s-cl');});}}
+  else{if(cUser&&pData){go('s-pd');loadPDash();}else{auth.signOut().then(()=>{cUser=null;pData=null;go('s-pl');});}}
+}
+
+function clrListeners(){listeners.forEach(fn=>{try{fn();}catch(e){}});listeners=[];}
+
+// ── AUTH ──────────────────────────────────────────────
+function togAuth(){
+  isReg=!isReg;
+  document.getElementById('l-title').textContent=isReg?'Create Account':'Welcome Back!';
+  document.getElementById('l-sub').textContent=isReg?'Register to book services':'Sign in to your account';
+  document.getElementById('l-btn').textContent=isReg?'Create Account':'Sign In';
+  document.getElementById('lt').textContent=isReg?'Already have an account? ':'Don\'t have an account? ';
+  document.getElementById('reg-ex').style.display=isReg?'block':'none';
+}
+
+async function doLogin(){
+  const em=document.getElementById('c-em').value.trim();
+  const pw=document.getElementById('c-pw').value;
+  const err=document.getElementById('l-err');
+  const btn=document.getElementById('l-btn');
+  err.style.display='none';
+  if(!em||!pw){err.textContent='Please fill all fields';err.style.display='block';return;}
+  btn.textContent='Please wait...';btn.disabled=true;
+  try{
+    if(isReg){
+      const nm=document.getElementById('r-name').value.trim();
+      const ph=document.getElementById('r-phone').value.trim();
+      const ct=document.getElementById('r-city').value.trim();
+      if(!nm||!ph){err.textContent='Name and phone are required';err.style.display='block';btn.textContent='Create Account';btn.disabled=false;return;}
+      const cr=await auth.createUserWithEmailAndPassword(em,pw);
+      cUser=cr.user;
+      const p={uid:cr.user.uid,name:nm,email:em,phone:ph,city:ct,registeredAt:new Date().toISOString(),wallet:0};
+      const tk=await cr.user.getIdToken();
+      await fetch(`${DB}/customers/${cr.user.uid}.json?auth=${tk}`,{method:'PUT',body:JSON.stringify(p)});
+      cProf=p;afterCLogin();toast('Account created! Welcome 🎉');
+    }else{
+      const cr=await auth.signInWithEmailAndPassword(em,pw);
+      cUser=cr.user;await loadCProf(cr.user);afterCLogin();toast('Welcome back! 👋');
+    }
+  }catch(e){
+    const m={'auth/user-not-found':'No account with this email','auth/wrong-password':'Incorrect password','auth/email-already-in-use':'Email already registered','auth/weak-password':'Password must be 6+ characters'};
+    err.textContent=m[e.code]||e.message;err.style.display='block';
+  }
+  btn.textContent=isReg?'Create Account':'Sign In';btn.disabled=false;
+}
+
+async function gLogin(){
+  try{
+    const p=new firebase.auth.GoogleAuthProvider();
+    const cr=await auth.signInWithPopup(p);
+    cUser=cr.user;await loadCProf(cr.user);afterCLogin();toast('Signed in with Google! 👋');
+  }catch(e){toast('Google sign-in: '+e.message);}
+}
+
+async function loadCProf(u){
+  try{
+    const sn=await db.ref('customers/'+u.uid).once('value');
+    cProf=sn.exists()?sn.val():{uid:u.uid,name:u.displayName||u.email.split('@')[0],email:u.email,phone:'',city:''};
+    if(!sn.exists()){const tk=await u.getIdToken();await fetch(`${DB}/customers/${u.uid}.json?auth=${tk}`,{method:'PUT',body:JSON.stringify(cProf)});}
+  }catch(e){cProf={uid:u.uid,name:u.email.split('@')[0],email:u.email};}
+}
+
+function afterCLogin(){
+  const init=(cProf.name||'U')[0].toUpperCase();
+  document.getElementById('h-av').textContent=init;
+  document.getElementById('pr-av').textContent=init;
+  document.getElementById('pr-nm').textContent=cProf.name||'Customer';
+  document.getElementById('pr-em').textContent=cProf.email||'';
+  document.getElementById('pr-ph').textContent=cProf.phone||'';
+  if(cProf.city)document.getElementById('h-city').innerHTML=cProf.city+' <span style="font-size:12px;">▾</span>';
+  loadLivePrices(()=>{go('s-ch');buildHome();});
+  startOtpLsn();
+}
+
+function cLogout(){clrListeners();auth.signOut().then(()=>{cUser=null;cProf=null;bkId=null;bkData=null;go('s-cl');});}
+
+// ── LIVE PRICES ───────────────────────────────────────
+async function loadLivePrices(cb){
+  try{
+    const sn=await db.ref('hs_service_prices').once('value');
+    const pr=sn.val()||{};
+    SVCS.forEach(s=>{
+      const sp=pr[s.id];if(!sp)return;
+      s.groups.forEach(g=>{
+        g.items.forEach(it=>{
+          const gk=g.key||g.title.split(' ')[0].toLowerCase();
+          const pd=sp[gk]&&sp[gk][it.key];
+          if(pd&&pd.price)it.price=pd.price;
+          else if(sp.basePrice)it.price=sp.basePrice;
+        });
+      });
+    });
+  }catch(e){}
+  if(cb)cb();
+}
+
+// ── HOME SCREEN ───────────────────────────────────────
+function buildHome(){buildCatTabs();buildGrid();buildPicks();}
+
+function buildCatTabs(){
+  document.getElementById('cat-tabs').innerHTML=CATS.map((c,i)=>`<div class="cat-t${i===activeCat?' on':''}" onclick="setCat(${i})">${c}</div>`).join('');
+}
+function setCat(i){activeCat=i;buildGrid();buildCatTabs();}
+
+function buildGrid(){
+  const list=activeCat===0?SVCS:SVCS.filter(s=>s.cat===CATS[activeCat]);
+  document.getElementById('svc-ct').textContent=list.length+' available';
+  document.getElementById('svc-grid').innerHTML=list.map(s=>`
+    <div class="svc-card" style="background:${s.color};" onclick="openSvc('${s.id}')">
+      <div class="svc-icon-bg" id="sib-${s.id}">${s.icon}</div>
+      <img class="svc-img" src="${s.img}" onload="document.getElementById('sib-${s.id}').style.display='none'" onerror="this.style.display='none'" loading="lazy"/>
+      <div class="svc-ov"><div class="svc-nm">${s.name}</div></div>
+    </div>`).join('');
+}
+
+function buildPicks(){
+  const picks=TP.map(id=>SVCS.find(s=>s.id===id)).filter(Boolean);
+  document.getElementById('picks').innerHTML=picks.map(s=>`
+    <div class="pick" style="background:${s.color};" onclick="openSvc('${s.id}')">
+      <div class="pick-ov"></div><div class="pick-ic">${s.icon}</div><div class="pick-nm">${s.name}</div>
+    </div>`).join('');
+}
+
+function onSrch(q){
+  const fl=q?SVCS.filter(s=>s.name.toLowerCase().includes(q.toLowerCase())):SVCS;
+  document.getElementById('svc-ct').textContent=fl.length+' results';
+  document.getElementById('svc-grid').innerHTML=fl.map(s=>`
+    <div class="svc-card" style="background:${s.color};" onclick="openSvc('${s.id}')">
+      <div class="svc-icon-bg">${s.icon}</div>
+      <div class="svc-ov"><div class="svc-nm">${s.name}</div></div>
+    </div>`).join('');
+}
+
+function hTab(i){
+  const sc=['s-ch','s-bks','s-pr'];go(sc[i]);
+  if(i===1)loadBks();
+  ['bn','bb','pb'].forEach(p=>{for(let j=0;j<3;j++){const el=document.getElementById(p+j);if(el)el.classList.toggle('on',j===i);}});
+}
+
+// ── SERVICE DETAIL ────────────────────────────────────
+function openSvc(id){
+  if(!cUser){go('s-cl');toast('Please sign in to book');return;}
+  selSvc=SVCS.find(s=>s.id===id);if(!selSvc)return;
+  selOpts={};
+  document.getElementById('sd-ic').textContent=selSvc.icon;
+  document.getElementById('sd-nm').textContent=selSvc.name;
+  document.getElementById('sd-cat').textContent=selSvc.cat;
+  document.getElementById('sd-grps').innerHTML=selSvc.groups.map((g,gi)=>`
+    <div class="grp-t">${g.title}</div>
+    ${g.style==='task'
+      ?`<div class="task-list">${g.items.map((it,ii)=>`
+          <div class="task-i" id="ti-${gi}-${ii}" onclick="togTask(${gi},${ii},'${it.key}','${it.name.replace(/'/g,"\\'")}',${it.price||499})">
+            <div class="task-left"><div class="task-chk" id="tc-${gi}-${ii}"></div>${it.ico?`<span style="margin-right:6px;">${it.ico}</span>`:''}<span class="task-nm">${it.name}</span></div>
+            <span class="task-pr" id="tp-${gi}-${ii}">₹${it.price||'—'}</span>
+          </div>`).join('')}</div>`
+      :`<div class="bhk-row">${g.items.map((it,ii)=>`
+          <div class="bhk" id="bh-${gi}-${ii}" onclick="selBhk(${gi},${ii},'${it.key}','${it.name.replace(/'/g,"\\'")}',${it.price||499})">
+            ${it.name}${it.price?`<br><span style="font-size:10px;color:var(--teal);">₹${it.price}</span>`:''}
+          </div>`).join('')}</div>`
+    }`).join('');
+  updTotal();go('s-sd');
+}
+
+function togTask(gi,ii,key,name,price){
+  const k=`${gi}-${key}`;const chip=document.getElementById(`ti-${gi}-${ii}`);const chk=document.getElementById(`tc-${gi}-${ii}`);
+  if(selOpts[k]){delete selOpts[k];chip.classList.remove('sel');chk.textContent='';}
+  else{selOpts[k]={name,price};chip.classList.add('sel');chk.textContent='✓';}
+  updTotal();
+}
+
+function selBhk(gi,ii,key,name,price){
+  const g=selSvc.groups[gi];
+  g.items.forEach((_,j)=>{delete selOpts[`${gi}-${g.items[j].key}`];const el=document.getElementById(`bh-${gi}-${j}`);if(el)el.classList.remove('sel');});
+  selOpts[`${gi}-${key}`]={name,price};
+  document.getElementById(`bh-${gi}-${ii}`).classList.add('sel');
+  updTotal();
+}
+
+function updTotal(){
+  const items=Object.values(selOpts);const tot=items.reduce((s,x)=>s+x.price,0);const cnt=items.length;
+  document.getElementById('sd-total').textContent='₹'+tot;
+  document.getElementById('sd-note').textContent=cnt?cnt+' item'+(cnt>1?'s':'')+' selected':'Select options above';
+  const btn=document.getElementById('sd-book');btn.disabled=cnt===0;btn.style.opacity=cnt?'1':'.4';
+}
+
+// ── BOOKING FLOW ──────────────────────────────────────
+function goBook(){if(!Object.keys(selOpts).length){toast('Select at least one option');return;}buildBk();go('s-bk');}
+
+function buildBk(){
+  document.getElementById('bk-sl').textContent=selSvc.name;
+  document.getElementById('bk-ss').textContent=selSvc.name;
+  const items=Object.values(selOpts);
+  document.getElementById('bk-si').textContent=items.map(x=>x.name).join(', ');
+  document.getElementById('bk-st').textContent='₹'+items.reduce((s,x)=>s+x.price,0);
+  selDate=null;selTime=null;
+  // Dates
+  const dates=[];for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);dates.push({lb:i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}),val:d.toISOString().split('T')[0]});}
+  document.getElementById('date-g').innerHTML=dates.map((d,i)=>`<div class="slot" id="dt-${i}" onclick="pickDt('${d.val}',${i})">${d.lb}</div>`).join('');
+  // Times
+  const times=['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM'];
+  document.getElementById('time-g').innerHTML=times.map((t,i)=>`<div class="slot" id="tm-${i}" onclick="pickTm('${t}',${i})">${t}</div>`).join('');
+  document.getElementById('bk-sdt').textContent='Select above';
+}
+
+function pickDt(v,i){selDate=v;document.querySelectorAll('#date-g .slot').forEach(s=>s.classList.remove('sel'));document.getElementById('dt-'+i).classList.add('sel');updDt();}
+function pickTm(v,i){selTime=v;document.querySelectorAll('#time-g .slot').forEach(s=>s.classList.remove('sel'));document.getElementById('tm-'+i).classList.add('sel');updDt();}
+function updDt(){if(selDate&&selTime)document.getElementById('bk-sdt').textContent=selDate+' at '+selTime;}
+
+async function confirmBk(){
+  if(!selDate){toast('Select a date');return;}if(!selTime){toast('Select a time');return;}
+  const addr=document.getElementById('bk-addr').value.trim();if(!addr){toast('Enter your address');return;}
+  const btn=document.getElementById('bk-cb');btn.textContent='Confirming...';btn.disabled=true;
+  const items=Object.values(selOpts);const tot=items.reduce((s,x)=>s+x.price,0);
+  const bk={customerId:cUser.uid,customerName:cProf?.name||cUser.email,customerPhone:cProf?.phone||'',
+    service:selSvc.name,serviceId:selSvc.id,tasks:items,priceVal:tot,price:tot,
+    date:selDate,time:selTime,address:addr+(document.getElementById('bk-lm').value?' near '+document.getElementById('bk-lm').value:''),
+    city:document.getElementById('bk-city').value||'Visakhapatnam',
+    status:'active',paymentStatus:'pending',createdAt:new Date().toISOString(),lat:17.6868,lng:83.2185};
+  try{
+    const ref=db.ref('bookings').push();bk.id=ref.key;
+    await ref.set(bk);await db.ref('active_bookings/'+ref.key).set(bk);
+    bkId=ref.key;bkData=bk;
+    fetch('https://notifybooking-mlchyp6tra-as.a.run.app',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bookingId:ref.key,booking:bk})}).catch(()=>{});
+    startRadar();go('s-rd');
+    document.getElementById('rd-bl').textContent='Booking #'+ref.key.slice(-6).toUpperCase();
+    toast('Booking confirmed! 🎉');
+  }catch(e){toast('Error: '+e.message);}
+  btn.textContent='✅ Confirm Booking';btn.disabled=false;
+}
+
+// ── RADAR ─────────────────────────────────────────────
+function startRadar(){
+  if(!bkId)return;
+  const ref=db.ref('active_bookings/'+bkId);
+  const fn=ref.on('value',sn=>{
+    if(!sn.exists()||!sn.val())return;const bk=sn.val();bkData=bk;
+    if(bk.acceptedBy){
+      document.getElementById('rd-st').textContent='Provider Found! 🎉';
+      document.getElementById('rd-sb').textContent=(bk.acceptedBy.name||'Provider')+' is on the way';
+      document.getElementById('r-pv').style.display='flex';
+      document.getElementById('rd-ac').style.display='block';
+      document.getElementById('rd-pn').textContent=bk.acceptedBy.name||'Provider';
+    }
+    if(bk.status==='payment_pending'){ref.off();setTimeout(()=>openPay(bk),800);}
+  });
+  listeners.push(()=>ref.off('value',fn));
+}
+
+function startOtpLsn(){
+  if(!cUser)return;
+  const ref=db.ref('job_otp').orderByChild('customerId').equalTo(cUser.uid);
+  const fn=ref.on('child_added',sn=>{
+    const d=sn.val();if(!d||d.status!=='waiting')return;
+    showOtp(d.otp,d.service||'');
+  });
+  listeners.push(()=>ref.off('child_added',fn));
+  // Also listen for changes
+  const fn2=ref.on('child_changed',sn=>{
+    const d=sn.val();if(!d||d.status!=='waiting')return;
+    showOtp(d.otp,d.service||'');
+  });
+  listeners.push(()=>ref.off('child_changed',fn2));
+}
+
+function showOtp(otp,svc){
+  document.getElementById('otp-sv').textContent='Share with provider for '+(svc||'service');
+  document.getElementById('otp-digs').innerHTML=String(otp).split('').map(d=>`<div class="otp-d">${d}</div>`).join('');
+  document.getElementById('otp-pop').classList.add('on');
+  if(!document.getElementById('s-rd').classList.contains('on'))go('s-rd');
+}
+function closeOtp(){document.getElementById('otp-pop').classList.remove('on');}
+
+// ── PAYMENT ───────────────────────────────────────────
+function openPay(bk){
+  bkData=bk||bkData;
+  const amt=parseInt(bkData?.priceVal||bkData?.price||0);
+  const svc=bkData?.service||selSvc?.name||'';
+  const rate=cRate(svc);const comm=Math.round(amt*rate/100);
+  document.getElementById('pay-sn').textContent=svc;
+  document.getElementById('pay-base').textContent='₹'+amt;
+  document.getElementById('pay-cl').textContent='Platform Fee ('+rate+'%)';
+  document.getElementById('pay-comm').textContent='₹'+comm;
+  document.getElementById('pay-tot').textContent='₹'+amt;
+  document.getElementById('pay-pg').textContent='₹'+(amt-comm);
+  go('s-pay');
+}
+
+function sPm(m){payM=m;['u','c','ca'].forEach((x,i)=>document.getElementById('pm-'+x).classList.toggle('sel',['upi','card','cash'][i]===m));}
+
+async function doPay(){
+  const btn=document.getElementById('pay-btn');btn.textContent='Processing...';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1500));
+  try{
+    const amt=parseInt(bkData?.priceVal||bkData?.price||0);
+    const svc=bkData?.service||selSvc?.name||'';
+    const rate=cRate(svc);const comm=Math.round(amt*rate/100);
+    const upd={status:'completed',paymentStatus:'paid',amountPaid:amt,paymentMethod:payM,commissionRate:rate,platformFee:comm,providerEarned:amt-comm,paidAt:new Date().toISOString()};
+    await db.ref('bookings/'+bkId).update(upd);await db.ref('active_bookings/'+bkId).update(upd);
+    if(bkData?.acceptedBy?.id){
+      const ps=await db.ref('providers/'+bkData.acceptedBy.id).once('value');
+      if(ps.exists()){const p=ps.val();await db.ref('providers/'+bkData.acceptedBy.id).update({totalEarned:(p.totalEarned||0)+(amt-comm)});}
+    }
+    if(bkData?.acceptedBy?.name)document.getElementById('rev-pn').textContent=bkData.acceptedBy.name+' completed your job!';
+    go('s-rev');starR=0;setStar(0);toast('Payment successful! ✅');
+  }catch(e){toast('Error: '+e.message);}
+  btn.textContent='Pay Now';btn.disabled=false;
+}
+
+// ── REVIEW ────────────────────────────────────────────
+function setStar(n){
+  starR=n;
+  document.querySelectorAll('#stars .star').forEach((s,i)=>s.textContent=i<n?'⭐':'☆');
+  const lb=['','Terrible 😞','Bad 😕','Okay 😐','Good 😊','Excellent 🤩'];
+  document.getElementById('star-lbl').textContent=n?lb[n]:'Tap to rate';
+}
+
+async function subRev(){
+  if(!starR){toast('Please rate your experience');return;}
+  try{
+    await db.ref('reviews/'+bkId).set({bookingId:bkId,customerId:cUser.uid,providerId:bkData?.acceptedBy?.id||'',service:bkData?.service||'',rating:starR,comment:document.getElementById('rev-c').value.trim(),createdAt:new Date().toISOString()});
+    await db.ref('bookings/'+bkId).update({rated:true,rating:starR});
+    if(bkData?.acceptedBy?.id){const ps=await db.ref('providers/'+bkData.acceptedBy.id).once('value');if(ps.exists()){const p=ps.val();const nr=((p.rating||5)*(p.reviews||0)+starR)/((p.reviews||0)+1);await db.ref('providers/'+bkData.acceptedBy.id).update({rating:parseFloat(nr.toFixed(1)),reviews:(p.reviews||0)+1});}}
+    showOk();
+  }catch(e){toast('Error: '+e.message);}
+}
+function skipRev(){showOk();}
+
+function showOk(){
+  document.getElementById('ok-id').textContent='Booking #'+(bkId||'').slice(-6).toUpperCase();
+  document.getElementById('ok-sv').textContent=bkData?.service||selSvc?.name||'';
+  document.getElementById('ok-rt').textContent=starR?'⭐'.repeat(starR):'Not rated';
+  document.getElementById('ok-am').textContent='₹'+(bkData?.priceVal||0);
+  go('s-ok');
+}
+function goHome(){go('s-ch');hTab(0);}
+function goBks(){hTab(1);}
+
+// ── MY BOOKINGS ───────────────────────────────────────
+async function loadBks(){
+  const el=document.getElementById('bk-list');
+  el.innerHTML='<div style="text-align:center;padding:40px;"><div class="spin"></div></div>';
+  if(!cUser){el.innerHTML='<div class="empty"><div class="ei">🔒</div><div class="et">Sign in to view bookings</div></div>';return;}
+  try{
+    const sn=await db.ref('bookings').orderByChild('customerId').equalTo(cUser.uid).once('value');
+    if(!sn.exists()){el.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">No bookings yet</div><div class="es">Book a service to get started</div></div>';return;}
+    const bks=[];sn.forEach(c=>bks.push(c.val()));bks.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    el.innerHTML=bks.map(b=>`
+      <div class="bk-c">
+        <div class="bk-badge s-${b.status||'active'}">${b.status||'active'}</div>
+        <div class="bk-svc">${b.service||''}</div>
+        <div class="bk-meta">${b.date||''} ${b.time?'at '+b.time:''}</div>
+        <div class="bk-meta">📍 ${b.address||''}</div>
+        <div class="bk-pr">₹${b.priceVal||b.price||0}</div>
+        ${b.status==='payment_pending'?`<button class="btn btn-br btn-sm" style="margin-top:10px;" onclick="openBkPay('${b.id||b.bookingId}')">Pay Now →</button>`:''}
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty"><div class="ei">⚠️</div><div class="et">Could not load bookings</div></div>';}
+}
+
+async function openBkPay(id){
+  try{const sn=await db.ref('bookings/'+id).once('value');if(sn.exists()){bkId=id;bkData=sn.val();openPay(bkData);}}catch(e){toast('Error loading booking');}
+}
+
+// ── PROVIDER AUTH ─────────────────────────────────────
+async function pLogin(){
+  const em=document.getElementById('p-em').value.trim();
+  const pw=document.getElementById('p-pw').value;
+  const err=document.getElementById('p-err');err.style.display='none';
+  try{
+    const cr=await auth.signInWithEmailAndPassword(em,pw);cUser=cr.user;
+    const sn=await db.ref('providers').orderByChild('email').equalTo(em).once('value');
+    if(sn.exists()){sn.forEach(c=>{pData=c.val();pData._key=c.key;});}
+    else{pData={id:cr.user.uid,_key:cr.user.uid,name:em.split('@')[0],email:em,rating:5.0,reviews:0,totalEarned:0,totalJobs:0,status:'approved'};}
+    updPStats();document.getElementById('pd-nm').textContent=(pData.name||'Provider').split(' ')[0];
+    go('s-pd');loadPDash();toast('Welcome '+(pData.name||'Provider').split(' ')[0]+'! 👋');
+  }catch(e){
+    const m={'auth/user-not-found':'No account found','auth/wrong-password':'Incorrect password'};
+    err.textContent=m[e.code]||e.message;err.style.display='block';
+  }
+}
+
+function updPStats(){
+  if(!pData)return;
+  document.getElementById('ps-j').textContent=pData.totalJobs||0;
+  document.getElementById('ps-e').textContent='₹'+(pData.totalEarned||0);
+  document.getElementById('ps-r').textContent=(pData.rating||5.0).toFixed(1)+'⭐';
+}
+
+// ── PROVIDER DASHBOARD ────────────────────────────────
+function pTab(i){if(i===0){go('s-pd');loadPDash();}else toast(['Dashboard','Jobs','Earnings','Profile'][i]+' — coming soon');}
+
+function loadPDash(){
+  if(!cUser)return;
+  const ref=db.ref('active_bookings');
+  const fn=ref.on('value',sn=>{
+    const nj=[],aj=[];
+    if(sn.exists()){
+      sn.forEach(c=>{
+        const b=c.val();if(!b||['completed','cancelled'].includes(b.status))return;
+        if(!b.acceptedBy)nj.push({...b,id:c.key});
+        else if(b.acceptedBy.id===cUser.uid||b.acceptedBy===cUser.uid)aj.push({...b,id:c.key});
+      });
+    }
+    rdrNewJobs(nj);rdrActJobs(aj);
+  });
+  listeners.push(()=>ref.off('value',fn));
+}
+
+function rdrNewJobs(jobs){
+  document.getElementById('nj-b').textContent=jobs.length+' new';
+  const el=document.getElementById('nj-l');
+  if(!jobs.length){el.innerHTML='<div class="empty" style="padding:18px 0;"><div class="ei" style="font-size:36px;">🎯</div><div class="et" style="font-size:14px;">No new jobs</div><div class="es" style="font-size:12px;">New requests appear instantly</div></div>';return;}
+  el.innerHTML=jobs.map(b=>`
+    <div class="job-c job-new">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;"><span style="background:var(--brand-s);color:var(--brand);font-size:10px;font-weight:800;padding:3px 9px;border-radius:100px;">New Request</span><span style="font-size:11px;color:var(--muted);">${(b.createdAt||'').slice(11,16)}</span></div>
+      <div class="job-sv">${b.service||''}</div>
+      <div class="job-addr">📍 ${b.address||b.city||''}</div>
+      <div style="font-size:12px;color:var(--muted);">👤 ${b.customerName||'Customer'}</div>
+      <div class="job-pr">₹${b.priceVal||b.price||0}</div>
+      <div class="job-row"><button class="btn btn-gr btn-sm" onclick="accJob('${b.id}')">✅ Accept Job</button><button class="btn btn-ol-rd btn-sm">❌ Decline</button></div>
+    </div>`).join('');
+}
+
+function rdrActJobs(jobs){
+  const el=document.getElementById('aj-l');
+  if(!jobs.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px 0;">No active jobs right now</div>';return;}
+  el.innerHTML=jobs.map(b=>`
+    <div class="job-c job-act">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;"><span style="background:var(--green-s);color:var(--green);font-size:10px;font-weight:800;padding:3px 9px;border-radius:100px;">${b.status||'Accepted'}</span></div>
+      <div class="job-sv">${b.service||''}</div>
+      <div class="job-addr">📍 ${b.address||b.city||''}</div>
+      <div class="job-pr">₹${b.priceVal||b.price||0}</div>
+      ${!['otp_sent','payment_pending','completed'].includes(b.status)?`<button class="btn btn-tl btn-sm" onclick="sendOtp('${b.id}',${b.priceVal||b.price||0},'${(b.service||'').replace(/'/g,"\\'")}','${b.customerId||''}')">🔐 Send OTP to Customer</button>`:''}
+      ${b.status==='otp_sent'?`<button class="btn btn-tl btn-sm" onclick="openOtpEntry('${b.id}',${b.priceVal||b.price||0},'${(b.service||'').replace(/'/g,"\\'")}')">🔢 Enter Customer OTP</button>`:''}
+      ${b.status==='payment_pending'?'<div style="background:rgba(245,158,11,.1);color:var(--yellow);font-size:11px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;">⏳ Waiting for customer payment</div>':''}
+      ${b.status==='completed'?'<div style="background:var(--green-s);color:var(--green);font-size:11px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;">✅ Completed</div>':''}
+    </div>`).join('');
+}
+
+async function accJob(id){
+  if(!cUser||!pData)return;
+  try{
+    const ab={id:cUser.uid,name:pData.name||'Provider',phone:pData.phone||'',email:cUser.email||''};
+    await db.ref('active_bookings/'+id).update({acceptedBy:ab,status:'accepted',acceptedAt:new Date().toISOString()});
+    await db.ref('bookings/'+id).update({acceptedBy:ab,status:'accepted',acceptedAt:new Date().toISOString()});
+    toast('Job accepted! 🎉 Head to the location');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+async function sendOtp(bkId_,amt,svc,custId){
+  const otp=Math.floor(1000+Math.random()*9000);
+  try{
+    const sn=await db.ref('bookings/'+bkId_).once('value');const bk=sn.val()||{};
+    await db.ref('job_otp/'+bkId_).set({otp,bookingId:bkId_,service:svc,customerId:bk.customerId||custId||'',customer:bk.customerName||'Customer',providerName:pData?.name||'Provider',generatedAt:new Date().toISOString(),status:'waiting'});
+    await db.ref('active_bookings/'+bkId_).update({status:'otp_sent',otpSentAt:new Date().toISOString()});
+    await db.ref('bookings/'+bkId_).update({status:'otp_sent',otpSentAt:new Date().toISOString()});
+    openOtpEntry(bkId_,amt,svc);toast('OTP sent to customer ✅');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+function openOtpEntry(id,amt,svc){
+  aOtpBkId=id;aOtpAmt=amt;aOtpSvc=svc;
+  document.getElementById('po-j').textContent='Job: '+svc+' · ₹'+amt;
+  ['oi1','oi2','oi3','oi4'].forEach(i=>{document.getElementById(i).value='';document.getElementById(i).classList.remove('err');});
+  document.getElementById('oi-err').style.display='none';
+  go('s-po');setTimeout(()=>document.getElementById('oi1').focus(),300);
+}
+
+function oNav(el,nxt){if(el.value&&nxt)document.getElementById(nxt)?.focus();}
+function oBk(e,prv){if(e.key==='Backspace'&&!e.target.value)document.getElementById(prv)?.focus();}
+
+async function verOtp(){
+  const ent=['oi1','oi2','oi3','oi4'].map(id=>document.getElementById(id).value).join('');
+  if(ent.length<4){toast('Enter the 4-digit OTP');return;}
+  try{
+    const sn=await db.ref('job_otp/'+aOtpBkId).once('value');const d=sn.val();
+    if(!d||String(d.otp)!==String(ent)){
+      document.getElementById('oi-err').textContent='❌ Wrong OTP. Ask customer to check their screen.';
+      document.getElementById('oi-err').style.display='block';
+      ['oi1','oi2','oi3','oi4'].forEach(id=>document.getElementById(id).classList.add('err'));
+      return;
+    }
+    await db.ref('job_otp/'+aOtpBkId).update({status:'verified',verifiedAt:new Date().toISOString()});
+    await db.ref('active_bookings/'+aOtpBkId).update({status:'payment_pending',otpVerifiedAt:new Date().toISOString()});
+    await db.ref('bookings/'+aOtpBkId).update({status:'payment_pending',otpVerifiedAt:new Date().toISOString()});
+    const bsn=await db.ref('bookings/'+aOtpBkId).once('value');const bk=bsn.val()||{};
+    const amt=parseInt(bk.priceVal||bk.price||aOtpAmt||0);const rate=cRate(bk.service||aOtpSvc);const comm=Math.round(amt*rate/100);
+    document.getElementById('dn-am').textContent='₹'+amt;
+    document.getElementById('dn-co').textContent='₹'+comm+' ('+rate+'%)';
+    document.getElementById('dn-er').textContent='₹'+(amt-comm);
+    document.getElementById('dn-ps').textContent='⏳ Waiting for customer to pay...';
+    document.getElementById('dn-ps').style.background='var(--teal-s)';
+    document.getElementById('dn-ps').style.color='var(--teal)';
+    go('s-pdn');toast('OTP verified! ✅ Waiting for payment...');
+    const pr=db.ref('bookings/'+aOtpBkId);
+    const pfn=pr.on('value',ps=>{
+      if(ps.exists()&&ps.val()?.status==='completed'){
+        document.getElementById('dn-ps').textContent='✅ Payment received! Job complete.';
+        document.getElementById('dn-ps').style.background='var(--green-s)';
+        document.getElementById('dn-ps').style.color='var(--green)';
+        pr.off('value',pfn);updPStats();
+      }
+    });
+    listeners.push(()=>pr.off('value',pfn));
+  }catch(e){toast('Error: '+e.message);}
+}
+
+// ── TOAST ─────────────────────────────────────────────
+let _tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.remove('hide');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.add('hide'),3000);}
+
+// ── INIT ──────────────────────────────────────────────
+auth.onAuthStateChanged(u=>{if(u){cUser=u;document.getElementById('mi').textContent=MODE==='customer'?'👤 Customer':'🔧 Provider';}});
+go('s-cl');
+document.getElementById('mi').textContent='👤 Customer';
+</script>
+</body>
+</html>
