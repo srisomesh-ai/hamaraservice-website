@@ -821,6 +821,42 @@ var SVC=[
       {k:'extrachild',name:'Per Extra Child / Day',p:199}
     ]}
   ]},
+  {id:'SVC008',name:'AC Repair',icon:'🔧',cat:'Appliance Care',base:299,groups:[
+    {key:'visit',title:'🔧 AC Repair Visit Fee',style:'bhk',items:[
+      {k:'visit',      name:'Visit / Diagnosis Fee',           p:199},
+      {k:'gas',        name:'Gas Refilling (per unit)',        p:799},
+      {k:'compressor', name:'Compressor Repair',               p:499},
+      {k:'pcb',        name:'PCB / Electrical Repair',         p:399},
+      {k:'motor',      name:'Motor / Fan Repair',              p:299},
+      {k:'install',    name:'New AC Installation (split)',     p:999}
+    ]}
+  ]},
+  {id:'SVC018',name:'Bike Wash',icon:'🏍️',cat:'Vehicle Care',base:79,groups:[
+    {key:'wash',title:'🏍️ Bike Wash Prices',style:'bhk',items:[
+      {k:'exterior',  name:'Exterior Wash',           p:79},
+      {k:'full',      name:'Full Wash (Ext + Chain)', p:129},
+      {k:'premium',   name:'Premium Detailing',       p:249},
+      {k:'chain',     name:'Chain Cleaning & Lube',   p:79}
+    ]},
+    {key:'type',title:'Bike Type Surcharge',style:'bhk',items:[
+      {k:'scooter',   name:'Scooter / Moped (base)',  p:0},
+      {k:'commuter',  name:'Commuter Bike',           p:0},
+      {k:'sports',    name:'Sports / Heavy Bike',     p:49}
+    ]}
+  ]},
+  {id:'SVC020',name:'2 Wheeler Mechanic',icon:'🔩',cat:'Vehicle Care',base:149,groups:[
+    {key:'visit',title:'🔩 Visit / Diagnosis Fee',style:'bhk',items:[
+      {k:'visit',     name:'Visit fee (diagnosis)',   p:149}
+    ]},
+    {key:'service',title:'Service Type (additional)',style:'bhk',items:[
+      {k:'oilchange', name:'Oil & Filter Change',     p:99},
+      {k:'brake',     name:'Brake Inspection / Fix',  p:79},
+      {k:'puncture',  name:'Tyre Puncture Fix',       p:49},
+      {k:'battery',   name:'Battery Check / Replace', p:79},
+      {k:'general',   name:'General Service',         p:199},
+      {k:'tuning',    name:'Engine Tuning',           p:149}
+    ]}
+  ]},
   {id:'SVC031',name:'Elderly Care',icon:'🧓',cat:'Care Services',base:599,groups:[
     {key:'care',title:'Care Package',style:'task',items:[
       {k:'companion',ico:'💬',name:'Companion Care (4 hrs)',   p:599},
