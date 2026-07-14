@@ -2956,11 +2956,22 @@ function loadProviders(filter,query){
     var earned=done.reduce(function(s,b){return s+b.amount;},0);
     var commAmt=done.reduce(function(s,b){var sv=catalog.find(function(c){return c.name===b.service;});var cp=sv?sv.commission:15;return s+Math.round(b.amount*(cp/100));},0);
     var status=p.status||"pending";
+    // Build services icons — handle both array and map formats
+    var svcIcons = '';
+    if (Array.isArray(p.services)) {
+      svcIcons = p.services.map(function(s){return '<span title="'+s.name+'">'+(s.icon||'🔧')+'</span>';}).join(' ');
+    } else if (p.services && typeof p.services === 'object') {
+      svcIcons = Object.keys(p.services).filter(function(k){return p.services[k]&&p.services[k].enabled;}).map(function(k){
+        var cat=catalog.find(function(c){return c.id===k;});
+        return '<span title="'+(cat?cat.name:k)+'">'+(cat?cat.icon:'🔧')+'</span>';
+      }).join(' ');
+    }
+    var locLabel = (p.city ? p.city + (p.radius ? ' · '+p.radius+'km' : '') : p.address||'--');
     var actions="<button class=\"abtn view\" onclick=\"viewProvider('"+p.id+"')\" >View</button> ";
     if(status!=="approved") actions+="<button class=\"abtn approve\" onclick=\"quickApprove('"+p.id+"')\" >OK</button> ";
     if(status!=="suspended") actions+="<button class=\"abtn suspend\" onclick=\"suspendProvider('"+p.id+"')\" >Ban</button> ";
     actions+="<button class=\"abtn del\" onclick=\"quickReject('"+p.id+"')\" >Del</button>";
-    return "<tr><td><strong style=\"font-size:12px;color:var(--purple)\">"+p.id+"</strong></td><td><strong>"+p.name+"</strong><br/><small style=\"color:var(--muted)\">"+( p.experience||"")+"</small></td><td>"+p.phone+"</td><td>"+(p.services||[]).map(function(s){return "<span title=\""+s.name+"\">"+s.icon+"</span>";}).join(" ")+"</td><td style=\"font-size:12px\">"+(p.address||"--")+"</td><td>"+(p.rating?""+p.rating:"--")+"</td><td>"+bk.length+" / "+done.length+"</td><td style=\"color:var(--green);font-weight:800\">Rs "+fmt(earned)+"</td><td style=\"color:var(--purple);font-weight:800\">Rs "+fmt(commAmt)+"</td><td><span class=\"badge "+status+"\">"+cap(status)+"</span></td><td>"+actions+"</td></tr>";
+    return "<tr><td><strong style=\"font-size:12px;color:var(--purple)\">"+p.id+"</strong></td><td><strong>"+p.name+"</strong><br/><small style=\"color:var(--muted)\">"+( p.experience||"")+"</small></td><td>"+p.phone+"</td><td>"+svcIcons+"</td><td style=\"font-size:12px\">"+locLabel+"</td><td>"+(p.rating?""+p.rating:"--")+"</td><td>"+bk.length+" / "+done.length+"</td><td style=\"color:var(--green);font-weight:800\">Rs "+fmt(earned)+"</td><td style=\"color:var(--purple);font-weight:800\">Rs "+fmt(commAmt)+"</td><td><span class=\"badge "+status+"\">"+cap(status)+"</span></td><td>"+actions+"</td></tr>";
   }).join("")||"<tr><td colspan=\"11\" style=\"text-align:center;color:var(--muted);padding:24px\">No providers found</td></tr>";
 }
 document.getElementById("pf-all").addEventListener("click",function(){document.querySelectorAll("#page-providers .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadProviders("all",null);});
