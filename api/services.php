@@ -31,9 +31,10 @@ switch ($action) {
   // ── CATEGORIES ────────────────────────────────────────
   case 'categories': {
     $stmt = $db->query("
-      SELECT DISTINCT category
+      SELECT category
       FROM services
       WHERE is_active = 1
+      GROUP BY category
       ORDER BY MIN(sort_order) ASC
     ");
     $cats = array_column($stmt->fetchAll(), 'category');
