@@ -2976,9 +2976,47 @@ function viewProvider(id){
   document.getElementById("pmSub").textContent=p.id+" - Registered "+new Date(p.registeredAt||Date.now()).toLocaleDateString("en-IN");
   var bk=[];try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
   var done=bk.filter(function(b){return b.status==="completed";});
-  var fields=[["Mobile",p.phone],["Email",p.email||"--"],["WhatsApp",p.whatsapp||"--"],["Gender",p.gender||"--"],["Experience",p.experience||"--"],["ID Type",p.idType||"--"],["ID Number",p.idNum||"--"],["Location",p.address||"--"],["Radius",(p.radius?p.radius+" km":"--")],["Status",cap(p.status||"pending")],["Total Bookings",bk.length],["Completed",done.length],["Total Earned","Rs "+fmt(done.reduce(function(s,b){return s+b.amount;},0))],["Rating",p.rating||"--"]];
+  var locHtml = p.address || '--';
+  if (p.lat && p.lat !== 0 && p.lng && p.lng !== 0) {
+    locHtml = (p.address||'') + ' <a href="https://maps.google.com/?q='+p.lat+','+p.lng+'" target="_blank" style="color:var(--teal);font-size:11px;font-weight:700;">📍 View Map</a>';
+  }
+  var fields=[["Mobile",p.phone],["Email",p.email||"--"],["WhatsApp",p.whatsapp||"--"],["Gender",p.gender||"--"],["City",p.city||"--"],["Location",locHtml],["Radius",(p.radius?p.radius+" km":"Not set")],["Experience",p.experience||"--"],["ID Type",p.idType||"--"],["ID Number",p.idNum||"--"],["Status",cap(p.status||"pending")],["Total Bookings",bk.length],["Completed",done.length],["Total Earned","Rs "+fmt(done.reduce(function(s,b){return s+b.amount;},0))],["Rating",p.rating||"--"]];
   document.getElementById("pmDetail").innerHTML=fields.map(function(f){return "<div class=\"prov-detail-row\"><div class=\"prov-detail-label\">"+f[0]+"</div><div class=\"prov-detail-val\">"+f[1]+"</div></div>";}).join("");
-  document.getElementById("pmServices").innerHTML=(p.services||[]).map(function(s){return "<span style=\"background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800\">"+s.icon+" "+s.name+" - Rs "+s.price+"</span>";}).join("");
+  // Services can be array (old) or object/map (new format with min/max)
+  var svcHtml = '';
+  if (p.services) {
+    if (Array.isArray(p.services)) {
+      // Old format — array of {name, icon, price}
+      svcHtml = p.services.map(function(s) {
+        var priceLabel = (s.min && s.max && s.min > 0)
+          ? '₹' + s.min + '–₹' + s.max
+          : (s.price && s.price !== 499 ? '₹' + s.price : 'Price not set');
+        return '<span style="background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800">'
+          + (s.icon||'🔧') + ' ' + s.name
+          + ' <span style="color:var(--teal);font-size:12px">' + priceLabel + '</span></span>';
+      }).join(' ');
+    } else {
+      // New format — object map {SVC001: {enabled:true, min:100, max:300}, ...}
+      svcHtml = Object.keys(p.services).filter(function(k) {
+        return p.services[k] && p.services[k].enabled;
+      }).map(function(svcId) {
+        var sd = p.services[svcId];
+        var mn = sd.min || 0; var mx = sd.max || 0;
+        var priceLabel = (mn > 0 || mx > 0)
+          ? '₹' + mn + '–₹' + mx
+          : 'Price not set';
+        // Get name from catalog
+        var catalog = getCatalog();
+        var cat = catalog.find(function(c) { return c.id === svcId; });
+        var name = cat ? cat.name : svcId;
+        var icon = cat ? cat.icon : '🔧';
+        return '<span style="background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800">'
+          + icon + ' ' + name
+          + ' <span style="color:var(--teal);font-size:12px">' + priceLabel + '</span></span>';
+      }).join(' ');
+    }
+  }
+  document.getElementById("pmServices").innerHTML = svcHtml || '<span style="color:var(--muted)">No services selected yet</span>';
   document.getElementById("pmBookings").innerHTML=bk.length?"<table style=\"width:100%;font-size:12px;border-collapse:collapse\"><thead><tr><th style=\"text-align:left;padding:5px;background:var(--bg)\">ID</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Service</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Amt</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Date</th><th style=\"text-align:left;padding:5px;background:var(--bg)\">Status</th></tr></thead><tbody>"+bk.map(function(b){return "<tr><td style=\"padding:5px;border-bottom:1px solid var(--border)\">"+b.id+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border)\">"+b.service+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border);font-weight:800\">Rs "+b.amount+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border)\">"+b.date+"</td><td style=\"padding:5px;border-bottom:1px solid var(--border)\"><span class=\"badge "+b.status+"\">"+cap(b.status)+"</span></td></tr>";}).join("")+"</tbody></table>":"<div style=\"color:var(--muted);font-size:13px;padding:12px\">No bookings yet</div>";
   document.getElementById("pmApproveBtn").onclick=function(){quickApprove(id);closeModal("providerModal");};
   document.getElementById("pmSuspendBtn").onclick=function(){suspendProvider(id);closeModal("providerModal");};
