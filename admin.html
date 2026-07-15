@@ -2584,13 +2584,13 @@ function getCustomers(){
   try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}
 }
 function syncCustomersFromFirebase(cb){
-  fbRestGet("customers", function(err,data){
-    if(!err&&data&&typeof data==="object"){
-      var custs=Object.values(data).filter(function(c){return c&&c.uid;});
-      localStorage.setItem("hs_customers",JSON.stringify(custs));
-      if(cb)cb(custs);
-    } else { if(cb)cb(getCustomers()); }
-  });
+  fetch('https://hamaraservice.com/api/customers.php?action=list', {
+    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
+  }).then(function(r){ return r.json(); }).then(function(res) {
+    var arr = (res.success && res.data) ? res.data : [];
+    localStorage.setItem('hs_customers', JSON.stringify(arr));
+    if (cb) cb(arr);
+  }).catch(function(){ if (cb) cb(getCustomers()); });
 }
 function saveCustomers(c){
   localStorage.setItem("hs_customers",JSON.stringify(c));
