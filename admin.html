@@ -1011,6 +1011,15 @@ function syncAllOrders(cb) {
 
 // ── Always read providers from Firebase (never localStorage) ─────────────────
 function fbGetProviders(cb){
+  // MySQL API
+  fetch('https://hamaraservice.com/api/providers.php?action=list', {
+    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
+  }).then(function(r){ return r.json(); }).then(function(res) {
+    var arr = (res.success && res.data) ? res.data : [];
+    saveProviders(arr);
+    if (cb) cb(arr);
+  }).catch(function(){ if (cb) cb([]); });
+  if (false) {
   _fbTok = ''; // always fresh token
   fbGet('providers', function(err, data){
     if(err || !data || data.error){
@@ -1021,7 +1030,8 @@ function fbGetProviders(cb){
     var arr = toArr(data).filter(function(p){ return p && p.id; });
     cb(arr);
   });
-}
+
+  }}
 
 // ── syncFromFirebase: now just calls fbGetProviders ───────────────────────────
 function syncFromFirebase(){
@@ -2229,83 +2239,72 @@ function fbRestDelete(path, cb) {
 }
 // ── Replace syncAllFromFirebase with SDK-based live reads ─────────────────────
 function syncAllFromFirebase(cb) {
-  var done = 0; var total = 4;
+  // Now reads from MySQL API instead of Firebase
+  showToast('🔄 Loading from MySQL...');
+  var done = 0; var total = 3;
   function check() {
     done++;
-    console.log('[Admin] sync check:', done, '/', total);
-    if (done >= total && cb) cb();
+    if (done >= total) {
+      showToast('✅ Data loaded from MySQL');
+      if (cb) cb();
+    }
   }
 
-  console.log('[Admin] syncAllFromFirebase START — firebase:', typeof firebase, '_fbSDK:', typeof _fbSDK);
-  showToast('🔄 Connecting to Firebase...');
-
-  // Execute immediately (rules are public)
-  (function() {
-    // Providers
-    _fbSDK.ref('providers').once('value').then(function(snap) {
-      var count = snap.exists() ? snap.numChildren() : 0;
-      console.log('[Admin] providers snap:', snap.exists(), 'count:', count);
-      showToast('📋 Providers: ' + count);
-      if (snap.exists()) {
-        var provs = [];
-        snap.forEach(function(c) { var v=c.val(); if(v&&v.id) provs.push(v); });
-        localStorage.setItem('hs_providers', JSON.stringify(provs));
-      }
-      check();
-    }).catch(function(e) {
-      console.error('[Admin] providers ERROR:', e.code, e.message);
-      showToast('❌ Providers: ' + e.message);
-      check();
-    });
-
-    // Customers
-    _fbSDK.ref('customers').once('value').then(function(snap) {
-      var count = snap.exists() ? snap.numChildren() : 0;
-      console.log('[Admin] customers snap:', snap.exists(), 'count:', count);
-      showToast('👥 Customers: ' + count);
-      if (snap.exists()) {
-        var custs = [];
-        snap.forEach(function(c) { var v=c.val(); if(v&&(v.id||v.uid)) custs.push(v); });
-        localStorage.setItem('hs_customers', JSON.stringify(custs));
-      }
-      check();
-    }).catch(function(e) {
-      console.error('[Admin] customers ERROR:', e.code, e.message);
-      showToast('❌ Customers: ' + e.message);
-      check();
-    });
-
-    // Bookings (both paths)
-    var allBks = []; var bkSeen = new Set();
-    var bkDone = 0;
-    function bkCheck() {
-      bkDone++;
-      if (bkDone < 2) return;
-      allBks.sort(function(a,b){ return new Date(b.createdAt||b.date||0) - new Date(a.createdAt||a.date||0); });
-      if (allBks.length > 0) localStorage.setItem('hs_all_orders', JSON.stringify(allBks));
-      console.log('[Admin] Bookings loaded:', allBks.length);
-      check();
+  // Providers
+  fetch('https://hamaraservice.com/api/providers.php?action=list', {
+    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
+  }).then(function(r){ return r.json(); }).then(function(res) {
+    if (res.success && res.data) {
+      localStorage.setItem('hs_providers', JSON.stringify(res.data));
+      showToast('📋 Providers: ' + res.data.length);
     }
-    function processBk(snap) {
-      if (snap.exists()) {
-        snap.forEach(function(c) {
-          var v = c.val(); if (!v || !v.id || bkSeen.has(v.id)) return;
-          bkSeen.add(v.id); allBks.push(v);
+    check();
+  }).catch(function(e){ console.error('Providers load error:', e); check(); });
+
+  // Bookings
+  fetch('https://hamaraservice.com/api/bookings.php?action=admin_list&limit=200', {
+    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
+  }).then(function(r){ return r.json(); }).then(function(res) {
+    if (res.success && res.data) {
+      // Normalise field names for admin panel
+      var bks = res.data.map(function(b) {
+        return Object.assign({}, b, {
+          providerId:   b.provider_id   || b.providerId,
+          customerId:   b.customer_id   || b.customerId,
+          customer:     b.customer_name || b.customer,
+          providerName: b.provider_name || b.providerName,
+          service:      b.svc_name      || b.service,
+          createdAt:    b.created_at    || b.createdAt,
+          completedAt:  b.completed_at  || b.completedAt,
+          amountPaid:   b.confirmed_price || b.amount || b.amountPaid,
+          paymentStatus: b.payment_status || b.paymentStatus,
         });
-      }
-      bkCheck();
+      });
+      localStorage.setItem('hs_all_orders', JSON.stringify(bks));
+      showToast('📦 Bookings: ' + bks.length);
     }
-    _fbSDK.ref('bookings').once('value').then(processBk).catch(function(){ bkCheck(); });
-    _fbSDK.ref('active_bookings').once('value').then(processBk).catch(function(){ bkCheck(); });
+    check();
+  }).catch(function(e){ console.error('Bookings load error:', e); check(); });
 
-    // Payouts
-    _fbSDK.ref('payouts').once('value').then(function(snap) {
-      var pays = [];
-      if (snap.exists()) snap.forEach(function(c){ var v=c.val(); if(v&&v.id) pays.push(v); });
+  // Payouts
+  fetch('https://hamaraservice.com/api/payouts.php?action=pending', {
+    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
+  }).then(function(r){ return r.json(); }).then(function(res) {
+    if (res.success && res.data) {
+      var pays = res.data.map(function(p) {
+        return Object.assign({}, p, {
+          providerId: p.provider_id || p.providerId,
+          upi: p.upi_id || p.upi,
+          bank: p.bank_name || p.bank,
+          account: p.account_no || p.account,
+          accountType: p.account_type || p.accountType,
+          requestedAt: p.requested_at || p.requestedAt,
+        });
+      });
       localStorage.setItem('hs_payouts', JSON.stringify(pays));
-      check();
-    }).catch(function(e){ check(); });
-  })();  // ← IIFE immediately invoked
+    }
+    check();
+  }).catch(function(e){ console.error('Payouts load error:', e); check(); });
 }
 
 // ── Real-time listeners — auto-refresh UI when Firebase data changes ──────────
@@ -2907,12 +2906,12 @@ function quickApprove(id){
     all[idx].suspended=false;
     all[idx].approvedAt=new Date().toISOString();
     saveProviders(all);
-    // Write to Firebase — provider checks this to get access
-    fbRestPatch('providers/'+id, {
-      status:'approved',
-      approvedAt:new Date().toISOString(),
-      suspended:false
-    });
+    // Write to MySQL API — provider status updated
+    fetch('https://hamaraservice.com/api/providers.php?action=approve', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+      body: JSON.stringify({id: id})
+    }).catch(function(){});
   }
   // Send approval email to provider
   var allForEmail = getProviders();
@@ -3105,9 +3104,12 @@ function approvePayout(id){
   if(idx>-1){
     p[idx].status="approved";p[idx].processedAt=new Date().toISOString();savePayouts(p);
     var req=p[idx];
-    // Write back to Firebase so provider sees approval
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/payouts/'+req.id+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'approved',processedAt:req.processedAt})}).catch(function(){});
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/'+req.providerId+'/withdrawals/'+req.id+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'approved',processedAt:req.processedAt})}).catch(function(){});
+    // Approve in MySQL — provider balance updated automatically
+    fetch('https://hamaraservice.com/api/payouts.php?action=approve', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+      body: JSON.stringify({id: req.id})
+    }).catch(function(){});
     var providers=getProviders();var pidx=providers.findIndex(function(pr){return pr.id===req.providerId;});
     if(pidx>-1){providers[pidx].withdrawnEarned=(providers[pidx].withdrawnEarned||0)+req.amount;saveProviders(providers);}
     loadPayments();
@@ -3120,9 +3122,12 @@ function rejectPayout(id){
   if(idx>-1){
     p[idx].status="rejected";p[idx].rejectedAt=new Date().toISOString();p[idx].note=reason;savePayouts(p);
     var req=p[idx];
-    // Write back to Firebase so provider sees rejection
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/payouts/'+req.id+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'rejected',rejectedAt:req.rejectedAt,note:reason})}).catch(function(){});
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/'+req.providerId+'/withdrawals/'+req.id+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'rejected',rejectedAt:req.rejectedAt,note:reason})}).catch(function(){});
+    // Reject in MySQL — provider balance refunded automatically
+    fetch('https://hamaraservice.com/api/payouts.php?action=reject', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+      body: JSON.stringify({id: req.id, note: reason})
+    }).catch(function(){});
   }
   loadPayments();showToast("Payout rejected. Provider wallet balance restored.");
 }
