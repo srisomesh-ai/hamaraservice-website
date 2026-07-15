@@ -153,6 +153,18 @@ switch ($action) {
     ok(['deleted' => true]);
   }
 
+  // ── ADMIN: LIST ALL CUSTOMERS ───────────────────────────
+  case 'list': {
+    requireAdmin();
+    $stmt = $db->query("
+      SELECT id, name, phone, email, city, auth_method, created_at
+      FROM customers
+      ORDER BY created_at DESC
+      LIMIT 500
+    ");
+    ok($stmt->fetchAll());
+  }
+
   default:
     err('Invalid action');
 }
