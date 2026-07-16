@@ -412,6 +412,74 @@ switch ($action) {
     ok($stmt->fetchAll());
   }
 
+  // ── SAVE PER-OPTION PRICES ───────────────────────────────
+  case 'save_option_prices': {
+    $prov = requireProvider();
+    $b    = getBody();
+    $svc_id = $b['svc_id'] ?? '';
+    $prices = $b['option_prices'] ?? [];
+    if (empty($svc_id)) err('svc_id required');
+
+    // Store in provider_service_prices table (create if needed)
+    // Using service_prices table with provider_id prefix
+    // We store as provider_id:svc_id:group_opt → price
+    // Simple approach: store as JSON in provider_services extras column
+    // Actually use a dedicated JSON column approach via provider_services notes
+
+    // Store prices as JSON in a new column
+    // Check if column exists, add if not
+    try {
+      $db->exec("ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL");
+    } catch (Exception $e) {} // Ignore if already exists
+
+    $stmt = $db->prepare("
+      INSERT INTO provider_services
+        (provider_id, svc_id, enabled, min_price, max_price, option_prices)
+      VALUES (?, ?, 1, 0, 0, ?)
+      ON DUPLICATE KEY UPDATE
+        option_prices = VALUES(option_prices)
+    ");
+    $stmt->execute([
+      $prov['id'],
+      $svc_id,
+      json_encode($prices),
+    ]);
+
+    // Also update min/max from the prices
+    if (!empty($prices)) {
+      $vals = array_values($prices);
+      $min = min($vals); $max = max($vals);
+      $db->prepare("UPDATE provider_services SET min_price=?, max_price=? WHERE provider_id=? AND svc_id=?")
+         ->execute([$min, $max, $prov['id'], $svc_id]);
+    }
+
+    ok(['saved' => true, 'svc_id' => $svc_id]);
+  }
+
+  // ── GET PER-OPTION PRICES ─────────────────────────────────
+  case 'get_option_prices': {
+    $prov = requireProvider();
+
+    try {
+      $db->exec("ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL");
+    } catch (Exception $e) {}
+
+    $stmt = $db->prepare("
+      SELECT svc_id, option_prices, min_price, max_price
+      FROM provider_services
+      WHERE provider_id = ? AND option_prices IS NOT NULL
+    ");
+    $stmt->execute([$prov['id']]);
+    $rows = $stmt->fetchAll();
+
+    $result = [];
+    foreach ($rows as $row) {
+      $prices = json_decode($row['option_prices'], true) ?? [];
+      $result[$row['svc_id']] = $prices;
+    }
+    ok($result);
+  }
+
   default:
     err('Invalid action');
 }
