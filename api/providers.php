@@ -319,25 +319,48 @@ switch ($action) {
         (provider_id, svc_id, svc_name, svc_icon, svc_cat, enabled, min_price, max_price)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
+        svc_name  = VALUES(svc_name),
+        svc_icon  = VALUES(svc_icon),
+        svc_cat   = VALUES(svc_cat),
         enabled   = VALUES(enabled),
         min_price = VALUES(min_price),
         max_price = VALUES(max_price)
     ");
 
+    $saved = 0;
     foreach ($b['services'] as $svc) {
+      $svcId = $svc['svc_id'] ?? '';
+      if (empty($svcId)) continue;
+
+      // Lookup svc_name/icon/cat from services table if not provided
+      $svcName = $svc['svc_name'] ?? '';
+      $svcIcon = $svc['svc_icon'] ?? '';
+      $svcCat  = $svc['svc_cat']  ?? '';
+      if (empty($svcName)) {
+        $lookup = $db->prepare("SELECT name, icon, category FROM services WHERE id = ?");
+        $lookup->execute([$svcId]);
+        $row = $lookup->fetch();
+        if ($row) {
+          $svcName = $row['name'];
+          $svcIcon = $row['icon'];
+          $svcCat  = $row['category'];
+        }
+      }
+
       $upsert->execute([
         $prov['id'],
-        $svc['svc_id']   ?? '',
-        $svc['svc_name'] ?? '',
-        $svc['svc_icon'] ?? '',
-        $svc['svc_cat']  ?? '',
+        $svcId,
+        $svcName,
+        $svcIcon,
+        $svcCat,
         (int)($svc['enabled']   ?? 1),
         (int)($svc['min_price'] ?? 0),
         (int)($svc['max_price'] ?? 0),
       ]);
+      $saved++;
     }
 
-    ok(['saved' => count($b['services'])]);
+    ok(['saved' => $saved]);
   }
 
   // ── ADMIN: APPROVE ────────────────────────────────────
