@@ -214,6 +214,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
 .bhk-chip.dirty .bhk-price-inp{border-color:var(--brand);color:var(--brand);background:#fff3eb;}
 .bhk-chip.saved{border-color:var(--green);background:var(--green-soft);color:var(--green);}
 .bhk-chip.saved .bhk-price-inp{border-color:var(--green);color:var(--green);}
+.bhk-chip .mm-row{display:flex;gap:4px;margin-top:6px;}
+.bhk-chip .mm-inp{width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:6px;
+  font-size:11px;text-align:center;color:var(--muted);background:#f9f9f9;}
+.bhk-chip .mm-label{font-size:9px;color:var(--muted);text-align:center;margin-top:2px;letter-spacing:.3px;}
+.bhk-chip .ref-price{font-size:12px;font-weight:700;color:var(--teal);margin:2px 0;}
 
 /* ── CARD ACTIONS ───────────────────────────────────── */
 .card-actions{display:flex;align-items:center;gap:8px;padding-top:14px;margin-top:8px;border-top:1px solid var(--line);}
@@ -1069,11 +1074,25 @@ function renderCards(){
         html+='<div class="bhk-row" style="margin-bottom:12px;">';
         grp.items.forEach(function(item){
           var e=eff(svc.id,grp.key,item.k,item.p);
+          var eMin=eff(svc.id,grp.key,item.k+'_min',0);
+          var eMax=eff(svc.id,grp.key,item.k+'_max',0);
           var cls=e.s==='dirty'?' dirty':e.s==='saved'?' saved':'';
-          html+='<div class="bhk-chip'+cls+'">';
-          html+='<div>'+item.name+'</div>';
-          html+='<input class="bhk-price-inp" type="number" value="'+e.v+'"';
-          html+=' data-sid="'+svc.id+'" data-grp="'+grp.key+'" data-key="'+item.k+'" data-def="'+item.p+'" oninput="onI(this)">';
+          html+='<div class="bhk-chip'+cls+'" style="padding:8px;">';
+          html+='<div style="font-size:12px;font-weight:700;margin-bottom:4px;">'+item.name+'</div>';
+          html+='<div class="ref-price">₹<input class="bhk-price-inp" type="number" value="'+e.v+'"';
+          html+=' style="width:70px;text-align:center;border:none;background:transparent;font-size:14px;font-weight:800;color:inherit;"';
+          html+=' data-sid="'+svc.id+'" data-grp="'+grp.key+'" data-key="'+item.k+'" data-def="'+item.p+'" oninput="onI(this)" placeholder="'+item.p+'">';
+          html+='</div>';
+          html+='<div class="mm-row">';
+          html+='<div style="flex:1"><div class="mm-label">MIN ₹</div>';
+          html+='<input class="mm-inp" type="number" value="'+eMin.v+'" placeholder="min"';
+          html+=' data-sid="'+svc.id+'" data-grp="'+grp.key+'" data-key="'+item.k+'_min" data-def="0" oninput="onI(this)">';
+          html+='</div>';
+          html+='<div style="flex:1"><div class="mm-label">MAX ₹</div>';
+          html+='<input class="mm-inp" type="number" value="'+eMax.v+'" placeholder="max"';
+          html+=' data-sid="'+svc.id+'" data-grp="'+grp.key+'" data-key="'+item.k+'_max" data-def="0" oninput="onI(this)">';
+          html+='</div>';
+          html+='</div>';
           html+='</div>';
         });
         html+='</div>';
