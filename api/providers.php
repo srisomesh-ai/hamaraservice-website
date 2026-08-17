@@ -109,6 +109,80 @@ switch ($action) {
       }
     }
 
+    // ── Email notifications ──────────────────────────────
+    $provName  = $b['name']  ?? '';
+    $provEmail = $b['email'] ?? '';
+    $provPhone = $b['phone'] ?? '';
+    $provCity  = $b['city']  ?? '';
+    $svcNames  = implode(', ', array_column($b['services'] ?? [], 'name'));
+
+    // 1. Email to admin
+    $adminSubject = 'New Provider Registration — ' . $provName;
+    $adminBody = "New provider registered on HamaraService.
+
+"
+      . "Name:     $provName
+"
+      . "Email:    $provEmail
+"
+      . "Phone:    $provPhone
+"
+      . "City:     $provCity
+"
+      . "Services: $svcNames
+"
+      . "ID:       $id
+
+"
+      . "Review at: https://hamaraservice.com/admin.html
+";
+    @mail('info@hamaraservice.com', $adminSubject, $adminBody,
+      implode("
+", [
+        'From: HamaraService <info@hamaraservice.com>',
+        'Reply-To: ' . $provEmail,
+        'Content-Type: text/plain; charset=UTF-8',
+        'X-Mailer: HamaraService-PHP'
+      ])
+    );
+
+    // 2. Email to provider
+    if (!empty($provEmail)) {
+      $provSubject = 'Application Received — HamaraService';
+      $provBody = "Dear $provName,
+
+"
+        . "Thank you for registering as a provider on HamaraService!
+
+"
+        . "Your application is under review. We will approve your account within 24-48 hours.
+
+"
+        . "Provider ID: $id
+
+"
+        . "Once approved, login at:
+https://hamaraservice.com/provider-portal.html
+
+"
+        . "Or use the HamaraService Provider App.
+
+"
+        . "Support: info@hamaraservice.com
+
+"
+        . "Best regards,
+HamaraService Team";
+      @mail($provEmail, $provSubject, $provBody,
+        implode("
+", [
+          'From: HamaraService <info@hamaraservice.com>',
+          'Content-Type: text/plain; charset=UTF-8',
+          'X-Mailer: HamaraService-PHP'
+        ])
+      );
+    }
+
     ok(['id' => $id, 'status' => 'pending',
         'message' => 'Registration successful. Awaiting admin approval.']);
   }
