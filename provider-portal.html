@@ -287,7 +287,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
       <button class="big-btn" onclick="doLogin()">🚀 Login to Dashboard</button>
       <button onclick="fillDemo()" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:2px dashed #f5c842;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#7a5a00;cursor:pointer;">⚡ Fill Demo Credentials</button>
       <div class="hint-box">
-        💡 <strong>Demo login:</strong> Email = <strong>demo@hamaraservice.in</strong> · Password = <strong>demo123</strong>
+        💡 <strong>Demo login:</strong> Email = <strong>demo@hamaraservice.com</strong> · Password = <strong>demo123</strong>
       </div>
     </div>
   </div>
@@ -744,7 +744,7 @@ function doLogin(){
   if(!email||!pass){showErr('Please enter your email and password');return;}
   if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showErr('Please enter a valid email address');return;}
   // Demo shortcut
-  if(email==='demo@hamaraservice.in'&&pass==='demo123'){
+  if(email==='demo@hamaraservice.com'&&pass==='demo123'){
     const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
     const demo=createDemo(providers);
     localStorage.setItem('hs_current_provider',JSON.stringify(demo));
@@ -784,7 +784,7 @@ function doLogin(){
 function showErr(msg){const e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
 
 function createDemo(providers){
-  const demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.in',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
+  const demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.com',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
   const idx=providers.findIndex(p=>p.id==='HS-PRO-DEMO');
   if(idx===-1)providers.push(demo);else providers[idx]=demo;
   localStorage.setItem('hs_providers',JSON.stringify(providers));
@@ -1439,7 +1439,7 @@ function syncProviderFromFirebase(){
 }
 
 function fillDemo(){
-  document.getElementById('loginEmail').value = 'demo@hamaraservice.in';
+  document.getElementById('loginEmail').value = 'demo@hamaraservice.com';
   document.getElementById('loginPass').value = 'demo123';
   showToast('✅ Demo credentials filled — click Login!');
 }
