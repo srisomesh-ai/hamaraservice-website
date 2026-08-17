@@ -187,6 +187,17 @@ HamaraService Team";
         'message' => 'Registration successful. Awaiting admin approval.']);
   }
 
+  // ── CHECK EMAIL EXISTS ───────────────────────────────
+  case 'check_email': {
+    $email = strtolower(trim($_GET['email'] ?? ''));
+    if (empty($email)) err('email required');
+    $stmt = $db->prepare("SELECT id FROM providers WHERE email = ? LIMIT 1");
+    $stmt->execute([$email]);
+    $row = $stmt->fetch();
+    echo json_encode(['exists' => !empty($row), 'success' => true]);
+    exit;
+  }
+
   // ── LOGIN ─────────────────────────────────────────────
   case 'login': {
     $b     = getBody();
