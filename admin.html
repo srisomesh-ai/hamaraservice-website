@@ -3534,9 +3534,9 @@ function eraseData(what) {
     provsList.forEach(function(p){
       if (!p.id) return;
       setTimeout(function(){
-        fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/'+p.id+'.json',{
-          method:'PATCH',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({withdrawnEarned:0})
+        fetch('https://hamaraservice.com/api/providers.php?action=reset_withdrawn',{
+          method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+          body:JSON.stringify({id:p.id})
         }).catch(function(){});
       }, 600);
     });
@@ -3555,10 +3555,7 @@ function eraseData(what) {
 
   function onAllDone() {
     if (what==='all' || what==='bookings' || what==='payouts') {
-      fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_reset.json',{
-        method:'PUT',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ts:Date.now(),by:'admin',what:what})
-      }).catch(function(){});
+      // Reset ping removed — no Firebase needed
     }
     showToast('\u2705 Erased: ' + label);
     setTimeout(function(){
