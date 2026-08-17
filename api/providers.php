@@ -363,6 +363,28 @@ switch ($action) {
     ok(['saved' => $saved]);
   }
 
+  // ── ADMIN: DELETE ────────────────────────────────────
+  case 'delete': {
+    requireAdmin();
+    $b  = getBody();
+    $id = $b['id'] ?? ($_GET['id'] ?? '');
+    if (empty($id)) err('id required');
+    $db->prepare("UPDATE providers SET status = 'deleted', available = 0 WHERE id = ?")
+       ->execute([$id]);
+    ok(['deleted' => true, 'id' => $id]);
+  }
+
+  // ── ADMIN: RESTORE ────────────────────────────────────
+  case 'restore': {
+    requireAdmin();
+    $b  = getBody();
+    $id = $b['id'] ?? '';
+    if (empty($id)) err('id required');
+    $db->prepare("UPDATE providers SET status = 'pending' WHERE id = ?")
+       ->execute([$id]);
+    ok(['restored' => true, 'id' => $id]);
+  }
+
   // ── ADMIN: APPROVE ────────────────────────────────────
   case 'approve': {
     requireAdmin();
