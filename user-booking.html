@@ -464,25 +464,36 @@ fbAuthInst.onAuthStateChanged(function(fbUser) {
       // Good cached profile with a real name (not email)
       fillFields(cached);
     } else {
-      // Fetch fresh from Firebase DB
-      var dbUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/' + fbUser.uid + '.json';
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', dbUrl, true); xhr.timeout = 5000;
-      xhr.onload = function() {
-        try {
-          var p = JSON.parse(xhr.responseText);
-          if (p && p.uid) {
+      // Fetch from MySQL API
+      fbUser.getIdToken().then(function(token) {
+        fetch('https://hamaraservice.com/api/customers.php?action=get&id=' + fbUser.uid, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          if (res.success && res.data) {
+            var p = res.data;
             try { localStorage.setItem('hs_profile_' + fbUser.uid, JSON.stringify(p)); } catch(e) {}
             fillFields(p);
           } else {
-            fillFields({ uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' });
+            // Not in MySQL yet — register them
+            fetch('https://hamaraservice.com/api/customers.php?action=register', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: fbUser.displayName || '', auth_method: 'google' })
+            }).then(function(r2) { return r2.json(); }).then(function(res2) {
+              var p2 = (res2.success && res2.data) ? res2.data :
+                { uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' };
+              fillFields(p2);
+            }).catch(function() {
+              fillFields({ uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' });
+            });
           }
-        } catch(e) {}
-      };
-      xhr.onerror = xhr.ontimeout = function() {
-        fillFields({ uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' });
-      };
-      xhr.send();
+        })
+        .catch(function() {
+          fillFields({ uid: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '', phone: '' });
+        });
+      });
     }
   } else {
     // Firebase fires null first before restoring session.
@@ -643,6 +654,19 @@ var SVCS = [
 // ── Sync prices from Firebase hs_service_prices ─────────────────────────────
 // Keeps user-booking.html prices in sync with hs-prices.html admin tool
 (function syncSVCSPrices() {
+  // Load reference prices from MySQL
+  fetch('https://hamaraservice.com/api/services.php?action=price_ranges')
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success && res.data) {
+      var ranges = res.data;
+      Object.keys(ranges).forEach(function(svcId) {
+        var r = ranges[svcId];
+        applyPrice(svcId, { min: r.min, max: r.max });
+      });
+    }
+  }).catch(function() {});
+  if (false) { // old Firebase code below kept for reference
   var FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json';
 
   // ID → service name map (fallback when Firebase entry has no name field)
@@ -1139,9 +1163,30 @@ function runRange(idx) {
       createdAt:     new Date().toISOString()
     };
 
-    // Save to Firebase — user-panel reads from here via customerId query
-    fbWrite('bookings/' + bookingId, pending);
-    fbWrite('active_bookings/' + bookingId + '/status', 'pending_no_provider');
+    // Save booking to MySQL
+    fbAuthInst.currentUser && fbAuthInst.currentUser.getIdToken().then(function(token) {
+      fetch('https://hamaraservice.com/api/bookings.php?action=create', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          svc_id:    selSvc.id || '',
+          svc_name:  selSvc.n,
+          svc_icon:  selSvc.icon || '',
+          address:   userAddr,
+          city:      userCity || '',
+          lat:       userLL ? userLL.lat : 0,
+          lng:       userLL ? userLL.lng : 0,
+          slot_date: document.getElementById('bookDate') ? document.getElementById('bookDate').value : '',
+          slot_time: document.getElementById('bookHour') ? document.getElementById('bookHour').value + ':' + document.getElementById('bookMinute').value : '',
+        })
+      }).then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success && res.data && res.data.id) {
+          bookingId = res.data.id;
+          console.log('[MySQL] Booking created:', bookingId);
+        }
+      }).catch(function(e) { console.error('Booking create error:', e); });
+    });
 
     // Show sorry screen inside the radar overlay
     showSorryScreen(pending);
@@ -1184,39 +1229,19 @@ function runRange(idx) {
     for (var bi = 0; bi < Math.min(inRange.length, 6); bi++) addBlip(idx);
   }
 
-  // Try Firebase first, fallback to localStorage
-  var xhr2 = new XMLHttpRequest();
-  xhr2.open('GET', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers.json', true);
-  xhr2.timeout = 5000;
-  xhr2.onload = function() {
-    try {
-      var data = JSON.parse(xhr2.responseText);
-      var provs = data && typeof data === 'object' ? Object.values(data).filter(function(p){return p&&p.id;}) : [];
-      if (provs.length > 0) {
-        // Update local cache
-        localStorage.setItem('hs_providers', JSON.stringify(provs));
-        countAndBlip(provs);
-      } else { countAndBlip([]); }
-    } catch(e) { countAndBlip([]); }
-  };
-  xhr2.onerror = xhr2.ontimeout = function() { countAndBlip([]); /*firebase offline*/ 
-    countAndBlip(JSON.parse(localStorage.getItem('hs_providers')||'[]'));
-  };
-  xhr2.send();
-
-  // Write to Firebase — provider dashboards poll this
-  fbWrite('active_bookings/' + bookingId + '/range', km);
-  fbWrite('active_bookings/' + bookingId + '/status', 'searching');
-  fbWrite('active_bookings/' + bookingId + '/updatedAt', Date.now());
-  fbWrite('notifications/search_' + bookingId, {
-    bookingId: bookingId,
-    service:   selSvc.n,
-    lat:       userLL.lat,
-    lng:       userLL.lng,
-    range:     km,
-    ts:        Date.now(),
-    status:    'searching'
+  // Get nearby providers from MySQL
+  fetch('https://hamaraservice.com/api/providers.php?action=nearby&lat=' + userLL.lat + '&lng=' + userLL.lng +
+    '&radius=' + km + (selSvc ? '&svc_id=' + selSvc.id : ''))
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    var provs = (res.success && res.data) ? res.data : [];
+    localStorage.setItem('hs_providers', JSON.stringify(provs));
+    countAndBlip(provs);
+  }).catch(function() {
+    countAndBlip(JSON.parse(localStorage.getItem('hs_providers') || '[]'));
   });
+
+  // Booking already in MySQL — providers poll MySQL for open jobs
 
   // Poll Firebase every 3s (real timestamps)
   var rangeStart = Date.now();
@@ -1226,8 +1251,12 @@ function runRange(idx) {
     if (!radarActive) return;
     var elapsed = Date.now() - rangeStart;
 
-    fbRead('active_bookings/' + bookingId, function(req) {
-      if (!radarActive) return;
+    // Poll MySQL for booking status
+  fetch('https://hamaraservice.com/api/bookings.php?action=get&id=' + bookingId)
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    var req = (res.success && res.data) ? res.data : null;
+    if (!radarActive) return;
 
       if (req && req.acceptedBy) {
         clearTimeout(pollTimer);
@@ -1435,8 +1464,8 @@ function confirmBooking() {
       status:     'confirmed',
       createdAt:  new Date().toISOString()
     };
-    // Write full confirmed booking to Firebase — user-panel.html listens via customerId
-    fbWrite('bookings/' + bookingId, bkData);
+    // Booking already confirmed in MySQL via acceptBooking flow
+    console.log('[MySQL] Booking confirmed:', bookingId);
   }
   showToast('✅ Booking confirmed! Professional is on the way.');
   setTimeout(function() { window.location.href = 'user-panel.html'; }, 1800);
@@ -1457,14 +1486,16 @@ function watchPendingBookings() {
   if (!pending.length) return;
 
   pending.forEach(function(bk) {
-    fbRead('bookings/' + bk.id, function(data) {
+    fetch('https://hamaraservice.com/api/bookings.php?action=get&id=' + bk.id)
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      var data = res.success ? res.data : null;
       if (!data) return;
-      if (data.status === 'accepted' || data.status === 'confirmed' ||
-          (data.acceptedBy && data.acceptedBy.name)) {
-        // Show notification banner
+      if (data.status === 'price_quoted' || data.status === 'confirmed' ||
+          data.status === 'accepted' || data.provider_id) {
         showProviderFoundBanner(bk, data);
       }
-    });
+    }).catch(function() {});
   });
 }
 
