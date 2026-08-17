@@ -176,6 +176,74 @@ switch ($action) {
     ok(['updated' => true]);
   }
 
+  // ── GET ALL PRICES (admin price manager) ────────────────────────
+  case 'get_all_prices': {
+    requireAdmin();
+    // Check if service_prices column exists in services table, add if not
+    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Exception $e) {}
+
+    $rows = $db->query("SELECT id, name, price_data FROM services ORDER BY id")->fetchAll();
+    $result = [];
+    foreach ($rows as $row) {
+      $pd = $row['price_data'] ? json_decode($row['price_data'], true) : null;
+      if ($pd) $result[$row['id']] = $pd;
+    }
+    ok($result);
+  }
+
+  // ── SAVE SERVICE PRICES (admin price manager) ────────────────────
+  case 'save_prices': {
+    requireAdmin();
+    $b      = getBody();
+    $svc_id = $b['svc_id'] ?? '';
+    $data   = $b['data']   ?? [];
+    if (empty($svc_id)) err('svc_id required');
+
+    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Exception $e) {}
+
+    // Calculate min/max from all prices in data
+    $all_prices = [];
+    foreach ($data as $grp => $opts) {
+      if ($grp === 'name') continue;
+      if ($grp === 'base' && is_numeric($opts)) {
+        $all_prices[] = (int)$opts;
+      } elseif (is_array($opts)) {
+        foreach ($opts as $v) {
+          if (is_numeric($v) && $v > 0) $all_prices[] = (int)$v;
+        }
+      }
+    }
+    $min_price = !empty($all_prices) ? min($all_prices) : 0;
+    $max_price = !empty($all_prices) ? max($all_prices) : 0;
+
+    $stmt = $db->prepare("
+      UPDATE services
+      SET price_data = ?, min_price = ?, max_price = ?
+      WHERE id = ?
+    ");
+    $stmt->execute([json_encode($data), $min_price, $max_price, $svc_id]);
+
+    if ($stmt->rowCount() === 0) {
+      // Insert if not exists (shouldn't happen but safety)
+      $db->prepare("INSERT INTO services (id, name, price_data, min_price, max_price)
+                    VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE price_data=VALUES(price_data)")
+         ->execute([$svc_id, $data['name'] ?? $svc_id, json_encode($data), $min_price, $max_price]);
+    }
+
+    ok(['saved' => true, 'svc_id' => $svc_id, 'min' => $min_price, 'max' => $max_price]);
+  }
+
+  // ── RESET SERVICE PRICES ─────────────────────────────────────────
+  case 'reset_prices': {
+    requireAdmin();
+    $b      = getBody();
+    $svc_id = $b['svc_id'] ?? '';
+    if (empty($svc_id)) err('svc_id required');
+    $db->prepare("UPDATE services SET price_data = NULL, min_price = 0, max_price = 0 WHERE id = ?")
+       ->execute([$svc_id]);
+    ok(['reset' => true, 'svc_id' => $svc_id]);
+  }
+
   default:
     err('Invalid action');
 }
