@@ -91,6 +91,7 @@ switch ($action) {
   case 'price_ranges': {
     $city = $_GET['city'] ?? '';
 
+    // 1. Get provider-set price ranges (what providers actually charge)
     $sql = "
       SELECT ps.svc_id,
              MIN(ps.min_price) as lowest_min,
@@ -108,12 +109,10 @@ switch ($action) {
       $params[] = "%$city%";
     }
     $sql .= " GROUP BY ps.svc_id";
-
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $rows = $stmt->fetchAll();
 
-    // Key by svc_id
     $result = [];
     foreach ($rows as $row) {
       $result[$row['svc_id']] = [
@@ -122,6 +121,30 @@ switch ($action) {
         'provider_count' => (int)$row['provider_count'],
       ];
     }
+
+    // 2. Get admin price_data (ref + min/max per option) from services table
+    try {
+      $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL");
+    } catch (Exception \$e) {}
+
+    $adminRows = $db->query("SELECT id, price_data FROM services WHERE price_data IS NOT NULL")
+                    ->fetchAll();
+
+    $adminPrices = [];
+    foreach ($adminRows as $row) {
+      $pd = json_decode($row['price_data'], true);
+      if ($pd) $adminPrices[$row['id']] = $pd;
+    }
+
+    // Merge admin prices into result
+    foreach ($adminPrices as $svcId => $pd) {
+      if (!isset($result[$svcId])) {
+        $result[$svcId] = ['min' => 0, 'max' => 0, 'provider_count' => 0];
+      }
+      // Add full admin price_data so provider app can show ref+min+max per option
+      $result[$svcId]['admin_prices'] = $pd;
+    }
+
     ok($result);
   }
 
