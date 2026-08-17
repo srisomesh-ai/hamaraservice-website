@@ -973,13 +973,14 @@ function loadBKFromFirebase(cb) {
         if(cb) cb(sorted);
       }
       if (!needFallback) { finish(fbBks, true); return; }
-      // Fallback: scan active_bookings (public path, no auth needed)
-      fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/active_bookings.json', {signal:AbortSignal.timeout(8000)})
+      // Fallback: get active booking from MySQL
+      var jwtFb = localStorage.getItem('hs_provider_jwt') || '';
+      fetch('https://hamaraservice.com/api/bookings.php?action=active&id=' + pid + '&role=provider', {
+        headers: { 'Authorization': 'Bearer ' + jwtFb }
+      })
         .then(function(r2){ return r2.json(); })
-        .then(function(d2){
-          var extra = (d2 && typeof d2 === 'object') ? Object.values(d2).filter(function(b){
-            return b && b.id && (b.providerId === pid || (b.acceptedBy && b.acceptedBy.id === pid));
-          }) : [];
+        .then(function(res2){
+          var extra = (res2.success && res2.data) ? [res2.data] : [];
           finish(extra);
         }).catch(function(){ finish([]); });
     }).catch(function(){ if(cb) cb(getBK()); });
@@ -3271,19 +3272,10 @@ function cancelWithdraw(id){
 
 // Debug: test if Firebase write works (call from browser console: testFBWrite())
 function testFBWrite() {
-  var _FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-  var testData = {test: true, ts: Date.now(), pid: P ? P.id : 'unknown'};
-  fetch(_FB + '/hs_write_test.json', {
-    method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(testData)
-  }).then(function(r) {
-    showToast(r.ok ? '✅ Firebase write OK (status '+r.status+')' : '❌ Firebase write FAILED: '+r.status);
-    console.log('FB test response status:', r.status);
-    r.text().then(function(t){ console.log('FB test response body:', t); });
-  }).catch(function(e) {
-    showToast('❌ Firebase write ERROR: '+e.message);
-    console.error('FB test error:', e);
-  });
+  fetch('https://hamaraservice.com/api/test-db.php?key=hamaraAdmin2024')
+  .then(function(r){ return r.json(); })
+  .then(function(res){ showToast(res.success ? '✅ MySQL OK — ' + res.data.message : '❌ MySQL FAILED'); })
+  .catch(function(e){ showToast('❌ MySQL ERROR: '+e.message); });
 }
 
 
@@ -3371,31 +3363,24 @@ function processWithdraw(){
   };
   payouts.push(req);
   _PAYOUTS = payouts;
-  var _FB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-  var _reqBody = JSON.stringify(req);
-  var _hdrs = {'Content-Type':'application/json'};
-
-  function _wdWrite(path, attempt) {
-    attempt = attempt || 1;
-    fetch(_FB + path + '.json', {method:'PUT', headers:_hdrs, body:_reqBody})
-      .then(function(r) {
-        if (!r.ok) {
-          r.text().then(function(t){ console.warn('WD write ['+r.status+'] '+path+':', t); });
-          if (attempt < 3) setTimeout(function(){ _wdWrite(path, attempt+1); }, 2000);
-          else showToast('⚠️ Withdrawal saved locally — sync failed, contact support');
-        } else {
-          console.log('WD write OK:', path);
-        }
-      })
-      .catch(function(e) {
-        if (attempt < 3) setTimeout(function(){ _wdWrite(path, attempt+1); }, 2000);
-      });
-  }
-
-  // payouts/ — admin Firebase listener reads this path
-  _wdWrite('/payouts/' + req.id);
-  // providers/{id}/withdrawals/ — for provider sync
-  _wdWrite('/providers/' + P.id + '/withdrawals/' + req.id);
+  // Submit payout request to MySQL API
+  var _jwt2 = localStorage.getItem('hs_provider_jwt') || '';
+  fetch('https://hamaraservice.com/api/payouts.php?action=request', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _jwt2, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      amount:       req.amount,
+      account_type: req.bankType || 'upi',
+      upi_id:       req.upi || '',
+      account_no:   req.accountNo || '',
+      ifsc:         req.ifsc || '',
+      bank_name:    req.bankName || '',
+    })
+  }).then(function(r){ return r.json(); })
+  .then(function(res){
+    if(res.success){ console.log('Payout request saved to MySQL:', res.data.id); }
+    else { showToast('⚠️ ' + (res.error || 'Payout request failed')); }
+  }).catch(function(e){ showToast('⚠️ Network error — try again'); });
 
   closeModal("withdrawModal");
   loadEarnings();
