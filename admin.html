@@ -3026,7 +3026,20 @@ document.getElementById("provSearch").addEventListener("input",function(){loadPr
 
 // ====== VIEW PROVIDER MODAL ======
 function viewProvider(id){
-  var p=getProviders().find(function(pr){return pr.id===id;});if(!p)return;
+  // Always fetch fresh from MySQL to get full details
+  fetch('https://hamaraservice.com/api/providers.php?action=get&id='+encodeURIComponent(id)+'&key=hamaraAdmin2024')
+  .then(function(r){return r.json();})
+  .then(function(res){
+    var p = (res.success && res.data)
+      ? Object.assign({}, getProviders().find(function(pr){return pr.id===id;})||{}, res.data)
+      : (getProviders().find(function(pr){return pr.id===id;})||{});
+    _renderProviderModal(p, id);
+  }).catch(function(){
+    var p = getProviders().find(function(pr){return pr.id===id;})||{};
+    _renderProviderModal(p, id);
+  });
+}
+function _renderProviderModal(p, id){
   document.getElementById("pmTitle").textContent=p.name;
   document.getElementById("pmSub").textContent=p.id+" - Registered "+new Date(p.registeredAt||Date.now()).toLocaleDateString("en-IN");
   var bk=[];try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
@@ -3035,7 +3048,7 @@ function viewProvider(id){
   if (p.lat && p.lat !== 0 && p.lng && p.lng !== 0) {
     locHtml = (p.address||'') + ' <a href="https://maps.google.com/?q='+p.lat+','+p.lng+'" target="_blank" style="color:var(--teal);font-size:11px;font-weight:700;">📍 View Map</a>';
   }
-  var fields=[["Mobile",p.phone],["Email",p.email||"--"],["WhatsApp",p.whatsapp||"--"],["Gender",p.gender||"--"],["City",p.city||"--"],["Location",locHtml],["Radius",(p.radius?p.radius+" km":"Not set")],["Experience",p.experience||"--"],["ID Type",p.idType||"--"],["ID Number",p.idNum||"--"],["Status",cap(p.status||"pending")],["Total Bookings",bk.length],["Completed",done.length],["Total Earned","Rs "+fmt(done.reduce(function(s,b){return s+b.amount;},0))],["Rating",p.rating||"--"]];
+  var fields=[["Mobile",p.phone],["Email",p.email||"--"],["WhatsApp",p.whatsapp||"--"],["Gender",p.gender||"--"],["City",p.city||"--"],["Location",locHtml],["Radius",((p.radius_km||p.radius)?((p.radius_km||p.radius)+" km"):"Not set")],["Experience",p.experience||"--"],["ID Type",(p.id_type||p.idType||"--")],["ID Number",(p.id_number||p.idNum||"--")],["Status",cap(p.status||"pending")],["Total Bookings",bk.length],["Completed",done.length],["Total Earned","Rs "+fmt(done.reduce(function(s,b){return s+b.amount;},0))],["Rating",p.rating||"--"]];
   document.getElementById("pmDetail").innerHTML=fields.map(function(f){return "<div class=\"prov-detail-row\"><div class=\"prov-detail-label\">"+f[0]+"</div><div class=\"prov-detail-val\">"+f[1]+"</div></div>";}).join("");
   // Services can be array (old) or object/map (new format with min/max)
   var svcHtml = '';
