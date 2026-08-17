@@ -753,31 +753,31 @@ function doLogin(){
     return;
   }
   showToast('🔍 Checking credentials...');
-  // Query Firebase REST directly — works on ANY device, ANY browser
-  fbRest('GET', 'providers', null, function(err, data){
-    if(err || !data){
-      showErr('Connection error. Please check your internet and try again.');
+  // Login via MySQL API — verifies email + password, returns JWT token
+  fetch('https://hamaraservice.com/api/providers.php?action=login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: pass })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (!res.success) {
+      showErr(res.error || 'Email or password incorrect. Please check and try again.');
       return;
     }
-    // Find provider by email
-    var found = null;
-    Object.keys(data).forEach(function(key){
-      var p = data[key];
-      if(p && p.email && p.email.toLowerCase() === email && p.password === pass){
-        found = p;
-      }
-    });
-    if(!found){
-      showErr('Email or password incorrect. Please check and try again.');
-      return;
-    }
+    var found   = res.data.provider;
+    var jwt     = res.data.token;
     var pStatus = found.status || 'pending';
-    if(pStatus === 'pending'){ showWaitingScreen(found); return; }
-    if(pStatus === 'suspended'){ showErr('Account suspended. Contact: 8985849710'); return; }
-    // Login success — store for session only
+    if (pStatus === 'pending')   { showWaitingScreen(found); return; }
+    if (pStatus === 'suspended') { showErr('Account suspended. Contact: 8985849710'); return; }
+    // Store JWT + provider data
+    localStorage.setItem('hs_provider_jwt',    jwt);
     localStorage.setItem('hs_current_provider', JSON.stringify(found));
     showToast('✅ Login successful! Redirecting...');
     setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 800);
+  })
+  .catch(function(e) {
+    showErr('Connection error. Please check your internet and try again.');
   });
 }
 
@@ -1420,14 +1420,12 @@ function saveProviderToFirebase(prov, onSuccess, onError){
 function syncProviderFromFirebase(){
   var prov = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
   if(prov && prov.id){
-    fbDB.ref('providers/'+prov.id).once('value', function(snap){
-      if(snap.exists()){
-        var fbProv = snap.val();
-        localStorage.setItem('hs_current_provider', JSON.stringify(fbProv));
-        var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-        var idx = allProvs.findIndex(function(p){ return p.id===fbProv.id; });
-        if(idx>-1) allProvs[idx]=fbProv; else allProvs.push(fbProv);
-        localStorage.setItem('hs_providers', JSON.stringify(allProvs));
+    var jwt = localStorage.getItem('hs_provider_jwt') || '';
+    fetch('https://hamaraservice.com/api/providers.php?action=get&id='+prov.id)
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success && res.data){
+        localStorage.setItem('hs_current_provider', JSON.stringify(res.data));
       }
     }).catch(function(){});
   }
