@@ -328,7 +328,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
         <div class="cat-pill" data-c="Security" onclick="setCat(this,'Security')">🛡️ Security</div>
       </div>
       <!-- Info -->
-      <div class="info-box">ℹ️ Click any service to expand · Edit prices · <strong>Save</strong> to push to Firebase · Service pages update within 30 seconds</div>
+      <div class="info-box">ℹ️ Click any service to expand · Edit prices · <strong>Save</strong> to save to MySQL database · Provider apps update immediately</div>
       <!-- Cards -->
       <div id="wrap"></div>
     </div>
@@ -931,12 +931,19 @@ function apiGet(action, cb) {
   fetch(MAPI + '/services.php?action=' + action + '&key=' + MKEY, {
     headers: { 'X-Admin-Key': MKEY }
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
   .then(function(res) {
-    if (res.success) cb(null, res.data);
+    // success=true with empty data is still connected — just no prices saved yet
+    if (res.success) cb(null, res.data || {});
     else cb(new Error(res.error || 'API error'), null);
   })
-  .catch(function(e) { cb(e, null); });
+  .catch(function(e) {
+    console.error('apiGet error:', e);
+    cb(e, null);
+  });
 }
 
 function apiSave(svcId, data, cb) {
@@ -974,8 +981,15 @@ function fbDel(p,cb) { cb(null); }
 function initApp(){
   setSt('⏳ Loading from MySQL...');
   apiGet('get_all_prices', function(err, data) {
-    if (err) { setSt('⚠️ Offline — using defaults', false); }
-    else { _fb = data || {}; setSt('✅ MySQL Connected', true); }
+    if (err) {
+      console.warn('MySQL load error:', err.message);
+      // Still show connected if we get any response — just no saved prices yet
+      setSt('⚠️ No saved prices yet — defaults shown', false);
+    } else {
+      _fb = data || {};
+      var count = Object.keys(_fb).length;
+      setSt('✅ MySQL Connected' + (count > 0 ? ' — ' + count + ' services with saved prices' : ' — Ready to set prices'), true);
+    }
     renderCards();
   });
 }
