@@ -943,75 +943,66 @@ async function loadUserData(fbUser) {
   }, 8000);
 
   try {
-    // Use REST API with auth token — more reliable than SDK on shared hosting
+    // Load from MySQL API
     const token = await fbUser.getIdToken();
-    const dbUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/' + fbUser.uid + '.json?auth=' + token;
-    const res   = await fetch(dbUrl);
-    let profile = res.ok ? await res.json() : null;
 
-    if (profile && (profile.deleted || profile.banned)) {
-      showGate();
-      try { await fbAuth.signOut(); } catch(e){}
-      currentUser = currentProfile = null; allBookings = [];
-      return;
+    // Get or create customer profile
+    let profile = null;
+    const pRes = await fetch('https://hamaraservice.com/api/customers.php?action=get&id=' + fbUser.uid, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const pData = await pRes.json();
+    if (pData.success && pData.data) {
+      profile = pData.data;
+    } else {
+      // Register customer in MySQL
+      const rRes = await fetch('https://hamaraservice.com/api/customers.php?action=register', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: fbUser.displayName || '', auth_method: 'google' })
+      });
+      const rData = await rRes.json();
+      profile = rData.data || { id: fbUser.uid, name: fbUser.displayName || '', email: fbUser.email || '' };
     }
 
-    if (!profile || !profile.uid) {
-      profile = {
-        uid: fbUser.uid,
-        id:  'HS-CU-' + Date.now().toString(36).toUpperCase(),
-        name: fbUser.displayName || '',
-        email: fbUser.email || '',
-        phone: fbUser.phoneNumber || '',
-        city: '', photoURL: fbUser.photoURL || '',
-        provider: (fbUser.providerData[0] || {}).providerId || 'email',
-        registeredAt: new Date().toISOString(), wallet: 0
-      };
-      await fetch(dbUrl, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(profile) });
-    }
     clearTimeout(_loadTimeout);
     currentProfile = profile;
     showPanel();
-    // Cache profile under UID-keyed key only — never the shared key
     localStorage.setItem('hs_profile_' + fbUser.uid, JSON.stringify(profile));
     renderProfile(profile);
 
-    // Show correct password section based on provider
-    const isGoogle = (profile.provider||'').includes('google') ||
-      (currentUser && currentUser.providerData && currentUser.providerData.some(p => p.providerId === 'google.com'));
+    const isGoogle = (currentUser && currentUser.providerData &&
+      currentUser.providerData.some(p => p.providerId === 'google.com'));
     const pwForm   = document.getElementById('pwUpdateForm');
     const pwGoogle = document.getElementById('pwGoogleNote');
     if (pwForm)   pwForm.style.display   = isGoogle ? 'none'  : 'block';
     if (pwGoogle) pwGoogle.style.display = isGoogle ? 'block' : 'none';
-    // Keep card always visible
     const sc = document.getElementById('securityCard');
     if (sc) sc.style.display = 'block';
 
-    // ── Load bookings via REST ───────────────────────────────────────────────
+    // ── Load bookings from MySQL ─────────────────────────────────────────────
     let fbBks = [];
     try {
-      const bkUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/bookings.json?auth=' + token + '&orderBy=%22customerId%22&equalTo=%22' + fbUser.uid + '%22';
-      const bkRes = await fetch(bkUrl);
-      const bkData = bkRes.ok ? await bkRes.json() : null;
-      if (bkData && typeof bkData === 'object') {
-        Object.values(bkData).forEach(function(v) { if(v&&v.id) fbBks.push(v); });
-      }
-    } catch(e) {}
-    try {
-      const abUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/active_bookings.json?auth=' + token;
-      const abRes = await fetch(abUrl);
-      const abData = abRes.ok ? await abRes.json() : null;
-      if (abData && typeof abData === 'object') {
-        Object.keys(abData).forEach(function(k) {
-          const v = abData[k]; if(!v) return;
-          if ((v.customerId||v.uid||'') !== fbUser.uid) return;
-          const bkId = v.id||k; if(!bkId) return;
-          const ei = fbBks.findIndex(function(b){return b.id===bkId;});
-          if (ei===-1) fbBks.push(Object.assign({},v,{id:bkId}));
-          else fbBks[ei]=Object.assign({},fbBks[ei],v,{id:bkId});
+      const bkRes = await fetch('https://hamaraservice.com/api/customers.php?action=bookings&id=' + fbUser.uid, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const bkData = await bkRes.json();
+      if (bkData.success && Array.isArray(bkData.data)) {
+        fbBks = bkData.data.map(function(b) {
+          return Object.assign({}, b, {
+            id:          b.id,
+            service:     b.svc_name || b.service,
+            status:      b.status,
+            customerId:  b.customer_id || fbUser.uid,
+            providerId:  b.provider_id,
+            providerName:b.provider_name,
+            amountPaid:  b.confirmed_price || b.amount || 0,
+            createdAt:   b.created_at,
+            completedAt: b.completed_at,
+          });
         });
       }
-    } catch(e){}
+    } catch(e) { console.error('Bookings load error:', e); }
     const _seen = new Set();
     fbBks = fbBks.filter(b=>{ const k=b.id; if(!k||_seen.has(k)) return false; _seen.add(k); return true; });
     allBookings = fbBks.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
