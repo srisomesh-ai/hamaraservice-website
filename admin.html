@@ -2403,19 +2403,23 @@ function fbRestSet(path, data, cb) {
 
 // ── Delete helpers ──────────────────────────────────────────────────────────
 function deleteProviderFull(id) {
-  if (!confirm('Permanently delete this provider? They will be marked as deleted and cannot login.')) return;
   // Remove from local cache immediately
   saveProviders(getProviders().filter(function(p) { return p.id !== id; }));
   localStorage.removeItem('hs_bk_' + id);
   // Delete in MySQL — soft delete (status = deleted)
-  fetch('https://hamaraservice.com/api/providers.php?action=delete', {
+  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024', {
     method: 'POST',
     headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
     body: JSON.stringify({id: id})
   }).then(function(r){return r.json();})
   .then(function(res){
-    if(res.success) showToast('✅ Provider deleted from database');
-    else showToast('⚠️ ' + (res.error||'Delete failed'));
+    if(res.success) {
+      showToast('✅ Provider deleted');
+      // Reload fresh list from MySQL — won't come back
+      syncAllFromFirebase(function(){ refreshAll(); });
+    } else {
+      showToast('⚠️ ' + (res.error||'Delete failed'));
+    }
   }).catch(function(){ showToast('⚠️ Network error'); });
   refreshAll();
 }
@@ -2919,6 +2923,8 @@ function quickApprove(id){
       body: JSON.stringify({id: id})
     }).catch(function(){});
   }
+  // Reload from MySQL after approve
+  syncAllFromFirebase(function(){ refreshAll(); });
   // Send approval email to provider
   var allForEmail = getProviders();
   var pForEmail = allForEmail.find(function(p){ return p.id===id; });
@@ -2928,7 +2934,26 @@ function quickApprove(id){
   refreshAll(); showToast("Provider "+id+" approved! Email sent.");
 }
 function quickReject(id){
-  deleteProviderFull(id);
+  if (!confirm('Delete this provider permanently?')) return;
+  // Remove from local cache
+  saveProviders(getProviders().filter(function(p){ return p.id !== id; }));
+  localStorage.removeItem('hs_bk_' + id);
+  // Delete in MySQL
+  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+    body: JSON.stringify({id: id})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    showToast(res.success ? '✅ Provider deleted' : '⚠️ ' + (res.error||'Delete failed'));
+    // Reload fresh from MySQL after delete
+    syncAllFromFirebase(function(){
+      refreshAll();
+    });
+  }).catch(function(){
+    showToast('⚠️ Network error');
+    refreshAll();
+  });
 }
 function suspendProvider(id){
   var all=getProviders();
@@ -2940,7 +2965,8 @@ function suspendProvider(id){
   }).then(function(r){return r.json();}).then(function(res){
     showToast(res.success ? '✅ Provider suspended' : '⚠️ '+(res.error||'Failed'));
   }).catch(function(){ showToast('⚠️ Network error'); });
-  refreshAll();
+  // Reload from MySQL after suspend
+  syncAllFromFirebase(function(){ refreshAll(); });
 }
 function markReview(id){
   var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
