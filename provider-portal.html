@@ -1004,7 +1004,14 @@ function _getSubPrice(svcId, subKey) {
 
 // Fetch all prices from Firebase once
 function _loadFirebasePrices(cb) {
-  var API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  // Load prices from MySQL API
+  fetch('https://hamaraservice.com/api/services.php?action=price_ranges')
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if(cb) cb(null, (res.success && res.data) ? res.data : {});
+  }).catch(function(e){ if(cb) cb(e, null); });
+  if (false) {
+  var API2 = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
   var DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
   // Get anonymous token first
   var x = new XMLHttpRequest();
@@ -2229,11 +2236,12 @@ function buildPortalSvcGrid() {
   // Fetch live prices from Firebase (once only)
   if (!_portalPxLoaded) {
     _portalPxLoaded = true;
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_=' + Date.now())
+    fetch('https://hamaraservice.com/api/services.php?action=price_ranges')
       .then(function(r){ return r.json(); })
-      .then(function(data) {
+      .then(function(res) {
+        var data = (res.success && res.data) ? res.data : {};
         if (data && typeof data === 'object') {
-          _portalFBPx = data; // prices replaced, flag is separate — safe
+          _portalFBPx = data; // prices from MySQL
           buildPortalSvcGrid(); // re-render once with live prices
         }
       }).catch(function(){});
