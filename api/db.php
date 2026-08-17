@@ -116,6 +116,9 @@ function requireProvider() {
     return $data;
 }
 function requireAdmin() {
-    $key = $_SERVER['HTTP_X_ADMIN_KEY'] ?? '';
+    // Accept key from header OR query param (for CORS-restricted browsers)
+    $key = $_SERVER['HTTP_X_ADMIN_KEY']
+        ?? $_GET['key']
+        ?? '';
     if ($key !== 'hamaraAdmin2024') err('Unauthorized', 401);
 }
