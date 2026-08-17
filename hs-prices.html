@@ -918,25 +918,59 @@ function doLogin(){
 function doLogout(){location.reload();}
 
 // ── FIREBASE REST ─────────────────────────────────────────────────────────────
-function getToken(cb){
-  if(_tok){cb(_tok);return;}
-  var x=new XMLHttpRequest();
-  x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',true);
-  x.setRequestHeader('Content-Type','application/json');
-  x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
-  x.onerror=function(){cb('');};
-  x.send(JSON.stringify({returnSecureToken:true}));
+// ── MySQL API helpers (replaces Firebase) ────────────────────────
+var MAPI = 'https://hamaraservice.com/api';
+var MKEY = 'hamaraAdmin2024';
+
+function apiGet(action, cb) {
+  fetch(MAPI + '/services.php?action=' + action, {
+    headers: { 'X-Admin-Key': MKEY }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success) cb(null, res.data);
+    else cb(new Error(res.error || 'API error'), null);
+  })
+  .catch(function(e) { cb(e, null); });
 }
-function fbGet(p,cb){getToken(function(t){var x=new XMLHttpRequest();x.open('GET',FB+'/'+p+'.json'+(t?'?auth='+t:''),true);x.timeout=8000;x.onload=function(){try{var d=JSON.parse(x.responseText);if(d&&d.error){cb(new Error(d.error),null);return;}cb(null,d);}catch(e){cb(e,null);}};x.onerror=x.ontimeout=function(){cb(new Error('Network error'),null);};x.send();});}
-function fbPut(p,data,cb){getToken(function(t){var x=new XMLHttpRequest();x.open('PUT',FB+'/'+p+'.json'+(t?'?auth='+t:''),true);x.setRequestHeader('Content-Type','application/json');x.timeout=10000;x.onload=function(){if(x.status>=200&&x.status<300){cb(null);}else{try{var e=JSON.parse(x.responseText);cb(new Error(e.error||'HTTP '+x.status));}catch(err){cb(new Error('HTTP '+x.status));}}};x.onerror=x.ontimeout=function(){cb(new Error('Network error'));};x.send(JSON.stringify(data));});}
-function fbDel(p,cb){getToken(function(t){var x=new XMLHttpRequest();x.open('DELETE',FB+'/'+p+'.json'+(t?'?auth='+t:''),true);x.timeout=8000;x.onload=function(){cb(null);};x.onerror=x.ontimeout=function(){cb(new Error('Network error'));};x.send();});}
+
+function apiSave(svcId, data, cb) {
+  fetch(MAPI + '/services.php?action=save_prices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
+    body: JSON.stringify({ svc_id: svcId, data: data })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success) cb(null);
+    else cb(new Error(res.error || 'Save failed'));
+  })
+  .catch(function(e) { cb(e); });
+}
+
+function apiReset(svcId, cb) {
+  fetch(MAPI + '/services.php?action=reset_prices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
+    body: JSON.stringify({ svc_id: svcId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) { cb(res.success ? null : new Error('Reset failed')); })
+  .catch(function(e) { cb(e); });
+}
+
+// Legacy stubs — not used
+function getToken(cb) { cb(''); }
+function fbGet(p,cb) { cb(new Error('Firebase removed'), null); }
+function fbPut(p,data,cb) { cb(new Error('Firebase removed')); }
+function fbDel(p,cb) { cb(null); }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function initApp(){
-  setSt('⏳ Connecting...');
-  fbGet(FBP,function(err,data){
-    if(err){setSt('⚠️ Offline — using defaults',false);}
-    else{_fb=data||{};setSt('✅ Firebase Connected',true);}
+  setSt('⏳ Loading from MySQL...');
+  apiGet('get_all_prices', function(err, data) {
+    if (err) { setSt('⚠️ Offline — using defaults', false); }
+    else { _fb = data || {}; setSt('✅ MySQL Connected', true); }
     renderCards();
   });
 }
@@ -1119,16 +1153,16 @@ function saveSvc(sid){
   });
   _fb[sid]=data;
   setSt('⏳ Saving...');
-  fbPut(FBP+'/'+sid,data,function(err){
-    if(err){toast('❌ '+err.message);setSt('❌ Error',false);}
-    else{
-      try{localStorage.setItem('hs_pricing_ts',Date.now().toString());}catch(e){}
-      toast('✅ '+svc.name+' — '+keys.length+' prices saved!',true);
-      setSt('✅ Firebase Connected',true);
-      var ok=document.getElementById('ok-'+sid);
-      if(ok){ok.style.display='inline';setTimeout(function(){ok.style.display='none';},3000);}
+  apiSave(sid, data, function(err) {
+    if (err) { toast('❌ ' + err.message); setSt('❌ Error', false); }
+    else {
+      try { localStorage.setItem('hs_pricing_ts', Date.now().toString()); } catch(e) {}
+      toast('✅ ' + svc.name + ' — ' + keys.length + ' prices saved!', true);
+      setSt('✅ MySQL Connected', true);
+      var ok = document.getElementById('ok-' + sid);
+      if (ok) { ok.style.display='inline'; setTimeout(function(){ ok.style.display='none'; }, 3000); }
       renderCards();
-      setTimeout(function(){var c=document.getElementById('sc-'+sid);if(c)c.classList.add('open');},30);
+      setTimeout(function(){ var c=document.getElementById('sc-'+sid); if(c) c.classList.add('open'); }, 30);
     }
   });
 }
@@ -1148,26 +1182,28 @@ function saveAll(){
       delete _dirty[k];
     });
     _fb[sid]=data;
-    fbPut(FBP+'/'+sid,data,function(err){
+    apiSave(sid, data, function(err) {
       done++;
-      if(done===ids.length){
-        try{localStorage.setItem('hs_pricing_ts',Date.now().toString());}catch(e){}
-        toast('✅ All changes saved!',true);setSt('✅ Firebase Connected',true);renderCards();
+      if (done === ids.length) {
+        try { localStorage.setItem('hs_pricing_ts', Date.now().toString()); } catch(e) {}
+        toast('✅ All changes saved!', true);
+        setSt('✅ MySQL Connected', true);
+        renderCards();
       }
     });
   });
 }
 function resetSvc(sid){
   var svc=SVC.find(function(s){return s.id===sid;});if(!svc)return;
-  if(!confirm('Reset "'+svc.name+'" to default prices?\nAll Firebase overrides will be deleted.'))return;
+  if(!confirm('Reset "'+svc.name+'" to default prices?\nAll MySQL overrides will be deleted.'))return;
   Object.keys(_dirty).forEach(function(k){if(k.startsWith(sid+'.'))delete _dirty[k];});
-  fbDel(FBP+'/'+sid,function(err){
-    if(err){toast('❌ '+err.message);return;}
+  apiReset(sid, function(err) {
+    if (err) { toast('❌ ' + err.message); return; }
     delete _fb[sid];
-    try{localStorage.setItem('hs_pricing_ts',Date.now().toString());}catch(e){}
-    toast('↺ '+svc.name+' reset to defaults');
+    try { localStorage.setItem('hs_pricing_ts', Date.now().toString()); } catch(e) {}
+    toast('↺ ' + svc.name + ' reset to defaults');
     renderCards();
-    setTimeout(function(){var c=document.getElementById('sc-'+sid);if(c)c.classList.add('open');},30);
+    setTimeout(function(){ var c=document.getElementById('sc-'+sid); if(c) c.classList.add('open'); }, 30);
   });
 }
 
