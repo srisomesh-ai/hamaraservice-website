@@ -931,17 +931,30 @@ function getBK() {
   // Return localStorage cache (always synced from Firebase on load)
   return _BK;
 }
-// Always load bookings from Firebase — called on initDashboard
+// Load bookings from MySQL — called on initDashboard
 function loadBKFromFirebase(cb) {
   var pid = P.id;
-  // Primary: query by providerId index
-  fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/bookings.json?orderBy="providerId"&equalTo="' + pid + '"', {signal:AbortSignal.timeout(8000)})
+  var jwt = localStorage.getItem('hs_provider_jwt') || '';
+  fetch('https://hamaraservice.com/api/bookings.php?action=history&id=' + pid + '&role=provider', {
+    headers: { 'Authorization': 'Bearer ' + jwt }
+  })
     .then(function(r){ return r.json(); })
-    .then(function(data) {
-      // Trust server-side query result — no extra client filter
-      var fbBks = (data && typeof data === 'object') ? Object.values(data).filter(function(b){ return b && b.id; }) : [];
-      // Fallback: also check acceptedBy.id for bookings stored differently
-      var needFallback = fbBks.length === 0;
+    .then(function(res) {
+      var fbBks = (res.success && Array.isArray(res.data)) ? res.data.map(function(b) {
+        return Object.assign({}, b, {
+          id:          b.id,
+          service:     b.svc_name || b.service,
+          providerId:  b.provider_id || pid,
+          customerId:  b.customer_id,
+          customer:    b.other_party || b.customer_name || '',
+          status:      b.status,
+          amountPaid:  b.amount || b.confirmed_price || 0,
+          providerEarned: b.provider_earns || 0,
+          createdAt:   b.created_at || b.createdAt,
+          completedAt: b.completed_at,
+        });
+      }) : [];
+      var needFallback = false;
       function finish(bks, fromFB) {
         var sorted;
         if (fromFB && bks.length === 0) {
@@ -984,19 +997,24 @@ function saveBK(bk) {
 // Load bookings from Firebase into localStorage cache (called on init)
 async function syncBKFromFirebase() {
   try {
-    var r = await fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/bookings.json?orderBy="providerId"&equalTo="' + P.id + '"', {signal:AbortSignal.timeout(8000)});
-    var data = await r.json();
-    if (data && typeof data === 'object') {
-      var fbBks = Object.values(data).filter(function(b){ return b && b.id; });
-      if (fbBks.length > 0) {
-        // Merge with local (local may have newer status)
-        var local = getBK();
-        var merged = {};
-        local.forEach(function(b){ if(b.id) merged[b.id] = b; });
-        fbBks.forEach(function(b){ if(b.id) merged[b.id] = Object.assign({}, merged[b.id]||{}, b); });
-        var sorted = Object.values(merged).sort(function(a,b){ return new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0); });
-        if (pid === P.id) _BK = sorted;
-      }
+    var jwt = localStorage.getItem('hs_provider_jwt') || '';
+    var r = await fetch('https://hamaraservice.com/api/bookings.php?action=history&id=' + P.id + '&role=provider', {
+      headers: { 'Authorization': 'Bearer ' + jwt }
+    });
+    var res = await r.json();
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      var fbBks = res.data.map(function(b){
+        return Object.assign({}, b, {
+          service: b.svc_name || b.service, providerId: P.id,
+          amountPaid: b.amount || b.confirmed_price || 0,
+          createdAt: b.created_at, completedAt: b.completed_at,
+        });
+      });
+      var local = getBK(); var merged = {};
+      local.forEach(function(b){ if(b.id) merged[b.id]=b; });
+      fbBks.forEach(function(b){ if(b.id) merged[b.id]=Object.assign({},merged[b.id]||{},b); });
+      var sorted = Object.values(merged).sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
+      _BK = sorted;
     }
   } catch(e) { console.warn('syncBKFromFirebase:', e.message); }
 }
@@ -1079,11 +1097,14 @@ window.addEventListener('load', () => {
   try {
     P = JSON.parse(saved);
     if (!P || !P.id) { window.location.href = 'provider-portal.html'; return; }
-    const FB_DB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-    fetch(FB_DB + '/providers/' + P.id + '.json', {signal:AbortSignal.timeout(8000)})
+    var _jwt = localStorage.getItem('hs_provider_jwt') || '';
+    fetch('https://hamaraservice.com/api/providers.php?action=get&id=' + P.id, {
+      headers: { 'Authorization': 'Bearer ' + _jwt }
+    })
       .then(function(r){ return r.json(); })
-      .then(function(fbP){
-        // ── Provider deleted by admin ───────────────────────────────────────
+      .then(function(res){
+        var fbP = res.success ? res.data : null;
+        // ── Provider not found ──────────────────────────────────────────────
         if (!fbP || !fbP.id) {
           localStorage.removeItem('hs_current_provider');
           alert('\u26a0\ufe0f Your account has been removed by admin.\nPlease contact support.');
@@ -2519,9 +2540,9 @@ function renderSvcProfileGrid() {
   // Load Firebase prices once
   if (!_psvcPxLoaded) {
     _psvcPxLoaded = true;
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_='+Date.now())
+    fetch('https://hamaraservice.com/api/services.php?action=price_ranges')
       .then(function(r){return r.json();})
-      .then(function(d){ if(d&&typeof d==='object'){_psvcPx=d; renderSvcProfileGrid();} })
+      .then(function(res){ var d=(res.success&&res.data)?res.data:{}; if(Object.keys(d).length){_psvcPx=d; renderSvcProfileGrid();} })
       .catch(function(){});
   }
 }
@@ -3269,7 +3290,7 @@ function testFBWrite() {
 // ── Sync withdrawal status from Firebase ─────────────────────────────────────
 function syncPayoutsFromFirebase(cb) {
   if (!P || !P.id) { if(cb) cb(); return; }
-  fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/providers/' + P.id + '/withdrawals.json?_=' + Date.now())
+  fetch('https://hamaraservice.com/api/providers.php?action=get&id=' + P.id + '/withdrawals.json?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(data) {
       if (!data || typeof data !== 'object') {
@@ -3302,7 +3323,8 @@ function syncPayoutsFromFirebase(cb) {
 function startResetListener() {
   var _last = sessionStorage.getItem('hs_last_reset') || '0';
   function check() {
-    fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_reset.json?_=' + Date.now())
+    // Reset check removed — no Firebase needed
+fetch('https://hamaraservice.com/api/test-db.php?_=' + Date.now())
       .then(function(r){ return r.json(); })
       .then(function(d) {
         if (!d || !d.ts) return;
@@ -3426,9 +3448,9 @@ function buzz(type){
 // STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
 // STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
 // STEP 5: Replace the URL below
-const FB_URL = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // ✅ LIVE
-const FB_URL_ALT = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app'; // same
-const FB_ENABLED = true; // Firebase configured ✅
+const FB_URL = 'https://hamaraservice.com/api'; // MySQL API
+const FB_URL_ALT = 'https://hamaraservice.com/api'; // same
+const FB_ENABLED = true; // MySQL configured ✅
 
 // BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
 var trackChannel = null;
@@ -5367,7 +5389,7 @@ function dashInitServices() {
   _DS.loaded = true;
 
   // Load prices via fetch
-  fetch('https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_='+Date.now())
+  fetch('https://hamaraservice.com/api/services.php?action=price_ranges?_='+Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){ _DS.prices = d || {}; })
     .catch(function(){})
