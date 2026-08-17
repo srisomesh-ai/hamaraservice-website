@@ -928,7 +928,7 @@ var MAPI = 'https://hamaraservice.com/api';
 var MKEY = 'hamaraAdmin2024';
 
 function apiGet(action, cb) {
-  fetch(MAPI + '/services.php?action=' + action, {
+  fetch(MAPI + '/services.php?action=' + action + '&key=' + MKEY, {
     headers: { 'X-Admin-Key': MKEY }
   })
   .then(function(r) { return r.json(); })
@@ -940,7 +940,7 @@ function apiGet(action, cb) {
 }
 
 function apiSave(svcId, data, cb) {
-  fetch(MAPI + '/services.php?action=save_prices', {
+  fetch(MAPI + '/services.php?action=save_prices&key=' + MKEY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
     body: JSON.stringify({ svc_id: svcId, data: data })
@@ -954,7 +954,7 @@ function apiSave(svcId, data, cb) {
 }
 
 function apiReset(svcId, cb) {
-  fetch(MAPI + '/services.php?action=reset_prices', {
+  fetch(MAPI + '/services.php?action=reset_prices&key=' + MKEY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
     body: JSON.stringify({ svc_id: svcId })
