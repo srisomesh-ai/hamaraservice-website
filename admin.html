@@ -1372,18 +1372,49 @@ function loadProviders(filter,query){
       +"<td>"+acts+"</td>"
       +"</tr>";
   }).join("")||"<tr><td colspan=\"14\" style=\"text-align:center;color:var(--muted);padding:24px\">No providers found</td></tr>";
-}function viewProvider(id){
-  var p=getProviders().find(function(x){return x.id===id;});if(!p)return;
-  var body=document.getElementById('providerModalBody');
-  if(body)body.innerHTML='<table style="width:100%;border-collapse:collapse;">'
-    +'<tr><td style="padding:8px;font-weight:700;">Name</td><td>'+p.name+'</td></tr>'
-    +'<tr><td style="padding:8px;font-weight:700;">Phone</td><td>'+(p.phone||'—')+'</td></tr>'
-    +'<tr><td style="padding:8px;font-weight:700;">Email</td><td>'+(p.email||'—')+'</td></tr>'
-    +'<tr><td style="padding:8px;font-weight:700;">Service</td><td>'+(p.service||'—')+'</td></tr>'
-    +'<tr><td style="padding:8px;font-weight:700;">City</td><td>'+(p.city||'—')+'</td></tr>'
-    +'<tr><td style="padding:8px;font-weight:700;">Status</td><td>'+cap(p.status||'pending')+'</td></tr>'
+function viewProvider(id){
+  // Fetch full details from MySQL API
+  fetch('https://hamaraservice.com/api/providers.php?action=get&id='+encodeURIComponent(id)+'&key=hamaraAdmin2024')
+  .then(function(r){return r.json();})
+  .then(function(res){
+    var p = (res.success && res.data) ? res.data
+            : (getProviders().find(function(x){return x.id===id;}) || {});
+    _showProviderModal(p);
+  }).catch(function(){
+    var p = getProviders().find(function(x){return x.id===id;}) || {};
+    _showProviderModal(p);
+  });
+}
+function _showProviderModal(p){
+  var svcs = (p.services||[]).map(function(s){
+    return typeof s==='string' ? s : ((s.icon||'')+(s.name||s.id||''));
+  }).join(', ');
+  var body = document.getElementById('providerModalBody');
+  if(!body) return;
+  function row(label, val, alt){ return '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px 14px;font-weight:700;color:#555;width:38%;font-size:13px">'+label+'</td><td style="padding:10px 14px;font-size:14px">'+(val||alt||'—')+'</td></tr>'; }
+  body.innerHTML = '<table style="width:100%;border-collapse:collapse;">'
+    +row('Provider ID','<span style="font-family:monospace;color:#6366f1;font-size:12px">'+(p.id||'')+'</span>')
+    +row('Name','<strong>'+(p.name||'')+'</strong>')
+    +row('Phone',p.phone)
+    +row('WhatsApp',p.whatsapp||p.phone)
+    +row('Email',p.email)
+    +row('Gender',p.gender)
+    +row('Experience',p.experience)
+    +row('Bio',p.bio)
+    +row('ID Type',p.id_type||p.idType)
+    +row('ID Number',p.id_number||p.idNum)
+    +row('Address',p.address)
+    +row('City',p.city)
+    +row('Service Radius',(p.radius_km||p.radius||'—')+' km')
+    +row('Services',svcs)
+    +row('Rating',p.rating?'⭐ '+p.rating+' ('+(p.review_count||0)+' reviews)':'No reviews yet')
+    +row('Total Jobs',(p.total_bookings||0)+' ('+(p.completed_bookings||0)+' completed)')
+    +row('Total Earned','₹'+(p.total_earned||p.totalEarned||0))
+    +row('Status','<span class="badge '+(p.status||'pending')+'">'+cap(p.status||'pending')+'</span>')
+    +row('Registered',p.registered_at||p.registeredAt?new Date(p.registered_at||p.registeredAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—')
     +'</table>';
-  var m=document.getElementById('providerModal');if(m)m.classList.add('show');
+  var m=document.getElementById('providerModal');
+  if(m) m.classList.add('show');
 }
 
 // ── PAYMENTS ──────────────────────────────────────────────────────────────────
