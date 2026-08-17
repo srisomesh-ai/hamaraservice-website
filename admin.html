@@ -1012,9 +1012,7 @@ function syncAllOrders(cb) {
 // ── Always read providers from Firebase (never localStorage) ─────────────────
 function fbGetProviders(cb){
   // MySQL API
-  fetch('https://hamaraservice.com/api/providers.php?action=list', {
-    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
-  }).then(function(r){ return r.json(); }).then(function(res) {
+  fetch('https://hamaraservice.com/api/providers.php?action=list&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
     var arr = (res.success && res.data) ? res.data : [];
     saveProviders(arr);
     if (cb) cb(arr);
@@ -2251,9 +2249,7 @@ function syncAllFromFirebase(cb) {
   }
 
   // Providers
-  fetch('https://hamaraservice.com/api/providers.php?action=list', {
-    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
-  }).then(function(r){ return r.json(); }).then(function(res) {
+  fetch('https://hamaraservice.com/api/providers.php?action=list&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
     if (res.success && res.data) {
       localStorage.setItem('hs_providers', JSON.stringify(res.data));
       showToast('📋 Providers: ' + res.data.length);
@@ -2262,9 +2258,7 @@ function syncAllFromFirebase(cb) {
   }).catch(function(e){ console.error('Providers load error:', e); check(); });
 
   // Bookings
-  fetch('https://hamaraservice.com/api/bookings.php?action=admin_list&limit=200', {
-    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
-  }).then(function(r){ return r.json(); }).then(function(res) {
+  fetch('https://hamaraservice.com/api/bookings.php?action=admin_list&limit=200&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
     if (res.success && res.data) {
       // Normalise field names for admin panel
       var bks = res.data.map(function(b) {
@@ -2287,9 +2281,7 @@ function syncAllFromFirebase(cb) {
   }).catch(function(e){ console.error('Bookings load error:', e); check(); });
 
   // Payouts
-  fetch('https://hamaraservice.com/api/payouts.php?action=pending', {
-    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
-  }).then(function(r){ return r.json(); }).then(function(res) {
+  fetch('https://hamaraservice.com/api/payouts.php?action=pending&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
     if (res.success && res.data) {
       var pays = res.data.map(function(p) {
         return Object.assign({}, p, {
@@ -2407,11 +2399,7 @@ function deleteProviderFull(id) {
   saveProviders(getProviders().filter(function(p) { return p.id !== id; }));
   localStorage.removeItem('hs_bk_' + id);
   // Delete in MySQL — soft delete (status = deleted)
-  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
-    body: JSON.stringify({id: id})
-  }).then(function(r){return r.json();})
+  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();})
   .then(function(res){
     if(res.success) {
       showToast('✅ Provider deleted');
@@ -2594,9 +2582,7 @@ function getCustomers(){
   try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}
 }
 function syncCustomersFromFirebase(cb){
-  fetch('https://hamaraservice.com/api/customers.php?action=list', {
-    headers: {'X-Admin-Key': 'hamaraAdmin2024'}
-  }).then(function(r){ return r.json(); }).then(function(res) {
+  fetch('https://hamaraservice.com/api/customers.php?action=list&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
     var arr = (res.success && res.data) ? res.data : [];
     localStorage.setItem('hs_customers', JSON.stringify(arr));
     if (cb) cb(arr);
@@ -2917,11 +2903,7 @@ function quickApprove(id){
     all[idx].approvedAt=new Date().toISOString();
     saveProviders(all);
     // Write to MySQL API — provider status updated
-    fetch('https://hamaraservice.com/api/providers.php?action=approve', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
-      body: JSON.stringify({id: id})
-    }).catch(function(){});
+    fetch('https://hamaraservice.com/api/providers.php?action=approve&key=hamaraAdmin2024',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();}).then(function(res){showToast(res.success?'✅ Approved!':'⚠️ '+(res.error||'Failed'));}).catch(function(){showToast('⚠️ Network error')});
   }
   // Reload from MySQL after approve
   syncAllFromFirebase(function(){ refreshAll(); });
@@ -2939,11 +2921,7 @@ function quickReject(id){
   saveProviders(getProviders().filter(function(p){ return p.id !== id; }));
   localStorage.removeItem('hs_bk_' + id);
   // Delete in MySQL
-  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
-    body: JSON.stringify({id: id})
-  }).then(function(r){return r.json();})
+  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();})
   .then(function(res){
     showToast(res.success ? '✅ Provider deleted' : '⚠️ ' + (res.error||'Delete failed'));
     // Reload fresh from MySQL after delete
@@ -2959,10 +2937,7 @@ function suspendProvider(id){
   var all=getProviders();
   var idx=all.findIndex(function(p){return p.id===id;});
   if(idx>-1){ all[idx].status='suspended'; all[idx].available=false; saveProviders(all); }
-  fetch('https://hamaraservice.com/api/providers.php?action=suspend',{
-    method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
-    body:JSON.stringify({id:id})
-  }).then(function(r){return r.json();}).then(function(res){
+  fetch('https://hamaraservice.com/api/providers.php?action=suspend&key=hamaraAdmin2024',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();}).then(function(res){
     showToast(res.success ? '✅ Provider suspended' : '⚠️ '+(res.error||'Failed'));
   }).catch(function(){ showToast('⚠️ Network error'); });
   // Reload from MySQL after suspend
@@ -3140,7 +3115,7 @@ function approvePayout(id){
     // Approve in MySQL — provider balance updated automatically
     fetch('https://hamaraservice.com/api/payouts.php?action=approve', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({id: req.id})
     }).catch(function(){});
     var providers=getProviders();var pidx=providers.findIndex(function(pr){return pr.id===req.providerId;});
@@ -3158,7 +3133,7 @@ function rejectPayout(id){
     // Reject in MySQL — provider balance refunded automatically
     fetch('https://hamaraservice.com/api/payouts.php?action=reject', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({id: req.id, note: reason})
     }).catch(function(){});
   }
@@ -3568,7 +3543,7 @@ function eraseData(what) {
       if (!p.id) return;
       setTimeout(function(){
         fetch('https://hamaraservice.com/api/providers.php?action=reset_withdrawn',{
-          method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+          method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({id:p.id})
         }).catch(function(){});
       }, 600);
