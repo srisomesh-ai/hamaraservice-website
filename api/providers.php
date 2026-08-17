@@ -474,6 +474,36 @@ HamaraService Team";
     $stmt->execute([$id]);
     $p = $stmt->fetch();
 
+    // Send approval email to provider
+    if (!empty($p['email'] ?? '')) {
+      $aSubject = 'Account Approved — HamaraService';
+      $aBody = "Dear {$p['name']},
+
+"
+        . "Congratulations! Your HamaraService provider account has been approved.
+
+"
+        . "You can now login and start receiving jobs:
+"
+        . "https://hamaraservice.com/provider-portal.html
+
+"
+        . "Or login on the HamaraService Provider App.
+
+"
+        . "Support: info@hamaraservice.com
+
+"
+        . "Best regards,
+HamaraService Team";
+      @mail($p['email'], $aSubject, $aBody,
+        implode("
+", [
+          'From: HamaraService <info@hamaraservice.com>',
+          'Content-Type: text/plain; charset=UTF-8',
+        ])
+      );
+    }
     ok(['approved' => true, 'fcm_token' => $p['fcm_token'] ?? '']);
   }
 
