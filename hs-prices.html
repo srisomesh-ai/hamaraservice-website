@@ -274,7 +274,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
       </div>
     </div>
     <div class="tb-right">
-      <div class="tb-status" id="fbSt">⏳ Connecting...</div>
+      <div class="tb-status" id="fbSt">⏳ Loading...</div>
       <button class="tb-btn" onclick="saveAll()">💾 Save All Changes</button>
       <button class="tb-btn ghost" onclick="doLogout()">Logout</button>
     </div>
@@ -1103,7 +1103,7 @@ function renderCards(){
     html+='<div class="card-actions">';
     html+='<button class="btn-save" data-sid="'+svc.id+'" onclick="saveSvc(this.dataset.sid)">💾 Save '+svc.name+'</button>';
     html+='<button class="btn-reset" data-sid="'+svc.id+'" onclick="resetSvc(this.dataset.sid)">↺ Reset</button>';
-    html+='<span class="save-ok" id="ok-'+svc.id+'">✅ Saved to Firebase!</span>';
+    html+='<span class="save-ok" id="ok-'+svc.id+'">✅ Saved!</span>';
     html+='</div>';
     html+='</div></div>';
   });
