@@ -399,7 +399,7 @@ switch ($action) {
     $status = $_GET['status'] ?? '';
     $city   = $_GET['city']   ?? '';
 
-    $sql    = "SELECT id, name, phone, email, city, status, available, rating, registered_at FROM providers WHERE 1=1";
+    $sql    = "SELECT id, name, phone, email, city, status, available, rating, registered_at FROM providers WHERE status != 'deleted'";
     $params = [];
 
     if (!empty($status)) { $sql .= " AND status = ?"; $params[] = $status; }
