@@ -2403,15 +2403,21 @@ function fbRestSet(path, data, cb) {
 
 // ── Delete helpers ──────────────────────────────────────────────────────────
 function deleteProviderFull(id) {
-  if (!confirm('Permanently delete this provider and ALL their bookings? This frees their email for re-registration.')) return;
-  // Remove from localStorage providers list
+  if (!confirm('Permanently delete this provider? They will be marked as deleted and cannot login.')) return;
+  // Remove from local cache immediately
   saveProviders(getProviders().filter(function(p) { return p.id !== id; }));
-  // Remove their bookings from localStorage
   localStorage.removeItem('hs_bk_' + id);
-  // Remove from Firebase (frees email for re-registration)
-  fbRestDelete('providers/' + id);
+  // Delete in MySQL — soft delete (status = deleted)
+  fetch('https://hamaraservice.com/api/providers.php?action=delete', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+    body: JSON.stringify({id: id})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    if(res.success) showToast('✅ Provider deleted from database');
+    else showToast('⚠️ ' + (res.error||'Delete failed'));
+  }).catch(function(){ showToast('⚠️ Network error'); });
   refreshAll();
-  showToast('Provider deleted — email freed for re-registration');
 }
 
 function deleteOrder(providerId, orderId) {
@@ -2927,13 +2933,14 @@ function quickReject(id){
 function suspendProvider(id){
   var all=getProviders();
   var idx=all.findIndex(function(p){return p.id===id;});
-  if(idx>-1){
-    all[idx].status="suspended";
-    all[idx].suspended=true;
-    saveProviders(all);
-    fbRestPatch('providers/'+id, {status:'suspended', suspended:true});
-  }
-  refreshAll();showToast("Provider suspended");
+  if(idx>-1){ all[idx].status='suspended'; all[idx].available=false; saveProviders(all); }
+  fetch('https://hamaraservice.com/api/providers.php?action=suspend',{
+    method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':'hamaraAdmin2024'},
+    body:JSON.stringify({id:id})
+  }).then(function(r){return r.json();}).then(function(res){
+    showToast(res.success ? '✅ Provider suspended' : '⚠️ '+(res.error||'Failed'));
+  }).catch(function(){ showToast('⚠️ Network error'); });
+  refreshAll();
 }
 function markReview(id){
   var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
