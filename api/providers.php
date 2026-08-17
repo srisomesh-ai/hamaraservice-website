@@ -536,7 +536,12 @@ HamaraService Team";
     $status = $_GET['status'] ?? '';
     $city   = $_GET['city']   ?? '';
 
-    $sql    = "SELECT id, name, phone, email, city, status, available, rating, registered_at FROM providers WHERE status != 'deleted'";
+    $sql    = "SELECT id, name, phone, email, whatsapp, gender, experience, bio,
+                       id_type, id_number, address, city, lat, lng, radius_km,
+                       status, available, rating, review_count,
+                       total_bookings, completed_bookings, total_earned,
+                       fcm_token, registered_at
+               FROM providers WHERE status != 'deleted'";
     $params = [];
 
     if (!empty($status)) { $sql .= " AND status = ?"; $params[] = $status; }
