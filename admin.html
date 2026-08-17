@@ -1316,15 +1316,20 @@ function quickSuspend(id){
   });
 }
 function quickReject(id){
-  if(!confirm('Remove this provider?'))return;
-  fbDelete('providers/'+id, function(){
-    fbGetProviders(function(arr){ 
-      lsSet('hs_providers',arr); 
-      loadApprovals(); 
-      loadDashboard(); 
+  if(!confirm('Delete this provider permanently?'))return;
+  saveProviders(getProviders().filter(function(p){return p.id!==id;}));
+  fetch('https://hamaraservice.com/api/providers.php?action=delete&key=hamaraAdmin2024',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    showToast(res.success?'✅ Provider deleted':'⚠️ '+(res.error||'Failed'));
+    fbGetProviders(function(arr){
+      lsSet('hs_providers',arr);
+      loadApprovals();
+      loadDashboard();
     });
-    showToast('Provider removed');
-  });
+  }).catch(function(){showToast('⚠️ Network error');});
 }
 
 // ── PROVIDERS ────────────────────────────────────────────────────────────────
@@ -2251,8 +2256,9 @@ function syncAllFromFirebase(cb) {
   // Providers
   fetch('https://hamaraservice.com/api/providers.php?action=list&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
     if (res.success && res.data) {
-      localStorage.setItem('hs_providers', JSON.stringify(res.data));
-      showToast('📋 Providers: ' + res.data.length);
+      var activeProvs = res.data.filter(function(p){ return p.status !== 'deleted'; });
+      localStorage.setItem('hs_providers', JSON.stringify(activeProvs));
+      showToast('📋 Providers: ' + activeProvs.length);
     }
     check();
   }).catch(function(e){ console.error('Providers load error:', e); check(); });
