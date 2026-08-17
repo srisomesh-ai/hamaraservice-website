@@ -773,16 +773,22 @@ function doRegister() {
       photoURL:'', provider:'email',
       registeredAt:new Date().toISOString()
     };
-    // Write to DB via REST so we can see exact error
-    var dbUrl = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/customers/'+u.uid+'.json';
+    // Save customer to MySQL
     return u.getIdToken().then(function(token) {
-      return fetch(dbUrl + '?auth=' + token, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile)
+      return fetch('https://hamaraservice.com/api/customers.php?action=register', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:        profile.name,
+          phone:       profile.phone,
+          city:        profile.city,
+          auth_method: 'email'
+        })
       });
     }).then(function(res) {
-      if (!res.ok) return res.text().then(function(t){ throw new Error('DB write failed: ' + t); });
+      return res.json();
+    }).then(function(res) {
+      if (!res.success) throw new Error(res.error || 'Registration failed');
       return id;
     });
   }).then(function(id) {
