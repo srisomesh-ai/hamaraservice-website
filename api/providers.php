@@ -56,9 +56,14 @@ switch ($action) {
     // Extract city from address
     $address = $b['address'] ?? '';
     $city    = $b['city'] ?? '';
-    if (empty($city) && strpos($address, ',') !== false) {
-      $parts = explode(',', $address);
-      $city  = trim(end($parts));
+    // Extract city from address if not provided
+    if (empty($city) && !empty($address)) {
+      if (strpos($address, ',') !== false) {
+        $parts = explode(',', $address);
+        $city  = trim(end($parts));
+      } else {
+        $city = $address;
+      }
     }
 
     // Insert provider
@@ -82,13 +87,13 @@ switch ($action) {
       ':gender'  => $b['gender']     ?? '',
       ':exp'     => $b['experience'] ?? '',
       ':bio'     => $b['bio']        ?? '',
-      ':idtype'  => $b['id_type']    ?? '',
-      ':idnum'   => $b['id_number']  ?? '',
+      ':idtype'  => $b['id_type']    ?? $b['idType']  ?? '',
+      ':idnum'   => $b['id_number']  ?? $b['idNum'] ?? '',
       ':address' => $address,
       ':city'    => $city,
       ':lat'     => (float)($b['lat'] ?? 0),
       ':lng'     => (float)($b['lng'] ?? 0),
-      ':radius'  => (int)($b['radius_km'] ?? 5),
+      ':radius'  => (int)($b['radius_km'] ?? $b['radius'] ?? 5),
     ]);
 
     // Save services if provided
@@ -211,8 +216,16 @@ HamaraService Team";
     $provider = $stmt->fetch();
 
     if (!$provider) err('Email or password incorrect');
-    if (!password_verify($pwd, $provider['password_hash']))
-      err('Email or password incorrect');
+    // Check password — support both hashed and plain (migration)
+    $pwdMatch = password_verify($pwd, $provider['password_hash']);
+    if (!$pwdMatch && $pwd === $provider['password_hash']) {
+      // Plain text password — upgrade to hash
+      $newHash = password_hash($pwd, PASSWORD_BCRYPT);
+      $db->prepare("UPDATE providers SET password_hash = ? WHERE id = ?")
+         ->execute([$newHash, $provider['id']]);
+      $pwdMatch = true;
+    }
+    if (!$pwdMatch) err('Email or password incorrect');
 
     // Status check
     if ($provider['status'] === 'suspended')
