@@ -768,7 +768,19 @@ function doLogin(){
     var found   = res.data.provider;
     var jwt     = res.data.token;
     var pStatus = found.status || 'pending';
-    if (pStatus === 'pending')   { showWaitingScreen(found); return; }
+    // If pending AND incomplete registration → go to registration form
+    if (pStatus === 'pending') {
+      var hasDetails = found.name && found.phone && (found.city || found.address);
+      if (!hasDetails) {
+        // Incomplete — scroll to registration section
+        showToast('⚠️ Please complete your registration first');
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('registerSection').style.display = 'block';
+        window.scrollTo(0, 0);
+        return;
+      }
+      showWaitingScreen(found); return;
+    }
     if (pStatus === 'suspended') { showErr('Account suspended. Contact: 8985849710'); return; }
     // Store JWT + provider data
     localStorage.setItem('hs_provider_jwt',    jwt);
