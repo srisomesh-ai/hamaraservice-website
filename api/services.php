@@ -152,32 +152,46 @@ switch ($action) {
   case 'save_prices': {
     requireAdmin();
     $b = getBody();
-
-    // Expected: { svc_id: 'SVC001', prices: [{group_key, option_key, option_name, price}] }
     $svc_id = $b['svc_id'] ?? '';
-    $prices = $b['prices'] ?? [];
+    $data   = $b['data']   ?? ($b['prices'] ?? []);
     if (empty($svc_id)) err('svc_id required');
 
-    // Delete existing prices for this service
-    $db->prepare("DELETE FROM service_prices WHERE svc_id = ?")
-       ->execute([$svc_id]);
+    // Ensure price_data column exists
+    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Exception $e) {}
 
-    // Insert new
-    $stmt = $db->prepare("
-      INSERT INTO service_prices (svc_id, group_key, option_key, option_name, price)
-      VALUES (?, ?, ?, ?, ?)
-    ");
-    foreach ($prices as $p) {
-      $stmt->execute([
-        $svc_id,
-        $p['group_key']    ?? '',
-        $p['option_key']   ?? '',
-        $p['option_name']  ?? '',
-        (int)($p['price']  ?? 0),
-      ]);
+    // Calculate min/max from all numeric prices in data
+    $all_prices = [];
+    if (is_array($data)) {
+      foreach ($data as $grp => $opts) {
+        if ($grp === 'name') continue;
+        if ($grp === 'base' && is_numeric($opts)) {
+          $all_prices[] = (int)$opts;
+        } elseif (is_array($opts)) {
+          foreach ($opts as $k => $v) {
+            // Skip _min and _max keys from min/max calc — they're bounds not prices
+            if (is_numeric($v) && $v > 0 && strpos($k, '_min') === false && strpos($k, '_max') === false) {
+              $all_prices[] = (int)$v;
+            }
+          }
+        }
+      }
+    }
+    $min_price = !empty($all_prices) ? min($all_prices) : 0;
+    $max_price = !empty($all_prices) ? max($all_prices) : 0;
+
+    $stmt = $db->prepare("UPDATE services SET price_data = ?, min_price = ?, max_price = ? WHERE id = ?");
+    $stmt->execute([json_encode($data), $min_price, $max_price, $svc_id]);
+
+    if ($stmt->rowCount() === 0) {
+      // Service row may not exist — insert
+      try {
+        $db->prepare("INSERT INTO services (id, name, price_data, min_price, max_price)
+                      VALUES (?, ?, ?, ?, ?)")
+           ->execute([$svc_id, $data['name'] ?? $svc_id, json_encode($data), $min_price, $max_price]);
+      } catch (Exception $e) { /* row exists with same data */ }
     }
 
-    ok(['saved' => count($prices)]);
+    ok(['saved' => true, 'svc_id' => $svc_id, 'min' => $min_price, 'max' => $max_price]);
   }
 
   // ── ADMIN: UPDATE SERVICE ─────────────────────────────
@@ -212,48 +226,6 @@ switch ($action) {
       if ($pd) $result[$row['id']] = $pd;
     }
     ok($result);
-  }
-
-  // ── SAVE SERVICE PRICES (admin price manager) ────────────────────
-  case 'save_prices': {
-    requireAdmin();
-    $b      = getBody();
-    $svc_id = $b['svc_id'] ?? '';
-    $data   = $b['data']   ?? [];
-    if (empty($svc_id)) err('svc_id required');
-
-    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Exception $e) {}
-
-    // Calculate min/max from all prices in data
-    $all_prices = [];
-    foreach ($data as $grp => $opts) {
-      if ($grp === 'name') continue;
-      if ($grp === 'base' && is_numeric($opts)) {
-        $all_prices[] = (int)$opts;
-      } elseif (is_array($opts)) {
-        foreach ($opts as $v) {
-          if (is_numeric($v) && $v > 0) $all_prices[] = (int)$v;
-        }
-      }
-    }
-    $min_price = !empty($all_prices) ? min($all_prices) : 0;
-    $max_price = !empty($all_prices) ? max($all_prices) : 0;
-
-    $stmt = $db->prepare("
-      UPDATE services
-      SET price_data = ?, min_price = ?, max_price = ?
-      WHERE id = ?
-    ");
-    $stmt->execute([json_encode($data), $min_price, $max_price, $svc_id]);
-
-    if ($stmt->rowCount() === 0) {
-      // Insert if not exists (shouldn't happen but safety)
-      $db->prepare("INSERT INTO services (id, name, price_data, min_price, max_price)
-                    VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE price_data=VALUES(price_data)")
-         ->execute([$svc_id, $data['name'] ?? $svc_id, json_encode($data), $min_price, $max_price]);
-    }
-
-    ok(['saved' => true, 'svc_id' => $svc_id, 'min' => $min_price, 'max' => $max_price]);
   }
 
   // ── RESET SERVICE PRICES ─────────────────────────────────────────
