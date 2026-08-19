@@ -15,6 +15,43 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
+function buildPriceRanges($db, $city = '') {
+  /* 1. Provider-set ranges (what approved providers actually charge) */
+  $sql = "
+    SELECT ps.svc_id,
+           MIN(ps.min_price) as lowest_min,
+           MAX(ps.max_price) as highest_max,
+           COUNT(DISTINCT ps.provider_id) as provider_count
+    FROM provider_services ps
+    INNER JOIN providers p ON p.id = ps.provider_id
+    WHERE p.status = 'approved'
+      AND ps.enabled = 1
+      AND ps.min_price > 0
+  ";
+  $params = [];
+  if (!empty($city)) { $sql .= " AND p.city LIKE ?"; $params[] = "%$city%"; }
+  $sql .= " GROUP BY ps.svc_id";
+  $stmt = $db->prepare($sql);
+  $stmt->execute($params);
+  $result = [];
+  foreach ($stmt->fetchAll() as $row) {
+    $result[$row['svc_id']] = [
+      'min' => (int)$row['lowest_min'],
+      'max' => (int)$row['highest_max'],
+      'provider_count' => (int)$row['provider_count'],
+    ];
+  }
+  /* 2. Admin reference + min/max per option */
+  try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch (Exception $e) {}
+  foreach ($db->query("SELECT id, price_data FROM services WHERE price_data IS NOT NULL")->fetchAll() as $row) {
+    $pd = json_decode($row['price_data'], true);
+    if (!$pd) continue;
+    if (!isset($result[$row['id']])) $result[$row['id']] = ['min' => 0, 'max' => 0, 'provider_count' => 0];
+    $result[$row['id']]['admin_prices'] = $pd;
+  }
+  return $result;
+}
+
 switch ($action) {
 
   // ── ALL SERVICES ──────────────────────────────────────
@@ -67,7 +104,9 @@ switch ($action) {
   // ── REFERENCE PRICES FOR ONE SERVICE ─────────────────
   case 'prices': {
     $id = $_GET['id'] ?? '';
-    if (empty($id)) err('id required');
+    /* Provider app calls action=prices with empty id expecting the full
+       ranges payload (admin ref + min/max per option) — serve it. */
+    if (empty($id)) { ok(buildPriceRanges($db, $_GET['city'] ?? '')); }
 
     $stmt = $db->prepare("
       SELECT group_key, option_key, option_name, price
@@ -89,63 +128,7 @@ switch ($action) {
   // ── PROVIDER PRICE RANGES (for homepage) ─────────────
   // Returns min/max across all approved providers per service
   case 'price_ranges': {
-    $city = $_GET['city'] ?? '';
-
-    // 1. Get provider-set price ranges (what providers actually charge)
-    $sql = "
-      SELECT ps.svc_id,
-             MIN(ps.min_price) as lowest_min,
-             MAX(ps.max_price) as highest_max,
-             COUNT(DISTINCT ps.provider_id) as provider_count
-      FROM provider_services ps
-      INNER JOIN providers p ON p.id = ps.provider_id
-      WHERE p.status = 'approved'
-        AND ps.enabled = 1
-        AND ps.min_price > 0
-    ";
-    $params = [];
-    if (!empty($city)) {
-      $sql .= " AND p.city LIKE ?";
-      $params[] = "%$city%";
-    }
-    $sql .= " GROUP BY ps.svc_id";
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    $rows = $stmt->fetchAll();
-
-    $result = [];
-    foreach ($rows as $row) {
-      $result[$row['svc_id']] = [
-        'min'            => (int)$row['lowest_min'],
-        'max'            => (int)$row['highest_max'],
-        'provider_count' => (int)$row['provider_count'],
-      ];
-    }
-
-    // 2. Get admin price_data (ref + min/max per option) from services table
-    try {
-      $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL");
-    } catch (Exception $e) {}
-
-    $adminRows = $db->query("SELECT id, price_data FROM services WHERE price_data IS NOT NULL")
-                    ->fetchAll();
-
-    $adminPrices = [];
-    foreach ($adminRows as $row) {
-      $pd = json_decode($row['price_data'], true);
-      if ($pd) $adminPrices[$row['id']] = $pd;
-    }
-
-    // Merge admin prices into result
-    foreach ($adminPrices as $svcId => $pd) {
-      if (!isset($result[$svcId])) {
-        $result[$svcId] = ['min' => 0, 'max' => 0, 'provider_count' => 0];
-      }
-      // Add full admin price_data so provider app can show ref+min+max per option
-      $result[$svcId]['admin_prices'] = $pd;
-    }
-
-    ok($result);
+    ok(buildPriceRanges($db, $_GET['city'] ?? ''));
   }
 
   // ── ADMIN: SAVE REFERENCE PRICES ─────────────────────
