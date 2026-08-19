@@ -125,7 +125,7 @@ switch ($action) {
     // 2. Get admin price_data (ref + min/max per option) from services table
     try {
       $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL");
-    } catch (Exception \$e) {}
+    } catch (Exception $e) {}
 
     $adminRows = $db->query("SELECT id, price_data FROM services WHERE price_data IS NOT NULL")
                     ->fetchAll();
