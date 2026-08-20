@@ -3062,7 +3062,7 @@ function _renderProviderModal(p, id){
           ? '₹' + mn + '–₹' + mx
           : (s.price && s.price !== 499 ? '₹' + s.price : 'Price not set');
         return '<span style="background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800">'
-          + (s.icon||'🔧') + ' ' + s.name
+          + (s.svc_icon||s.icon||'🔧') + ' ' + (s.svc_name||s.name||s.svc_id||'Service')
           + ' <span style="color:var(--teal);font-size:12px">' + priceLabel + '</span></span>';
       }).join(' ');
     } else {
