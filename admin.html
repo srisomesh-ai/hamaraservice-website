@@ -3054,10 +3054,12 @@ function _renderProviderModal(p, id){
   var svcHtml = '';
   if (p.services) {
     if (Array.isArray(p.services)) {
-      // Old format — array of {name, icon, price}
+      // MySQL format — array of {svc_name, svc_icon, min_price, max_price} or old {name, icon, price}
       svcHtml = p.services.map(function(s) {
-        var priceLabel = (s.min && s.max && s.min > 0)
-          ? '₹' + s.min + '–₹' + s.max
+        var mn = parseInt(s.min_price || s.min || 0);
+        var mx = parseInt(s.max_price || s.max || 0);
+        var priceLabel = (mn > 0 || mx > 0)
+          ? '₹' + mn + '–₹' + mx
           : (s.price && s.price !== 499 ? '₹' + s.price : 'Price not set');
         return '<span style="background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:800">'
           + (s.icon||'🔧') + ' ' + s.name
