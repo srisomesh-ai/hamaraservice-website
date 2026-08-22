@@ -279,7 +279,7 @@ HamaraService Team";
     $fields = [];
     $params = [':id' => $prov['id']];
     $allowed = ['name','phone','whatsapp','gender','experience','bio',
-                'address','city','lat','lng','radius_km'];
+                'address','city','lat','lng','radius_km','available'];
     foreach ($allowed as $f) {
       if (isset($b[$f])) {
         $fields[]   = "$f = :$f";
