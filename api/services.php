@@ -129,20 +129,41 @@ switch ($action) {
        ranges payload (admin ref + min/max per option) — serve it. */
     if (empty($id)) { ok(buildPriceRanges($db, $_GET['city'] ?? '')); }
 
-    $stmt = $db->prepare("
-      SELECT group_key, option_key, option_name, price
-      FROM service_prices
-      WHERE svc_id = ?
-      ORDER BY group_key, price ASC
-    ");
-    $stmt->execute([$id]);
-    $rows = $stmt->fetchAll();
-
-    // Build grouped structure: {groupKey: {optKey: price}}
+    // Read admin prices from services.price_data JSON column
     $grouped = [];
-    foreach ($rows as $row) {
-      $grouped[$row['group_key']][$row['option_key']] = (int)$row['price'];
+    try {
+      $stmt = $db->prepare("SELECT price_data FROM services WHERE id = ?");
+      $stmt->execute([$id]);
+      $pd = $stmt->fetchColumn();
+      if ($pd) {
+        $data = json_decode($pd, true);
+        if (is_array($data)) {
+          foreach ($data as $grp => $opts) {
+            if ($grp === 'name') continue;
+            if ($grp === 'base') { $grouped['base'] = ['base' => (int)$opts]; continue; }
+            if (is_array($opts)) {
+              foreach ($opts as $k => $v) {
+                if (is_numeric($v)) $grouped[$grp][$k] = (int)$v;
+              }
+            }
+          }
+        }
+      }
+    } catch (Throwable $e) {}
+
+    // Fallback: legacy service_prices table
+    if (empty($grouped)) {
+      try {
+        $stmt = $db->prepare("
+          SELECT group_key, option_key, price FROM service_prices
+          WHERE svc_id = ? ORDER BY group_key, price ASC");
+        $stmt->execute([$id]);
+        foreach ($stmt->fetchAll() as $row) {
+          $grouped[$row['group_key']][$row['option_key']] = (int)$row['price'];
+        }
+      } catch (Throwable $e) {}
     }
+
     ok($grouped);
   }
 
