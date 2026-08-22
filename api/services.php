@@ -12,6 +12,20 @@
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
 
+// Global error handler — always return JSON even on fatal errors
+set_exception_handler(function($e) {
+  http_response_code(500);
+  echo json_encode(['success' => false, 'error' => 'Server: ' . $e->getMessage()]);
+  exit;
+});
+register_shutdown_function(function() {
+  $err = error_get_last();
+  if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Fatal: ' . $err['message']]);
+  }
+});
+
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
@@ -42,7 +56,7 @@ function buildPriceRanges($db, $city = '') {
     ];
   }
   /* 2. Admin reference + min/max per option */
-  try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch (Exception $e) {}
+  try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch (Throwable $e) {}
   foreach ($db->query("SELECT id, price_data FROM services WHERE price_data IS NOT NULL")->fetchAll() as $row) {
     $pd = json_decode($row['price_data'], true);
     if (!$pd) continue;
@@ -139,8 +153,19 @@ switch ($action) {
     $data   = $b['data']   ?? ($b['prices'] ?? []);
     if (empty($svc_id)) err('svc_id required');
 
-    // Ensure price_data column exists
-    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Exception $e) {}
+    // Ensure services table exists (with price_data column)
+    try {
+      $db->exec("CREATE TABLE IF NOT EXISTS services (
+        id         VARCHAR(20) PRIMARY KEY,
+        name       VARCHAR(120) NOT NULL DEFAULT '',
+        icon       VARCHAR(10)  NOT NULL DEFAULT '',
+        cat        VARCHAR(60)  NOT NULL DEFAULT '',
+        min_price  INT NOT NULL DEFAULT 0,
+        max_price  INT NOT NULL DEFAULT 0,
+        price_data JSON NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) {}
+    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Throwable $e) {}
 
     // Calculate min/max from all numeric prices in data
     $all_prices = [];
@@ -171,7 +196,7 @@ switch ($action) {
         $db->prepare("INSERT INTO services (id, name, price_data, min_price, max_price)
                       VALUES (?, ?, ?, ?, ?)")
            ->execute([$svc_id, $data['name'] ?? $svc_id, json_encode($data), $min_price, $max_price]);
-      } catch (Exception $e) { /* row exists with same data */ }
+      } catch (Throwable $e) { /* row exists with same data */ }
     }
 
     ok(['saved' => true, 'svc_id' => $svc_id, 'min' => $min_price, 'max' => $max_price]);
@@ -199,8 +224,19 @@ switch ($action) {
   // ── GET ALL PRICES (admin price manager) ────────────────────────
   case 'get_all_prices': {
     requireAdmin();
-    // Check if service_prices column exists in services table, add if not
-    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Exception $e) {}
+    // Ensure services table exists
+    try {
+      $db->exec("CREATE TABLE IF NOT EXISTS services (
+        id         VARCHAR(20) PRIMARY KEY,
+        name       VARCHAR(120) NOT NULL DEFAULT '',
+        icon       VARCHAR(10)  NOT NULL DEFAULT '',
+        cat        VARCHAR(60)  NOT NULL DEFAULT '',
+        min_price  INT NOT NULL DEFAULT 0,
+        max_price  INT NOT NULL DEFAULT 0,
+        price_data JSON NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (Throwable $e) {}
+    try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Throwable $e) {}
 
     $rows = $db->query("SELECT id, name, price_data FROM services ORDER BY id")->fetchAll();
     $result = [];
