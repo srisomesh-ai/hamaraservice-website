@@ -421,8 +421,8 @@ HamaraService Team";
         svc_icon  = VALUES(svc_icon),
         svc_cat   = VALUES(svc_cat),
         enabled   = VALUES(enabled),
-        min_price = VALUES(min_price),
-        max_price = VALUES(max_price)
+        min_price = IF(VALUES(min_price) > 0, VALUES(min_price), min_price),
+        max_price = IF(VALUES(max_price) > 0, VALUES(max_price), max_price)
     ");
 
     $saved = 0;
