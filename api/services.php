@@ -27,6 +27,13 @@ register_shutdown_function(function() {
 });
 
 $action = $_GET['action'] ?? '';
+
+// Version check — no DB needed
+if ($action === 'version') {
+  echo json_encode(['success' => true, 'version' => 'v2026-08-20-1', 'file' => 'services.php']);
+  exit;
+}
+
 $db     = getDB();
 
 function buildPriceRanges($db, $city = '') {
