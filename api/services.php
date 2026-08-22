@@ -30,7 +30,7 @@ $action = $_GET['action'] ?? '';
 
 // Version check — no DB needed
 if ($action === 'version') {
-  echo json_encode(['success' => true, 'version' => 'v2026-08-20-1', 'file' => 'services.php']);
+  echo json_encode(['success' => true, 'version' => 'v2026-08-20-2-minmax-cols', 'file' => 'services.php']);
   exit;
 }
 
