@@ -128,7 +128,7 @@ switch ($action) {
     if ($price <= 0) err('quoted_price must be > 0');
 
     // Check booking is still available
-    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND status = 'active'");
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND status IN ('searching','active')");
     $stmt->execute([$id]);
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not available');
@@ -494,6 +494,22 @@ switch ($action) {
   }
 
   // ── ADMIN: LIST ALL ───────────────────────────────────
+  // ── OPEN BOOKINGS (provider polling) ─────────────────
+  case 'open': {
+    requireProvider();
+    $city  = $_GET['city'] ?? '';
+    $limit = (int)($_GET['limit'] ?? 20);
+
+    $sql    = "SELECT * FROM bookings WHERE status = 'searching'";
+    $params = [];
+    if (!empty($city)) { $sql .= " AND city LIKE ?"; $params[] = "%$city%"; }
+    $sql .= " ORDER BY created_at DESC LIMIT $limit";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    ok($stmt->fetchAll());
+  }
+
   case 'admin_list': {
     requireAdmin();
     $status = $_GET['status'] ?? '';
