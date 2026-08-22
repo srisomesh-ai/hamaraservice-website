@@ -96,7 +96,7 @@ switch ($action) {
         (:id, :cid, :cname, :cphone,
          :svc_id, :svc_name, :svc_icon,
          :address, :city, :lat, :lng,
-         :date, :time, :notes, 'active')
+         :date, :time, :notes, 'searching')
     ");
     $stmt->execute([
       ':id'       => $id,
@@ -115,7 +115,7 @@ switch ($action) {
       ':notes'    => $b['notes'] ?? '',
     ]);
 
-    ok(['id' => $id, 'status' => 'active']);
+    ok(['id' => $id, 'status' => 'searching']);
   }
 
   // ── PROVIDER ACCEPTS + QUOTES PRICE ──────────────────
