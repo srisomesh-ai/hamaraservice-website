@@ -173,6 +173,8 @@ switch ($action) {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     } catch (Throwable $e) {}
     try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Throwable $e) {}
+    try { $db->exec("ALTER TABLE services ADD COLUMN min_price INT NOT NULL DEFAULT 0"); } catch(Throwable $e) {}
+    try { $db->exec("ALTER TABLE services ADD COLUMN max_price INT NOT NULL DEFAULT 0"); } catch(Throwable $e) {}
 
     // Calculate min/max from all numeric prices in data
     $all_prices = [];
@@ -244,6 +246,8 @@ switch ($action) {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     } catch (Throwable $e) {}
     try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch(Throwable $e) {}
+    try { $db->exec("ALTER TABLE services ADD COLUMN min_price INT NOT NULL DEFAULT 0"); } catch(Throwable $e) {}
+    try { $db->exec("ALTER TABLE services ADD COLUMN max_price INT NOT NULL DEFAULT 0"); } catch(Throwable $e) {}
 
     $rows = $db->query("SELECT id, name, price_data FROM services ORDER BY id")->fetchAll();
     $result = [];
