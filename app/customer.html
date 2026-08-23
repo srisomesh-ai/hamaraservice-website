@@ -101,10 +101,17 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .nearby-ico{font-size:28px}
 .nearby-title{font-size:14.5px;font-weight:900;color:var(--amber)}
 .nearby-sub{font-size:12px;color:#7a5a3a;margin-top:2px}
-.nearby-sel-wrap{position:relative}
-.nearby-sel{margin-bottom:0!important;border:2px solid var(--amber)!important;background:#fff!important;font-weight:700;color:var(--teal);appearance:none;-webkit-appearance:none;padding-right:40px!important}
-.nearby-arrow{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--amber);font-size:14px;font-weight:900;pointer-events:none;animation:arrowB 1s infinite}
-@keyframes arrowB{0%,100%{transform:translateY(-50%)}50%{transform:translateY(-30%)}}
+.nb-list{max-height:250px;overflow-y:auto;border-radius:12px;background:#fff;border:1.5px solid #f0e0d0}
+.nb-row{display:flex;align-items:center;gap:10px;padding:12px 13px;border-bottom:1px solid #f4ede6;cursor:pointer;font-size:13.5px;font-weight:600}
+.nb-row:last-child{border-bottom:none}
+.nb-row:active{background:#fff4ec}
+.nb-row.on{background:#e8f7ee}
+.nb-row .nb-ic{font-size:17px}
+.nb-row .nb-nm{flex:1;line-height:1.3}
+.nb-row .nb-d{font-size:11px;color:var(--muted);font-weight:700;background:#f1f5f7;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.nb-row .nb-ck{color:var(--green);font-weight:900;display:none}
+.nb-row.on .nb-ck{display:inline}
+.nb-empty{padding:16px;text-align:center;font-size:12.5px;color:var(--muted)}
 .home-hero{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;padding:16px 16px 18px;position:sticky;top:0;z-index:50}
 .search-inp{width:100%;margin-top:12px;padding:12px 15px;border:none;border-radius:12px;font-size:14.5px;background:#fff;color:var(--txt)}
 .search-inp:focus{outline:2px solid var(--amber)}
@@ -180,16 +187,13 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
       <div class="nearby-head">
         <span class="nearby-ico">🏢</span>
         <div style="flex:1">
-          <div class="nearby-title">Select Your Building / Nearest Place</div>
-          <div class="nearby-sub">Tap below to choose from <b id="nearbyCount">0</b> places found near you ⬇️</div>
+          <div class="nearby-title">Your Building / Landmark</div>
+          <div class="nearby-sub">Search or pick from nearby places</div>
         </div>
       </div>
-      <div class="nearby-sel-wrap">
-        <select class="inp nearby-sel" id="nearbySel" onchange="pickNearbySel()">
-          <option value="">👇 Tap here to choose your building…</option>
-        </select>
-        <span class="nearby-arrow">▼</span>
-      </div>
+      <input class="inp" id="nbSearch" placeholder="🔍 Type your building name… e.g. Pavan Midway"
+        oninput="nbSearchInput()" autocomplete="off" style="margin-bottom:8px">
+      <div id="nbList" class="nb-list"></div>
     </div>
     <div class="card">
       <label>Your Location (auto-detected)</label>
@@ -513,6 +517,19 @@ function captureGPS(force){
 }
 function gpsOk(extra){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='✅ Location updated'+(extra||'');}
 var selNearby='';
+var nbItems=[];
+var JUNK_TYPES=['locality','sublocality','political','administrative_area_level_1','administrative_area_level_2','administrative_area_level_3','route','postal_code','country','plus_code'];
+function typeIcon(types){
+  types=types||[];
+  if(types.indexOf('apartment_complex')>=0||types.indexOf('apartment_building')>=0||types.indexOf('lodging')>=0)return '🏢';
+  if(types.indexOf('school')>=0||types.indexOf('university')>=0)return '🏫';
+  if(types.indexOf('hospital')>=0||types.indexOf('doctor')>=0||types.indexOf('pharmacy')>=0)return '🏥';
+  if(types.indexOf('hindu_temple')>=0||types.indexOf('church')>=0||types.indexOf('mosque')>=0||types.indexOf('place_of_worship')>=0)return '🛕';
+  if(types.indexOf('store')>=0||types.indexOf('supermarket')>=0||types.indexOf('shopping_mall')>=0)return '🏬';
+  if(types.indexOf('restaurant')>=0||types.indexOf('cafe')>=0)return '🍽️';
+  if(types.indexOf('bank')>=0||types.indexOf('atm')>=0)return '🏦';
+  return '📍';
+}
 function loadNearbyPlaces(lat,lng){
   fetch('https://places.googleapis.com/v1/places:searchNearby',{
     method:'POST',
@@ -522,45 +539,87 @@ function loadNearbyPlaces(lat,lng){
       'X-Goog-FieldMask':'places.displayName,places.location,places.types'
     },
     body:JSON.stringify({
-      maxResultCount:15,
+      maxResultCount:20,
       rankPreference:'DISTANCE',
-      locationRestriction:{circle:{center:{latitude:lat,longitude:lng},radius:300.0}}
+      locationRestriction:{circle:{center:{latitude:lat,longitude:lng},radius:400.0}}
     })
   })
   .then(function(r){return r.json();})
   .then(function(d){
-    var list=[];var seen={};
+    nbItems=[];var seen={};
     (d.places||[]).forEach(function(p){
       var nm=(p.displayName&&p.displayName.text)||'';
-      if(!nm||seen[nm])return;seen[nm]=1;
+      if(!nm||seen[nm.toLowerCase()])return;
+      var types=p.types||[];
+      // filter junk: localities, roads, generic geo entries
+      for(var i=0;i<types.length;i++){if(JUNK_TYPES.indexOf(types[i])>=0)return;}
+      if(nm.length>50)return; // long junk addresses
+      seen[nm.toLowerCase()]=1;
       var pl=p.location||{};
       var dx=((pl.latitude||lat)-lat)*111320;
       var dy=((pl.longitude||lng)-lng)*111320*Math.cos(lat*Math.PI/180);
-      list.push({name:nm,dist:Math.round(Math.sqrt(dx*dx+dy*dy))});
+      nbItems.push({name:nm,dist:Math.round(Math.sqrt(dx*dx+dy*dy)),ico:typeIcon(types)});
     });
-    list=list.slice(0,15);
-    if(!list.length){$('nearbyWrap').classList.add('hide');return;}
-    $('nearbyCount').textContent=list.length;
-    var h='<option value="">👇 Tap here to choose your building…</option>';
-    list.forEach(function(it){
-      h+='<option value="'+it.name.replace(/"/g,'&quot;')+'">'+it.name+'  ('+it.dist+'m)</option>';
-    });
-    $('nearbySel').innerHTML=h;
+    nbItems=nbItems.slice(0,8);
+    renderNbList(nbItems);
     $('nearbyWrap').classList.remove('hide');
   }).catch(function(){});
 }
-function pickNearbySel(){
-  var nm=$('nearbySel').value;
-  if(!nm)return;
-  selNearby=nm;
-  var aw=document.querySelector('.nearby-arrow');if(aw)aw.style.animation='none';
-  var cd=document.querySelector('.nearby-card');if(cd){cd.style.background='#f0faf3';cd.style.borderColor='var(--green)';}
-  var tt=document.querySelector('.nearby-title');if(tt){tt.textContent='✅ Place Selected';tt.style.color='var(--green)';}
-  var cur=$('bAddr').value.replace(/^Near [^,]+,\s*/,'');
-  $('bAddr').value='Near '+nm+', '+cur;
-  toast('📍 '+nm+' added');
+function renderNbList(list){
+  if(!list.length){
+    $('nbList').innerHTML='<div class="nb-empty">Type your building name above to search 🔍</div>';
+    return;
+  }
+  var h='';
+  list.forEach(function(it,i){
+    var on=(selNearby===it.name)?' on':'';
+    h+='<div class="nb-row'+on+'" onclick="pickNb('+i+')">'
+      +'<span class="nb-ic">'+(it.ico||'📍')+'</span>'
+      +'<span class="nb-nm">'+it.name+'</span>'
+      +(it.dist!=null?'<span class="nb-d">'+it.dist+'m</span>':'')
+      +'<span class="nb-ck">✓</span></div>';
+  });
+  $('nbList').innerHTML=h;
 }
-
+var nbCurrent=[];
+function pickNb(i){
+  var it=(nbCurrent.length?nbCurrent:nbItems)[i];
+  if(!it)return;
+  selNearby=it.name;
+  var cur=$('bAddr').value.replace(/^Near [^,]+,\s*/,'');
+  $('bAddr').value='Near '+it.name+', '+cur;
+  renderNbList(nbCurrent.length?nbCurrent:nbItems);
+  var tt=document.querySelector('.nearby-title');if(tt){tt.textContent='✅ '+it.name;tt.style.color='var(--green)';}
+  toast('📍 '+it.name+' added to address');
+}
+var nbTimer=null;
+function nbSearchInput(){
+  var q=$('nbSearch').value.trim();
+  clearTimeout(nbTimer);
+  if(!q){nbCurrent=[];renderNbList(nbItems);return;}
+  nbTimer=setTimeout(function(){
+    fetch('https://places.googleapis.com/v1/places:autocomplete',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Goog-Api-Key':GKEY},
+      body:JSON.stringify({
+        input:q,
+        locationBias:{circle:{center:{latitude:gps.lat||17.7,longitude:gps.lng||83.2},radius:3000.0}},
+        includedRegionCodes:['in']
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      nbCurrent=[];
+      (d.suggestions||[]).forEach(function(s){
+        var pp=s.placePrediction;if(!pp)return;
+        var main=(pp.structuredFormat&&pp.structuredFormat.mainText&&pp.structuredFormat.mainText.text)||(pp.text&&pp.text.text)||'';
+        if(main)nbCurrent.push({name:main,dist:null,ico:'📍'});
+      });
+      nbCurrent=nbCurrent.slice(0,6);
+      renderNbList(nbCurrent);
+    }).catch(function(){});
+  },350);
+}
 
 // ── CREATE BOOKING ──
 var pendingAfterAuth=null;
