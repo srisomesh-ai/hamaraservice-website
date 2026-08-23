@@ -68,6 +68,17 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .gps-ok{background:#e8f7ee;color:var(--green);border:1.5px solid #bbe7cc}
 .gps-no{background:#fff8e6;color:#8a6d00;border:1.5px solid #f3dfa0;cursor:pointer}
 .otp-big{font-size:34px;letter-spacing:10px;font-weight:900;color:var(--teal);text-align:center;padding:14px;background:#eef7fa;border-radius:14px;margin:12px 0}
+.home-hero{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;padding:16px 16px 18px;position:sticky;top:0;z-index:50}
+.search-inp{width:100%;margin-top:12px;padding:12px 15px;border:none;border-radius:12px;font-size:14.5px;background:#fff;color:var(--txt)}
+.search-inp:focus{outline:2px solid var(--amber)}
+.cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 4px;scrollbar-width:none;background:var(--bg);position:sticky;top:118px;z-index:45}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-chip{flex:0 0 auto;padding:8px 15px;border-radius:99px;background:#fff;border:1.5px solid #d5e2e6;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.cat-chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.cat-head{display:flex;align-items:center;gap:8px;margin:18px 0 10px}
+.cat-head .t{font-size:15.5px;font-weight:900;color:var(--teal)}
+.cat-head .n{font-size:11px;color:var(--muted);font-weight:700;background:#e3eef1;padding:2px 9px;border-radius:99px}
+.svc-tile .from{font-size:9.5px;color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
@@ -94,11 +105,18 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 
 <!-- ══ HOME ══ -->
 <div id="pgHome" class="hide">
-  <div class="topbar"><h1>Hamara<span style="color:#ffb35c">Service</span></h1><span class="mini" id="homeUser"></span></div>
-  <div class="page">
-    <div class="sec-title">All Services</div>
-    <div class="svc-grid" id="svcGrid"></div>
+  <div class="home-hero">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:20px;font-weight:900">Hamara<span style="color:#ffb35c">Service</span></div>
+        <div style="font-size:12px;color:#cfe4ea" id="homeUser"></div>
+      </div>
+      <div style="font-size:12px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:99px">✨ Pay after service</div>
+    </div>
+    <input class="search-inp" id="homeSearch" placeholder="🔍 Search services…" oninput="renderHome()">
   </div>
+  <div class="cat-scroll" id="catChips"></div>
+  <div class="page" id="homeBody" style="padding-top:6px"></div>
   <div class="tabbar">
     <div class="tab on"><span class="i">🏠</span>Home</div>
     <div class="tab" onclick="showBookings()"><span class="i">📋</span>Bookings</div>
@@ -203,23 +221,55 @@ function doAuth(){
 function logout(){localStorage.removeItem('hs_cust_token');localStorage.removeItem('hs_cust_me');localStorage.removeItem('hs_active_bk');location.href='index.html';}
 
 // ── HOME ──
+var CATS=[];var catIcons={'Home Cleaning':'🧹','Home Services':'🔧','Vehicle Care':'🚗','Pest Control':'🐜','Cooking':'👩‍🍳','Security':'🛡️','Outdoor':'🌿','Beauty & Wellness':'💆','Health Services':'🩺','Care Services':'🤱','Appliance Care':'❄️'};
+var selCat='All';
 function initHome(){
-  $('homeUser').textContent=ME.name||'';
+  $('homeUser').textContent='Hi '+(ME.name||'')+' 👋';
+  CATS=[];SVC.forEach(function(s){if(CATS.indexOf(s.cat)<0)CATS.push(s.cat);});
   show('pgHome');
-  renderGrid();
+  renderChips();renderHome();
   api('services.php','price_ranges').then(function(res){
-    if(res.success){priceRanges=res.data||{};renderGrid();}
+    if(res.success){priceRanges=res.data||{};renderHome();}
   }).catch(function(){});
   if(activeBookingId) resumeBooking();
 }
-function renderGrid(){
-  var h='';
-  SVC.forEach(function(s){
-    var r=priceRanges[s.id];
-    var pr=(r&&r.min>0)?('from ₹'+r.min):('from ₹'+(s.base||99));
-    h+='<div class="svc-tile" onclick="openSvc(\''+s.id+'\')"><div class="ico">'+s.icon+'</div><div class="nm">'+s.name+'</div><div class="pr">'+pr+'</div></div>';
+function renderChips(){
+  var h='<div class="cat-chip'+(selCat==='All'?' on':'')+'" onclick="pickCat(\'All\')">✨ All</div>';
+  CATS.forEach(function(ct){
+    h+='<div class="cat-chip'+(selCat===ct?' on':'')+'" onclick="pickCat(\''+ct+'\')">'+(catIcons[ct]||'')+' '+ct+'</div>';
   });
-  $('svcGrid').innerHTML=h;
+  $('catChips').innerHTML=h;
+}
+function pickCat(ct){selCat=ct;renderChips();renderHome();window.scrollTo(0,0);}
+function tileHtml(s){
+  var r=priceRanges[s.id];
+  var pr=(r&&r.min>0)?r.min:(s.base||99);
+  return '<div class="svc-tile" onclick="openSvc(\''+s.id+'\')"><div class="ico">'+s.icon+'</div><div class="nm">'+s.name+'</div><div class="pr"><span class="from">from </span>₹'+pr+'</div></div>';
+}
+function renderHome(){
+  var q=($('homeSearch').value||'').trim().toLowerCase();
+  var h='';
+  var list=SVC.filter(function(s){
+    if(selCat!=='All'&&s.cat!==selCat)return false;
+    if(q&&s.name.toLowerCase().indexOf(q)<0&&s.cat.toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+  if(!list.length){$('homeBody').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">No services found</div>';return;}
+  if(selCat==='All'&&!q){
+    // grouped by category
+    CATS.forEach(function(ct){
+      var group=list.filter(function(s){return s.cat===ct;});
+      if(!group.length)return;
+      h+='<div class="cat-head"><span class="t">'+(catIcons[ct]||'')+' '+ct+'</span><span class="n">'+group.length+'</span></div><div class="svc-grid">';
+      group.forEach(function(s){h+=tileHtml(s);});
+      h+='</div>';
+    });
+  } else {
+    h+='<div style="height:8px"></div><div class="svc-grid">';
+    list.forEach(function(s){h+=tileHtml(s);});
+    h+='</div>';
+  }
+  $('homeBody').innerHTML=h;
 }
 
 // ── SERVICE OPTIONS ──
