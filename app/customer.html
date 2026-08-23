@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f4c5c">
+<title>HamaraService — Book a Service</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--teal:#0f4c5c;--teal2:#1a6b7e;--amber:#f26b1d;--bg:#eef5f6;--card:#fff;--txt:#1a2b32;--muted:#6b7f87;--green:#16a34a;--red:#dc2626;--yellow:#f59e0b;--r:14px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);min-height:100vh;padding-bottom:70px}
+.hide{display:none!important}
+.topbar{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.topbar .back{font-size:22px;cursor:pointer;padding:4px 8px}
+.topbar h1{font-size:17px;font-weight:800;flex:1}
+.topbar .mini{font-size:12px;color:#cfe4ea}
+.page{padding:16px;max-width:520px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,76,92,.08)}
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:var(--r);background:var(--amber);color:#fff;font-size:16px;font-weight:800;cursor:pointer;text-align:center}
+.btn:disabled{opacity:.5}
+.btn.teal{background:var(--teal)}
+.btn.ghost{background:#fff;color:var(--teal);border:2px solid var(--teal)}
+.inp{width:100%;padding:13px 14px;border:1.5px solid #d5e2e6;border-radius:12px;font-size:15px;margin-bottom:12px;background:#fff}
+.inp:focus{outline:none;border-color:var(--teal)}
+label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.err{color:var(--red);font-size:13px;margin-bottom:10px;min-height:16px}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.svc-tile{background:#fff;border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(15,76,92,.07);transition:.15s}
+.svc-tile:active{transform:scale(.95)}
+.svc-tile .ico{font-size:30px;margin-bottom:6px}
+.svc-tile .nm{font-size:12px;font-weight:700;line-height:1.25}
+.svc-tile .pr{font-size:11px;color:var(--amber);font-weight:800;margin-top:4px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 14px;border:1.5px solid #d5e2e6;border-radius:12px;background:#fff;font-size:13.5px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.opt{border:1.5px solid #d5e2e6;border-radius:12px;background:#fff;padding:12px;text-align:center;cursor:pointer}
+.opt.on{border-color:var(--amber);background:#fff4ec}
+.opt .n{font-size:13px;font-weight:700}
+.opt .p{font-size:15px;font-weight:900;color:var(--teal);margin-top:3px}
+.total-bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e2ecef;display:flex;align-items:center;padding:12px 16px;gap:14px;z-index:60}
+.total-bar .amt{font-size:20px;font-weight:900;color:var(--teal)}
+.total-bar .lbl{font-size:11px;color:var(--muted)}
+.total-bar .btn{flex:1;padding:13px}
+.sec-title{font-size:15px;font-weight:800;margin:16px 0 10px;color:var(--teal)}
+.radar-wrap{text-align:center;padding:40px 0}
+.pulse{width:130px;height:130px;margin:0 auto 24px;border-radius:50%;background:radial-gradient(circle,var(--amber) 22%,rgba(242,107,29,.25) 60%,transparent 70%);display:flex;align-items:center;justify-content:center;font-size:44px;animation:pl 1.4s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(242,107,29,.4)}70%{box-shadow:0 0 0 34px rgba(242,107,29,0)}100%{box-shadow:0 0 0 0 rgba(242,107,29,0)}}
+.status-big{font-size:18px;font-weight:800;margin-bottom:8px}
+.status-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.offer-card{border:2px solid var(--amber);background:#fff8f2}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2ecef;display:flex;z-index:55}
+.tab{flex:1;text-align:center;padding:9px 0 7px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer}
+.tab .i{font-size:20px;display:block;margin-bottom:2px}
+.tab.on{color:var(--teal)}
+.bk-item{display:flex;gap:12px;align-items:center}
+.bk-item .ic{font-size:28px}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800}
+.badge.searching{background:#fff3cd;color:#8a6d00}
+.badge.accepted,.badge.price_confirmed{background:#d1f2dd;color:#0f6d33}
+.badge.active,.badge.otp_sent{background:#cfe9f5;color:#0b5a77}
+.badge.completed{background:#e2e8f0;color:#334155}
+.badge.cancelled{background:#fee2e2;color:#991b1b}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:#132b33;color:#fff;padding:11px 20px;border-radius:99px;font-size:13.5px;z-index:99;display:none;max-width:90%;text-align:center}
+.gps-banner{display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:12px}
+.gps-ok{background:#e8f7ee;color:var(--green);border:1.5px solid #bbe7cc}
+.gps-no{background:#fff8e6;color:#8a6d00;border:1.5px solid #f3dfa0;cursor:pointer}
+.otp-big{font-size:34px;letter-spacing:10px;font-weight:900;color:var(--teal);text-align:center;padding:14px;background:#eef7fa;border-radius:14px;margin:12px 0}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══ -->
+<div id="pgAuth" class="hide">
+  <div class="topbar"><span class="back" onclick="location.href='index.html'">←</span><h1>Customer Login</h1></div>
+  <div class="page">
+    <div class="card">
+      <div id="authErr" class="err"></div>
+      <div id="regFields" class="hide">
+        <label>Full Name</label><input class="inp" id="rName" placeholder="Your name">
+        <label>Mobile Number</label><input class="inp" id="rPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
+      </div>
+      <label>Email</label><input class="inp" id="aEmail" type="email" placeholder="you@example.com">
+      <label>Password</label><input class="inp" id="aPwd" type="password" placeholder="Password">
+      <button class="btn" id="authBtn" onclick="doAuth()">Login</button>
+      <p style="text-align:center;margin-top:14px;font-size:13.5px;color:var(--muted)">
+        <span id="authSwap" style="color:var(--amber);font-weight:800;cursor:pointer" onclick="swapAuth()">New here? Create account</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="pgHome" class="hide">
+  <div class="topbar"><h1>Hamara<span style="color:#ffb35c">Service</span></h1><span class="mini" id="homeUser"></span></div>
+  <div class="page">
+    <div class="sec-title">All Services</div>
+    <div class="svc-grid" id="svcGrid"></div>
+  </div>
+  <div class="tabbar">
+    <div class="tab on"><span class="i">🏠</span>Home</div>
+    <div class="tab" onclick="showBookings()"><span class="i">📋</span>Bookings</div>
+    <div class="tab" onclick="logout()"><span class="i">🚪</span>Logout</div>
+  </div>
+</div>
+
+<!-- ══ SERVICE / OPTIONS ══ -->
+<div id="pgSvc" class="hide">
+  <div class="topbar"><span class="back" onclick="show('pgHome')">←</span><h1 id="svcTitle"></h1></div>
+  <div class="page" id="svcBody" style="padding-bottom:90px"></div>
+  <div class="total-bar">
+    <div><div class="lbl">TOTAL</div><div class="amt" id="svcTotal">₹0</div></div>
+    <button class="btn" onclick="goAddress()">Book Now →</button>
+  </div>
+</div>
+
+<!-- ══ ADDRESS ══ -->
+<div id="pgAddr" class="hide">
+  <div class="topbar"><span class="back" onclick="show('pgSvc')">←</span><h1>Service Address</h1></div>
+  <div class="page">
+    <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Tap to capture your location</div>
+    <div class="card">
+      <label>Full Address *</label>
+      <textarea class="inp" id="bAddr" rows="2" placeholder="House no, Street, Area, City"></textarea>
+      <label>Landmark *</label>
+      <input class="inp" id="bLandmark" placeholder="Near school, temple, hospital...">
+      <label>Mobile Number *</label>
+      <input class="inp" id="bPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
+      <label>When?</label>
+      <div class="chip-row" id="slotRow"></div>
+    </div>
+    <button class="btn" onclick="createBooking()">Find Provider →</button>
+  </div>
+</div>
+
+<!-- ══ RADAR / TRACK ══ -->
+<div id="pgRadar" class="hide">
+  <div class="topbar"><h1>Your Booking</h1><span class="mini" id="radarBid"></span></div>
+  <div class="page">
+    <div class="radar-wrap" id="radarSearch">
+      <div class="pulse">🔍</div>
+      <div class="status-big">Searching for providers…</div>
+      <div class="status-sub" id="radarSub">Contacting providers near you</div>
+      <button class="btn ghost" style="max-width:220px;margin:0 auto" onclick="cancelBooking()">Cancel</button>
+    </div>
+    <div id="radarOffer" class="hide"></div>
+    <div id="radarActive" class="hide"></div>
+  </div>
+</div>
+
+<!-- ══ BOOKINGS LIST ══ -->
+<div id="pgBookings" class="hide">
+  <div class="topbar"><span class="back" onclick="show('pgHome')">←</span><h1>My Bookings</h1></div>
+  <div class="page" id="bkList"></div>
+  <div class="tabbar">
+    <div class="tab" onclick="show('pgHome')"><span class="i">🏠</span>Home</div>
+    <div class="tab on"><span class="i">📋</span>Bookings</div>
+    <div class="tab" onclick="logout()"><span class="i">🚪</span>Logout</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="catalog.js"></script>
+<script>
+var API='https://hamaraservice.com/api';
+var TOKEN=localStorage.getItem('hs_cust_token')||'';
+var ME=JSON.parse(localStorage.getItem('hs_cust_me')||'{}');
+var isReg=false, curSvc=null, sel={}, gps={lat:0,lng:0}, activeBookingId=localStorage.getItem('hs_active_bk')||'', pollTimer=null, priceRanges={};
+
+function $(id){return document.getElementById(id);}
+function show(p){['pgAuth','pgHome','pgSvc','pgAddr','pgRadar','pgBookings'].forEach(function(x){$(x).classList.add('hide');});$(p).classList.remove('hide');window.scrollTo(0,0);}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
+function api(ep,action,body,method){
+  var url=API+'/'+ep+'?action='+action;
+  var opt={method:method||(body?'POST':'GET'),headers:{'Content-Type':'application/json'}};
+  if(TOKEN)opt.headers['Authorization']='Bearer '+TOKEN;
+  if(body)opt.body=JSON.stringify(body);
+  return fetch(url,opt).then(function(r){return r.json();});
+}
+
+// ── AUTH ──
+function swapAuth(){isReg=!isReg;$('regFields').classList.toggle('hide',!isReg);$('authBtn').textContent=isReg?'Create Account':'Login';$('authSwap').textContent=isReg?'Have an account? Login':'New here? Create account';$('authErr').textContent='';}
+function doAuth(){
+  var email=$('aEmail').value.trim().toLowerCase(),pwd=$('aPwd').value;
+  if(!email||!pwd){$('authErr').textContent='Enter email and password';return;}
+  $('authBtn').disabled=true;
+  var act=isReg?'web_register':'web_login';
+  var body={email:email,password:pwd};
+  if(isReg){body.name=$('rName').value.trim();body.phone=$('rPhone').value.trim();
+    if(!body.name){$('authErr').textContent='Enter your name';$('authBtn').disabled=false;return;}}
+  api('customers.php',act,body).then(function(res){
+    $('authBtn').disabled=false;
+    if(res.success){TOKEN=res.data.token;ME=res.data.customer;
+      localStorage.setItem('hs_cust_token',TOKEN);localStorage.setItem('hs_cust_me',JSON.stringify(ME));localStorage.setItem('hs_role','customer');
+      initHome();
+    } else if(res.error==='NOT_REGISTERED'){swapAuth();$('authErr').textContent='Email not found — create your account';
+    } else {$('authErr').textContent=res.error||'Failed';}
+  }).catch(function(){$('authBtn').disabled=false;$('authErr').textContent='Network error';});
+}
+function logout(){localStorage.removeItem('hs_cust_token');localStorage.removeItem('hs_cust_me');localStorage.removeItem('hs_active_bk');location.href='index.html';}
+
+// ── HOME ──
+function initHome(){
+  $('homeUser').textContent=ME.name||'';
+  show('pgHome');
+  renderGrid();
+  api('services.php','price_ranges').then(function(res){
+    if(res.success){priceRanges=res.data||{};renderGrid();}
+  }).catch(function(){});
+  if(activeBookingId) resumeBooking();
+}
+function renderGrid(){
+  var h='';
+  SVC.forEach(function(s){
+    var r=priceRanges[s.id];
+    var pr=(r&&r.min>0)?('from ₹'+r.min):('from ₹'+(s.base||99));
+    h+='<div class="svc-tile" onclick="openSvc(\''+s.id+'\')"><div class="ico">'+s.icon+'</div><div class="nm">'+s.name+'</div><div class="pr">'+pr+'</div></div>';
+  });
+  $('svcGrid').innerHTML=h;
+}
+
+// ── SERVICE OPTIONS ──
+var adminPrices={};
+function openSvc(id){
+  curSvc=SVC.find(function(s){return s.id===id;});sel={tasks:{},opts:{}};
+  $('svcTitle').textContent=curSvc.icon+' '+curSvc.name;
+  adminPrices={};
+  api('services.php','prices&id='+id).then(function(res){
+    if(res.success)adminPrices=res.data||{};
+    renderSvc();
+  }).catch(function(){renderSvc();});
+  show('pgSvc');
+}
+function priceOf(gk,ok_,fallback){
+  var g=adminPrices[gk]||{};
+  var v=g[ok_]; if(typeof v==='number'&&v>0)return v;
+  var mn=g[ok_+'_min']; if(typeof mn==='number'&&mn>0)return mn;
+  return fallback||0;
+}
+function renderSvc(){
+  var h='';
+  (curSvc.groups||[]).forEach(function(g){
+    if(g.style==='label'){
+      h+='<div class="sec-title">'+g.title+'</div><div class="chip-row">';
+      g.items.forEach(function(it){
+        var on=sel.tasks[it.k]?' on':'';
+        h+='<div class="chip'+on+'" onclick="togTask(\''+it.k+'\')">'+(it.ico||'')+' '+it.name+'</div>';
+      });
+      h+='</div>';
+    } else if(g.style==='bhk'){
+      if(g.showOn&&!sel.tasks[g.showOn])return;
+      h+='<div class="sec-title">'+g.title+'</div><div class="opt-grid">';
+      g.items.forEach(function(it){
+        var key=g.key+'_'+it.k;
+        var p=priceOf(g.key,it.k,it.p);
+        var on=sel.opts[g.key]===it.k?' on':'';
+        h+='<div class="opt'+on+'" onclick="pickOpt(\''+g.key+'\',\''+it.k+'\','+p+')"><div class="n">'+it.name+'</div><div class="p">₹'+p+'</div></div>';
+      });
+      h+='</div>';
+    } else if(g.style==='info'){
+      if(g.showOn&&!sel.tasks[g.showOn])return;
+      h+='<div class="card" style="font-size:13px;color:var(--muted)">ℹ️ '+g.info+'</div>';
+    }
+  });
+  if(!(curSvc.groups||[]).length){
+    h+='<div class="card">Base price ₹'+(curSvc.base||0)+'. Final price quoted by provider.</div>';
+  }
+  $('svcBody').innerHTML=h;
+  calcTotal();
+}
+function togTask(k){sel.tasks[k]=!sel.tasks[k];renderSvc();}
+function pickOpt(gk,k,p){sel.opts[gk]=k;sel['_p_'+gk]=p;renderSvc();}
+function calcTotal(){
+  var t=0;
+  Object.keys(sel.opts||{}).forEach(function(gk){t+=sel['_p_'+gk]||0;});
+  if(t===0)t=curSvc?(curSvc.base||0):0;
+  $('svcTotal').textContent='₹'+t;
+  return t;
+}
+
+// ── ADDRESS ──
+var slots=['Now / ASAP','Morning','Afternoon','Evening'];var selSlot='Now / ASAP';
+function goAddress(){
+  var anyTaskGroup=(curSvc.groups||[]).some(function(g){return g.style==='label';});
+  var anyTask=Object.keys(sel.tasks).some(function(k){return sel.tasks[k];});
+  if(anyTaskGroup&&!anyTask){toast('Select at least one task');return;}
+  $('bPhone').value=ME.phone||'';
+  $('bAddr').value=ME.address||'';
+  var h='';slots.forEach(function(s){h+='<div class="chip'+(s===selSlot?' on':'')+'" onclick="pickSlot(\''+s+'\')">'+s+'</div>';});
+  $('slotRow').innerHTML=h;
+  show('pgAddr');
+  captureGPS(false);
+}
+function pickSlot(s){selSlot=s;var h='';slots.forEach(function(x){h+='<div class="chip'+(x===selSlot?' on':'')+'" onclick="pickSlot(\''+x+'\')">'+x+'</div>';});$('slotRow').innerHTML=h;}
+function captureGPS(force){
+  if(gps.lat&&!force){gpsOk();return;}
+  if(!navigator.geolocation){return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    gps.lat=pos.coords.latitude;gps.lng=pos.coords.longitude;gpsOk();
+    api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
+  },function(){},{enableHighAccuracy:true,timeout:9000});
+}
+function gpsOk(){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='📍 GPS location captured ✓';}
+
+// ── CREATE BOOKING ──
+function createBooking(){
+  var addr=$('bAddr').value.trim(),lm=$('bLandmark').value.trim(),ph=$('bPhone').value.trim();
+  if(!addr){toast('Enter address');return;}
+  if(!lm){toast('Enter landmark');return;}
+  if(ph.length<10){toast('Enter valid mobile');return;}
+  var parts=addr.split(',');var city=parts.length>1?parts[parts.length-1].trim():addr;
+  var taskNames=[];
+  (curSvc.groups||[]).forEach(function(g){if(g.style==='label')g.items.forEach(function(it){if(sel.tasks[it.k])taskNames.push(it.name);});});
+  var body={
+    svc_id:curSvc.id,svc_name:curSvc.name,svc_icon:curSvc.icon,
+    address:addr+' (Landmark: '+lm+')',city:city,
+    lat:gps.lat,lng:gps.lng,
+    slot_time:selSlot,notes:taskNames.join(', ')
+  };
+  api('customers.php','update',{phone:ph,address:addr,city:city}).catch(function(){});
+  api('bookings.php','create',body).then(function(res){
+    if(res.success){
+      activeBookingId=res.data.id;localStorage.setItem('hs_active_bk',activeBookingId);
+      $('radarBid').textContent=activeBookingId;
+      show('pgRadar');$('radarSearch').classList.remove('hide');$('radarOffer').classList.add('hide');$('radarActive').classList.add('hide');
+      startPoll();
+    } else toast(res.error||'Booking failed');
+  }).catch(function(){toast('Network error');});
+}
+function resumeBooking(){
+  $('radarBid').textContent=activeBookingId;
+  show('pgRadar');startPoll();
+}
+
+// ── POLL BOOKING ──
+function startPoll(){
+  clearInterval(pollTimer);
+  pollTimer=setInterval(checkBooking,4000);checkBooking();
+}
+function checkBooking(){
+  api('bookings.php','get&id='+activeBookingId).then(function(res){
+    if(!res.success)return;
+    var b=res.data;renderBookingState(b);
+  }).catch(function(){});
+}
+function renderBookingState(b){
+  var st=b.status;
+  if(st==='searching'){
+    $('radarSearch').classList.remove('hide');$('radarOffer').classList.add('hide');$('radarActive').classList.add('hide');
+  } else if(st==='accepted'||st==='negotiating'||st==='final_offer'){
+    $('radarSearch').classList.add('hide');$('radarActive').classList.add('hide');
+    var o=$('radarOffer');o.classList.remove('hide');
+    var price=b.quoted_price||b.final_price||0;
+    o.innerHTML='<div class="card offer-card">'
+      +'<div style="font-size:15px;font-weight:800;margin-bottom:6px">🎉 Provider Found!</div>'
+      +'<div style="font-size:14px;margin-bottom:4px"><b>'+(b.provider_name||'Provider')+'</b></div>'
+      +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+b.provider_phone+'</div>':'')
+      +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
+      +(st==='final_offer'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
+      +'<button class="btn" onclick="acceptPrice('+price+')">Accept ₹'+price+'</button>'
+      +'<div style="height:8px"></div>'
+      +(st!=='final_offer'?'<button class="btn ghost" onclick="negotiate()">Negotiate</button><div style="height:8px"></div>':'')
+      +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="searchAnother()">Search Another</button>'
+      +'</div>';
+  } else if(st==='price_confirmed'||st==='otp_sent'||st==='active'){
+    $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
+    var a=$('radarActive');a.classList.remove('hide');
+    var otpBlock=b.otp?('<div style="font-size:12px;color:var(--muted);text-align:center">Share this OTP when provider arrives</div><div class="otp-big">'+b.otp+'</div>'):'';
+    a.innerHTML='<div class="card">'
+      +'<div style="font-size:15px;font-weight:800;margin-bottom:8px">✅ Booking Confirmed</div>'
+      +'<div style="font-size:14px"><b>'+(b.provider_name||'Provider')+'</b> · ₹'+(b.final_price||b.quoted_price||0)+'</div>'
+      +(b.provider_phone?'<div style="margin:8px 0"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')
+      +otpBlock
+      +'<div style="font-size:13px;color:var(--muted);margin-top:8px">Status: <span class="badge '+st+'">'+st.replace(/_/g,' ')+'</span></div>'
+      +'</div>';
+  } else if(st==='completed'){
+    clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
+    $('radarActive').classList.remove('hide');$('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
+    $('radarActive').innerHTML='<div class="card" style="text-align:center"><div style="font-size:42px">🎉</div><div style="font-size:17px;font-weight:800;margin:8px 0">Service Completed!</div><div style="font-size:13px;color:var(--muted);margin-bottom:14px">Thank you for using HamaraService</div><button class="btn" onclick="show(\'pgHome\')">Done</button></div>';
+  } else if(st==='cancelled'){
+    clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
+    toast('Booking cancelled');show('pgHome');
+  }
+}
+function acceptPrice(p){
+  api('bookings.php','confirm_price',{booking_id:activeBookingId,confirmed_price:p}).then(function(res){
+    if(res.success){toast('Price confirmed ✓');checkBooking();}
+    else toast(res.error||'Failed');
+  });
+}
+function negotiate(){
+  var v=prompt('Enter your counter price (₹):');
+  if(!v)return;var p=parseInt(v,10);
+  if(!p||p<1){toast('Invalid price');return;}
+  api('bookings.php','negotiate',{booking_id:activeBookingId,counter_price:p}).then(function(res){
+    if(res.success){toast('Counter sent — waiting for provider');}
+    else toast(res.error||'Failed');
+  });
+}
+function searchAnother(){
+  api('bookings.php','search_another',{booking_id:activeBookingId}).then(function(res){
+    if(res.success){toast('Searching for another provider…');checkBooking();}
+    else toast(res.error||'Failed');
+  });
+}
+function cancelBooking(){
+  if(!confirm('Cancel this booking?'))return;
+  api('bookings.php','cancel',{booking_id:activeBookingId}).then(function(res){
+    clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
+    toast('Cancelled');show('pgHome');
+  });
+}
+
+// ── BOOKINGS LIST ──
+function showBookings(){
+  show('pgBookings');
+  $('bkList').innerHTML='<div class="card">Loading…</div>';
+  api('bookings.php','history').then(function(res){
+    var arr=(res.success&&res.data)?res.data:[];
+    if(!arr.length){$('bkList').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">No bookings yet</div>';return;}
+    var h='';
+    arr.forEach(function(b){
+      h+='<div class="card bk-item" onclick="'+(['completed','cancelled'].indexOf(b.status)<0?('resumeFromList(\''+b.id+'\')'):'void(0)')+'">'
+        +'<div class="ic">'+(b.svc_icon||'🔧')+'</div>'
+        +'<div style="flex:1"><div style="font-weight:800;font-size:14px">'+b.svc_name+'</div>'
+        +'<div style="font-size:12px;color:var(--muted)">'+(b.created_at||'').substring(0,16)+'</div></div>'
+        +'<div style="text-align:right"><span class="badge '+b.status+'">'+b.status.replace(/_/g,' ')+'</span>'
+        +(b.final_price>0?'<div style="font-weight:900;color:var(--teal);margin-top:4px">₹'+b.final_price+'</div>':'')
+        +'</div></div>';
+    });
+    $('bkList').innerHTML=h;
+  }).catch(function(){$('bkList').innerHTML='<div class="card">Could not load</div>';});
+}
+function resumeFromList(id){activeBookingId=id;localStorage.setItem('hs_active_bk',id);resumeBooking();}
+
+// ── INIT ──
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+if(TOKEN&&ME.id){initHome();} else {show('pgAuth');}
+</script>
+</body>
+</html>
