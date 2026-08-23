@@ -88,6 +88,13 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 @keyframes ring{0%{transform:scale(.35);opacity:1}100%{transform:scale(1.15);opacity:0}}
 .loc-txt{font-size:17px;font-weight:800}
 .loc-sub{font-size:13px;color:#cfe4ea;margin-top:6px}
+.pf-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;font-size:24px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.pf-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #eef3f5;font-size:14.5px;font-weight:600;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(10,30,38,.7);z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:18px}
+.dt-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f1f5f7;font-size:13.5px}
+.dt-row span:first-child{color:var(--muted);font-weight:700}
+.btn.red-ghost2{background:#fff;color:var(--red);border:2px solid var(--red)}
 .nearby-card{background:#fff8f0;border:2.5px solid var(--amber);border-radius:16px;padding:14px;margin-bottom:14px;animation:nbGlow 1.6s ease-in-out 3}
 @keyframes nbGlow{0%,100%{box-shadow:0 0 0 0 rgba(242,107,29,.35)}50%{box-shadow:0 0 0 8px rgba(242,107,29,0)}}
 .nearby-head{display:flex;gap:10px;align-items:center;margin-bottom:11px}
@@ -150,7 +157,7 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="tabbar">
     <div class="tab on"><span class="i">🏠</span>Home</div>
     <div class="tab" onclick="showBookings()"><span class="i">📋</span>Bookings</div>
-    <div class="tab" onclick="authTab()"><span class="i" id="authTabIco">🚪</span><span id="authTabLbl">Logout</span></div>
+    <div class="tab" onclick="showProfile()"><span class="i">👤</span>Profile</div>
   </div>
 </div>
 
@@ -220,9 +227,23 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="tabbar">
     <div class="tab" onclick="show('pgHome')"><span class="i">🏠</span>Home</div>
     <div class="tab on"><span class="i">📋</span>Bookings</div>
-    <div class="tab" onclick="logout()"><span class="i">🚪</span>Logout</div>
+    <div class="tab" onclick="showProfile()"><span class="i">👤</span>Profile</div>
   </div>
 </div>
+
+<!-- ══ PROFILE ══ -->
+<div id="pgProfile" class="hide">
+  <div class="topbar"><h1>My Profile</h1></div>
+  <div class="page" id="profileBody"></div>
+  <div class="tabbar">
+    <div class="tab" onclick="show('pgHome');updateTabs('home')"><span class="i">🏠</span>Home</div>
+    <div class="tab" onclick="showBookings()"><span class="i">📋</span>Bookings</div>
+    <div class="tab on"><span class="i">👤</span>Profile</div>
+  </div>
+</div>
+
+<!-- ══ BOOKING DETAIL SHEET ══ -->
+<div id="bkSheet" class="hide"></div>
 
 <div id="locOverlay" class="hide">
   <div class="loc-anim">
@@ -244,7 +265,7 @@ var ME=JSON.parse(localStorage.getItem('hs_cust_me')||'{}');
 var isReg=false, curSvc=null, sel={}, gps={lat:0,lng:0}, activeBookingId=localStorage.getItem('hs_active_bk')||'', pollTimer=null, priceRanges={};
 
 function $(id){return document.getElementById(id);}
-function show(p){['pgAuth','pgHome','pgSvc','pgAddr','pgRadar','pgBookings'].forEach(function(x){$(x).classList.add('hide');});$(p).classList.remove('hide');window.scrollTo(0,0);}
+function show(p){['pgAuth','pgHome','pgSvc','pgAddr','pgRadar','pgBookings','pgProfile'].forEach(function(x){$(x).classList.add('hide');});$(p).classList.remove('hide');window.scrollTo(0,0);}
 function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
 function api(ep,action,body,method){
   var url=API+'/'+ep+'?action='+action;
@@ -679,7 +700,7 @@ function showBookings(){
     if(!arr.length){$('bkList').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">No bookings yet</div>';return;}
     var h='';
     arr.forEach(function(b){
-      h+='<div class="card bk-item" onclick="'+(['completed','cancelled'].indexOf(b.status)<0?('resumeFromList(\''+b.id+'\')'):'void(0)')+'">'
+      h+='<div class="card bk-item" onclick="openBkDetail(\''+b.id+'\')">'
         +'<div class="ic">'+(b.svc_icon||'🔧')+'</div>'
         +'<div style="flex:1"><div style="font-weight:800;font-size:14px">'+b.svc_name+'</div>'
         +'<div style="font-size:12px;color:var(--muted)">'+(b.created_at||'').substring(0,16)+'</div></div>'
@@ -691,6 +712,111 @@ function showBookings(){
   }).catch(function(){$('bkList').innerHTML='<div class="card">Could not load</div>';});
 }
 function resumeFromList(id){activeBookingId=id;localStorage.setItem('hs_active_bk',id);resumeBooking();}
+
+// ── PROFILE ──
+function updateTabs(){}
+function showProfile(){
+  show('pgProfile');
+  var el=$('profileBody');
+  if(!TOKEN||!ME.id){
+    el.innerHTML='<div class="card" style="text-align:center;padding:30px 16px">'
+      +'<div style="font-size:48px;margin-bottom:10px">👤</div>'
+      +'<div style="font-weight:800;font-size:16px;margin-bottom:6px">You are not logged in</div>'
+      +'<div style="font-size:13px;color:var(--muted);margin-bottom:18px">Login to manage bookings and profile</div>'
+      +'<button class="btn" onclick="show(\'pgAuth\')">Login / Register</button></div>';
+    return;
+  }
+  // fetch fresh profile
+  api('customers.php','get&id='+encodeURIComponent(ME.id)).then(function(res){
+    if(res.success&&res.data){ME=Object.assign(ME,res.data);localStorage.setItem('hs_cust_me',JSON.stringify(ME));}
+    renderProfile();
+  }).catch(function(){renderProfile();});
+  renderProfile();
+}
+function renderProfile(){
+  var ini=(ME.name||'U').charAt(0).toUpperCase();
+  $('profileBody').innerHTML=
+    '<div class="card" style="display:flex;align-items:center;gap:14px">'
+    +'<div class="pf-avatar">'+ini+'</div>'
+    +'<div style="flex:1"><div style="font-weight:900;font-size:17px">'+(ME.name||'')+'</div>'
+    +'<div style="font-size:12.5px;color:var(--muted)">'+(ME.email||'')+'</div>'
+    +'<div style="font-size:12.5px;color:var(--muted)">🆔 '+(ME.id||'')+'</div></div></div>'
+
+    +'<div class="sec-title">✏️ Edit Details</div>'
+    +'<div class="card">'
+    +'<label>Full Name</label><input class="inp" id="pfName" value="'+(ME.name||'').replace(/"/g,'&quot;')+'">'
+    +'<label>Mobile Number</label><input class="inp" id="pfPhone" type="tel" maxlength="10" value="'+(ME.phone||'')+'">'
+    +'<label>Default Address</label><textarea class="inp" id="pfAddr" rows="2">'+(ME.address||'')+'</textarea>'
+    +'<button class="btn teal" onclick="saveProfile()">💾 Save Changes</button></div>'
+
+    +'<div class="sec-title">🔒 Change Password</div>'
+    +'<div class="card">'
+    +'<label>Current Password</label><input class="inp" id="pfOld" type="password">'
+    +'<label>New Password</label><input class="inp" id="pfNew" type="password">'
+    +'<button class="btn ghost" onclick="changePwd()">Update Password</button></div>'
+
+    +'<div class="sec-title">ℹ️ More</div>'
+    +'<div class="card" style="padding:6px 16px">'
+    +'<div class="pf-row" onclick="location.href=\'mailto:info@hamaraservice.com\'"><span>📧 Contact Support</span><span>›</span></div>'
+    +'<div class="pf-row" onclick="location.href=\'https://hamaraservice.com\'"><span>🌐 Visit Website</span><span>›</span></div>'
+    +'<div class="pf-row" style="border:none" onclick="logout()"><span style="color:var(--red);font-weight:800">🚪 Logout</span><span>›</span></div>'
+    +'</div>'
+    +'<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">HamaraService · info@hamaraservice.com</div>';
+}
+function saveProfile(){
+  var body={name:$('pfName').value.trim(),phone:$('pfPhone').value.trim(),address:$('pfAddr').value.trim()};
+  if(!body.name){toast('Enter your name');return;}
+  api('customers.php','update',body).then(function(res){
+    if(res.success){ME=Object.assign(ME,body);localStorage.setItem('hs_cust_me',JSON.stringify(ME));toast('✅ Profile saved');renderProfile();}
+    else toast(res.error||'Save failed');
+  }).catch(function(){toast('Network error');});
+}
+function changePwd(){
+  var o=$('pfOld').value,n=$('pfNew').value;
+  if(n.length<4){toast('New password too short');return;}
+  api('customers.php','change_password',{old_password:o,new_password:n}).then(function(res){
+    if(res.success){toast('✅ Password updated');$('pfOld').value='';$('pfNew').value='';}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+
+// ── BOOKING DETAIL ──
+function openBkDetail(id){
+  api('bookings.php','get&id='+encodeURIComponent(id)).then(function(res){
+    if(!res.success){toast('Could not load');return;}
+    var b=res.data;
+    var sh=$('bkSheet');sh.className='modal';
+    var canCancel=['searching','price_quoted','negotiating','negotiation_final'].indexOf(b.status)>=0;
+    var canTrack=['searching','price_quoted','negotiating','negotiation_final','confirmed','price_confirmed','active'].indexOf(b.status)>=0;
+    sh.innerHTML='<div class="sheet" onclick="event.stopPropagation()">'
+      +'<div style="display:flex;align-items:center;margin-bottom:12px">'
+      +'<span style="font-size:26px;margin-right:10px">'+(b.svc_icon||'🔧')+'</span>'
+      +'<div style="flex:1"><b style="font-size:16px">'+b.svc_name+'</b><div style="font-size:11px;color:var(--muted)">'+b.id+'</div></div>'
+      +'<span style="font-size:22px;cursor:pointer;padding:4px" onclick="closeBkSheet()">✕</span></div>'
+      +'<div class="dt-row"><span>Status</span><span class="badge '+b.status+'">'+b.status.replace(/_/g,' ')+'</span></div>'
+      +(b.notes?'<div class="dt-row"><span>Tasks</span><span style="text-align:right;max-width:60%">'+b.notes+'</span></div>':'')
+      +'<div class="dt-row"><span>Address</span><span style="text-align:right;max-width:60%">'+(b.address||'')+'</span></div>'
+      +(b.slot_time?'<div class="dt-row"><span>Time</span><span>'+b.slot_time+'</span></div>':'')
+      +(b.provider_name?'<div class="dt-row"><span>Provider</span><span>'+b.provider_name+(b.provider_phone?' · <a href="tel:'+b.provider_phone+'">📞</a>':'')+'</span></div>':'')
+      +((b.confirmed_price>0||b.quoted_price>0)?'<div class="dt-row"><span>Price</span><b style="color:var(--teal);font-size:16px">₹'+(b.confirmed_price||b.final_price||b.quoted_price)+'</b></div>':'')
+      +(b.otp&&['confirmed','price_confirmed'].indexOf(b.status)>=0?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Share OTP when provider arrives</div><div class="otp-big">'+b.otp+'</div>':'')
+      +'<div class="dt-row"><span>Booked on</span><span>'+((b.created_at||'').substring(0,16))+'</span></div>'
+      +'<div style="height:12px"></div>'
+      +(canTrack?'<button class="btn teal" onclick="closeBkSheet();resumeFromList(\''+b.id+'\')">📡 Track Live</button><div style="height:8px"></div>':'')
+      +(canCancel?'<button class="btn red-ghost2" onclick="cancelFromDetail(\''+b.id+'\')">Cancel Booking</button>':'')
+      +(b.status==='completed'?'<button class="btn" onclick="closeBkSheet();openSvc(\''+b.svc_id+'\')">🔁 Book Again</button>':'')
+      +'<div style="height:14px"></div></div>';
+    sh.onclick=closeBkSheet;
+  }).catch(function(){toast('Network error');});
+}
+function closeBkSheet(){var s=$('bkSheet');s.className='hide';s.innerHTML='';}
+function cancelFromDetail(id){
+  if(!confirm('Cancel this booking?'))return;
+  api('bookings.php','cancel',{booking_id:id}).then(function(){
+    closeBkSheet();toast('Cancelled');showBookings();
+    if(activeBookingId===id){clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';}
+  });
+}
 
 // ── INIT ──
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
