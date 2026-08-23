@@ -19,6 +19,62 @@ switch ($action) {
   // ── REGISTER / UPSERT ─────────────────────────────────
   // Called after Firebase Auth signup/login
   // Flutter sends Firebase ID token in Authorization header
+  // ── WEB APP: REGISTER (email + password, no Firebase) ──
+  case 'web_register': {
+    $b = getBody();
+    $name  = trim($b['name'] ?? '');
+    $phone = trim($b['phone'] ?? '');
+    $email = strtolower(trim($b['email'] ?? ''));
+    $pwd   = $b['password'] ?? '';
+    if (empty($name) || empty($email) || empty($pwd)) err('name, email, password required');
+    if (strlen($pwd) < 4) err('Password too short');
+
+    try { $db->exec("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
+
+    // Email must not exist
+    $chk = $db->prepare("SELECT id FROM customers WHERE email = ? LIMIT 1");
+    $chk->execute([$email]);
+    if ($chk->fetch()) err('Email already registered. Please login.');
+
+    $id = 'HS-CUST-' . strtoupper(substr(preg_replace('/[^a-z]/','',explode('@',$email)[0]).'xxxx',0,4)) . rand(100000,999999);
+    $db->prepare("
+      INSERT INTO customers (id, name, phone, email, password_hash, auth_method)
+      VALUES (?, ?, ?, ?, ?, 'web')
+    ")->execute([$id, $name, $phone, $email, password_hash($pwd, PASSWORD_BCRYPT)]);
+
+    $token = makeJWT(['type'=>'customer','uid'=>$id,'email'=>$email,'name'=>$name]);
+    ok(['token'=>$token, 'customer'=>['id'=>$id,'name'=>$name,'phone'=>$phone,'email'=>$email]]);
+  }
+
+  // ── WEB APP: LOGIN ──
+  case 'web_login': {
+    $b = getBody();
+    $email = strtolower(trim($b['email'] ?? ''));
+    $pwd   = $b['password'] ?? '';
+    if (empty($email) || empty($pwd)) err('email and password required');
+
+    try { $db->exec("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
+
+    $stmt = $db->prepare("SELECT * FROM customers WHERE email = ? LIMIT 1");
+    $stmt->execute([$email]);
+    $c = $stmt->fetch();
+    if (!$c) err('NOT_REGISTERED', 404);
+    if (empty($c['password_hash']) || !password_verify($pwd, $c['password_hash'])) {
+      // allow plain match upgrade
+      if ($pwd === ($c['password_hash'] ?? '__nope__')) {
+        $db->prepare("UPDATE customers SET password_hash = ? WHERE id = ?")
+           ->execute([password_hash($pwd, PASSWORD_BCRYPT), $c['id']]);
+      } else {
+        err('Incorrect password', 401);
+      }
+    }
+    $token = makeJWT(['type'=>'customer','uid'=>$c['id'],'email'=>$email,'name'=>$c['name']]);
+    ok(['token'=>$token, 'customer'=>[
+      'id'=>$c['id'],'name'=>$c['name'],'phone'=>$c['phone'],'email'=>$email,
+      'address'=>$c['address'],'city'=>$c['city'],'lat'=>(float)$c['lat'],'lng'=>(float)$c['lng']
+    ]]);
+  }
+
   case 'register': {
     $user = requireCustomer();  // verifies Firebase token
     $b    = getBody();
