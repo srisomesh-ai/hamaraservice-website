@@ -1046,7 +1046,8 @@ function syncFromFirebase(){
     showToast(arr.length ? '✅ '+arr.length+' providers loaded' : 'ℹ️ No providers yet');
   });
 
-  // Customers
+  // Customers — MySQL (app registrations) FIRST, then merge Firebase
+  syncCustomersFromFirebase(function(){ loadCustomers(null); });
   fbGet('customers', function(err, data){
     if(!err && data && !data.error){
       var arr=toArr(data).filter(function(c){ return c&&(c.id||c.uid); });
@@ -1057,7 +1058,8 @@ function syncFromFirebase(){
         _ex2.forEach(function(c){ if(c && (c.id||c.uid) && !_ids2[c.id||c.uid]) arr.push(c); });
       }catch(e){}
       if(arr.length){ lsSet('hs_customers',arr); loadCustomers(null); }
-    }
+      else { loadCustomers(null); }
+    } else { loadCustomers(null); }
   });
 
   // Bookings — load from both paths
@@ -2633,9 +2635,16 @@ function getCustomers(){
 }
 function syncCustomersFromFirebase(cb){
   fetch('https://hamaraservice.com/api/customers.php?action=list&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
-    var arr = (res.success && res.data) ? res.data : [];
-    localStorage.setItem('hs_customers', JSON.stringify(arr));
-    if (cb) cb(arr);
+    var mysql = (res.success && res.data) ? res.data : [];
+    // MERGE MySQL (app-registered) with any existing Firebase-origin customers
+    var ex = getCustomers();
+    var byKey = {};
+    mysql.forEach(function(c){ var k=c.id||c.uid||c.email; if(k) byKey[k]=c; });
+    ex.forEach(function(c){ var k=c.id||c.uid||c.email; if(k && !byKey[k]) byKey[k]=c; });
+    var merged = Object.keys(byKey).map(function(k){ return byKey[k]; });
+    localStorage.setItem('hs_customers', JSON.stringify(merged));
+    if (document.getElementById('custBody')) loadCustomers(null);
+    if (cb) cb(merged);
   }).catch(function(){ if (cb) cb(getCustomers()); });
 }
 function saveCustomers(c){
