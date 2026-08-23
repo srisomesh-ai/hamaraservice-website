@@ -392,8 +392,51 @@ function renderHome(){
 }
 
 // ── SERVICE OPTIONS ──
+// Exact website service pages — same format as hamaraservice.com
+var SVC_PAGE_MAP = {
+  'House Maid': 'svc-house-maid.html',
+  'Deep Cleaning': 'svc-deep-cleaning.html',
+  'Bathroom Cleaning': 'svc-bathroom-cleaning.html',
+  'Kitchen Cleaning': 'svc-kitchen-cleaning.html',
+  'Sofa / Carpet Cleaning': 'svc-sofa-carpet-cleaning.html',
+  'Laundry / Ironing': 'svc-laundry-ironing.html',
+  'AC Cleaning & Repair': 'svc-ac-service.html',
+  'Home Appliance Repair': 'svc-appliance-repair.html',
+  'Water Purifier Service': 'svc-water-purifier.html',
+  'Plumber': 'svc-plumber.html',
+  'Electrician': 'svc-electrician.html',
+  'Carpenter': 'svc-carpenter.html',
+  'Painter': 'svc-painter.html',
+  'CCTV Installation': 'svc-cctv.html',
+  'Solar Panel Cleaning': 'svc-solar-panel.html',
+  'Car / Bike Wash': 'svc-car-wash.html',
+  'Car & Bike Mechanic': 'svc-mechanic.html',
+  'Pest Control': 'svc-pest-control.html',
+  'Cook / Cooking Person': 'svc-cook.html',
+  'Haircut (Men)': 'svc-haircut-men.html',
+  'Haircut (Women)': 'svc-haircut-women.html',
+  'Full Body Massage': 'svc-massage.html',
+  'Gym / Fitness Trainer': 'svc-fitness-trainer.html',
+  'Doctor Visit': 'svc-doctor-visit.html',
+  'Nurse Visit': 'svc-nurse-visit.html',
+  'Lab Test Collection': 'svc-lab-test.html',
+  'Babysitter / Nanny': 'svc-babysitter.html',
+  'Elderly Care': 'svc-elderly-care.html',
+  'Gardener': 'svc-gardener.html',
+  'Driver': 'svc-driver.html',
+  'Security Guard & Bouncers': 'svc-security-guard.html'
+};
 var adminPrices={};
 function openSvc(id){
+  var s=SVC.find(function(x){return x.id===id;});
+  if(s&&SVC_PAGE_MAP[s.name]){
+    // Open the exact website service page — full format & booking system
+    window.location.href='/'+SVC_PAGE_MAP[s.name];
+    return;
+  }
+  openSvcApp(id);
+}
+function openSvcApp(id){
   curSvc=SVC.find(function(s){return s.id===id;});sel={tasks:{},opts:{}};
   $('svcTitle').textContent=curSvc.name;
   adminPrices={};
