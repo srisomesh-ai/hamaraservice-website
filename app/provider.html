@@ -49,7 +49,8 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#132b33;color:#fff;padding:11px 20px;border-radius:99px;font-size:13.5px;z-index:120;display:none;max-width:90%;text-align:center}
 .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800}
 .badge.searching{background:#fff3cd;color:#8a6d00}
-.badge.accepted,.badge.price_confirmed{background:#d1f2dd;color:#0f6d33}
+.badge.accepted,.badge.price_confirmed,.badge.confirmed,.badge.price_quoted{background:#d1f2dd;color:#0f6d33}
+.badge.negotiating,.badge.negotiation_final{background:#fde8d0;color:#9a4c00}
 .badge.active,.badge.otp_sent{background:#cfe9f5;color:#0b5a77}
 .badge.completed{background:#e2e8f0;color:#334155}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -323,7 +324,7 @@ function toggleAvail(){
 function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(pollJobs,5000);pollJobs();}
 function pollJobs(){
   // active job first
-  api('bookings.php','active').then(function(res){
+  api('bookings.php','active',null,'&id='+encodeURIComponent(ME.id)+'&role=provider').then(function(res){
     if(res.success&&res.data&&res.data.id){activeJob=res.data;renderActiveJob();}
     else{activeJob=null;renderActiveJob();}
   }).catch(function(){});
@@ -387,19 +388,19 @@ function renderActiveJob(){
     +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+(b.customer_name||'Customer')+' '+(b.customer_phone?('· <a href="tel:'+b.customer_phone+'">📞 '+b.customer_phone+'</a>'):'')+'</div>'
     +'<div style="font-size:13px;margin-bottom:10px"><b>📍</b> '+b.address+'</div>'
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.final_price||b.quoted_price||0)+'</div>';
-  if(st==='negotiating'){
+  if(st==='price_quoted'){
+    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:4px">⏳ Waiting for customer to accept your quote ₹'+(b.quoted_price||0)+'</div>';
+  } else if(st==='negotiating'){
     h+='<div style="background:#fff8e6;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:10px">Customer counter: <b>₹'+(b.counter_price||0)+'</b></div>'
       +'<button class="btn green" onclick="acceptCounter()">Accept ₹'+(b.counter_price||0)+'</button><div style="height:8px"></div>'
       +'<button class="btn ghost" onclick="finalOffer()">Send Final Offer</button>';
-  } else if(st==='price_confirmed'){
-    h+='<button class="btn teal" onclick="sendOTPInfo()">🚗 I have arrived — Verify OTP</button>';
-  } else if(st==='otp_sent'||st==='active'){
-    if(st==='otp_sent'){
-      h+='<label>Enter Customer OTP</label><input class="inp" id="jobOtp" type="number" maxlength="4" placeholder="4-digit OTP">'
-        +'<button class="btn teal" onclick="verifyOtp()">Verify & Start Job</button>';
-    } else {
-      h+='<button class="btn green" onclick="completeJob()">✅ Job Done — Complete</button>';
-    }
+  } else if(st==='negotiation_final'){
+    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Final offer ₹'+(b.final_price||0)+' sent — waiting for customer</div>';
+  } else if(st==='confirmed'||st==='price_confirmed'){
+    h+='<label>Enter Customer OTP (ask on arrival)</label><input class="inp" id="jobOtp" type="number" maxlength="4" placeholder="4-digit OTP">'
+      +'<button class="btn teal" onclick="verifyOtp()">Verify & Start Job</button>';
+  } else if(st==='active'){
+    h+='<button class="btn green" onclick="completeJob()">✅ Job Done — Complete</button>';
   }
   h+='</div>';
   el.innerHTML=h;
@@ -407,11 +408,6 @@ function renderActiveJob(){
 function acceptCounter(){api('bookings.php','accept_counter',{booking_id:activeJob.id}).then(function(res){if(res.success)toast('Accepted ✓');pollJobs();});}
 function finalOffer(){var v=prompt('Your final price (₹):');if(!v)return;
   api('bookings.php','final_offer',{booking_id:activeJob.id,final_price:parseInt(v,10)}).then(function(res){if(res.success)toast('Final offer sent');pollJobs();});}
-function sendOTPInfo(){
-  api('bookings.php','verify_otp',{booking_id:activeJob.id,request:1}).then(function(res){
-    toast('Ask customer for the OTP shown in their app');pollJobs();
-  }).catch(function(){toast('Ask customer for OTP');});
-}
 function verifyOtp(){
   var o=$('jobOtp').value.trim();
   if(o.length<4){toast('Enter 4-digit OTP');return;}
