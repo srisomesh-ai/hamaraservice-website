@@ -234,6 +234,7 @@ function logout(){localStorage.removeItem('hs_cust_token');localStorage.removeIt
 // ── HOME ──
 var CATS=[];var catIcons={'Home Cleaning':'🧹','Home Services':'🔧','Vehicle Care':'🚗','Pest Control':'🐜','Cooking':'👩‍🍳','Security':'🛡️','Outdoor':'🌿','Beauty & Wellness':'💆','Health Services':'🩺','Care Services':'🤱','Appliance Care':'❄️'};
 var selCat='All';
+var svcImages={};
 function initHome(){
   $('homeUser').textContent=(TOKEN&&ME.name)?('Hi '+ME.name+' 👋'):'Book trusted services near you';
   var li=(TOKEN&&ME.id);
@@ -241,6 +242,16 @@ function initHome(){
   CATS=[];SVC.forEach(function(s){if(CATS.indexOf(s.cat)<0)CATS.push(s.cat);});
   show('pgHome');
   renderChips();renderHome();
+  // Live admin catalog — your updated images, names, active status
+  fetch('/catalog.json?t='+Date.now()).then(function(r){return r.json();}).then(function(cat){
+    if(Array.isArray(cat)){
+      cat.forEach(function(x){
+        if(x.id&&x.image)svcImages[x.id]=x.image;
+        if(x.id&&x.status==='inactive')svcImages[x.id+'_off']=1;
+      });
+      renderHome();
+    }
+  }).catch(function(){});
   api('services.php','price_ranges').then(function(res){
     if(res.success){priceRanges=res.data||{};renderHome();}
   }).catch(function(){});
@@ -257,14 +268,16 @@ function pickCat(ct){selCat=ct;renderChips();renderHome();window.scrollTo(0,0);}
 function tileHtml(s){
   var r=priceRanges[s.id];
   var pr=(r&&r.min>0)?r.min:(s.base||99);
+  var img=svcImages[s.id]||('/assets/services/'+s.id+'.jpg');
   return '<div class="svc-tile" onclick="openSvc(\''+s.id+'\')">'
-    +'<div class="ico-wrap"><img class="ico-img" src="/assets/services/'+s.id+'.jpg" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><span class="ico-emoji" style="display:none">'+s.icon+'</span></div>'
+    +'<div class="ico-wrap"><img class="ico-img" src="'+img+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><span class="ico-emoji" style="display:none">'+s.icon+'</span></div>'
     +'<div class="nm">'+s.name+'</div><div class="pr"><span class="from">from </span>₹'+pr+'</div></div>';
 }
 function renderHome(){
   var q=($('homeSearch').value||'').trim().toLowerCase();
   var h='';
   var list=SVC.filter(function(s){
+    if(svcImages[s.id+'_off'])return false;
     if(selCat!=='All'&&s.cat!==selCat)return false;
     if(q&&s.name.toLowerCase().indexOf(q)<0&&s.cat.toLowerCase().indexOf(q)<0)return false;
     return true;
