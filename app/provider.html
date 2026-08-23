@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f4c5c">
+<title>HamaraService — Provider</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--teal:#0f4c5c;--teal2:#1a6b7e;--amber:#f26b1d;--bg:#eef5f6;--card:#fff;--txt:#1a2b32;--muted:#6b7f87;--green:#16a34a;--red:#dc2626;--yellow:#f59e0b;--r:14px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);min-height:100vh;padding-bottom:64px}
+.hide{display:none!important}
+.topbar{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.topbar .back{font-size:22px;cursor:pointer;padding:4px 8px}
+.topbar h1{font-size:17px;font-weight:800;flex:1}
+.page{padding:16px;max-width:520px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,76,92,.08)}
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:var(--r);background:var(--amber);color:#fff;font-size:16px;font-weight:800;cursor:pointer;text-align:center}
+.btn:disabled{opacity:.5}
+.btn.teal{background:var(--teal)}
+.btn.green{background:var(--green)}
+.btn.ghost{background:#fff;color:var(--teal);border:2px solid var(--teal)}
+.btn.red-ghost{background:#fff;color:var(--red);border:2px solid var(--red)}
+.inp{width:100%;padding:13px 14px;border:1.5px solid #d5e2e6;border-radius:12px;font-size:15px;margin-bottom:12px;background:#fff}
+.inp:focus{outline:none;border-color:var(--teal)}
+label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.err{color:var(--red);font-size:13px;margin-bottom:10px;min-height:16px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 14px;border:1.5px solid #d5e2e6;border-radius:12px;background:#fff;font-size:13.5px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.sec-title{font-size:15px;font-weight:800;margin:16px 0 10px;color:var(--teal)}
+.tog-wrap{display:flex;align-items:center;justify-content:space-between}
+.switch{width:56px;height:30px;border-radius:99px;background:#cbd5e1;position:relative;cursor:pointer;transition:.2s}
+.switch.on{background:var(--green)}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on::after{left:29px}
+.job-pop{position:fixed;inset:0;background:rgba(10,30,38,.85);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.job-card{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:400px;animation:pop .25s}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.count{font-size:13px;font-weight:800;color:var(--red);text-align:center;margin-bottom:8px}
+.svc-check{display:flex;align-items:center;gap:10px;padding:11px;border:1.5px solid #d5e2e6;border-radius:12px;margin-bottom:8px;background:#fff;cursor:pointer}
+.svc-check.on{border-color:var(--teal);background:#eef7fa}
+.svc-check .price-btn{margin-left:auto;background:var(--amber);color:#fff;font-size:12px;font-weight:800;padding:6px 12px;border-radius:9px;border:none;cursor:pointer}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2ecef;display:flex;z-index:55}
+.tab{flex:1;text-align:center;padding:9px 0 7px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer}
+.tab .i{font-size:20px;display:block;margin-bottom:2px}
+.tab.on{color:var(--teal)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#132b33;color:#fff;padding:11px 20px;border-radius:99px;font-size:13.5px;z-index:120;display:none;max-width:90%;text-align:center}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800}
+.badge.searching{background:#fff3cd;color:#8a6d00}
+.badge.accepted,.badge.price_confirmed{background:#d1f2dd;color:#0f6d33}
+.badge.active,.badge.otp_sent{background:#cfe9f5;color:#0b5a77}
+.badge.completed{background:#e2e8f0;color:#334155}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#fff;border-radius:14px;padding:14px;text-align:center}
+.stat .v{font-size:22px;font-weight:900;color:var(--teal)}
+.stat .l{font-size:11px;color:var(--muted);font-weight:700}
+.opt-price-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.opt-price-row .nm{flex:1;font-size:13.5px;font-weight:600}
+.opt-price-row input{width:92px;padding:9px;border:1.5px solid #d5e2e6;border-radius:10px;font-size:14px;text-align:center}
+.opt-price-row .rng{font-size:10.5px;color:var(--teal);font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(10,30,38,.7);z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:86vh;overflow-y:auto;padding:18px}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══ -->
+<div id="pgAuth" class="hide">
+  <div class="topbar"><span class="back" onclick="location.href='index.html'">←</span><h1>Provider Login</h1></div>
+  <div class="page">
+    <div class="card">
+      <div id="authErr" class="err"></div>
+      <label>Email</label><input class="inp" id="aEmail" type="email" placeholder="you@example.com">
+      <label>Password</label><input class="inp" id="aPwd" type="password" placeholder="Password">
+      <button class="btn teal" id="authBtn" onclick="doLogin()">Login</button>
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0"><div style="flex:1;height:1px;background:#d5e2e6"></div><span style="font-size:12px;color:var(--muted)">OR</span><div style="flex:1;height:1px;background:#d5e2e6"></div></div>
+      <button class="btn" onclick="startRegister()">🛠️ REGISTER AS PROVIDER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REGISTER (3 steps) ══ -->
+<div id="pgReg" class="hide">
+  <div class="topbar"><span class="back" onclick="regBack()">←</span><h1 id="regTitle">Your Details</h1></div>
+  <div class="page">
+    <div class="card">
+      <div id="regErr" class="err"></div>
+      <div id="regStep0">
+        <label>Full Name *</label><input class="inp" id="rName">
+        <label>Mobile *</label><input class="inp" id="rPhone" type="tel" maxlength="10">
+        <label>WhatsApp</label><input class="inp" id="rWa" type="tel" maxlength="10" placeholder="Same as mobile if empty">
+        <label>Email *</label><input class="inp" id="rEmail" type="email">
+        <label>Password *</label><input class="inp" id="rPwd" type="password">
+        <label>Gender</label>
+        <div class="chip-row" id="rGender" style="margin-bottom:12px">
+          <div class="chip" onclick="pickG(this,'Male')">Male</div>
+          <div class="chip" onclick="pickG(this,'Female')">Female</div>
+        </div>
+        <label>Experience</label>
+        <div class="chip-row" id="rExp" style="margin-bottom:12px">
+          <div class="chip" onclick="pickE(this,'0-1 years')">0–1 yr</div>
+          <div class="chip" onclick="pickE(this,'1-2 years')">1–2 yr</div>
+          <div class="chip" onclick="pickE(this,'3-5 years')">3–5 yr</div>
+          <div class="chip" onclick="pickE(this,'5+ years')">5+ yr</div>
+        </div>
+        <label>ID Type</label>
+        <select class="inp" id="rIdType"><option value="">Select</option><option>Aadhaar</option><option>PAN</option><option>Voter ID</option><option>Driving License</option></select>
+        <label>ID Number</label><input class="inp" id="rIdNum">
+      </div>
+      <div id="regStep1" class="hide">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Select services you offer (you can set prices after approval)</div>
+        <div id="regSvcList"></div>
+      </div>
+      <div id="regStep2" class="hide">
+        <div id="regGps" class="card" style="background:#fff8e6;cursor:pointer" onclick="regGPS()">📍 Tap to capture your location (required)</div>
+        <label>Full Address *</label><textarea class="inp" id="rAddr" rows="2"></textarea>
+        <label>Service Radius (km)</label>
+        <div class="chip-row" id="rRad" style="margin-bottom:12px">
+          <div class="chip" onclick="pickR(this,5)">5 km</div>
+          <div class="chip" onclick="pickR(this,10)">10 km</div>
+          <div class="chip" onclick="pickR(this,15)">15 km</div>
+          <div class="chip" onclick="pickR(this,25)">25 km</div>
+        </div>
+      </div>
+      <button class="btn" id="regNext" onclick="regNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PENDING ══ -->
+<div id="pgPending" class="hide">
+  <div class="page" style="padding-top:70px;text-align:center">
+    <div style="font-size:56px">⏳</div>
+    <div style="font-size:20px;font-weight:900;margin:12px 0 6px">Application Under Review</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:6px" id="pendName"></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:22px">Approval usually takes 24–48 hours.<br>Support: info@hamaraservice.com</div>
+    <button class="btn ghost" style="max-width:240px;margin:0 auto" onclick="logout()">Back to Login</button>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="pgDash" class="hide">
+  <div class="topbar"><h1 id="dashName">Provider</h1><span style="font-size:12px" id="dashCity"></span></div>
+  <div class="page">
+    <div class="card tog-wrap">
+      <div><div style="font-weight:800;font-size:15px" id="avLbl">You are Offline</div>
+      <div style="font-size:12px;color:var(--muted)">Go online to receive jobs</div></div>
+      <div class="switch" id="avSwitch" onclick="toggleAvail()"></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="v" id="stJobs">0</div><div class="l">TOTAL JOBS</div></div>
+      <div class="stat"><div class="v" id="stEarn">₹0</div><div class="l">EARNED</div></div>
+    </div>
+    <div class="sec-title">Active Job</div>
+    <div id="activeJob"><div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div></div>
+  </div>
+  <div class="tabbar">
+    <div class="tab on"><span class="i">🏠</span>Dashboard</div>
+    <div class="tab" onclick="openServices()"><span class="i">🧰</span>My Services</div>
+    <div class="tab" onclick="logout()"><span class="i">🚪</span>Logout</div>
+  </div>
+</div>
+
+<!-- ══ MY SERVICES ══ -->
+<div id="pgSvcs" class="hide">
+  <div class="topbar"><span class="back" onclick="show('pgDash')">←</span><h1>My Services</h1><span style="font-size:13px;font-weight:800;cursor:pointer" onclick="saveServices()">SAVE</span></div>
+  <div class="page" id="mySvcList"></div>
+</div>
+
+<div id="priceSheet" class="hide"></div>
+<div id="jobPop" class="hide"></div>
+<div class="toast" id="toast"></div>
+
+<script src="catalog.js"></script>
+<script>
+var API='https://hamaraservice.com/api';
+var TOKEN=localStorage.getItem('hs_prov_token')||'';
+var ME=JSON.parse(localStorage.getItem('hs_prov_me')||'{}');
+var reg={step:0,gender:'',exp:'',radius:5,lat:0,lng:0,city:'',svcs:{}};
+var mySvcs={}, myPrices={}, adminAll={}, available=false, pollTimer=null, shownJobs={}, activeJob=null;
+
+function $(id){return document.getElementById(id);}
+function show(p){['pgAuth','pgReg','pgPending','pgDash','pgSvcs'].forEach(function(x){$(x).classList.add('hide');});$(p).classList.remove('hide');window.scrollTo(0,0);}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
+function api(ep,action,body,extraQ){
+  var url=API+'/'+ep+'?action='+action+(extraQ||'');
+  var opt={method:body?'POST':'GET',headers:{'Content-Type':'application/json'}};
+  if(TOKEN)opt.headers['Authorization']='Bearer '+TOKEN;
+  if(body)opt.body=JSON.stringify(body);
+  return fetch(url,opt).then(function(r){return r.json();});
+}
+
+// ── LOGIN ──
+function doLogin(){
+  var email=$('aEmail').value.trim().toLowerCase(),pwd=$('aPwd').value;
+  if(!email||!pwd){$('authErr').textContent='Enter email and password';return;}
+  $('authBtn').disabled=true;
+  api('providers.php','login',{email:email,password:pwd}).then(function(res){
+    $('authBtn').disabled=false;
+    if(res.success){
+      TOKEN=res.data.token||'';ME=res.data.provider||{};
+      localStorage.setItem('hs_prov_token',TOKEN);localStorage.setItem('hs_prov_me',JSON.stringify(ME));localStorage.setItem('hs_role','provider');
+      route();
+    } else {
+      // not found → register
+      api('providers.php','check_email',null,'&email='+encodeURIComponent(email)).then(function(r2){
+        if(r2&&r2.exists===false){startRegister();$('rEmail').value=email;$('rPwd').value=pwd;toast('New provider — complete registration');}
+        else $('authErr').textContent=res.error||'Incorrect password';
+      }).catch(function(){$('authErr').textContent=res.error||'Login failed';});
+    }
+  }).catch(function(){$('authBtn').disabled=false;$('authErr').textContent='Network error';});
+}
+function logout(){localStorage.removeItem('hs_prov_token');localStorage.removeItem('hs_prov_me');clearInterval(pollTimer);location.href='index.html';}
+function route(){
+  if((ME.status||'pending')!=='approved'){$('pendName').textContent=ME.name||'';show('pgPending');return;}
+  initDash();
+}
+
+// ── REGISTER ──
+function startRegister(){reg={step:0,gender:'',exp:'',radius:5,lat:0,lng:0,city:'',svcs:{}};show('pgReg');updReg();}
+function pickG(el,v){reg.gender=v;[].forEach.call($('rGender').children,function(c){c.classList.remove('on');});el.classList.add('on');}
+function pickE(el,v){reg.exp=v;[].forEach.call($('rExp').children,function(c){c.classList.remove('on');});el.classList.add('on');}
+function pickR(el,v){reg.radius=v;[].forEach.call($('rRad').children,function(c){c.classList.remove('on');});el.classList.add('on');}
+function updReg(){
+  ['regStep0','regStep1','regStep2'].forEach(function(s,i){$(s).classList.toggle('hide',i!==reg.step);});
+  $('regTitle').textContent=['Your Details','Your Services','Location & Area'][reg.step];
+  $('regNext').textContent=reg.step<2?'Continue →':'Submit Application ✓';
+  if(reg.step===1&&!$('regSvcList').innerHTML){
+    var h='';SVC.forEach(function(s){
+      h+='<div class="svc-check" id="rs_'+s.id+'" onclick="togRegSvc(\''+s.id+'\')"><span style="font-size:22px">'+s.icon+'</span><span style="font-size:14px;font-weight:700">'+s.name+'</span></div>';
+    });
+    $('regSvcList').innerHTML=h;
+  }
+}
+function togRegSvc(id){reg.svcs[id]=!reg.svcs[id];$('rs_'+id).classList.toggle('on',reg.svcs[id]);}
+function regBack(){if(reg.step>0){reg.step--;updReg();}else show('pgAuth');}
+function regGPS(){
+  navigator.geolocation.getCurrentPosition(function(pos){
+    reg.lat=pos.coords.latitude;reg.lng=pos.coords.longitude;
+    $('regGps').style.background='#e8f7ee';$('regGps').textContent='📍 Location captured ✓';
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+reg.lat+'&lon='+reg.lng+'&format=json')
+      .then(function(r){return r.json();}).then(function(d){
+        var a=d.address||{};reg.city=a.city||a.town||a.suburb||a.county||'';
+        if(!$('rAddr').value)$('rAddr').value=[a.suburb,a.city||a.town,a.state].filter(Boolean).join(', ');
+      }).catch(function(){});
+  },function(){toast('Enable location permission');},{enableHighAccuracy:true,timeout:10000});
+}
+function regNext(){
+  $('regErr').textContent='';
+  if(reg.step===0){
+    if(!$('rName').value.trim()||!$('rPhone').value.trim()||!$('rEmail').value.trim()||!$('rPwd').value){$('regErr').textContent='Fill all required fields';return;}
+    reg.step=1;updReg();return;
+  }
+  if(reg.step===1){
+    if(!Object.keys(reg.svcs).some(function(k){return reg.svcs[k];})){$('regErr').textContent='Select at least one service';return;}
+    reg.step=2;updReg();return;
+  }
+  if(!$('rAddr').value.trim()){$('regErr').textContent='Enter your address';return;}
+  if(!reg.lat){$('regErr').textContent='Tap to capture your location first';return;}
+  var svcArr=[];SVC.forEach(function(s){if(reg.svcs[s.id])svcArr.push({id:s.id,name:s.name,icon:s.icon,cat:s.cat});});
+  var body={
+    name:$('rName').value.trim(),phone:$('rPhone').value.trim(),
+    whatsapp:$('rWa').value.trim()||$('rPhone').value.trim(),
+    email:$('rEmail').value.trim().toLowerCase(),password:$('rPwd').value,
+    gender:reg.gender,experience:reg.exp,bio:'',
+    id_type:$('rIdType').value,id_number:$('rIdNum').value.trim(),
+    address:$('rAddr').value.trim(),city:reg.city,
+    lat:reg.lat,lng:reg.lng,radius_km:reg.radius,
+    services:svcArr
+  };
+  $('regNext').disabled=true;
+  api('providers.php','register',body).then(function(res){
+    $('regNext').disabled=false;
+    if(res.success){$('pendName').textContent='Hi '+body.name+'! Application submitted.';show('pgPending');toast('✅ Registered! Waiting for approval');}
+    else $('regErr').textContent=res.error||'Registration failed';
+  }).catch(function(){$('regNext').disabled=false;$('regErr').textContent='Network error';});
+}
+
+// ── DASHBOARD ──
+function initDash(){
+  show('pgDash');
+  $('dashName').textContent=ME.name||'Provider';
+  $('dashCity').textContent=ME.city||'';
+  available=(ME.available==1||ME.available===true);
+  updAvail();
+  $('stJobs').textContent=ME.total_bookings||0;
+  $('stEarn').textContent='₹'+(ME.total_earned||0);
+  startPoll();
+  refreshProfile();
+}
+function refreshProfile(){
+  api('providers.php','get',null,'&id='+encodeURIComponent(ME.id)).then(function(res){
+    if(res.success&&res.data){ME=Object.assign(ME,res.data);
+      localStorage.setItem('hs_prov_me',JSON.stringify(ME));
+      available=(ME.available==1);updAvail();
+      $('stJobs').textContent=ME.total_bookings||0;
+      $('stEarn').textContent='₹'+(ME.total_earned||0);}
+  }).catch(function(){});
+}
+function updAvail(){
+  $('avSwitch').classList.toggle('on',available);
+  $('avLbl').textContent=available?'You are Online ✓':'You are Offline';
+}
+function toggleAvail(){
+  var next=!available;
+  available=next;updAvail();
+  var doSet=function(){
+    api('providers.php','available',{available:next?1:0}).then(function(res){
+      if(!res.success){available=!next;updAvail();toast('Could not update');}
+      else toast(next?'✅ You are Online':'You are Offline');
+    }).catch(function(){available=!next;updAvail();toast('Network error');});
+  };
+  if(next&&navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      api('providers.php','update',{lat:pos.coords.latitude,lng:pos.coords.longitude,available:1}).then(doSet).catch(doSet);
+    },function(){doSet();},{enableHighAccuracy:true,timeout:8000});
+  } else doSet();
+}
+
+// ── JOB POLLING ──
+function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(pollJobs,5000);pollJobs();}
+function pollJobs(){
+  // active job first
+  api('bookings.php','active').then(function(res){
+    if(res.success&&res.data&&res.data.id){activeJob=res.data;renderActiveJob();}
+    else{activeJob=null;renderActiveJob();}
+  }).catch(function(){});
+  if(!available)return;
+  if(activeJob)return;
+  api('bookings.php','open').then(function(res){
+    if(!res.success||!res.data)return;
+    var myIds={};SVC.forEach(function(s){if(mySvcs[s.id])myIds[s.id]=1;});
+    var useFilter=Object.keys(myIds).length>0;
+    for(var i=0;i<res.data.length;i++){
+      var b=res.data[i];
+      if(shownJobs[b.id])continue;
+      if(useFilter&&!myIds[b.svc_id])continue;
+      shownJobs[b.id]=1;
+      showJobPopup(b);
+      break;
+    }
+  }).catch(function(){});
+}
+function showJobPopup(b){
+  var pop=$('jobPop');
+  pop.className='job-pop';
+  var secs=30;
+  pop.innerHTML='<div class="job-card">'
+    +'<div class="count" id="jpCount">Respond in 30s</div>'
+    +'<div style="font-size:34px;text-align:center">'+(b.svc_icon||'🔔')+'</div>'
+    +'<div style="font-size:18px;font-weight:900;text-align:center;margin:6px 0">'+b.svc_name+'</div>'
+    +(b.notes?'<div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px">'+b.notes+'</div>':'')
+    +'<div style="font-size:13px;margin:10px 0"><b>📍</b> '+b.address+'</div>'
+    +(b.slot_time?'<div style="font-size:13px;margin-bottom:12px"><b>🕐</b> '+b.slot_time+'</div>':'')
+    +'<label>Your Price (₹) *</label><input class="inp" id="jpPrice" type="number" placeholder="Enter your quote">'
+    +'<button class="btn green" onclick="acceptJob(\''+b.id+'\')">✓ Accept & Quote</button>'
+    +'<div style="height:8px"></div>'
+    +'<button class="btn red-ghost" onclick="dismissJob()">Skip</button>'
+    +'</div>';
+  var iv=setInterval(function(){
+    secs--;var c=$('jpCount');
+    if(c)c.textContent='Respond in '+secs+'s';
+    if(secs<=0){clearInterval(iv);dismissJob();}
+  },1000);
+  pop._iv=iv;
+}
+function dismissJob(){var p=$('jobPop');clearInterval(p._iv);p.className='hide';p.innerHTML='';}
+function acceptJob(bid){
+  var p=parseInt($('jpPrice').value,10);
+  if(!p||p<1){toast('Enter your price');return;}
+  api('bookings.php','accept',{booking_id:bid,quoted_price:p}).then(function(res){
+    dismissJob();
+    if(res.success){toast('✅ Quote sent to customer!');pollJobs();}
+    else toast(res.error||'Job no longer available');
+  }).catch(function(){dismissJob();toast('Network error');});
+}
+function renderActiveJob(){
+  var el=$('activeJob');
+  if(!activeJob){el.innerHTML='<div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div>';return;}
+  var b=activeJob,st=b.status;
+  var h='<div class="card">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:26px">'+(b.svc_icon||'🔧')+'</span>'
+    +'<div style="flex:1"><div style="font-weight:800">'+b.svc_name+'</div><div style="font-size:12px;color:var(--muted)">'+b.id+'</div></div>'
+    +'<span class="badge '+st+'">'+st.replace(/_/g,' ')+'</span></div>'
+    +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+(b.customer_name||'Customer')+' '+(b.customer_phone?('· <a href="tel:'+b.customer_phone+'">📞 '+b.customer_phone+'</a>'):'')+'</div>'
+    +'<div style="font-size:13px;margin-bottom:10px"><b>📍</b> '+b.address+'</div>'
+    +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.final_price||b.quoted_price||0)+'</div>';
+  if(st==='negotiating'){
+    h+='<div style="background:#fff8e6;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:10px">Customer counter: <b>₹'+(b.counter_price||0)+'</b></div>'
+      +'<button class="btn green" onclick="acceptCounter()">Accept ₹'+(b.counter_price||0)+'</button><div style="height:8px"></div>'
+      +'<button class="btn ghost" onclick="finalOffer()">Send Final Offer</button>';
+  } else if(st==='price_confirmed'){
+    h+='<button class="btn teal" onclick="sendOTPInfo()">🚗 I have arrived — Verify OTP</button>';
+  } else if(st==='otp_sent'||st==='active'){
+    if(st==='otp_sent'){
+      h+='<label>Enter Customer OTP</label><input class="inp" id="jobOtp" type="number" maxlength="4" placeholder="4-digit OTP">'
+        +'<button class="btn teal" onclick="verifyOtp()">Verify & Start Job</button>';
+    } else {
+      h+='<button class="btn green" onclick="completeJob()">✅ Job Done — Complete</button>';
+    }
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+function acceptCounter(){api('bookings.php','accept_counter',{booking_id:activeJob.id}).then(function(res){if(res.success)toast('Accepted ✓');pollJobs();});}
+function finalOffer(){var v=prompt('Your final price (₹):');if(!v)return;
+  api('bookings.php','final_offer',{booking_id:activeJob.id,final_price:parseInt(v,10)}).then(function(res){if(res.success)toast('Final offer sent');pollJobs();});}
+function sendOTPInfo(){
+  api('bookings.php','verify_otp',{booking_id:activeJob.id,request:1}).then(function(res){
+    toast('Ask customer for the OTP shown in their app');pollJobs();
+  }).catch(function(){toast('Ask customer for OTP');});
+}
+function verifyOtp(){
+  var o=$('jobOtp').value.trim();
+  if(o.length<4){toast('Enter 4-digit OTP');return;}
+  api('bookings.php','verify_otp',{booking_id:activeJob.id,otp:o}).then(function(res){
+    if(res.success){toast('✅ OTP verified — job started');}
+    else toast(res.error||'Wrong OTP');
+    pollJobs();
+  });
+}
+function completeJob(){
+  if(!confirm('Mark job as completed?'))return;
+  api('bookings.php','complete',{booking_id:activeJob.id}).then(function(res){
+    if(res.success){toast('🎉 Job completed!');activeJob=null;refreshProfile();}
+    else toast(res.error||'Failed');
+    pollJobs();
+  });
+}
+
+// ── MY SERVICES ──
+function openServices(){
+  show('pgSvcs');
+  Promise.all([
+    api('providers.php','services',null,'&id='+encodeURIComponent(ME.id)),
+    api('services.php','price_ranges'),
+    api('providers.php','get_option_prices',null,'&id='+encodeURIComponent(ME.id))
+  ]).then(function(rs){
+    mySvcs={};
+    if(rs[0].success&&rs[0].data)rs[0].data.forEach(function(s){if(s.enabled==1)mySvcs[s.svc_id]=true;});
+    adminAll=rs[1].success?(rs[1].data||{}):{};
+    myPrices=rs[2].success?(rs[2].data||{}):{};
+    renderMySvcs();
+  }).catch(function(){renderMySvcs();});
+}
+function renderMySvcs(){
+  var h='';
+  SVC.forEach(function(s){
+    var on=mySvcs[s.id]?' on':'';
+    h+='<div class="svc-check'+on+'" id="ms_'+s.id+'">'
+      +'<span style="font-size:22px" onclick="togMySvc(\''+s.id+'\')">'+s.icon+'</span>'
+      +'<span style="flex:1;font-size:14px;font-weight:700" onclick="togMySvc(\''+s.id+'\')">'+s.name+'</span>'
+      +(mySvcs[s.id]?'<button class="price-btn" onclick="openPrices(\''+s.id+'\')">₹ Set</button>':'')
+      +'</div>';
+  });
+  $('mySvcList').innerHTML=h;
+}
+function togMySvc(id){mySvcs[id]=!mySvcs[id];renderMySvcs();}
+function saveServices(){
+  var arr=[];SVC.forEach(function(s){
+    arr.push({id:s.id,name:s.name,icon:s.icon,cat:s.cat,enabled:mySvcs[s.id]?1:0,
+      min_price:0,max_price:0});
+  });
+  api('providers.php','services',{services:arr}).then(function(res){
+    toast(res.success?'✅ Services saved':'Save failed');
+  });
+}
+function openPrices(svcId){
+  var s=SVC.find(function(x){return x.id===svcId;});
+  var admin=(adminAll[svcId]&&adminAll[svcId].admin_prices)||{};
+  var saved=myPrices[svcId]||{};
+  var sheet=$('priceSheet');
+  sheet.className='modal';
+  var body='<div class="sheet"><div style="display:flex;align-items:center;margin-bottom:12px">'
+    +'<span style="font-size:24px;margin-right:8px">'+s.icon+'</span>'
+    +'<b style="flex:1;font-size:16px">'+s.name+' — Prices</b>'
+    +'<span style="font-size:22px;cursor:pointer;padding:4px" onclick="closeSheet()">✕</span></div>';
+  var rows=0;
+  (s.groups||[]).forEach(function(g){
+    if(g.style!=='bhk')return;
+    body+='<div class="sec-title" style="margin-top:8px">'+g.title+'</div>';
+    g.items.forEach(function(it){
+      var key=g.key+'_'+it.k;
+      var a=admin[g.key]||{};
+      var mn=a[it.k+'_min']||0,mx=a[it.k+'_max']||0,ref=a[it.k]||it.p||0;
+      var val=saved[key]||'';
+      body+='<div class="opt-price-row"><div class="nm">'+it.name
+        +(mn>0?'<div class="rng">Allowed: ₹'+mn+' – ₹'+mx+'</div>':'')
+        +'</div><input type="number" id="pp_'+key+'" value="'+val+'" placeholder="'+(ref||'₹')+'" data-min="'+mn+'" data-max="'+mx+'"></div>';
+      rows++;
+    });
+  });
+  if(!rows)body+='<div style="font-size:13.5px;color:var(--muted);padding:10px 0">This service has one base price — customers get your quote when booking.</div>';
+  body+='<div style="height:10px"></div><button class="btn teal" onclick="savePrices(\''+svcId+'\')">💾 Save Prices</button><div style="height:16px"></div></div>';
+  sheet.innerHTML=body;
+}
+function closeSheet(){var s=$('priceSheet');s.className='hide';s.innerHTML='';}
+function savePrices(svcId){
+  var s=SVC.find(function(x){return x.id===svcId;});
+  var prices={},bad=null;
+  (s.groups||[]).forEach(function(g){
+    if(g.style!=='bhk')return;
+    g.items.forEach(function(it){
+      var key=g.key+'_'+it.k;
+      var el=$('pp_'+key);if(!el)return;
+      var v=parseInt(el.value,10)||0;
+      if(v>0){
+        var mn=parseInt(el.dataset.min,10)||0,mx=parseInt(el.dataset.max,10)||0;
+        if(mn>0&&v<mn){bad=it.name+': min ₹'+mn;return;}
+        if(mx>0&&v>mx){bad=it.name+': max ₹'+mx;return;}
+        prices[key]=v;
+      }
+    });
+  });
+  if(bad){toast('⚠️ '+bad);return;}
+  if(!Object.keys(prices).length){toast('Enter at least one price');return;}
+  api('providers.php','save_option_prices',{svc_id:svcId,prices:prices}).then(function(res){
+    if(res.success){myPrices[svcId]=prices;toast('✅ Prices saved');closeSheet();}
+    else toast(res.error||'Save failed');
+  });
+}
+
+// ── INIT ──
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+if(TOKEN&&ME.id){route();} else {show('pgAuth');}
+</script>
+</body>
+</html>
