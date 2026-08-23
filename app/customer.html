@@ -57,9 +57,28 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .sec-title{font-size:15px;font-weight:800;margin:16px 0 10px;color:var(--teal)}
 .radar-wrap{text-align:center;padding:40px 0}
 .pulse{width:130px;height:130px;margin:0 auto 24px;border-radius:50%;background:radial-gradient(circle,var(--amber) 22%,rgba(242,107,29,.25) 60%,transparent 70%);display:flex;align-items:center;justify-content:center;font-size:44px;animation:pl 1.4s infinite}
+/* ── PROVIDER SCANNER ── */
+.scanner{position:relative;width:230px;height:230px;margin:8px auto 26px;border-radius:50%;background:radial-gradient(circle,#0d3d47 0%,#0f4c5c 70%,#0a3540 100%);box-shadow:0 8px 30px rgba(15,76,92,.35),inset 0 0 40px rgba(0,0,0,.3);overflow:hidden}
+.scan-grid{position:absolute;inset:0;border-radius:50%;background:
+  linear-gradient(rgba(120,220,232,.12) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(120,220,232,.12) 1px,transparent 1px);background-size:28px 28px;background-position:center}
+.scan-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid rgba(120,220,232,.35)}
+.scan-ring.r1{width:70px;height:70px}
+.scan-ring.r2{width:140px;height:140px}
+.scan-ring.r3{width:205px;height:205px}
+.scan-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(64,224,208,.55) 0deg,rgba(64,224,208,.18) 40deg,transparent 90deg);animation:sweep 2.4s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.scan-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;z-index:3;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));animation:centerPulse 1.6s ease infinite}
+@keyframes centerPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.15)}}
+.scan-blip{position:absolute;font-size:17px;z-index:2;opacity:0;animation:blip 4.8s infinite}
+.scan-blip.b1{top:22%;left:64%;animation-delay:.6s}
+.scan-blip.b2{top:62%;left:20%;animation-delay:2.2s}
+.scan-blip.b3{top:70%;left:68%;animation-delay:3.6s}
+@keyframes blip{0%,8%{opacity:0;transform:scale(.4)}14%{opacity:1;transform:scale(1.25)}20%{opacity:1;transform:scale(1)}46%{opacity:1}60%,100%{opacity:0;transform:scale(.6)}}
+.scanner::after{content:'';position:absolute;top:50%;left:50%;width:12px;height:12px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(64,224,208,.9);box-shadow:0 0 14px 5px rgba(64,224,208,.45);z-index:1}
 @keyframes pl{0%{box-shadow:0 0 0 0 rgba(242,107,29,.4)}70%{box-shadow:0 0 0 34px rgba(242,107,29,0)}100%{box-shadow:0 0 0 0 rgba(242,107,29,0)}}
 .status-big{font-size:18px;font-weight:800;margin-bottom:8px}
-.status-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.status-sub{transition:opacity .22s;font-size:13px;color:var(--muted);margin-bottom:22px}
 .offer-card{border:2px solid var(--amber);background:#fff8f2}
 .tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2ecef;display:flex;z-index:55}
 .tab{flex:1;text-align:center;padding:9px 0 7px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer}
@@ -276,10 +295,20 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="page" style="padding-bottom:80px">
     <div id="bkTimeline"></div>
     <div class="radar-wrap" id="radarSearch">
-      <div class="pulse">🔍</div>
+      <div class="scanner">
+        <div class="scan-ring r1"></div>
+        <div class="scan-ring r2"></div>
+        <div class="scan-ring r3"></div>
+        <div class="scan-grid"></div>
+        <div class="scan-sweep"></div>
+        <div class="scan-blip b1">👷</div>
+        <div class="scan-blip b2">🔧</div>
+        <div class="scan-blip b3">🧹</div>
+        <div class="scan-center">📍</div>
+      </div>
       <div class="status-big">Searching for providers…</div>
-      <div class="status-sub" id="radarSub">Contacting providers near you</div>
-      <button class="btn ghost" style="max-width:220px;margin:0 auto" onclick="cancelBooking()">Cancel</button>
+      <div class="status-sub" id="radarSub">Scanning 5 km around you</div>
+      <button class="btn ghost" style="max-width:220px;margin:16px auto 0" onclick="cancelBooking()">Cancel</button>
     </div>
     <div id="radarOffer" class="hide"></div>
     <div id="radarActive" class="hide"></div>
@@ -808,9 +837,22 @@ function resumeBooking(){
 }
 
 // ── POLL BOOKING ──
+var scanMsgTimer=null;
+var scanMsgs=['Scanning 5 km around you','Contacting nearby professionals','Checking who is available now','Almost there — hold on'];
+function startScanMsgs(){
+  clearInterval(scanMsgTimer);var i=0;
+  scanMsgTimer=setInterval(function(){
+    var el=$('radarSub');
+    if(!el||$('radarSearch').classList.contains('hide')){clearInterval(scanMsgTimer);return;}
+    i=(i+1)%scanMsgs.length;
+    el.style.opacity='0';
+    setTimeout(function(){el.textContent=scanMsgs[i];el.style.opacity='1';},220);
+  },2600);
+}
 function startPoll(){
   clearInterval(pollTimer);
   pollTimer=setInterval(checkBooking,4000);checkBooking();
+  startScanMsgs();
 }
 function checkBooking(){
   api('bookings.php','get&id='+activeBookingId).then(function(res){
