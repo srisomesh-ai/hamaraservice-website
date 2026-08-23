@@ -318,10 +318,10 @@ switch ($action) {
       );
     }
 
-    // Reset booking to active — new provider can pick it up
+    // Reset booking to searching — new provider can pick it up
     $db->prepare("
       UPDATE bookings SET
-        status             = 'active',
+        status             = 'searching',
         provider_id        = NULL,
         provider_name      = NULL,
         quoted_price       = 0,
