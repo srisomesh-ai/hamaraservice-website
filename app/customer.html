@@ -26,9 +26,11 @@ body{background:var(--bg);color:var(--txt);min-height:100vh;padding-bottom:70px}
 label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
 .err{color:var(--red);font-size:13px;margin-bottom:10px;min-height:16px}
 .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.svc-tile{background:#fff;border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(15,76,92,.07);transition:.15s}
+.svc-tile{background:#fff;border-radius:14px;padding:10px 8px 12px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(15,76,92,.07);transition:.15s;overflow:hidden}
 .svc-tile:active{transform:scale(.95)}
-.svc-tile .ico{font-size:30px;margin-bottom:6px}
+.svc-tile .ico-wrap{width:100%;height:64px;border-radius:10px;overflow:hidden;margin-bottom:7px;background:#f0f6f8;display:flex;align-items:center;justify-content:center}
+.svc-tile .ico-img{width:100%;height:100%;object-fit:cover}
+.svc-tile .ico-emoji{font-size:30px}
 .svc-tile .nm{font-size:12px;font-weight:700;line-height:1.25}
 .svc-tile .pr{font-size:11px;color:var(--amber);font-weight:800;margin-top:4px}
 .chip-row{display:flex;flex-wrap:wrap;gap:8px}
@@ -255,7 +257,9 @@ function pickCat(ct){selCat=ct;renderChips();renderHome();window.scrollTo(0,0);}
 function tileHtml(s){
   var r=priceRanges[s.id];
   var pr=(r&&r.min>0)?r.min:(s.base||99);
-  return '<div class="svc-tile" onclick="openSvc(\''+s.id+'\')"><div class="ico">'+s.icon+'</div><div class="nm">'+s.name+'</div><div class="pr"><span class="from">from </span>₹'+pr+'</div></div>';
+  return '<div class="svc-tile" onclick="openSvc(\''+s.id+'\')">'
+    +'<div class="ico-wrap"><img class="ico-img" src="/assets/services/'+s.id+'.jpg" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><span class="ico-emoji" style="display:none">'+s.icon+'</span></div>'
+    +'<div class="nm">'+s.name+'</div><div class="pr"><span class="from">from </span>₹'+pr+'</div></div>';
 }
 function renderHome(){
   var q=($('homeSearch').value||'').trim().toLowerCase();
@@ -287,7 +291,7 @@ function renderHome(){
 var adminPrices={};
 function openSvc(id){
   curSvc=SVC.find(function(s){return s.id===id;});sel={tasks:{},opts:{}};
-  $('svcTitle').textContent=curSvc.icon+' '+curSvc.name;
+  $('svcTitle').textContent=curSvc.name;
   adminPrices={};
   api('services.php','prices&id='+id).then(function(res){
     if(res.success)adminPrices=res.data||{};
