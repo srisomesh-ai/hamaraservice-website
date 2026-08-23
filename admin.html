@@ -1050,6 +1050,12 @@ function syncFromFirebase(){
   fbGet('customers', function(err, data){
     if(!err && data && !data.error){
       var arr=toArr(data).filter(function(c){ return c&&(c.id||c.uid); });
+      // MERGE with MySQL customers instead of replacing
+      try{
+        var _ex2 = lsGet('hs_customers',[]);
+        var _ids2 = {}; arr.forEach(function(c){ _ids2[c.id||c.uid]=1; });
+        _ex2.forEach(function(c){ if(c && (c.id||c.uid) && !_ids2[c.id||c.uid]) arr.push(c); });
+      }catch(e){}
       if(arr.length){ lsSet('hs_customers',arr); loadCustomers(null); }
     }
   });
@@ -2339,6 +2345,7 @@ function syncAllFromFirebase(cb) {
 // ── Real-time listeners — auto-refresh UI when Firebase data changes ──────────
 var _liveListenersStarted = false;
 function startLiveListeners() {
+  if (typeof syncCustomersFromFirebase==='function') syncCustomersFromFirebase(function(){ if(document.getElementById('custBody')) loadCustomers(null); });
   if (_liveListenersStarted) return;
   _liveListenersStarted = true;
 
@@ -2359,6 +2366,12 @@ function startLiveListeners() {
     if (!snap.exists()) return;
     var custs = [];
     snap.forEach(function(c) { var v=c.val(); if(v&&(v.id||v.uid)) custs.push(v); });
+    // MERGE with existing (MySQL-registered app customers must never be dropped)
+    try{
+      var _ex = JSON.parse(localStorage.getItem('hs_customers')||'[]');
+      var _ids = {}; custs.forEach(function(c){ _ids[c.id||c.uid]=1; });
+      _ex.forEach(function(c){ if(c && (c.id||c.uid) && !_ids[c.id||c.uid]) custs.push(c); });
+    }catch(e){}
     localStorage.setItem('hs_customers', JSON.stringify(custs));
     if (document.getElementById('custBody')) loadCustomers(null);
     console.log('[Admin] Live: customers updated', custs.length);
