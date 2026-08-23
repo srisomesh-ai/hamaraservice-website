@@ -168,6 +168,25 @@ switch ($action) {
   }
 
   // ── GET PROFILE ───────────────────────────────────────
+  // ── CHANGE PASSWORD (web app) ──
+  case 'change_password': {
+    $user = requireCustomer();
+    $b = getBody();
+    $old = $b['old_password'] ?? '';
+    $new = $b['new_password'] ?? '';
+    if (strlen($new) < 4) err('New password too short');
+    $stmt = $db->prepare("SELECT password_hash FROM customers WHERE id = ? LIMIT 1");
+    $stmt->execute([$user['uid']]);
+    $row = $stmt->fetch();
+    if (!$row) err('Customer not found', 404);
+    if (!empty($row['password_hash']) && !password_verify($old, $row['password_hash'])) {
+      err('Current password is incorrect', 401);
+    }
+    $db->prepare("UPDATE customers SET password_hash = ? WHERE id = ?")
+       ->execute([password_hash($new, PASSWORD_BCRYPT), $user['uid']]);
+    ok(['changed' => true]);
+  }
+
   case 'get': {
     $user = requireCustomer();
     $id   = $_GET['id'] ?? $user['uid'];
