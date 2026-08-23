@@ -131,15 +131,60 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .cat-head .t{font-size:15.5px;font-weight:900;color:var(--teal)}
 .cat-head .n{font-size:11px;color:var(--muted);font-weight:700;background:#e3eef1;padding:2px 9px;border-radius:99px}
 .svc-tile .from{font-size:9.5px;color:var(--muted);font-weight:600}
+
+/* ── AUTH SCREEN ── */
+.auth-screen{min-height:100vh;background:linear-gradient(165deg,#0f4c5c 0%,#1a6b7e 60%,#2a8ba0 100%);display:flex;flex-direction:column}
+.auth-hero{padding:52px 24px 70px;text-align:center;color:#fff;position:relative}
+.auth-back{position:absolute;left:16px;top:18px;font-size:22px;color:#fff;cursor:pointer;padding:6px 10px}
+.auth-logo{font-size:32px;font-weight:900;letter-spacing:-.5px;animation:riseIn .5s ease both}
+.auth-logo span{color:#ffb35c}
+.auth-tag{font-size:13.5px;color:#cfe4ea;margin-top:6px;animation:riseIn .55s .05s ease both}
+.auth-badges{display:flex;justify-content:center;gap:8px;margin-top:18px;flex-wrap:wrap;animation:riseIn .6s .1s ease both}
+.auth-badges span{font-size:11.5px;font-weight:700;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:6px 12px;border-radius:99px}
+.auth-card-wrap{flex:1;background:var(--bg);border-radius:26px 26px 0 0;margin-top:-34px;padding:26px 18px 40px}
+.auth-card{background:#fff;border-radius:18px;padding:24px 20px;box-shadow:0 4px 24px rgba(15,76,92,.12);max-width:420px;margin:0 auto;animation:riseIn .5s .12s ease both}
+.auth-title{font-size:20px;font-weight:900}
+.auth-sub{font-size:13px;color:var(--muted);margin:3px 0 16px}
+/* ── GLOBAL ANIMATIONS ── */
+@keyframes riseIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.svc-tile{animation:riseIn .4s ease both}
+.svc-tile:nth-child(1){animation-delay:.02s}.svc-tile:nth-child(2){animation-delay:.05s}
+.svc-tile:nth-child(3){animation-delay:.08s}.svc-tile:nth-child(4){animation-delay:.11s}
+.svc-tile:nth-child(5){animation-delay:.14s}.svc-tile:nth-child(6){animation-delay:.17s}
+.svc-tile:active{transform:scale(.96);transition:transform .12s}
+.chip{transition:all .18s ease}
+.chip.on{animation:popIn .22s ease}
+.cat-chip{transition:all .18s ease}
+.cat-chip:active{transform:scale(.93)}
+.cat-chip.on{animation:popIn .22s ease}
+.card{animation:fadeIn .3s ease both}
+.btn{transition:transform .12s ease,opacity .2s}
+.btn:active{transform:scale(.97)}
+.sec-title{animation:fadeIn .35s ease both}
+.skel{background:linear-gradient(90deg,#e8eef0 25%,#f4f8f9 50%,#e8eef0 75%);background-size:800px 100%;animation:shimmer 1.2s infinite linear;border-radius:12px}
+.tabbar .tab{transition:all .15s ease}
+.tabbar .tab:active{transform:scale(.92)}
 </style>
 </head>
 <body>
 
 <!-- ══ AUTH ══ -->
-<div id="pgAuth" class="hide">
-  <div class="topbar"><span class="back" onclick="show('pgHome')">←</span><h1>Login / Register</h1></div>
-  <div class="page">
-    <div class="card">
+<div id="pgAuth" class="hide auth-screen">
+  <div class="auth-hero">
+    <span class="back auth-back" onclick="show('pgHome')">←</span>
+    <div class="auth-logo">Hamara<span>Service</span></div>
+    <div class="auth-tag">Trusted home services at your doorstep</div>
+    <div class="auth-badges">
+      <span>✅ Verified Pros</span><span>💰 Pay After Service</span><span>⭐ 4.8 Rated</span>
+    </div>
+  </div>
+  <div class="auth-card-wrap">
+    <div class="auth-card">
+      <div class="auth-title" id="authTitle">Welcome back 👋</div>
+      <div class="auth-sub" id="authSub">Login to book your service</div>
       <div id="authErr" class="err"></div>
       <div id="regFields" class="hide">
         <label>Full Name</label><input class="inp" id="rName" placeholder="Your name">
@@ -212,6 +257,14 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
       <input class="inp" id="bPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
       <label>When?</label>
       <div class="chip-row" id="slotRow"></div>
+      <label>Preferred Hour <span style="font-weight:500;color:var(--muted)">(optional)</span></label>
+      <select class="inp" id="bHour">
+        <option value="">Any time</option>
+        <option>6 AM</option><option>7 AM</option><option>8 AM</option><option>9 AM</option>
+        <option>10 AM</option><option>11 AM</option><option>12 PM</option><option>1 PM</option>
+        <option>2 PM</option><option>3 PM</option><option>4 PM</option><option>5 PM</option>
+        <option>6 PM</option><option>7 PM</option><option>8 PM</option><option>9 PM</option>
+      </select>
     </div>
     <button class="btn" onclick="createBooking()">Find Provider →</button>
   </div>
@@ -294,27 +347,14 @@ function api(ep,action,body,method){
 }
 
 // ── AUTH ──
-function swapAuth(){isReg=!isReg;$('regFields').classList.toggle('hide',!isReg);$('authBtn').textContent=isReg?'Create Account':'Login';$('authSwap').textContent=isReg?'Have an account? Login':'New here? Create account';$('authErr').textContent='';}
-function doAuth(){
-  var email=$('aEmail').value.trim().toLowerCase(),pwd=$('aPwd').value;
-  if(!email||!pwd){$('authErr').textContent='Enter email and password';return;}
-  $('authBtn').disabled=true;
-  var act=isReg?'web_register':'web_login';
-  var body={email:email,password:pwd};
-  if(isReg){body.name=$('rName').value.trim();body.phone=$('rPhone').value.trim();
-    if(!body.name){$('authErr').textContent='Enter your name';$('authBtn').disabled=false;return;}}
-  api('customers.php',act,body).then(function(res){
-    $('authBtn').disabled=false;
-    if(res.success){TOKEN=res.data.token;ME=res.data.customer;
-      localStorage.setItem('hs_cust_token',TOKEN);localStorage.setItem('hs_cust_me',JSON.stringify(ME));localStorage.setItem('hs_role','customer');
-      if(pendingAfterAuth==='addr'&&curSvc){
-        pendingAfterAuth=null;
-        toast('✓ Logged in — set your address');
-        goAddress(); // full flow: phone prefill + GPS capture + animation
-      } else { initHome(); }
-    } else if(res.error==='NOT_REGISTERED'){swapAuth();$('authErr').textContent='Email not found — create your account';
-    } else {$('authErr').textContent=res.error||'Failed';}
-  }).catch(function(){$('authBtn').disabled=false;$('authErr').textContent='Network error';});
+function swapAuth(){
+  regMode=!regMode;
+  $('regFields').classList.toggle('hide',!regMode);
+  $('authBtn').textContent=regMode?'Create Account':'Login';
+  $('authSwap').textContent=regMode?'Already have an account? Login':'New here? Create account';
+  if($('authTitle')){$('authTitle').textContent=regMode?'Create your account 🎉':'Welcome back 👋';}
+  if($('authSub')){$('authSub').textContent=regMode?'Register to start booking services':'Login to book your service';}
+  $('authErr').textContent='';
 }
 function authTab(){
   if(TOKEN&&ME.id)logout();
@@ -431,7 +471,7 @@ function openSvc(id){
   var s=SVC.find(function(x){return x.id===id;});
   if(s&&SVC_PAGE_MAP[s.name]){
     // Open the exact website service page — full format & booking system
-    window.location.href='/'+SVC_PAGE_MAP[s.name];
+    window.location.href='/'+SVC_PAGE_MAP[s.name]+'?app=1';
     return;
   }
   openSvcApp(id);
@@ -718,11 +758,14 @@ function createBooking(){
   if(!city)city=locAddr;
   var taskNames=[];
   (curSvc.groups||[]).forEach(function(g){if(g.style==='label')g.items.forEach(function(it){if(sel.tasks[it.k])taskNames.push(it.name);});});
+  if(siteBooking&&siteBooking.summary&&siteBooking.summary.length){
+    taskNames=siteBooking.summary.map(function(t){return (typeof t==='string')?t:(t.name||t.label||JSON.stringify(t));});
+  }
   var body={
     svc_id:curSvc.id,svc_name:curSvc.name,svc_icon:curSvc.icon,
     address:addr,city:city,
     lat:gps.lat,lng:gps.lng,
-    slot_time:selSlot,notes:taskNames.join(', ')
+    slot_time:selSlot+(($('bHour')&&$('bHour').value)?(' · '+$('bHour').value):''),notes:taskNames.join(', ')+((siteBooking&&siteBooking.price)?(' | Est ₹'+siteBooking.price):'')
   };
   api('customers.php','update',{phone:ph,address:addr,city:city}).catch(function(){});
   api('bookings.php','create',body).then(function(res){
@@ -991,8 +1034,40 @@ function cancelFromDetail(id){
 
 // ── INIT ──
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+// Mark app context so website pages know they're inside the app
+sessionStorage.setItem('hs_in_app','1');
 // Guest browsing allowed — login required only when booking
 initHome();
+// Came from a website svc page with selected tasks → jump straight to address
+var siteBooking=null;
+(function(){
+  if(location.search.indexOf('book=1')<0)return;
+  var opts=null;
+  try{opts=JSON.parse(localStorage.getItem('hs_service_options')||sessionStorage.getItem('hs_service_options')||'null');}catch(e){}
+  if(!opts||!opts.service)return;
+  var s=SVC.find(function(x){return x.id===opts.svcId;})||SVC.find(function(x){return x.name===opts.service;});
+  curSvc=s||{id:opts.svcId||'SVC000',name:opts.service,icon:opts.icon||'🔧',groups:[]};
+  sel={tasks:{},opts:{}};
+  siteBooking={price:parseInt(opts.price||'0',10)||0,summary:opts.summary||[]};
+  history.replaceState(null,'','customer.html');
+  setTimeout(function(){goAddressFromSite();},250);
+})();
+function goAddressFromSite(){
+  if(!requireLogin('siteAddr'))return;
+  $('bPhone').value=ME.phone||'';
+  if((!ME.phone||!ME.phone.length)&&TOKEN&&ME.id){
+    api('customers.php','get&id='+encodeURIComponent(ME.id)).then(function(res){
+      if(res.success&&res.data){ME=Object.assign(ME,res.data);localStorage.setItem('hs_cust_me',JSON.stringify(ME));if(!$('bPhone').value)$('bPhone').value=ME.phone||'';}
+    }).catch(function(){});
+  }
+  var h='';slots.forEach(function(s){h+='<div class="chip'+(s===selSlot?' on':'')+'" onclick="pickSlot(\''+s+'\')">'+s+'</div>';});
+  $('slotRow').innerHTML=h;
+  show('pgAddr');
+  selNearby='';
+  if($('nbSearch')){$('nbSearch').style.display='';$('nbSearch').value='';}
+  if($('nbList'))$('nbList').style.display='';
+  captureGPS(true);
+}
 </script>
 </body>
 </html>
