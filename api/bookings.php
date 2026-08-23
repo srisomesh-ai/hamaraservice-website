@@ -438,7 +438,12 @@ switch ($action) {
     $id = $_GET['id'] ?? '';
     if (empty($id)) err('id required');
 
-    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ?");
+    $stmt = $db->prepare("
+      SELECT b.*, p.upi_id AS provider_upi, p.rating AS provider_rating
+      FROM bookings b
+      LEFT JOIN providers p ON p.id = b.provider_id
+      WHERE b.id = ?
+    ");
     $stmt->execute([$id]);
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not found', 404);
