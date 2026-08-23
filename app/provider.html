@@ -107,6 +107,11 @@ google.maps.importLibrary("places").then(function(){window._placesReady=true;});
     <div class="card">
       <div id="regErr" class="err"></div>
       <div id="regStep0">
+        <div style="text-align:center;margin-bottom:14px">
+          <div id="photoPreview" onclick="pickPhoto('reg')" style="width:96px;height:96px;border-radius:50%;background:#eef5f6;border:2px dashed var(--teal);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;background-size:cover;background-position:center;overflow:hidden">📷</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;cursor:pointer" onclick="pickPhoto('reg')">Add your photo (recommended)</div>
+        </div>
+        <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="onPhotoPicked(this)">
         <label>Full Name *</label><input class="inp" id="rName">
         <label>Mobile *</label><input class="inp" id="rPhone" type="tel" maxlength="10">
         <label>WhatsApp</label><input class="inp" id="rWa" type="tel" maxlength="10" placeholder="Same as mobile if empty">
@@ -212,7 +217,8 @@ google.maps.importLibrary("places").then(function(){window._placesReady=true;});
   <div class="topbar"><span class="back" onclick="show('pgDash')">←</span><h1>Profile & Payment</h1></div>
   <div class="page" style="padding-bottom:90px">
     <div class="card" style="text-align:center">
-      <div class="dash-avatar" style="margin:0 auto 8px;width:60px;height:60px;font-size:24px" id="profAvatar">P</div>
+      <div id="profPhotoPrev" onclick="pickPhoto('profile')" style="width:80px;height:80px;border-radius:50%;background:#eef5f6;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;background-size:cover;background-position:center;overflow:hidden;border:2px solid var(--teal)">P</div>
+      <div style="font-size:11.5px;color:var(--teal);font-weight:700;cursor:pointer;margin-bottom:6px" onclick="pickPhoto('profile')">📷 Change photo</div>
       <div style="font-weight:900;font-size:16px" id="profName"></div>
       <div style="font-size:12px;color:var(--muted)" id="profMeta"></div>
     </div>
@@ -426,7 +432,15 @@ function regNext(){
   $('regNext').disabled=true;
   api('providers.php','register',body).then(function(res){
     $('regNext').disabled=false;
-    if(res.success){$('pendName').textContent='Hi '+body.name+'! Application submitted.';show('pgPending');toast('✅ Registered! Waiting for approval');}
+    if(res.success){
+      // auto-login to get token, then upload photo
+      if(_photoData){
+        api('providers.php','login',{email:body.email,password:body.password}).then(function(lr){
+          if(lr.success){TOKEN=lr.data.token;ME=lr.data.provider;localStorage.setItem('hs_prov_token',TOKEN);localStorage.setItem('hs_prov_me',JSON.stringify(ME));uploadPhoto();}
+        }).catch(function(){});
+      }
+      $('pendName').textContent='Hi '+body.name+'! Application submitted.';show('pgPending');toast('✅ Registered! Waiting for approval');
+    }
     else $('regErr').textContent=res.error||'Registration failed';
   }).catch(function(){$('regNext').disabled=false;$('regErr').textContent='Network error';});
 }
@@ -435,7 +449,8 @@ function regNext(){
 function initDash(){
   show('pgDash');
   $('dashName').textContent=ME.name||'Provider';
-  $('dashAvatar').textContent=(ME.name||'P').charAt(0).toUpperCase();
+  if(ME.photo){$('dashAvatar').style.backgroundImage='url(https://hamaraservice.com'+ME.photo+')';$('dashAvatar').style.backgroundSize='cover';$('dashAvatar').style.backgroundPosition='center';$('dashAvatar').textContent='';}
+  else $('dashAvatar').textContent=(ME.name||'P').charAt(0).toUpperCase();
   $('dashId').textContent=(ME.id||'')+' · '+(ME.city||'');
   var rt=parseFloat(ME.rating||0);
   $('dashRating').textContent=rt>0?('⭐ '+rt.toFixed(1)+' ('+(ME.review_count||0)+' reviews)'):'⭐ New provider';
@@ -589,10 +604,49 @@ function completeJob(){
 }
 
 
+
+// ── PHOTO UPLOAD ──
+var _photoData=null, _photoCtx='reg';
+function pickPhoto(ctx){_photoCtx=ctx||'reg';$('photoInput').click();}
+function onPhotoPicked(inp){
+  var f=inp.files&&inp.files[0];if(!f)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      // compress to max 600px, jpeg 0.82
+      var max=600,w=img.width,h=img.height;
+      if(w>h&&w>max){h=h*max/w;w=max;}else if(h>max){w=w*max/h;h=max;}
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      _photoData=cv.toDataURL('image/jpeg',0.82);
+      // preview
+      var pv=$('photoPreview')||$('profPhotoPrev');
+      if(pv){pv.style.backgroundImage='url('+_photoData+')';pv.textContent='';}
+      var pp=$('profPhotoPrev');if(pp){pp.style.backgroundImage='url('+_photoData+')';pp.textContent='';}
+      if(_photoCtx==='profile')uploadPhoto();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+function uploadPhoto(cb){
+  if(!_photoData){if(cb)cb();return;}
+  api('upload.php','provider_photo',{image:_photoData}).then(function(res){
+    if(res.success){
+      ME.photo=res.data.photo;localStorage.setItem('hs_prov_me',JSON.stringify(ME));
+      toast('📷 Photo saved');
+    } else toast(res.error||'Upload failed');
+    if(cb)cb();
+  }).catch(function(){toast('Upload error');if(cb)cb();});
+}
+
 // ── PROFILE / PAYMENT ──
 function openProf(){
   show('pgProf');
-  $('profAvatar').textContent=(ME.name||'P').charAt(0).toUpperCase();
+  var pp=$('profPhotoPrev');
+  if(ME.photo){pp.style.backgroundImage='url(https://hamaraservice.com'+ME.photo+')';pp.textContent='';}
+  else{pp.style.backgroundImage='';pp.textContent=(ME.name||'P').charAt(0).toUpperCase();}
   $('profName').textContent=ME.name||'';
   $('profMeta').textContent=(ME.id||'')+' · '+(ME.status||'');
   $('profPhone').textContent=ME.phone||'';
