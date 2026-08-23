@@ -439,7 +439,7 @@ switch ($action) {
     if (empty($id)) err('id required');
 
     $stmt = $db->prepare("
-      SELECT b.*, p.upi_id AS provider_upi, p.rating AS provider_rating
+      SELECT b.*, p.upi_id AS provider_upi, p.rating AS provider_rating, p.photo AS provider_photo
       FROM bookings b
       LEFT JOIN providers p ON p.id = b.provider_id
       WHERE b.id = ?
