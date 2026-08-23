@@ -150,6 +150,10 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="topbar"><span class="back" onclick="show('pgSvc')">←</span><h1>Service Address</h1></div>
   <div class="page">
     <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Detecting your location…</div>
+    <div id="nearbyWrap" class="hide" style="margin-bottom:12px">
+      <label>📍 Pick your building / nearest place</label>
+      <div class="chip-row" id="nearbyChips"></div>
+    </div>
     <div class="card">
       <label>Your Location (auto-detected)</label>
       <textarea class="inp" id="bAddr" rows="2" placeholder="Detecting street / building / area…"></textarea>
@@ -389,7 +393,22 @@ function captureGPS(force){
   if(gps.lat&&!force){gpsOk('');return;}
   if(!navigator.geolocation){toast('Location not supported on this browser');return;}
   var b=$('gpsBanner');b.className='gps-banner gps-no';b.textContent='📍 Detecting your location…';
-  navigator.geolocation.getCurrentPosition(function(pos){
+  var best=null,wid=null,done=false;
+  var finish=function(pos){
+    if(done)return;done=true;
+    if(wid!==null)navigator.geolocation.clearWatch(wid);
+    onPos(pos);
+  };
+  wid=navigator.geolocation.watchPosition(function(pos){
+    if(!best||pos.coords.accuracy<best.coords.accuracy)best=pos;
+    if(pos.coords.accuracy<=25)finish(pos); // good enough
+  },function(err){
+    if(!done){done=true;if(wid!==null)navigator.geolocation.clearWatch(wid);
+      b.className='gps-banner gps-no';
+      b.textContent='📍 Location blocked — tap to retry (allow permission)';}
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+  setTimeout(function(){if(best)finish(best);},6000);
+  function onPos(pos){
     gps.lat=pos.coords.latitude;gps.lng=pos.coords.longitude;
     // Precise reverse geocode — building / street / area / city / pincode
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+gps.lat+'&lon='+gps.lng+'&format=json&zoom=18&addressdetails=1')
@@ -411,13 +430,55 @@ function captureGPS(force){
       if(addr){$('bAddr').value=addr;}
       gpsOk(addr?(' — '+(a.neighbourhood||a.suburb||a.city||a.town||'')):'');
     }).catch(function(){gpsOk('');});
+    loadNearbyPlaces(gps.lat,gps.lng);
     api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
-  },function(err){
-    b.className='gps-banner gps-no';
-    b.textContent='📍 Location blocked — tap to retry (allow permission)';
-  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+  }
 }
 function gpsOk(extra){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='✅ Location updated'+(extra||'');}
+var selNearby='';
+function loadNearbyPlaces(lat,lng){
+  var q='[out:json][timeout:8];('
+    +'way(around:250,'+lat+','+lng+')["building"]["name"];'
+    +'node(around:250,'+lat+','+lng+')["name"]["amenity"];'
+    +'node(around:250,'+lat+','+lng+')["name"]["shop"];'
+    +'way(around:250,'+lat+','+lng+')["name"]["amenity"];'
+    +'node(around:250,'+lat+','+lng+')["name"]["office"];'
+    +');out center 20;';
+  fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),
+    headers:{'Content-Type':'application/x-www-form-urlencoded'}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var items=[];
+    (d.elements||[]).forEach(function(e){
+      var nm=(e.tags&&e.tags.name)||'';
+      if(!nm)return;
+      var elat=e.lat||(e.center&&e.center.lat),elng=e.lon||(e.center&&e.center.lon);
+      if(!elat)return;
+      var dx=(elat-lat)*111320,dy=(elng-lng)*111320*Math.cos(lat*Math.PI/180);
+      items.push({name:nm,dist:Math.round(Math.sqrt(dx*dx+dy*dy))});
+    });
+    // dedupe by name, sort by distance, top 10
+    var seen={},list=[];
+    items.sort(function(a,b){return a.dist-b.dist;});
+    items.forEach(function(it){if(!seen[it.name]&&list.length<10){seen[it.name]=1;list.push(it);}});
+    if(!list.length){$('nearbyWrap').classList.add('hide');return;}
+    var h='';
+    list.forEach(function(it){
+      h+='<div class="chip nb-chip" data-nm="'+it.name.replace(/"/g,'&quot;')+'" onclick="pickNearby(this)">'+it.name+' <span style="font-size:10px;color:var(--muted)">'+it.dist+'m</span></div>';
+    });
+    $('nearbyChips').innerHTML=h;
+    $('nearbyWrap').classList.remove('hide');
+  }).catch(function(){});
+}
+function pickNearby(el){
+  selNearby=el.getAttribute('data-nm')||'';
+  [].forEach.call(document.querySelectorAll('.nb-chip'),function(x){x.classList.remove('on');});
+  el.classList.add('on');
+  // Prepend to location if not already there
+  var cur=$('bAddr').value;
+  if(cur.indexOf(selNearby)<0){$('bAddr').value='Near '+selNearby+', '+cur;}
+  toast('📍 '+selNearby+' added to address');
+}
 
 // ── CREATE BOOKING ──
 var pendingAfterAuth=null;
