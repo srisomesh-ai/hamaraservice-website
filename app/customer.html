@@ -199,6 +199,7 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 <script src="catalog.js?v=2"></script>
 <script>
 var API='https://hamaraservice.com/api';
+var GKEY='AIzaSyApCgAtEZ7rlsaRH8_Ec4H-paU6ueMjzkM';
 var TOKEN=localStorage.getItem('hs_cust_token')||'';
 var ME=JSON.parse(localStorage.getItem('hs_cust_me')||'{}');
 var isReg=false, curSvc=null, sel={}, gps={lat:0,lng:0}, activeBookingId=localStorage.getItem('hs_active_bk')||'', pollTimer=null, priceRanges={};
@@ -410,25 +411,28 @@ function captureGPS(force){
   setTimeout(function(){if(best)finish(best);},6000);
   function onPos(pos){
     gps.lat=pos.coords.latitude;gps.lng=pos.coords.longitude;
-    // Precise reverse geocode — building / street / area / city / pincode
-    fetch('https://nominatim.openstreetmap.org/reverse?lat='+gps.lat+'&lon='+gps.lng+'&format=json&zoom=18&addressdetails=1')
+    // Google Geocoding — exact street address for India
+    fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng='+gps.lat+','+gps.lng+'&key='+GKEY+'&region=in')
     .then(function(r){return r.json();})
     .then(function(d){
-      var a=d.address||{};
-      var parts=[
-        a.building||a.amenity||a.shop||'',
-        a.house_number||'',
-        a.road||a.pedestrian||a.footway||'',
-        a.neighbourhood||a.suburb||a.residential||'',
-        a.city||a.town||a.village||a.county||'',
-        a.postcode||''
-      ].filter(function(x){return x&&x.length>0;});
-      // dedupe consecutive
-      var seen={},clean=[];
-      parts.forEach(function(p){if(!seen[p]){seen[p]=1;clean.push(p);}});
-      var addr=clean.join(', ');
+      var addr='';var area='';
+      if(d.status==='OK'&&d.results&&d.results.length){
+        // best result: street_address or premise, else first
+        var best=null;
+        for(var i=0;i<d.results.length;i++){
+          var t=d.results[i].types||[];
+          if(t.indexOf('street_address')>=0||t.indexOf('premise')>=0||t.indexOf('subpremise')>=0){best=d.results[i];break;}
+        }
+        if(!best)best=d.results[0];
+        addr=best.formatted_address||'';
+        // strip trailing ', India'
+        addr=addr.replace(/,\s*India$/,'');
+        (best.address_components||[]).forEach(function(ac){
+          if((ac.types||[]).indexOf('sublocality_level_1')>=0||(ac.types||[]).indexOf('sublocality')>=0)area=ac.long_name;
+        });
+      }
       if(addr){$('bAddr').value=addr;}
-      gpsOk(addr?(' — '+(a.neighbourhood||a.suburb||a.city||a.town||'')):'');
+      gpsOk(area?(' — '+area):'');
     }).catch(function(){gpsOk('');});
     loadNearbyPlaces(gps.lat,gps.lng);
     api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
@@ -437,30 +441,31 @@ function captureGPS(force){
 function gpsOk(extra){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='✅ Location updated'+(extra||'');}
 var selNearby='';
 function loadNearbyPlaces(lat,lng){
-  var q='[out:json][timeout:8];('
-    +'way(around:250,'+lat+','+lng+')["building"]["name"];'
-    +'node(around:250,'+lat+','+lng+')["name"]["amenity"];'
-    +'node(around:250,'+lat+','+lng+')["name"]["shop"];'
-    +'way(around:250,'+lat+','+lng+')["name"]["amenity"];'
-    +'node(around:250,'+lat+','+lng+')["name"]["office"];'
-    +');out center 20;';
-  fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),
-    headers:{'Content-Type':'application/x-www-form-urlencoded'}})
+  fetch('https://places.googleapis.com/v1/places:searchNearby',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-Goog-Api-Key':GKEY,
+      'X-Goog-FieldMask':'places.displayName,places.location,places.types'
+    },
+    body:JSON.stringify({
+      maxResultCount:15,
+      rankPreference:'DISTANCE',
+      locationRestriction:{circle:{center:{latitude:lat,longitude:lng},radius:300.0}}
+    })
+  })
   .then(function(r){return r.json();})
   .then(function(d){
-    var items=[];
-    (d.elements||[]).forEach(function(e){
-      var nm=(e.tags&&e.tags.name)||'';
-      if(!nm)return;
-      var elat=e.lat||(e.center&&e.center.lat),elng=e.lon||(e.center&&e.center.lon);
-      if(!elat)return;
-      var dx=(elat-lat)*111320,dy=(elng-lng)*111320*Math.cos(lat*Math.PI/180);
-      items.push({name:nm,dist:Math.round(Math.sqrt(dx*dx+dy*dy))});
+    var list=[];var seen={};
+    (d.places||[]).forEach(function(p){
+      var nm=(p.displayName&&p.displayName.text)||'';
+      if(!nm||seen[nm])return;seen[nm]=1;
+      var pl=p.location||{};
+      var dx=((pl.latitude||lat)-lat)*111320;
+      var dy=((pl.longitude||lng)-lng)*111320*Math.cos(lat*Math.PI/180);
+      list.push({name:nm,dist:Math.round(Math.sqrt(dx*dx+dy*dy))});
     });
-    // dedupe by name, sort by distance, top 10
-    var seen={},list=[];
-    items.sort(function(a,b){return a.dist-b.dist;});
-    items.forEach(function(it){if(!seen[it.name]&&list.length<10){seen[it.name]=1;list.push(it);}});
+    list=list.slice(0,10);
     if(!list.length){$('nearbyWrap').classList.add('hide');return;}
     var h='';
     list.forEach(function(it){
