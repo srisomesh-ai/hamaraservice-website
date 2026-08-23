@@ -240,14 +240,16 @@ switch ($action) {
     if (!$bk) err('Booking not found');
 
     $confirmed = (int)($bk['counter_price'] ?: $bk['quoted_price']);
+    $otp = str_pad((string)rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
     $db->prepare("
       UPDATE bookings SET
-        status             = 'price_confirmed',
+        status             = 'confirmed',
         confirmed_price    = ?,
+        otp                = ?,
         negotiation_status = 'confirmed'
       WHERE id = ?
-    ")->execute([$confirmed, $id]);
+    ")->execute([$confirmed, $otp, $id]);
 
     $fcm = getFcm($db, 'customers', $bk['customer_id']);
     sendPush($fcm,
@@ -256,7 +258,7 @@ switch ($action) {
       ['event'=>'price_confirmed','confirmedPrice'=>"$confirmed",'bookingId'=>$id]
     );
 
-    ok(['status'=>'price_confirmed','confirmed_price'=>$confirmed]);
+    ok(['status'=>'confirmed','confirmed_price'=>$confirmed,'otp'=>$otp]);
   }
 
   // ── CUSTOMER CONFIRMS PRICE ───────────────────────────
