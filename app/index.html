@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f4c5c">
+<title>HamaraService — Home Services App</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--teal:#0f4c5c;--teal2:#1a6b7e;--amber:#f26b1d;--bg:#eef5f6;--card:#fff;--txt:#1a2b32;--muted:#6b7f87;--green:#16a34a;--red:#dc2626;--yellow:#f59e0b;--radius:16px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(160deg,#0f4c5c 0%,#1a6b7e 55%,#2a8ba0 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;color:#fff}
+.logo{font-size:34px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px}
+.logo span{color:#ffb35c}
+.tag{font-size:14px;color:#cfe4ea;margin-bottom:44px}
+.role-card{width:100%;max-width:380px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);border-radius:22px;padding:26px 22px;margin-bottom:18px;cursor:pointer;transition:.2s;text-align:center}
+.role-card:active{transform:scale(.97);background:rgba(255,255,255,.16)}
+.role-card .ico{font-size:46px;margin-bottom:10px}
+.role-card h2{font-size:21px;font-weight:800;margin-bottom:6px}
+.role-card p{font-size:13px;color:#cfe4ea;line-height:1.5}
+.role-card.provider{background:rgba(242,107,29,.15);border-color:rgba(255,179,92,.5)}
+.foot{margin-top:30px;font-size:12px;color:#9fc2cb;text-align:center;line-height:1.7}
+.foot a{color:#ffb35c;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="logo">Hamara<span>Service</span></div>
+<div class="tag">Trusted home services at your doorstep</div>
+
+<div class="role-card" onclick="location.href='customer.html'">
+  <div class="ico">🏠</div>
+  <h2>I Need a Service</h2>
+  <p>Book maids, cleaning, repairs, cooking &amp; more.<br>Verified professionals · Pay after service</p>
+</div>
+
+<div class="role-card provider" onclick="location.href='provider.html'">
+  <div class="ico">🛠️</div>
+  <h2>I'm a Service Provider</h2>
+  <p>Register, get jobs near you &amp; earn.<br>Set your own prices · Instant job alerts</p>
+</div>
+
+<div class="foot">
+  info@hamaraservice.com<br>
+  <a href="https://hamaraservice.com">hamaraservice.com</a>
+</div>
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+// Auto-forward if already logged in
+var ct=localStorage.getItem('hs_cust_token'), pt=localStorage.getItem('hs_prov_token');
+var role=localStorage.getItem('hs_role');
+if(role==='customer'&&ct) location.replace('customer.html');
+else if(role==='provider'&&pt) location.replace('provider.html');
+</script>
+</body>
+</html>
