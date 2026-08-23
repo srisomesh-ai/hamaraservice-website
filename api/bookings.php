@@ -58,6 +58,11 @@ function makeOtp() {
     return str_pad(rand(1000,9999), 4, '0', STR_PAD_LEFT);
 }
 
+// ── auto-migrate: completion otp + reviews ──
+try { $db->exec("ALTER TABLE bookings ADD COLUMN completion_otp VARCHAR(8) NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN rating INT NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN review TEXT NULL"); } catch (Exception $e) {}
+
 switch ($action) {
 
   // ── CREATE BOOKING ────────────────────────────────────
@@ -351,12 +356,14 @@ switch ($action) {
     if (!$bk) err('Booking not found');
     if ($bk['otp'] !== $otp) err('Invalid OTP');
 
+    $completionOtp = str_pad((string)rand(0, 9999), 4, '0', STR_PAD_LEFT);
     $db->prepare("
       UPDATE bookings SET
-        otp_verified = 1,
-        status       = 'active'
+        otp_verified   = 1,
+        status         = 'active',
+        completion_otp = ?
       WHERE id = ?
-    ")->execute([$id]);
+    ")->execute([$completionOtp, $id]);
 
     // Notify customer
     $fcm = getFcm($db, 'customers', $bk['customer_id']);
@@ -379,6 +386,13 @@ switch ($action) {
     $stmt->execute([$id]);
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not found');
+
+    // Completion OTP gate — customer shares it only when satisfied with the work
+    if (!empty($bk['completion_otp'])) {
+      $cotp = trim($b['completion_otp'] ?? '');
+      if (empty($cotp)) err('COMPLETION_OTP_REQUIRED');
+      if ($cotp !== $bk['completion_otp']) err('Invalid completion OTP');
+    }
 
     $amount = (int)($bk['confirmed_price'] ?: $bk['amount'] ?: 0);
     $commPct = (int)($bk['commission_pct'] ?? 15);
@@ -527,6 +541,38 @@ switch ($action) {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     ok($stmt->fetchAll());
+  }
+
+  case 'review': {
+    $cust = requireCustomer();
+    $b    = getBody();
+    $id   = $b['booking_id'] ?? '';
+    $rating = (int)($b['rating'] ?? 0);
+    $review = trim($b['review'] ?? '');
+    if (empty($id)) err('booking_id required');
+    if ($rating < 1 || $rating > 5) err('rating 1-5 required');
+
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
+    $stmt->execute([$id, $cust['id']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    if ($bk['status'] !== 'completed') err('Booking not completed yet');
+    if (!empty($bk['rating'])) err('Already reviewed');
+
+    $db->prepare("UPDATE bookings SET rating = ?, review = ? WHERE id = ?")
+       ->execute([$rating, $review, $id]);
+
+    // Recompute provider rating
+    if (!empty($bk['provider_id'])) {
+      $agg = $db->prepare("SELECT AVG(rating) a, COUNT(rating) c FROM bookings WHERE provider_id = ? AND rating IS NOT NULL");
+      $agg->execute([$bk['provider_id']]);
+      $r = $agg->fetch();
+      $db->prepare("UPDATE providers SET rating = ?, review_count = ? WHERE id = ?")
+         ->execute([round((float)$r['a'], 1), (int)$r['c'], $bk['provider_id']]);
+      $fcm = getFcm($db, 'providers', $bk['provider_id']);
+      sendPush($fcm, "New Review ⭐", "$rating stars from a customer", ['event'=>'review','bookingId'=>$id]);
+    }
+    ok(['rating'=>$rating]);
   }
 
   default:
