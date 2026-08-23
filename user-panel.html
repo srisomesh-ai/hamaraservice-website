@@ -401,6 +401,14 @@ header{position:sticky;top:0;z-index:200;background:var(--teal);border-bottom:no
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+/* HS-APP-MODE glue: inside the app, booking + login are handled by /app/ */
+(function(){
+  if(sessionStorage.getItem('hs_in_app')!=='1' && !/ wv\)/.test(navigator.userAgent)) return;
+  location.replace('/app/customer.html?book=1');
+})();
+</script>
 </head>
 <body>
 <div id="loadingOverlay"><div class="ld-spinner"></div><div style="font-size:13px;color:#9ca3af;font-family:sans-serif;">Loading…</div></div>
