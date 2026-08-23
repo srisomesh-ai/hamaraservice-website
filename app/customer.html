@@ -79,6 +79,15 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .gps-ok{background:#e8f7ee;color:var(--green);border:1.5px solid #bbe7cc}
 .gps-no{background:#fff8e6;color:#8a6d00;border:1.5px solid #f3dfa0;cursor:pointer}
 .otp-big{font-size:34px;letter-spacing:10px;font-weight:900;color:var(--teal);text-align:center;padding:14px;background:#eef7fa;border-radius:14px;margin:12px 0}
+#locOverlay{position:fixed;inset:0;background:linear-gradient(160deg,var(--teal),var(--teal2));z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.loc-anim{position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:28px}
+.loc-pin{font-size:52px;z-index:2;animation:bounce 1.2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.loc-ring{position:absolute;inset:0;border:3px solid rgba(255,255,255,.5);border-radius:50%;animation:ring 2s infinite}
+.loc-ring.r2{animation-delay:1s}
+@keyframes ring{0%{transform:scale(.35);opacity:1}100%{transform:scale(1.15);opacity:0}}
+.loc-txt{font-size:17px;font-weight:800}
+.loc-sub{font-size:13px;color:#cfe4ea;margin-top:6px}
 .home-hero{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;padding:16px 16px 18px;position:sticky;top:0;z-index:50}
 .search-inp{width:100%;margin-top:12px;padding:12px 15px;border:none;border-radius:12px;font-size:14.5px;background:#fff;color:var(--txt)}
 .search-inp:focus{outline:2px solid var(--amber)}
@@ -151,8 +160,10 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="page">
     <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Detecting your location…</div>
     <div id="nearbyWrap" class="hide" style="margin-bottom:12px">
-      <label>📍 Pick your building / nearest place</label>
-      <div class="chip-row" id="nearbyChips"></div>
+      <label>📍 Select your building / nearest place</label>
+      <select class="inp" id="nearbySel" onchange="pickNearbySel()" style="margin-bottom:0">
+        <option value="">— Choose nearby place —</option>
+      </select>
     </div>
     <div class="card">
       <label>Your Location (auto-detected)</label>
@@ -194,6 +205,15 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   </div>
 </div>
 
+<div id="locOverlay" class="hide">
+  <div class="loc-anim">
+    <div class="loc-ring"></div>
+    <div class="loc-ring r2"></div>
+    <div class="loc-pin">📍</div>
+  </div>
+  <div class="loc-txt">Detecting your precise location…</div>
+  <div class="loc-sub">Finding street &amp; nearby buildings</div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="catalog.js?v=2"></script>
@@ -232,6 +252,7 @@ function doAuth(){
       if(pendingAfterAuth==='addr'&&curSvc){
         pendingAfterAuth=null;
         $('bPhone').value=ME.phone||$('bPhone').value;
+        if(!$('bPhone').value){api('customers.php','get&id='+encodeURIComponent(ME.id)).then(function(r2){if(r2.success&&r2.data){ME=Object.assign(ME,r2.data);localStorage.setItem('hs_cust_me',JSON.stringify(ME));$('bPhone').value=ME.phone||'';}}).catch(function(){});}
         show('pgAddr');
         toast('✓ Logged in — complete your booking');
       } else { initHome(); }
@@ -384,6 +405,15 @@ function goAddress(){
   var anyTask=Object.keys(sel.tasks).some(function(k){return sel.tasks[k];});
   if(anyTaskGroup&&!anyTask){toast('Select at least one task');return;}
   $('bPhone').value=ME.phone||'';
+  if((!ME.phone||!ME.phone.length)&&TOKEN&&ME.id){
+    api('customers.php','get&id='+encodeURIComponent(ME.id)).then(function(res){
+      if(res.success&&res.data){
+        ME=Object.assign(ME,res.data);
+        localStorage.setItem('hs_cust_me',JSON.stringify(ME));
+        if(!$('bPhone').value)$('bPhone').value=ME.phone||'';
+      }
+    }).catch(function(){});
+  }
   var h='';slots.forEach(function(s){h+='<div class="chip'+(s===selSlot?' on':'')+'" onclick="pickSlot(\''+s+'\')">'+s+'</div>';});
   $('slotRow').innerHTML=h;
   show('pgAddr');
@@ -392,6 +422,7 @@ function goAddress(){
 function pickSlot(s){selSlot=s;var h='';slots.forEach(function(x){h+='<div class="chip'+(x===selSlot?' on':'')+'" onclick="pickSlot(\''+x+'\')">'+x+'</div>';});$('slotRow').innerHTML=h;}
 function captureGPS(force){
   if(gps.lat&&!force){gpsOk('');return;}
+  $('locOverlay').classList.remove('hide');
   if(!navigator.geolocation){toast('Location not supported on this browser');return;}
   var b=$('gpsBanner');b.className='gps-banner gps-no';b.textContent='📍 Detecting your location…';
   var best=null,wid=null,done=false;
@@ -406,9 +437,11 @@ function captureGPS(force){
   },function(err){
     if(!done){done=true;if(wid!==null)navigator.geolocation.clearWatch(wid);
       b.className='gps-banner gps-no';
-      b.textContent='📍 Location blocked — tap to retry (allow permission)';}
+      b.textContent='📍 Location blocked — tap to retry (allow permission)';
+      $('locOverlay').classList.add('hide');}
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
   setTimeout(function(){if(best)finish(best);},6000);
+  setTimeout(function(){$('locOverlay').classList.add('hide');},14000);
   function onPos(pos){
     gps.lat=pos.coords.latitude;gps.lng=pos.coords.longitude;
     // Google Geocoding — exact street address for India
@@ -433,7 +466,8 @@ function captureGPS(force){
       }
       if(addr){$('bAddr').value=addr;}
       gpsOk(area?(' — '+area):'');
-    }).catch(function(){gpsOk('');});
+      $('locOverlay').classList.add('hide');
+    }).catch(function(){gpsOk('');$('locOverlay').classList.add('hide');});
     loadNearbyPlaces(gps.lat,gps.lng);
     api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
   }
@@ -465,25 +499,25 @@ function loadNearbyPlaces(lat,lng){
       var dy=((pl.longitude||lng)-lng)*111320*Math.cos(lat*Math.PI/180);
       list.push({name:nm,dist:Math.round(Math.sqrt(dx*dx+dy*dy))});
     });
-    list=list.slice(0,10);
+    list=list.slice(0,15);
     if(!list.length){$('nearbyWrap').classList.add('hide');return;}
-    var h='';
+    var h='<option value="">— Choose nearby place —</option>';
     list.forEach(function(it){
-      h+='<div class="chip nb-chip" data-nm="'+it.name.replace(/"/g,'&quot;')+'" onclick="pickNearby(this)">'+it.name+' <span style="font-size:10px;color:var(--muted)">'+it.dist+'m</span></div>';
+      h+='<option value="'+it.name.replace(/"/g,'&quot;')+'">'+it.name+'  ('+it.dist+'m)</option>';
     });
-    $('nearbyChips').innerHTML=h;
+    $('nearbySel').innerHTML=h;
     $('nearbyWrap').classList.remove('hide');
   }).catch(function(){});
 }
-function pickNearby(el){
-  selNearby=el.getAttribute('data-nm')||'';
-  [].forEach.call(document.querySelectorAll('.nb-chip'),function(x){x.classList.remove('on');});
-  el.classList.add('on');
-  // Prepend to location if not already there
-  var cur=$('bAddr').value;
-  if(cur.indexOf(selNearby)<0){$('bAddr').value='Near '+selNearby+', '+cur;}
-  toast('📍 '+selNearby+' added to address');
+function pickNearbySel(){
+  var nm=$('nearbySel').value;
+  if(!nm)return;
+  selNearby=nm;
+  var cur=$('bAddr').value.replace(/^Near [^,]+,\s*/,'');
+  $('bAddr').value='Near '+nm+', '+cur;
+  toast('📍 '+nm+' added');
 }
+
 
 // ── CREATE BOOKING ──
 var pendingAfterAuth=null;
