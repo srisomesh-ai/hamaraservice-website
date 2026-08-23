@@ -101,11 +101,24 @@ function verifyJWT($token) {
     return $data;
 }
 
+function makeJWT($payload, $days = 30) {
+    $payload['exp'] = time() + ($days * 86400);
+    $h = rtrim(base64_encode(json_encode(['alg'=>'HS256','typ'=>'JWT'])), '=');
+    $p = rtrim(base64_encode(json_encode($payload)), '=');
+    $s = rtrim(base64_encode(hash_hmac('sha256', "$h.$p", JWT_SECRET, true)), '=');
+    return "$h.$p.$s";
+}
+
 // ── Auth middleware ───────────────────────────────────────
 function requireCustomer() {
     $auth  = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $token = str_replace('Bearer ', '', $auth);
-    $user  = verifyFirebaseToken($token);
+    // Web app JWT first (fast, local), then Firebase token (mobile app)
+    $jwt = verifyJWT($token);
+    if ($jwt && ($jwt['type'] ?? '') === 'customer') {
+        return ['uid' => $jwt['uid'], 'email' => $jwt['email'] ?? '', 'name' => $jwt['name'] ?? ''];
+    }
+    $user = verifyFirebaseToken($token);
     if (!$user) err('Unauthorized', 401);
     return $user;
 }
