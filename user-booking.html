@@ -188,6 +188,14 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 .choose-svc-btn:hover .choose-svc-arrow{transform:translateX(4px);}
 .choose-svc-btn.selected{background:var(--teal,#1B6B7A);border-color:var(--teal,#1B6B7A);color:#fff;}
 </style>
+
+<script>
+/* HS-APP-MODE glue: inside the app, booking + login are handled by /app/ */
+(function(){
+  if(sessionStorage.getItem('hs_in_app')!=='1' && !/ wv\)/.test(navigator.userAgent)) return;
+  location.replace('/app/customer.html?book=1');
+})();
+</script>
 </head>
 <body>
 
