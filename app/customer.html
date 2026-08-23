@@ -85,7 +85,7 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 
 <!-- ══ AUTH ══ -->
 <div id="pgAuth" class="hide">
-  <div class="topbar"><span class="back" onclick="location.href='index.html'">←</span><h1>Customer Login</h1></div>
+  <div class="topbar"><span class="back" onclick="show('pgHome')">←</span><h1>Login / Register</h1></div>
   <div class="page">
     <div class="card">
       <div id="authErr" class="err"></div>
@@ -120,7 +120,7 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="tabbar">
     <div class="tab on"><span class="i">🏠</span>Home</div>
     <div class="tab" onclick="showBookings()"><span class="i">📋</span>Bookings</div>
-    <div class="tab" onclick="logout()"><span class="i">🚪</span>Logout</div>
+    <div class="tab" onclick="authTab()"><span class="i" id="authTabIco">🚪</span><span id="authTabLbl">Logout</span></div>
   </div>
 </div>
 
@@ -213,10 +213,19 @@ function doAuth(){
     $('authBtn').disabled=false;
     if(res.success){TOKEN=res.data.token;ME=res.data.customer;
       localStorage.setItem('hs_cust_token',TOKEN);localStorage.setItem('hs_cust_me',JSON.stringify(ME));localStorage.setItem('hs_role','customer');
-      initHome();
+      if(pendingAfterAuth==='addr'&&curSvc){
+        pendingAfterAuth=null;
+        $('bPhone').value=ME.phone||$('bPhone').value;
+        show('pgAddr');
+        toast('✓ Logged in — complete your booking');
+      } else { initHome(); }
     } else if(res.error==='NOT_REGISTERED'){swapAuth();$('authErr').textContent='Email not found — create your account';
     } else {$('authErr').textContent=res.error||'Failed';}
   }).catch(function(){$('authBtn').disabled=false;$('authErr').textContent='Network error';});
+}
+function authTab(){
+  if(TOKEN&&ME.id)logout();
+  else show('pgAuth');
 }
 function logout(){localStorage.removeItem('hs_cust_token');localStorage.removeItem('hs_cust_me');localStorage.removeItem('hs_active_bk');location.href='index.html';}
 
@@ -224,14 +233,16 @@ function logout(){localStorage.removeItem('hs_cust_token');localStorage.removeIt
 var CATS=[];var catIcons={'Home Cleaning':'🧹','Home Services':'🔧','Vehicle Care':'🚗','Pest Control':'🐜','Cooking':'👩‍🍳','Security':'🛡️','Outdoor':'🌿','Beauty & Wellness':'💆','Health Services':'🩺','Care Services':'🤱','Appliance Care':'❄️'};
 var selCat='All';
 function initHome(){
-  $('homeUser').textContent='Hi '+(ME.name||'')+' 👋';
+  $('homeUser').textContent=(TOKEN&&ME.name)?('Hi '+ME.name+' 👋'):'Book trusted services near you';
+  var li=(TOKEN&&ME.id);
+  if($('authTabLbl')){$('authTabLbl').textContent=li?'Logout':'Login';$('authTabIco').textContent=li?'🚪':'👤';}
   CATS=[];SVC.forEach(function(s){if(CATS.indexOf(s.cat)<0)CATS.push(s.cat);});
   show('pgHome');
   renderChips();renderHome();
   api('services.php','price_ranges').then(function(res){
     if(res.success){priceRanges=res.data||{};renderHome();}
   }).catch(function(){});
-  if(activeBookingId) resumeBooking();
+  if(TOKEN&&ME.id&&activeBookingId) resumeBooking();
 }
 function renderChips(){
   var h='<div class="cat-chip'+(selCat==='All'?' on':'')+'" onclick="pickCat(\'All\')">✨ All</div>';
@@ -356,7 +367,16 @@ function captureGPS(force){
 function gpsOk(){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='📍 GPS location captured ✓';}
 
 // ── CREATE BOOKING ──
+var pendingAfterAuth=null;
+function requireLogin(next){
+  if(TOKEN&&ME.id)return true;
+  pendingAfterAuth=next||null;
+  show('pgAuth');
+  toast('Login or register to continue booking');
+  return false;
+}
 function createBooking(){
+  if(!requireLogin('addr'))return;
   var addr=$('bAddr').value.trim(),lm=$('bLandmark').value.trim(),ph=$('bPhone').value.trim();
   if(!addr){toast('Enter address');return;}
   if(!lm){toast('Enter landmark');return;}
@@ -471,6 +491,7 @@ function cancelBooking(){
 
 // ── BOOKINGS LIST ──
 function showBookings(){
+  if(!requireLogin())return;
   show('pgBookings');
   $('bkList').innerHTML='<div class="card">Loading…</div>';
   api('bookings.php','history&id='+encodeURIComponent(ME.id)+'&role=customer').then(function(res){
@@ -493,7 +514,8 @@ function resumeFromList(id){activeBookingId=id;localStorage.setItem('hs_active_b
 
 // ── INIT ──
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
-if(TOKEN&&ME.id){initHome();} else {show('pgAuth');}
+// Guest browsing allowed — login required only when booking
+initHome();
 </script>
 </body>
 </html>
