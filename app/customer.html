@@ -88,6 +88,16 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 @keyframes ring{0%{transform:scale(.35);opacity:1}100%{transform:scale(1.15);opacity:0}}
 .loc-txt{font-size:17px;font-weight:800}
 .loc-sub{font-size:13px;color:#cfe4ea;margin-top:6px}
+.nearby-card{background:#fff8f0;border:2.5px solid var(--amber);border-radius:16px;padding:14px;margin-bottom:14px;animation:nbGlow 1.6s ease-in-out 3}
+@keyframes nbGlow{0%,100%{box-shadow:0 0 0 0 rgba(242,107,29,.35)}50%{box-shadow:0 0 0 8px rgba(242,107,29,0)}}
+.nearby-head{display:flex;gap:10px;align-items:center;margin-bottom:11px}
+.nearby-ico{font-size:28px}
+.nearby-title{font-size:14.5px;font-weight:900;color:var(--amber)}
+.nearby-sub{font-size:12px;color:#7a5a3a;margin-top:2px}
+.nearby-sel-wrap{position:relative}
+.nearby-sel{margin-bottom:0!important;border:2px solid var(--amber)!important;background:#fff!important;font-weight:700;color:var(--teal);appearance:none;-webkit-appearance:none;padding-right:40px!important}
+.nearby-arrow{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--amber);font-size:14px;font-weight:900;pointer-events:none;animation:arrowB 1s infinite}
+@keyframes arrowB{0%,100%{transform:translateY(-50%)}50%{transform:translateY(-30%)}}
 .home-hero{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;padding:16px 16px 18px;position:sticky;top:0;z-index:50}
 .search-inp{width:100%;margin-top:12px;padding:12px 15px;border:none;border-radius:12px;font-size:14.5px;background:#fff;color:var(--txt)}
 .search-inp:focus{outline:2px solid var(--amber)}
@@ -159,11 +169,20 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
   <div class="topbar"><span class="back" onclick="show('pgSvc')">←</span><h1>Service Address</h1></div>
   <div class="page">
     <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Detecting your location…</div>
-    <div id="nearbyWrap" class="hide" style="margin-bottom:12px">
-      <label>📍 Select your building / nearest place</label>
-      <select class="inp" id="nearbySel" onchange="pickNearbySel()" style="margin-bottom:0">
-        <option value="">— Choose nearby place —</option>
-      </select>
+    <div id="nearbyWrap" class="hide nearby-card">
+      <div class="nearby-head">
+        <span class="nearby-ico">🏢</span>
+        <div style="flex:1">
+          <div class="nearby-title">Select Your Building / Nearest Place</div>
+          <div class="nearby-sub">Tap below to choose from <b id="nearbyCount">0</b> places found near you ⬇️</div>
+        </div>
+      </div>
+      <div class="nearby-sel-wrap">
+        <select class="inp nearby-sel" id="nearbySel" onchange="pickNearbySel()">
+          <option value="">👇 Tap here to choose your building…</option>
+        </select>
+        <span class="nearby-arrow">▼</span>
+      </div>
     </div>
     <div class="card">
       <label>Your Location (auto-detected)</label>
@@ -500,7 +519,8 @@ function loadNearbyPlaces(lat,lng){
     });
     list=list.slice(0,15);
     if(!list.length){$('nearbyWrap').classList.add('hide');return;}
-    var h='<option value="">— Choose nearby place —</option>';
+    $('nearbyCount').textContent=list.length;
+    var h='<option value="">👇 Tap here to choose your building…</option>';
     list.forEach(function(it){
       h+='<option value="'+it.name.replace(/"/g,'&quot;')+'">'+it.name+'  ('+it.dist+'m)</option>';
     });
@@ -512,6 +532,9 @@ function pickNearbySel(){
   var nm=$('nearbySel').value;
   if(!nm)return;
   selNearby=nm;
+  var aw=document.querySelector('.nearby-arrow');if(aw)aw.style.animation='none';
+  var cd=document.querySelector('.nearby-card');if(cd){cd.style.background='#f0faf3';cd.style.borderColor='var(--green)';}
+  var tt=document.querySelector('.nearby-title');if(tt){tt.textContent='✅ Place Selected';tt.style.color='var(--green)';}
   var cur=$('bAddr').value.replace(/^Near [^,]+,\s*/,'');
   $('bAddr').value='Near '+nm+', '+cur;
   toast('📍 '+nm+' added');
