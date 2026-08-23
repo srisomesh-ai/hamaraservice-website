@@ -332,7 +332,7 @@ HamaraService Team";
     $svc_id = $_GET['svc_id'] ?? '';
     $radius = (float)($_GET['radius'] ?? 20); // km
 
-    if ($lat == 0 || $lng == 0) err('lat and lng required');
+    $city = trim($_GET['city'] ?? '');
 
     // Haversine distance in SQL
     $sql = "
@@ -357,15 +357,27 @@ HamaraService Team";
       $params[':svc_id'] = $svc_id;
     }
 
-    $sql .= "
-      WHERE p.status    = 'approved'
-        AND p.available = 1
-        AND p.lat       != 0
-      HAVING distance_km <= :radius
-      ORDER BY distance_km ASC
-      LIMIT 20
-    ";
-    $params[':radius'] = $radius;
+    if ($lat != 0 && $lng != 0) {
+      // GPS mode: distance filter, but include providers without GPS if city matches
+      $sql .= "
+        WHERE p.status    = 'approved'
+          AND p.available = 1
+        HAVING (p.lat != 0 AND distance_km <= :radius)";
+      if (!empty($city)) {
+        $sql .= " OR (p.lat = 0 AND p.city LIKE :city)";
+        $params[':city'] = "%$city%";
+      }
+      $sql .= " ORDER BY distance_km ASC LIMIT 20";
+      $params[':radius'] = $radius;
+    } else {
+      // No GPS: match by city only
+      $sql .= " WHERE p.status = 'approved' AND p.available = 1";
+      if (!empty($city)) {
+        $sql .= " AND p.city LIKE :city";
+        $params[':city'] = "%$city%";
+      }
+      $sql .= " ORDER BY p.rating DESC LIMIT 20";
+    }
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
