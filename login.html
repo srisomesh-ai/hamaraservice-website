@@ -872,5 +872,17 @@ function toast(msg) {
   t._t = setTimeout(function(){ t.classList.remove('show'); }, 3500);
 }
 </script>
+
+<script>
+/* HS-APP: Google OAuth is blocked inside Android WebView — hide those buttons */
+document.addEventListener('DOMContentLoaded',function(){
+  if(sessionStorage.getItem('hs_in_app')!=='1' && !/ wv\)/.test(navigator.userAgent)) return;
+  document.querySelectorAll('[id*="oogle"],[class*="oogle"],[onclick*="oogle"],button,a').forEach(function(el){
+    var t=(el.textContent||'')+((el.getAttribute&&el.getAttribute('onclick'))||'');
+    if(/google/i.test(t) && /sign|login|continue/i.test(t)) el.style.display='none';
+    if(/googleSignIn|signInWithGoogle|googleLogin/i.test((el.getAttribute&&el.getAttribute('onclick'))||'')) el.style.display='none';
+  });
+});
+</script>
 </body>
 </html>
