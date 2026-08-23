@@ -58,7 +58,8 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .bk-item .ic{font-size:28px}
 .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800}
 .badge.searching{background:#fff3cd;color:#8a6d00}
-.badge.accepted,.badge.price_confirmed{background:#d1f2dd;color:#0f6d33}
+.badge.accepted,.badge.price_confirmed,.badge.confirmed,.badge.price_quoted{background:#d1f2dd;color:#0f6d33}
+.badge.negotiating,.badge.negotiation_final{background:#fde8d0;color:#9a4c00}
 .badge.active,.badge.otp_sent{background:#cfe9f5;color:#0b5a77}
 .badge.completed{background:#e2e8f0;color:#334155}
 .badge.cancelled{background:#fee2e2;color:#991b1b}
@@ -349,28 +350,33 @@ function renderBookingState(b){
   var st=b.status;
   if(st==='searching'){
     $('radarSearch').classList.remove('hide');$('radarOffer').classList.add('hide');$('radarActive').classList.add('hide');
-  } else if(st==='accepted'||st==='negotiating'||st==='final_offer'){
+  } else if(st==='negotiating'){
+    // waiting for provider response to counter
     $('radarSearch').classList.add('hide');$('radarActive').classList.add('hide');
     var o=$('radarOffer');o.classList.remove('hide');
-    var price=b.quoted_price||b.final_price||0;
+    o.innerHTML='<div class="card offer-card" style="text-align:center"><div style="font-size:30px">💬</div><div style="font-weight:800;margin:8px 0">Counter sent — ₹'+(b.counter_price||0)+'</div><div style="font-size:13px;color:var(--muted)">Waiting for provider to respond…</div></div>';
+  } else if(st==='price_quoted'||st==='negotiation_final'){
+    $('radarSearch').classList.add('hide');$('radarActive').classList.add('hide');
+    var o=$('radarOffer');o.classList.remove('hide');
+    var price=(st==='negotiation_final')?(b.final_price||b.quoted_price||0):(b.quoted_price||0);
     o.innerHTML='<div class="card offer-card">'
       +'<div style="font-size:15px;font-weight:800;margin-bottom:6px">🎉 Provider Found!</div>'
       +'<div style="font-size:14px;margin-bottom:4px"><b>'+(b.provider_name||'Provider')+'</b></div>'
       +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+b.provider_phone+'</div>':'')
       +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
-      +(st==='final_offer'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
+      +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
       +'<button class="btn" onclick="acceptPrice('+price+')">Accept ₹'+price+'</button>'
       +'<div style="height:8px"></div>'
-      +(st!=='final_offer'?'<button class="btn ghost" onclick="negotiate()">Negotiate</button><div style="height:8px"></div>':'')
+      +(st!=='negotiation_final'?'<button class="btn ghost" onclick="negotiate()">Negotiate</button><div style="height:8px"></div>':'')
       +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="searchAnother()">Search Another</button>'
       +'</div>';
-  } else if(st==='price_confirmed'||st==='otp_sent'||st==='active'){
+  } else if(st==='confirmed'||st==='price_confirmed'||st==='otp_sent'||st==='active'){
     $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
     var a=$('radarActive');a.classList.remove('hide');
     var otpBlock=b.otp?('<div style="font-size:12px;color:var(--muted);text-align:center">Share this OTP when provider arrives</div><div class="otp-big">'+b.otp+'</div>'):'';
     a.innerHTML='<div class="card">'
       +'<div style="font-size:15px;font-weight:800;margin-bottom:8px">✅ Booking Confirmed</div>'
-      +'<div style="font-size:14px"><b>'+(b.provider_name||'Provider')+'</b> · ₹'+(b.final_price||b.quoted_price||0)+'</div>'
+      +'<div style="font-size:14px"><b>'+(b.provider_name||'Provider')+'</b> · ₹'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'</div>'
       +(b.provider_phone?'<div style="margin:8px 0"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')
       +otpBlock
       +'<div style="font-size:13px;color:var(--muted);margin-top:8px">Status: <span class="badge '+st+'">'+st.replace(/_/g,' ')+'</span></div>'
@@ -417,7 +423,7 @@ function cancelBooking(){
 function showBookings(){
   show('pgBookings');
   $('bkList').innerHTML='<div class="card">Loading…</div>';
-  api('bookings.php','history').then(function(res){
+  api('bookings.php','history&id='+encodeURIComponent(ME.id)+'&role=customer').then(function(res){
     var arr=(res.success&&res.data)?res.data:[];
     if(!arr.length){$('bkList').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">No bookings yet</div>';return;}
     var h='';
@@ -427,7 +433,7 @@ function showBookings(){
         +'<div style="flex:1"><div style="font-weight:800;font-size:14px">'+b.svc_name+'</div>'
         +'<div style="font-size:12px;color:var(--muted)">'+(b.created_at||'').substring(0,16)+'</div></div>'
         +'<div style="text-align:right"><span class="badge '+b.status+'">'+b.status.replace(/_/g,' ')+'</span>'
-        +(b.final_price>0?'<div style="font-weight:900;color:var(--teal);margin-top:4px">₹'+b.final_price+'</div>':'')
+        +((b.confirmed_price>0||b.amount>0)?'<div style="font-weight:900;color:var(--teal);margin-top:4px">₹'+(b.confirmed_price||b.amount)+'</div>':'')
         +'</div></div>';
     });
     $('bkList').innerHTML=h;
