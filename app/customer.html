@@ -37,6 +37,14 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .chip-row{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:10px 14px;border:1.5px solid #d5e2e6;border-radius:12px;background:#fff;font-size:13.5px;font-weight:600;cursor:pointer}
 .chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.task-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.task-tile{position:relative;background:#fff;border:2px solid #e2ecef;border-radius:14px;padding:14px 6px 12px;text-align:center;cursor:pointer;transition:.15s}
+.task-tile:active{transform:scale(.95)}
+.task-tile.on{border-color:var(--teal);background:#eef7fa;box-shadow:0 2px 8px rgba(15,76,92,.12)}
+.task-tile .tt-ico{font-size:34px;margin-bottom:7px}
+.task-tile .tt-nm{font-size:11.5px;font-weight:700;line-height:1.25;min-height:29px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.task-tile .tt-check{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--teal);color:#fff;font-size:12px;font-weight:900;display:none;align-items:center;justify-content:center;line-height:20px}
+.task-tile.on .tt-check{display:flex}
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .opt{border:1.5px solid #d5e2e6;border-radius:12px;background:#fff;padding:12px;text-align:center;cursor:pointer}
 .opt.on{border-color:var(--amber);background:#fff4ec}
@@ -323,10 +331,14 @@ function renderSvc(){
   var h='';
   (curSvc.groups||[]).forEach(function(g){
     if(g.style==='label'){
-      h+='<div class="sec-title">'+g.title+'</div><div class="chip-row">';
+      h+='<div class="sec-title">'+g.title+' <span style="font-size:11px;color:var(--muted);font-weight:600">· tap to select</span></div><div class="task-grid">';
       g.items.forEach(function(it){
         var on=sel.tasks[it.k]?' on':'';
-        h+='<div class="chip'+on+'" onclick="togTask(\''+it.k+'\')">'+(it.ico||'')+' '+it.name+'</div>';
+        h+='<div class="task-tile'+on+'" onclick="togTask(\''+it.k+'\')">'
+          +'<div class="tt-ico">'+(it.ico||'🔧')+'</div>'
+          +'<div class="tt-nm">'+it.name+'</div>'
+          +'<div class="tt-check">✓</div>'
+          +'</div>';
       });
       h+='</div>';
     } else if(g.style==='bhk'){
