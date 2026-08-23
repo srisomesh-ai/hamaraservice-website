@@ -23,6 +23,7 @@ $db     = getDB();
 // ── auto-migrate: upi_id + areas ──
 try { $db->exec("ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL"); } catch (Exception $e) {}
 try { $db->exec("ALTER TABLE providers ADD COLUMN areas TEXT NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL"); } catch (Exception $e) {}
 
 switch ($action) {
 
@@ -259,7 +260,7 @@ HamaraService Team";
     $stmt = $db->prepare("
       SELECT id, name, phone, email, whatsapp, gender, experience, bio,
              id_type, id_number, address, city, lat, lng, radius_km,
-             upi_id, areas,
+             upi_id, areas, photo,
              status, available, rating, review_count,
              total_bookings, completed_bookings, total_earned, pending_earned,
              registered_at
@@ -285,7 +286,7 @@ HamaraService Team";
     $fields = [];
     $params = [':id' => $prov['id']];
     $allowed = ['name','phone','whatsapp','gender','experience','bio',
-                'address','city','lat','lng','radius_km','available','upi_id','areas'];
+                'address','city','lat','lng','radius_km','available','upi_id','areas','photo'];
     foreach ($allowed as $f) {
       if (isset($b[$f])) {
         $fields[]   = "$f = :$f";
