@@ -149,12 +149,12 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 <div id="pgAddr" class="hide">
   <div class="topbar"><span class="back" onclick="show('pgSvc')">←</span><h1>Service Address</h1></div>
   <div class="page">
-    <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Tap to capture your location</div>
+    <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Detecting your location…</div>
     <div class="card">
-      <label>Full Address *</label>
-      <textarea class="inp" id="bAddr" rows="2" placeholder="House no, Street, Area, City"></textarea>
-      <label>Landmark *</label>
-      <input class="inp" id="bLandmark" placeholder="Near school, temple, hospital...">
+      <label>Your Location (auto-detected)</label>
+      <textarea class="inp" id="bAddr" rows="2" placeholder="Detecting street / building / area…"></textarea>
+      <label>Flat / Door No & Building *</label>
+      <input class="inp" id="bFlat" placeholder="e.g. Flat 302, Sai Residency">
       <label>Mobile Number *</label>
       <input class="inp" id="bPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
       <label>When?</label>
@@ -379,22 +379,45 @@ function goAddress(){
   var anyTask=Object.keys(sel.tasks).some(function(k){return sel.tasks[k];});
   if(anyTaskGroup&&!anyTask){toast('Select at least one task');return;}
   $('bPhone').value=ME.phone||'';
-  $('bAddr').value=ME.address||'';
   var h='';slots.forEach(function(s){h+='<div class="chip'+(s===selSlot?' on':'')+'" onclick="pickSlot(\''+s+'\')">'+s+'</div>';});
   $('slotRow').innerHTML=h;
   show('pgAddr');
-  captureGPS(false);
+  captureGPS(true); // always fetch fresh precise location
 }
 function pickSlot(s){selSlot=s;var h='';slots.forEach(function(x){h+='<div class="chip'+(x===selSlot?' on':'')+'" onclick="pickSlot(\''+x+'\')">'+x+'</div>';});$('slotRow').innerHTML=h;}
 function captureGPS(force){
-  if(gps.lat&&!force){gpsOk();return;}
-  if(!navigator.geolocation){return;}
+  if(gps.lat&&!force){gpsOk('');return;}
+  if(!navigator.geolocation){toast('Location not supported on this browser');return;}
+  var b=$('gpsBanner');b.className='gps-banner gps-no';b.textContent='📍 Detecting your location…';
   navigator.geolocation.getCurrentPosition(function(pos){
-    gps.lat=pos.coords.latitude;gps.lng=pos.coords.longitude;gpsOk();
+    gps.lat=pos.coords.latitude;gps.lng=pos.coords.longitude;
+    // Precise reverse geocode — building / street / area / city / pincode
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+gps.lat+'&lon='+gps.lng+'&format=json&zoom=18&addressdetails=1')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var a=d.address||{};
+      var parts=[
+        a.building||a.amenity||a.shop||'',
+        a.house_number||'',
+        a.road||a.pedestrian||a.footway||'',
+        a.neighbourhood||a.suburb||a.residential||'',
+        a.city||a.town||a.village||a.county||'',
+        a.postcode||''
+      ].filter(function(x){return x&&x.length>0;});
+      // dedupe consecutive
+      var seen={},clean=[];
+      parts.forEach(function(p){if(!seen[p]){seen[p]=1;clean.push(p);}});
+      var addr=clean.join(', ');
+      if(addr){$('bAddr').value=addr;}
+      gpsOk(addr?(' — '+(a.neighbourhood||a.suburb||a.city||a.town||'')):'');
+    }).catch(function(){gpsOk('');});
     api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
-  },function(){},{enableHighAccuracy:true,timeout:9000});
+  },function(err){
+    b.className='gps-banner gps-no';
+    b.textContent='📍 Location blocked — tap to retry (allow permission)';
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 }
-function gpsOk(){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='📍 GPS location captured ✓';}
+function gpsOk(extra){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='✅ Location updated'+(extra||'');}
 
 // ── CREATE BOOKING ──
 var pendingAfterAuth=null;
@@ -407,16 +430,21 @@ function requireLogin(next){
 }
 function createBooking(){
   if(!requireLogin('addr'))return;
-  var addr=$('bAddr').value.trim(),lm=$('bLandmark').value.trim(),ph=$('bPhone').value.trim();
-  if(!addr){toast('Enter address');return;}
-  if(!lm){toast('Enter landmark');return;}
+  var locAddr=$('bAddr').value.trim(),flat=$('bFlat').value.trim(),ph=$('bPhone').value.trim()||ME.phone||'';
+  if(!locAddr){toast('Location not detected — tap the banner');return;}
+  if(!flat){toast('Enter your flat / door number');return;}
   if(ph.length<10){toast('Enter valid mobile');return;}
-  var parts=addr.split(',');var city=parts.length>1?parts[parts.length-1].trim():addr;
+  var addr=flat+', '+locAddr;
+  var parts=locAddr.split(',');
+  var city='';
+  // city = second-last part before pincode usually
+  for(var i=parts.length-1;i>=0;i--){var pt=parts[i].trim();if(pt&&!/^\d{6}$/.test(pt)){city=pt;break;}}
+  if(!city)city=locAddr;
   var taskNames=[];
   (curSvc.groups||[]).forEach(function(g){if(g.style==='label')g.items.forEach(function(it){if(sel.tasks[it.k])taskNames.push(it.name);});});
   var body={
     svc_id:curSvc.id,svc_name:curSvc.name,svc_icon:curSvc.icon,
-    address:addr+' (Landmark: '+lm+')',city:city,
+    address:addr,city:city,
     lat:gps.lat,lng:gps.lng,
     slot_time:selSlot,notes:taskNames.join(', ')
   };
