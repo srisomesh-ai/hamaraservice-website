@@ -20,6 +20,10 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
+// ── auto-migrate: upi_id + areas ──
+try { $db->exec("ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE providers ADD COLUMN areas TEXT NULL"); } catch (Exception $e) {}
+
 switch ($action) {
 
   // ── REGISTER ──────────────────────────────────────────
@@ -71,11 +75,11 @@ switch ($action) {
       INSERT INTO providers
         (id, name, phone, email, whatsapp, password_hash,
          gender, experience, bio, id_type, id_number,
-         address, city, lat, lng, radius_km, status)
+         address, city, lat, lng, radius_km, areas, status)
       VALUES
         (:id, :name, :phone, :email, :whatsapp, :pwd,
          :gender, :exp, :bio, :idtype, :idnum,
-         :address, :city, :lat, :lng, :radius, 'pending')
+         :address, :city, :lat, :lng, :radius, :areas, 'pending')
     ");
     $stmt->execute([
       ':id'      => $id,
@@ -94,6 +98,7 @@ switch ($action) {
       ':lat'     => (float)($b['lat'] ?? 0),
       ':lng'     => (float)($b['lng'] ?? 0),
       ':radius'  => (int)($b['radius_km'] ?? $b['radius'] ?? 5),
+      ':areas'   => json_encode($b['areas'] ?? []),
     ]);
 
     // Save services if provided
@@ -254,6 +259,7 @@ HamaraService Team";
     $stmt = $db->prepare("
       SELECT id, name, phone, email, whatsapp, gender, experience, bio,
              id_type, id_number, address, city, lat, lng, radius_km,
+             upi_id, areas,
              status, available, rating, review_count,
              total_bookings, completed_bookings, total_earned, pending_earned,
              registered_at
@@ -279,7 +285,7 @@ HamaraService Team";
     $fields = [];
     $params = [':id' => $prov['id']];
     $allowed = ['name','phone','whatsapp','gender','experience','bio',
-                'address','city','lat','lng','radius_km','available'];
+                'address','city','lat','lng','radius_km','available','upi_id','areas'];
     foreach ($allowed as $f) {
       if (isset($b[$f])) {
         $fields[]   = "$f = :$f";
@@ -364,8 +370,9 @@ HamaraService Team";
           AND p.available = 1
         HAVING (p.lat != 0 AND distance_km <= :radius)";
       if (!empty($city)) {
-        $sql .= " OR (p.lat = 0 AND p.city LIKE :city)";
+        $sql .= " OR (p.lat = 0 AND (p.city LIKE :city OR p.areas LIKE :city2))";
         $params[':city'] = "%$city%";
+        $params[':city2'] = "%$city%";
       }
       $sql .= " ORDER BY distance_km ASC LIMIT 20";
       $params[':radius'] = $radius;
@@ -373,8 +380,9 @@ HamaraService Team";
       // No GPS: match by city only
       $sql .= " WHERE p.status = 'approved' AND p.available = 1";
       if (!empty($city)) {
-        $sql .= " AND p.city LIKE :city";
+        $sql .= " AND (p.city LIKE :city OR p.areas LIKE :city2)";
         $params[':city'] = "%$city%";
+        $params[':city2'] = "%$city%";
       }
       $sql .= " ORDER BY p.rating DESC LIMIT 20";
     }
