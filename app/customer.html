@@ -251,10 +251,8 @@ function doAuth(){
       localStorage.setItem('hs_cust_token',TOKEN);localStorage.setItem('hs_cust_me',JSON.stringify(ME));localStorage.setItem('hs_role','customer');
       if(pendingAfterAuth==='addr'&&curSvc){
         pendingAfterAuth=null;
-        $('bPhone').value=ME.phone||$('bPhone').value;
-        if(!$('bPhone').value){api('customers.php','get&id='+encodeURIComponent(ME.id)).then(function(r2){if(r2.success&&r2.data){ME=Object.assign(ME,r2.data);localStorage.setItem('hs_cust_me',JSON.stringify(ME));$('bPhone').value=ME.phone||'';}}).catch(function(){});}
-        show('pgAddr');
-        toast('✓ Logged in — complete your booking');
+        toast('✓ Logged in — set your address');
+        goAddress(); // full flow: phone prefill + GPS capture + animation
       } else { initHome(); }
     } else if(res.error==='NOT_REGISTERED'){swapAuth();$('authErr').textContent='Email not found — create your account';
     } else {$('authErr').textContent=res.error||'Failed';}
@@ -404,6 +402,7 @@ function goAddress(){
   var anyTaskGroup=(curSvc.groups||[]).some(function(g){return g.style==='label';});
   var anyTask=Object.keys(sel.tasks).some(function(k){return sel.tasks[k];});
   if(anyTaskGroup&&!anyTask){toast('Select at least one task');return;}
+  if(!requireLogin('addr'))return; // login first, then location
   $('bPhone').value=ME.phone||'';
   if((!ME.phone||!ME.phone.length)&&TOKEN&&ME.id){
     api('customers.php','get&id='+encodeURIComponent(ME.id)).then(function(res){
