@@ -3332,7 +3332,7 @@ function loadCustomers(query){
   var orders=getAllOrders();
   document.getElementById("custBody").innerHTML=customers.map(function(c){
     var bk=orders.filter(function(o){return o.customer===c.name||o.phone===c.phone;});
-    return "<tr><td><strong style=\"font-size:12px;color:var(--blue)\">"+(c.id||"--")+"</strong></td><td><strong>"+c.name+"</strong></td><td>"+c.phone+"</td><td style=\"font-size:12px\">"+(c.email||"--")+"</td><td>"+(c.city||"--")+"</td><td><strong>"+bk.length+"</strong></td><td style=\"font-size:12px\">"+(c.registeredAt?new Date(c.registeredAt).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn del\" onclick=\"deleteCustomer('"+c.id+"')\" >Del</button></td></tr>";
+    return "<tr><td><strong style=\"font-size:12px;color:var(--blue)\">"+(c.id||"--")+"</strong></td><td><strong>"+c.name+"</strong></td><td>"+c.phone+"</td><td style=\"font-size:12px\">"+(c.email||"--")+"</td><td>"+(c.city||"--")+"</td><td><strong>"+bk.length+"</strong></td><td style=\"font-size:12px\">"+((c.registeredAt||c.created_at)?new Date(c.registeredAt||c.created_at).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn del\" onclick=\"deleteCustomer('"+c.id+"')\" >Del</button></td></tr>";
   }).join("")||"<tr><td colspan=\"8\" style=\"text-align:center;color:var(--muted);padding:24px\">No registered customers yet</td></tr>";
 }
 document.getElementById("custSearch").addEventListener("input",function(){loadCustomers(this.value.toLowerCase());});
