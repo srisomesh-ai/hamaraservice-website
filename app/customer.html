@@ -244,6 +244,7 @@ window.HS_FCM = (function(){
 })();
 </script>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -1055,18 +1056,18 @@ function renderBookingState(b){
     // Payment section
     var payBlock;
     if(!paid){
-      var upiBtn='';
-      if(b.provider_upi){
-        var upiUrl='upi://pay?pa='+encodeURIComponent(b.provider_upi)+'&pn='+encodeURIComponent(b.provider_name||'Provider')+'&am='+amt+'&cu=INR&tn='+encodeURIComponent('HamaraService '+(b.id||''));
-        upiBtn='<a class="btn teal" style="text-decoration:none;margin-bottom:8px" href="'+upiUrl+'">💳 Pay ₹'+amt+' via UPI</a>';
-      }
-      payBlock='<div class="card" style="border:2px solid var(--amber)"><div style="font-weight:800;font-size:15px;margin-bottom:4px">💰 Payment Pending</div><div style="font-size:13px;color:var(--muted);margin-bottom:12px">Pay ₹'+amt+' to '+(b.provider_name||'your provider')+'</div>'+upiBtn+'<button class="btn green" onclick="markPaid()">✓ I have paid ₹'+amt+'</button></div>';
+      payBlock='<div class="card" style="border:2px solid var(--amber)"><div style="font-weight:800;font-size:15px;margin-bottom:4px">💰 Payment Pending</div>'
+        +'<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Pay ₹'+amt+' to '+(b.provider_name||'your provider')+'</div>'
+        +'<button class="btn green" onclick="payNow('+amt+')">💳 Pay ₹'+amt+' Securely</button>'
+        +'<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">UPI · Cards · Netbanking · Wallets</div></div>';
     } else {
       payBlock='<div class="card" style="text-align:center;border:2px solid var(--green)"><div style="font-size:15px;font-weight:800;color:var(--green)">✅ Payment Done · ₹'+amt+'</div></div>';
     }
-    // Review section
+    // Review section — only after payment is done
     var rateBlock='';
-    if(!b.rating){
+    if(!paid){
+      rateBlock=''; // no review until paid
+    } else if(!b.rating){
       rateBlock='<div class="card" id="rateCard" style="text-align:center">'
         +(b.review_requested?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:6px">⭐ Your provider requested a review</div>':'')
         +'<div style="font-size:15px;font-weight:800;margin-bottom:10px">Rate your experience</div>'
@@ -1104,6 +1105,45 @@ function genStartOtp(){
     else toast(res.error||'Failed');
   }).catch(function(){toast('Network error');});
 }
+
+function payNow(amt){
+  api('bookings.php','get&id='+activeBookingId).then(function(res){
+    var b=res.data||{};
+    // create order on server
+    fetch('https://hamaraservice.com/api/create-order.php',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({bookingId:activeBookingId,amount:amt,service:b.svc_name||'Home Service',customerId:ME.id||'',providerId:b.provider_id||''})
+    }).then(function(r){return r.json();}).then(function(order){
+      if(!order.order_id){toast('Could not start payment: '+(order.error||'error'));return;}
+      var rzp=new Razorpay({
+        key:order.key_id,
+        amount:order.amount,
+        currency:order.currency||'INR',
+        name:'HamaraService',
+        description:(b.svc_name||'Home Service')+' · '+activeBookingId,
+        order_id:order.order_id,
+        prefill:{name:ME.name||'',email:ME.email||'',contact:ME.phone||''},
+        theme:{color:'#0f4c5c'},
+        handler:function(resp){
+          // verify + mark paid on server
+          api('bookings.php','razorpay_confirm',{
+            booking_id:activeBookingId,
+            razorpay_order_id:resp.razorpay_order_id,
+            razorpay_payment_id:resp.razorpay_payment_id,
+            razorpay_signature:resp.razorpay_signature
+          }).then(function(vr){
+            if(vr.success){popNotify('✅','Payment Successful','₹'+amt+' paid — thank you!','var(--green)');_lastRenderKey='';checkBooking();}
+            else toast(vr.error||'Verification failed');
+          }).catch(function(){toast('Verification error');});
+        },
+        modal:{ondismiss:function(){toast('Payment cancelled');}}
+      });
+      rzp.on('payment.failed',function(r){toast('Payment failed: '+(r.error&&r.error.description||''));});
+      rzp.open();
+    }).catch(function(){toast('Payment service error');});
+  });
+}
+
 function markPaid(){
   if(!confirm('Confirm you have paid the provider?'))return;
   api('bookings.php','mark_paid',{booking_id:activeBookingId}).then(function(res){
