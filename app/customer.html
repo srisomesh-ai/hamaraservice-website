@@ -968,9 +968,10 @@ function renderBookingState(b){
     $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
     var a=$('radarActive');a.classList.remove('hide');
     var price=b.confirmed_price||b.final_price||b.quoted_price||0;
-    var startOtpBlock=b.start_otp
-      ?('<div class="card" style="text-align:center;border:2px dashed var(--teal)"><div style="font-size:12.5px;color:var(--muted);font-weight:700">START OTP — SHARE WHEN PROVIDER ARRIVES</div><div class="otp-big">'+b.start_otp+'</div></div>')
-      :('<div class="card" style="text-align:center"><div style="font-size:13px;color:var(--muted);margin-bottom:10px">When your provider arrives, generate the OTP to start</div><button class="btn teal" onclick="genStartOtp()">🔑 Generate OTP to Start</button></div>');
+    var existingOtp=b.start_otp||b.otp||'';
+    var startOtpBlock=existingOtp
+      ?('<div class="card" style="text-align:center;border:2px dashed var(--teal)"><div style="font-size:12.5px;color:var(--muted);font-weight:700">🔑 START OTP — SHARE WHEN PROVIDER ARRIVES</div><div class="otp-big">'+existingOtp+'</div><div style="font-size:11px;color:var(--muted)">Give this code to your provider to begin the work</div></div>')
+      :('<div class="card" style="text-align:center;border:2px solid var(--teal)"><div style="font-size:14px;font-weight:800;margin-bottom:4px">Provider arrived?</div><div style="font-size:13px;color:var(--muted);margin-bottom:12px">Generate the OTP and share it so they can start the work</div><button class="btn teal" onclick="genStartOtp()">🔑 Generate OTP to Start</button></div>');
     var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+b.provider_photo+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
     a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">✅</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Booking Confirmed</div><div style="font-size:13px;color:var(--muted)">Provider is on the way</div></div>'
       +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+' · ₹'+price+'</div></div></div>'
