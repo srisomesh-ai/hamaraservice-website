@@ -207,8 +207,18 @@ window.HS_FCM = (function(){
     appId: "1:1064274729048:web:placeholder"
   };
   var messaging=null;
+  var _saveFn=null;
+  // Native Android token bridge
+  window.onAndroidFcmToken=function(tok){ if(tok&&_saveFn){_saveFn(tok);} };
   function init(role, saveFn){
+    _saveFn=saveFn;
     try{
+      // If inside the Android wrapper, use the NATIVE FCM token (real system notifications)
+      if(window.AndroidBridge && window.AndroidBridge.isAndroidApp && window.AndroidBridge.isAndroidApp()){
+        var nt=window.__ANDROID_FCM_TOKEN||(window.AndroidBridge.getFcmToken&&window.AndroidBridge.getFcmToken());
+        if(nt){saveFn(nt);console.log('[FCM] using native Android token');}
+        return; // native handles background notifications with sound
+      }
       if(!window.firebase||!firebase.messaging){return;}
       if(VAPID_KEY==="REPLACE_WITH_VAPID_KEY"){console.warn("[FCM] VAPID key not set — push disabled, in-app popups still work");return;}
       firebase.initializeApp(cfg);
