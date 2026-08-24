@@ -1114,7 +1114,7 @@ function payNow(amt){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({bookingId:activeBookingId,amount:amt,service:b.svc_name||'Home Service',customerId:ME.id||'',providerId:b.provider_id||''})
     }).then(function(r){return r.json();}).then(function(order){
-      if(!order.order_id){toast('Could not start payment: '+(order.error||'error'));return;}
+      if(!order.order_id){var em=order.error||'error';if(order.details&&order.details.error&&order.details.error.description)em=order.details.error.description;toast('Could not start payment: '+em);console.error('[RZP] order error',order);return;}
       var rzp=new Razorpay({
         key:order.key_id,
         amount:order.amount,
@@ -1138,8 +1138,12 @@ function payNow(amt){
         },
         modal:{ondismiss:function(){toast('Payment cancelled');}}
       });
-      rzp.on('payment.failed',function(r){toast('Payment failed: '+(r.error&&r.error.description||''));});
-      rzp.open();
+      rzp.on('payment.failed',function(r){
+        var e=r.error||{};
+        console.error('[RZP] failed',e);
+        toast('Payment failed: '+(e.description||e.reason||e.code||'unknown')+(e.step?(' ('+e.step+')'):''));
+      });
+      try{ rzp.open(); }catch(err){ toast('Could not open checkout: '+err.message); console.error('[RZP] open error',err); }
     }).catch(function(){toast('Payment service error');});
   });
 }
