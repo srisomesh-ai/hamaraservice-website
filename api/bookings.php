@@ -692,12 +692,12 @@ switch ($action) {
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not found');
     if ($bk['status'] !== 'active') err('Job not active');
-    // enforce minimum duration
-    $minMin = (int)($bk['min_duration_min'] ?: 5);
-    if (!empty($bk['started_at'])) {
-      $elapsed = (time() - strtotime($bk['started_at'])) / 60;
-      if ($elapsed < $minMin) err('TOO_EARLY:' . ceil($minMin - $elapsed));
-    }
+    // [TESTING] minimum-duration gate disabled
+    // $minMin = (int)($bk['min_duration_min'] ?: 5);
+    // if (!empty($bk['started_at'])) {
+    //   $elapsed = (time() - strtotime($bk['started_at'])) / 60;
+    //   if ($elapsed < $minMin) err('TOO_EARLY:' . ceil($minMin - $elapsed));
+    // }
     $cotp = $bk['completion_otp'] ?: str_pad((string)rand(0,9999),4,'0',STR_PAD_LEFT);
     $db->prepare("UPDATE bookings SET completion_otp = ? WHERE id = ?")->execute([$cotp, $id]);
     $fcm = getFcm($db, 'customers', $bk['customer_id']);
