@@ -926,8 +926,7 @@ function renderBookingState(b){
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
       +'<button class="btn" onclick="acceptPrice('+price+')">Accept ₹'+price+'</button>'
       +'<div style="height:8px"></div>'
-      +(st!=='negotiation_final'?'<button class="btn ghost" onclick="negotiate()">Negotiate</button><div style="height:8px"></div>':'')
-      +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="searchAnother()">Search Another</button>'
+      +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="searchAnother()">Search Another Provider</button>'
       +'</div>';
   } else if(st==='confirmed'||st==='price_confirmed'||st==='otp_sent'||st==='active'){
     $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
