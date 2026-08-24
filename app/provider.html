@@ -84,6 +84,51 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 window._placesReady=false;
 google.maps.importLibrary("places").then(function(){window._placesReady=true;});
 </script>
+
+<!-- Firebase Cloud Messaging -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script>
+window.HS_FCM = (function(){
+  // ⚠️ Paste your Web Push VAPID key from Firebase Console →
+  //    Project Settings → Cloud Messaging → Web Push certificates → Key pair
+  var VAPID_KEY = "REPLACE_WITH_VAPID_KEY";
+  var cfg = {
+    apiKey: "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
+    authDomain: "hamaraservice-s009.firebaseapp.com",
+    projectId: "hamaraservice-s009",
+    storageBucket: "hamaraservice-s009.firebasestorage.app",
+    messagingSenderId: "1064274729048",
+    appId: "1:1064274729048:web:placeholder"
+  };
+  var messaging=null;
+  function init(role, saveFn){
+    try{
+      if(!window.firebase||!firebase.messaging){return;}
+      if(VAPID_KEY==="REPLACE_WITH_VAPID_KEY"){console.warn("[FCM] VAPID key not set — push disabled, in-app popups still work");return;}
+      firebase.initializeApp(cfg);
+      messaging=firebase.messaging();
+      if(!('Notification' in window)){return;}
+      Notification.requestPermission().then(function(perm){
+        if(perm!=='granted'){return;}
+        navigator.serviceWorker.register('/app/firebase-messaging-sw.js').then(function(reg){
+          messaging.getToken({vapidKey:VAPID_KEY, serviceWorkerRegistration:reg}).then(function(token){
+            if(token&&saveFn){saveFn(token);}
+            console.log('[FCM] token ok');
+          }).catch(function(e){console.warn('[FCM] getToken failed',e);});
+        });
+      });
+      // foreground messages → in-app popup
+      messaging.onMessage(function(payload){
+        var d=(payload.data||payload.notification||{});
+        if(window.popNotify)popNotify('🔔',d.title||'HamaraService',d.body||'','var(--teal)');
+      });
+    }catch(e){console.warn('[FCM] init error',e);}
+  }
+  return {init:init};
+})();
+</script>
+
 </head>
 <body>
 
@@ -313,6 +358,7 @@ function doLogin(){
 function logout(){localStorage.removeItem('hs_prov_token');localStorage.removeItem('hs_prov_me');clearInterval(pollTimer);location.href='index.html';}
 function route(){
   if(!TOKEN||!ME.id){show('pgAuth');return;}
+  if(window.HS_FCM)HS_FCM.init('provider',function(tok){api('providers.php','fcm',{fcm_token:tok}).catch(function(){});});
   // Always verify with server — never trust stale local data
   api('providers.php','get&id='+encodeURIComponent(ME.id)).then(function(res){
     if(!res.success||!res.data){logout();return;}
