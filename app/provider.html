@@ -550,6 +550,18 @@ function acceptJob(bid){
     else toast(res.error||'Job no longer available');
   }).catch(function(){dismissJob();toast('Network error');});
 }
+
+function navBtn(b){
+  // Only show once the job is confirmed (provider is heading to customer)
+  if(['price_quoted','negotiating','negotiation_final'].indexOf(b.status)>-1)return '';
+  var dest='';
+  if(b.lat&&b.lng&&parseFloat(b.lat)!=0){dest=parseFloat(b.lat)+','+parseFloat(b.lng);}
+  else if(b.address){dest=encodeURIComponent(b.address);}
+  if(!dest)return '';
+  var url='https://www.google.com/maps/dir/?api=1&destination='+dest+'&travelmode=driving';
+  return '<a class="btn teal" style="text-decoration:none;margin-bottom:10px" href="'+url+'" target="_blank">🧭 Navigate to Customer</a>';
+}
+
 function renderActiveJob(){
   var el=$('activeJob');
   if(!activeJob){el.innerHTML='<div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div>';return;}
@@ -559,7 +571,8 @@ function renderActiveJob(){
     +'<div style="flex:1"><div style="font-weight:800">'+b.svc_name+'</div><div style="font-size:12px;color:var(--muted)">'+b.id+'</div></div>'
     +'<span class="badge '+st+'">'+st.replace(/_/g,' ')+'</span></div>'
     +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+(b.customer_name||'Customer')+' '+(b.customer_phone?('· <a href="tel:'+b.customer_phone+'">📞 '+b.customer_phone+'</a>'):'')+'</div>'
-    +'<div style="font-size:13px;margin-bottom:10px"><b>📍</b> '+b.address+'</div>'
+    +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+b.address+'</div>'
+    +navBtn(b)
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.final_price||b.quoted_price||0)+'</div>';
   if(st==='price_quoted'){
     h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:4px">⏳ Waiting for customer to accept your quote ₹'+(b.quoted_price||0)+'</div>';
