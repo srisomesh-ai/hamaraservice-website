@@ -473,11 +473,14 @@ switch ($action) {
     if (empty($id)) err('id required');
 
     $col  = $role === 'provider' ? 'provider_id' : 'customer_id';
+    // include recently-completed-but-unpaid so provider still sees payment status
     $stmt = $db->prepare("
       SELECT * FROM bookings
       WHERE $col = ?
-        AND status NOT IN ('completed','cancelled')
-      ORDER BY created_at DESC
+        AND (status NOT IN ('completed','cancelled')
+             OR (status = 'completed' AND payment_status != 'paid'
+                 AND completed_at > (NOW() - INTERVAL 2 HOUR)))
+      ORDER BY (status='completed') ASC, created_at DESC
       LIMIT 1
     ");
     $stmt->execute([$id]);
