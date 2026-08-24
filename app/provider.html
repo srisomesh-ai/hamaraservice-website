@@ -590,6 +590,19 @@ function pollJobs(){
     }
   }).catch(function(){});
 }
+
+function myPriceFor(b){
+  // provider's saved price for this service (first/base option)
+  var sv=myPrices[b.svc_id]||{};
+  var vals=[];
+  for(var k in sv){var n=parseInt(sv[k],10);if(n>0)vals.push(n);}
+  if(vals.length){return Math.min.apply(null,vals);} // base/lowest set price
+  // fall back to admin default price for the service
+  var ad=(adminAll[b.svc_id]&&adminAll[b.svc_id].admin_prices)||{};
+  for(var k2 in ad){var n2=parseInt(ad[k2],10);if(n2>0)return n2;}
+  return 0;
+}
+
 function showJobPopup(b){
   var pop=$('jobPop');
   pop.className='job-pop';
@@ -601,8 +614,9 @@ function showJobPopup(b){
     +(b.notes?'<div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px">'+b.notes+'</div>':'')
     +'<div style="font-size:13px;margin:10px 0"><b>📍</b> '+b.address+'</div>'
     +(b.slot_time?'<div style="font-size:13px;margin-bottom:12px"><b>🕐</b> '+b.slot_time+'</div>':'')
-    +'<label>Your Price (₹) *</label><input class="inp" id="jpPrice" type="number" placeholder="Enter your quote">'
-    +'<button class="btn green" onclick="acceptJob(\''+b.id+'\')">✓ Accept & Quote</button>'
+    +'<label>Your Price (₹)</label><input class="inp" id="jpPrice" type="number" value="'+(myPriceFor(b)||'')+'" placeholder="Your price">'
+    +'<div style="font-size:11.5px;color:var(--muted);margin:-4px 0 8px">'+(myPriceFor(b)?'Your saved price — edit if needed':'Set your price for this job')+'</div>'
+    +'<button class="btn green" onclick="acceptJob(\''+b.id+'\')">✓ Accept'+(myPriceFor(b)?' at ₹'+myPriceFor(b):' & Quote')+'</button>'
     +'<div style="height:8px"></div>'
     +'<button class="btn red-ghost" onclick="dismissJob()">Skip</button>'
     +'</div>';
@@ -616,7 +630,7 @@ function showJobPopup(b){
 function dismissJob(){var p=$('jobPop');clearInterval(p._iv);p.className='hide';p.innerHTML='';}
 function acceptJob(bid){
   var p=parseInt($('jpPrice').value,10);
-  if(!p||p<1){toast('Enter your price');return;}
+  if(!p||p<1){toast('Enter your price for this job');return;}
   api('bookings.php','accept',{booking_id:bid,quoted_price:p}).then(function(res){
     dismissJob();
     if(res.success){toast('✅ Quote sent to customer!');pollJobs();}
