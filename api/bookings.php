@@ -68,6 +68,8 @@ try { $db->exec("ALTER TABLE bookings ADD COLUMN start_otp VARCHAR(8) NULL"); } 
 try { $db->exec("ALTER TABLE bookings ADD COLUMN started_at DATETIME NULL"); } catch (Exception $e) {}
 try { $db->exec("ALTER TABLE bookings ADD COLUMN min_duration_min INT DEFAULT 5"); } catch (Exception $e) {}
 try { $db->exec("ALTER TABLE bookings ADD COLUMN review_requested TINYINT DEFAULT 0"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN payment_method VARCHAR(20) NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN razorpay_payment_id VARCHAR(50) NULL"); } catch (Exception $e) {}
 
 switch ($action) {
 
@@ -727,10 +729,39 @@ switch ($action) {
     $stmt->execute([$id, $prov['id']]);
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not found');
+    if (($bk['payment_status'] ?? '') !== 'paid') err('PAYMENT_PENDING');
     $db->prepare("UPDATE bookings SET review_requested = 1 WHERE id = ?")->execute([$id]);
     $fcm = getFcm($db, 'customers', $bk['customer_id']);
     sendPush($fcm, "Review Request ⭐", ($bk['provider_name'] ?: 'Your provider') . " is asking for a review.", ['event'=>'review_requested','bookingId'=>$id]);
     ok(['review_requested'=>1]);
+  }
+
+  case 'razorpay_confirm': {
+    $user = requireCustomer();
+    $bd   = getBody();
+    $id   = $bd['booking_id'] ?? '';
+    $oid  = $bd['razorpay_order_id'] ?? '';
+    $pid  = $bd['razorpay_payment_id'] ?? '';
+    $sig  = $bd['razorpay_signature'] ?? '';
+    if (empty($id) || empty($oid) || empty($pid) || empty($sig)) err('Missing payment fields');
+
+    // Verify signature (secret must match create-order.php)
+    $RZP_SECRET = 'vHNYS7qh04Fyklra0YbzB6Iy';
+    $expected = hash_hmac('sha256', $oid . '|' . $pid, $RZP_SECRET);
+    if (!hash_equals($expected, $sig)) err('Invalid payment signature');
+
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
+    $stmt->execute([$id, $user['uid']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+
+    $db->prepare("UPDATE bookings SET payment_status = 'paid', payment_method = 'razorpay', razorpay_payment_id = ? WHERE id = ?")
+       ->execute([$pid, $id]);
+
+    $fcm = getFcm($db, 'providers', $bk['provider_id']);
+    sendPush($fcm, "Payment Received 💰", "Customer paid ₹" . (int)$bk['confirmed_price'] . " online.", ['event'=>'payment_done','bookingId'=>$id]);
+
+    ok(['payment_status'=>'paid','payment_id'=>$pid]);
   }
 
   default:
