@@ -63,6 +63,12 @@ try { $db->exec("ALTER TABLE bookings ADD COLUMN completion_otp VARCHAR(8) NULL"
 try { $db->exec("ALTER TABLE bookings ADD COLUMN rating INT NULL"); } catch (Exception $e) {}
 try { $db->exec("ALTER TABLE bookings ADD COLUMN review TEXT NULL"); } catch (Exception $e) {}
 
+// ── auto-migrate: full flow fields ──
+try { $db->exec("ALTER TABLE bookings ADD COLUMN start_otp VARCHAR(8) NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN started_at DATETIME NULL"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN min_duration_min INT DEFAULT 5"); } catch (Exception $e) {}
+try { $db->exec("ALTER TABLE bookings ADD COLUMN review_requested TINYINT DEFAULT 0"); } catch (Exception $e) {}
+
 switch ($action) {
 
   // ── CREATE BOOKING ────────────────────────────────────
@@ -279,25 +285,21 @@ switch ($action) {
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not found');
 
-    // Generate OTP
-    $otp = makeOtp();
-
     $db->prepare("
       UPDATE bookings SET
         status             = 'confirmed',
         confirmed_price    = ?,
         amount             = ?,
-        negotiation_status = 'confirmed',
-        otp                = ?
+        negotiation_status = 'confirmed'
       WHERE id = ?
-    ")->execute([$price, $price, $otp, $id]);
+    ")->execute([$price, $price, $id]);
 
-    // Notify provider
+    // Notify provider — customer confirmed the job
     $fcm = getFcm($db, 'providers', $bk['provider_id']);
     sendPush($fcm,
-      "Booking Confirmed ✅",
-      "Customer confirmed price ₹$price. Proceed to service.",
-      ['event'=>'booking_accepted','confirmedPrice'=>"$price",'bookingId'=>$id]
+      "Job Confirmed ✅",
+      "Customer confirmed ₹$price. Head to the location.",
+      ['event'=>'booking_confirmed','confirmedPrice'=>"$price",'bookingId'=>$id]
     );
 
     ok(['status'=>'confirmed','confirmed_price'=>$price,'otp'=>$otp]);
@@ -356,14 +358,13 @@ switch ($action) {
     if (!$bk) err('Booking not found');
     if ($bk['otp'] !== $otp) err('Invalid OTP');
 
-    $completionOtp = str_pad((string)rand(0, 9999), 4, '0', STR_PAD_LEFT);
     $db->prepare("
       UPDATE bookings SET
-        otp_verified   = 1,
-        status         = 'active',
-        completion_otp = ?
+        otp_verified = 1,
+        status       = 'active',
+        started_at   = CURRENT_TIMESTAMP
       WHERE id = ?
-    ")->execute([$completionOtp, $id]);
+    ")->execute([$id]);
 
     // Notify customer
     $fcm = getFcm($db, 'customers', $bk['customer_id']);
@@ -402,13 +403,17 @@ switch ($action) {
     $db->prepare("
       UPDATE bookings SET
         status         = 'completed',
-        payment_status = 'paid',
+        payment_status = 'pending',
         commission_pct = ?,
         commission_amt = ?,
         provider_earns = ?,
         completed_at   = CURRENT_TIMESTAMP
       WHERE id = ?
     ")->execute([$commPct, $commAmt, $provEarns, $id]);
+
+    // Notify customer — job done, please pay
+    $cfcm = getFcm($db, 'customers', $bk['customer_id']);
+    sendPush($cfcm, "Service Completed 🎉", "Please pay ₹$amount to your provider.", ['event'=>'completed','bookingId'=>$id,'amount'=>(string)$amount]);
 
     // Update provider earnings
     if (!empty($bk['provider_id'])) {
@@ -589,6 +594,93 @@ switch ($action) {
       sendPush($fcm, "New Review ⭐", "$rating stars from a customer", ['event'=>'review','bookingId'=>$id]);
     }
     ok(['rating'=>$rating]);
+  }
+
+  case 'decline': {
+    $user = requireCustomer();
+    $bd   = getBody();
+    $id   = $bd['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
+    $stmt->execute([$id, $user['uid']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    $db->prepare("UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL, quoted_price = 0, negotiation_status = NULL WHERE id = ?")->execute([$id]);
+    if (!empty($bk['provider_id'])) {
+      $fcm = getFcm($db, 'providers', $bk['provider_id']);
+      sendPush($fcm, "Not Interested", "Customer declined your quote. Searching others.", ['event'=>'declined','bookingId'=>$id]);
+    }
+    ok(['status'=>'searching']);
+  }
+
+  case 'generate_start_otp': {
+    $user = requireCustomer();
+    $bd   = getBody();
+    $id   = $bd['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
+    $stmt->execute([$id, $user['uid']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    if ($bk['status'] !== 'confirmed') err('Booking must be confirmed first');
+    $otp = $bk['start_otp'] ?: str_pad((string)rand(0,9999),4,'0',STR_PAD_LEFT);
+    $db->prepare("UPDATE bookings SET start_otp = ?, otp = ? WHERE id = ?")->execute([$otp, $otp, $id]);
+    $fcm = getFcm($db, 'providers', $bk['provider_id']);
+    sendPush($fcm, "Start OTP Ready 🔑", "Customer generated the start OTP. Ask them and enter it to begin.", ['event'=>'start_otp_ready','bookingId'=>$id]);
+    ok(['start_otp'=>$otp]);
+  }
+
+  case 'request_completion_otp': {
+    $prov = requireProvider();
+    $bd   = getBody();
+    $id   = $bd['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND provider_id = ?");
+    $stmt->execute([$id, $prov['id']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    if ($bk['status'] !== 'active') err('Job not active');
+    // enforce minimum duration
+    $minMin = (int)($bk['min_duration_min'] ?: 5);
+    if (!empty($bk['started_at'])) {
+      $elapsed = (time() - strtotime($bk['started_at'])) / 60;
+      if ($elapsed < $minMin) err('TOO_EARLY:' . ceil($minMin - $elapsed));
+    }
+    $cotp = $bk['completion_otp'] ?: str_pad((string)rand(0,9999),4,'0',STR_PAD_LEFT);
+    $db->prepare("UPDATE bookings SET completion_otp = ? WHERE id = ?")->execute([$cotp, $id]);
+    $fcm = getFcm($db, 'customers', $bk['customer_id']);
+    sendPush($fcm, "Completion OTP 🔑", "Your provider finished. Share the completion OTP if satisfied.", ['event'=>'completion_otp_ready','bookingId'=>$id]);
+    ok(['completion_otp'=>$cotp]);
+  }
+
+  case 'mark_paid': {
+    $user = requireCustomer();
+    $bd   = getBody();
+    $id   = $bd['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
+    $stmt->execute([$id, $user['uid']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    $db->prepare("UPDATE bookings SET payment_status = 'paid' WHERE id = ?")->execute([$id]);
+    $fcm = getFcm($db, 'providers', $bk['provider_id']);
+    sendPush($fcm, "Payment Received 💰", "Customer marked payment as done.", ['event'=>'payment_done','bookingId'=>$id]);
+    ok(['payment_status'=>'paid']);
+  }
+
+  case 'request_review': {
+    $prov = requireProvider();
+    $bd   = getBody();
+    $id   = $bd['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND provider_id = ?");
+    $stmt->execute([$id, $prov['id']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    $db->prepare("UPDATE bookings SET review_requested = 1 WHERE id = ?")->execute([$id]);
+    $fcm = getFcm($db, 'customers', $bk['customer_id']);
+    sendPush($fcm, "Review Request ⭐", ($bk['provider_name'] ?: 'Your provider') . " is asking for a review.", ['event'=>'review_requested','bookingId'=>$id]);
+    ok(['review_requested'=>1]);
   }
 
   default:
