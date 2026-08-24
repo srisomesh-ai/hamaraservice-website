@@ -122,6 +122,7 @@ window.HS_FCM = (function(){
       messaging.onMessage(function(payload){
         var d=(payload.data||payload.notification||{});
         if(window.popNotify)popNotify('🔔',d.title||'HamaraService',d.body||'','var(--teal)');
+        if(typeof pollJobs==='function'){try{pollJobs();}catch(e){}}
       });
     }catch(e){console.warn('[FCM] init error',e);}
   }
@@ -542,7 +543,19 @@ function toggleAvail(){
 }
 
 // ── JOB POLLING ──
-function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(pollJobs,5000);pollJobs();}
+
+// Restart polling when app returns to foreground (timers suspend when backgrounded)
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden && TOKEN && ME.id && (ME.status==='approved')){
+    if(pollTimer){clearInterval(pollTimer);}
+    startPoll();
+  }
+});
+window.addEventListener('focus',function(){
+  if(TOKEN && ME.id && ME.status==='approved'){ if(pollTimer)clearInterval(pollTimer); startPoll(); }
+});
+
+function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(pollJobs,4000);pollJobs();}
 function pollJobs(){
   // active job first
   api('bookings.php','active',null,'&id='+encodeURIComponent(ME.id)+'&role=provider').then(function(res){
@@ -557,9 +570,11 @@ function pollJobs(){
     var useFilter=Object.keys(myIds).length>0;
     for(var i=0;i<res.data.length;i++){
       var b=res.data[i];
-      if(shownJobs[b.id])continue;
       if(useFilter&&!myIds[b.svc_id])continue;
-      shownJobs[b.id]=1;
+      // re-alert if not shown in the last 45s (in case provider missed it)
+      var now=Date.now();
+      if(shownJobs[b.id]&&(now-shownJobs[b.id])<45000)continue;
+      shownJobs[b.id]=now;
       showJobPopup(b);
       break;
     }
