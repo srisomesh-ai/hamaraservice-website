@@ -187,6 +187,7 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .skel{background:linear-gradient(90deg,#e8eef0 25%,#f4f8f9 50%,#e8eef0 75%);background-size:800px 100%;animation:shimmer 1.2s infinite linear;border-radius:12px}
 .tabbar .tab{transition:all .15s ease}
 .tabbar .tab:active{transform:scale(.92)}
+@keyframes notifSlide{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -864,10 +865,44 @@ function startPoll(){_lastRenderKey='';
   pollTimer=setInterval(checkBooking,4000);checkBooking();
   startScanMsgs();
 }
+
+// ── POPUP NOTIFICATION SYSTEM ──
+var _lastStatus=null, _lastPayStatus=null, _lastReviewReq=0;
+function popNotify(icon,title,msg,color){
+  var ov=document.getElementById('notifPop');
+  if(!ov){
+    ov=document.createElement('div');ov.id='notifPop';
+    ov.style.cssText='position:fixed;left:0;right:0;top:0;z-index:9999;display:flex;justify-content:center;pointer-events:none';
+    document.body.appendChild(ov);
+  }
+  var card=document.createElement('div');
+  card.style.cssText='pointer-events:auto;margin-top:14px;max-width:340px;width:90%;background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.22);display:flex;gap:12px;align-items:center;border-left:5px solid '+(color||'var(--teal)')+';animation:notifSlide .4s cubic-bezier(.2,.8,.2,1)';
+  card.innerHTML='<div style="font-size:28px">'+icon+'</div><div style="flex:1"><div style="font-weight:800;font-size:14px">'+title+'</div><div style="font-size:12.5px;color:var(--muted);margin-top:2px">'+msg+'</div></div>';
+  ov.appendChild(card);
+  try{if(navigator.vibrate)navigator.vibrate(80);}catch(e){}
+  setTimeout(function(){card.style.transition='all .4s';card.style.opacity='0';card.style.transform='translateY(-20px)';setTimeout(function(){card.remove();},400);},4200);
+}
+function detectChange(b){
+  var st=b.status;
+  if(_lastStatus!==null && st!==_lastStatus){
+    if(st==='price_quoted')popNotify('🎉','Provider Found!',(b.provider_name||'A provider')+' quoted ₹'+(b.quoted_price||0),'var(--amber)');
+    else if(st==='active')popNotify('🧰','Service Started','Your provider has started the work','var(--teal)');
+    else if(st==='completed')popNotify('✅','Service Completed','Please complete the payment','var(--green)');
+    else if(st==='cancelled')popNotify('❌','Booking Cancelled','This booking was cancelled','var(--red)');
+  }
+  if(_lastPayStatus!==null && b.payment_status!==_lastPayStatus && b.payment_status==='paid'){
+    popNotify('💰','Payment Confirmed','Payment marked as done','var(--green)');
+  }
+  if(b.review_requested && !_lastReviewReq){
+    popNotify('⭐','Review Requested',(b.provider_name||'Your provider')+' is asking for a review','var(--amber)');
+  }
+  _lastStatus=st;_lastPayStatus=b.payment_status;_lastReviewReq=b.review_requested?1:0;
+}
+
 function checkBooking(){
   api('bookings.php','get&id='+activeBookingId).then(function(res){
     if(!res.success)return;
-    var b=res.data;renderBookingState(b);
+    var b=res.data;detectChange(b);renderBookingState(b);
   }).catch(function(){});
 }
 function renderTimeline(st){
@@ -897,7 +932,7 @@ function renderTimeline(st){
 var _lastRenderKey='';
 function renderBookingState(b){
   var st=b.status;
-  var key=st+'|'+(b.otp||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.rating||'');
+  var key=st+'|'+(b.otp||'')+'|'+(b.start_otp||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.review_requested||0)+'|'+(b.rating||'');
   if(key===_lastRenderKey)return;
   _lastRenderKey=key;
   renderTimeline(st);
@@ -924,77 +959,108 @@ function renderBookingState(b){
       +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+b.provider_phone+'</div>':'')
       +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
-      +'<button class="btn" onclick="acceptPrice('+price+')">Accept ₹'+price+'</button>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">This is the provider\'s final price. Confirm to book, or decline to find another.</div>'
+      +'<button class="btn green" onclick="confirmBooking('+price+')">✓ Confirm Booking · ₹'+price+'</button>'
       +'<div style="height:8px"></div>'
-      +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="searchAnother()">Search Another Provider</button>'
+      +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="notInterested()">Not Interested</button>'
       +'</div>';
-  } else if(st==='confirmed'||st==='price_confirmed'||st==='otp_sent'||st==='active'){
+  } else if(st==='confirmed'||st==='price_confirmed'||st==='otp_sent'){
     $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
     var a=$('radarActive');a.classList.remove('hide');
     var price=b.confirmed_price||b.final_price||b.quoted_price||0;
-    var isActive=(st==='active');
-    var otpBlock='';
-    if(b.otp&&!isActive){
-      otpBlock='<div class="card" style="text-align:center;border:2px dashed var(--teal)">'
-      +'<div style="font-size:12.5px;color:var(--muted);font-weight:700">SHARE THIS OTP WHEN PROVIDER ARRIVES</div>'
-      +'<div class="otp-big">'+b.otp+'</div></div>';
-    } else if(isActive&&b.completion_otp){
-      otpBlock='<div class="card" style="text-align:center;border:2px dashed var(--green)">'
-      +'<div style="font-size:12.5px;color:var(--green);font-weight:800">✅ WORK COMPLETION OTP</div>'
-      +'<div class="otp-big" style="color:var(--green)">'+b.completion_otp+'</div>'
-      +'<div style="font-size:11.5px;color:var(--muted)">Share ONLY when the work is finished to your satisfaction</div></div>';
-    }
-    a.innerHTML=
-      '<div class="card" style="text-align:center;padding:20px">'
-      +'<div style="font-size:44px">'+(isActive?'🧰':'✅')+'</div>'
-      +'<div style="font-size:18px;font-weight:900;margin:8px 0 4px">'+(isActive?'Work In Progress':'Booking Confirmed')+'</div>'
-      +'<div style="font-size:13px;color:var(--muted)">'+(isActive?'Your provider is working on the job':'Provider is on the way')+'</div>'
-      +'</div>'
-      +'<div class="card">'
-      +'<div style="display:flex;align-items:center;gap:12px">'
-      +(b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+b.provider_photo+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+((b.provider_name||'P').charAt(0).toUpperCase())+'</div>'))
-      +'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+(b.provider_name||'Provider')+'</div>'
-      +'<div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+'</div></div>'
-      +'<div style="font-size:19px;font-weight:900;color:var(--teal)">₹'+price+'</div></div>'
-      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')
-      +'</div>'
-      +otpBlock
-      +'<div class="card" style="font-size:13px;color:var(--muted)">📍 '+(b.address||'')+'</div>';
+    var startOtpBlock=b.start_otp
+      ?('<div class="card" style="text-align:center;border:2px dashed var(--teal)"><div style="font-size:12.5px;color:var(--muted);font-weight:700">START OTP — SHARE WHEN PROVIDER ARRIVES</div><div class="otp-big">'+b.start_otp+'</div></div>')
+      :('<div class="card" style="text-align:center"><div style="font-size:13px;color:var(--muted);margin-bottom:10px">When your provider arrives, generate the OTP to start</div><button class="btn teal" onclick="genStartOtp()">🔑 Generate OTP to Start</button></div>');
+    var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+b.provider_photo+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
+    a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">✅</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Booking Confirmed</div><div style="font-size:13px;color:var(--muted)">Provider is on the way</div></div>'
+      +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+' · ₹'+price+'</div></div></div>'
+      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')+'</div>'
+      +startOtpBlock
+      +'<div class="card" style="font-size:13px;color:var(--muted)">📍 '+(b.address||'')+'</div>'
+      +'<button class="btn ghost" style="border-color:var(--red);color:var(--red);margin-top:8px" onclick="cancelBooking()">Cancel Booking</button>';
+  } else if(st==='active'){
+    $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
+    var a=$('radarActive');a.classList.remove('hide');
+    var price=b.confirmed_price||b.final_price||b.quoted_price||0;
+    var compBlock=b.completion_otp
+      ?('<div class="card" style="text-align:center;border:2px dashed var(--green)"><div style="font-size:12.5px;color:var(--green);font-weight:800">✅ COMPLETION OTP</div><div class="otp-big" style="color:var(--green)">'+b.completion_otp+'</div><div style="font-size:11.5px;color:var(--muted)">Share this ONLY when the work is done to your satisfaction</div></div>')
+      :('<div class="card" style="text-align:center;font-size:13px;color:var(--muted)">🧰 Work in progress. When your provider finishes, they will request a completion OTP.</div>');
+    var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+b.provider_photo+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
+    a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">🧰</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Work In Progress</div><div style="font-size:13px;color:var(--muted)">Your provider is working on the job</div></div>'
+      +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+'</div></div><div style="font-size:19px;font-weight:900;color:var(--teal)">₹'+price+'</div></div>'
+      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')+'</div>'
+      +compBlock;
   } else if(st==='completed'){
-    clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
+    clearInterval(pollTimer);
     $('radarActive').classList.remove('hide');$('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
     var amt=b.confirmed_price||b.final_price||b.quoted_price||0;
-    var payBtn='';
-    if(b.provider_upi&&amt>0){
-      var upiUrl='upi://pay?pa='+encodeURIComponent(b.provider_upi)+'&pn='+encodeURIComponent(b.provider_name||'Provider')+'&am='+amt+'&cu=INR&tn='+encodeURIComponent('HamaraService '+(b.id||''));
-      payBtn='<div class="card" style="text-align:center">'
-        +'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Pay your provider directly via UPI</div>'
-        +'<a class="btn teal" style="text-decoration:none" href="'+upiUrl+'">💳 Pay ₹'+amt+' via UPI</a>'
-        +'<div style="font-size:11px;color:var(--muted);margin-top:8px">Opens GPay / PhonePe / Paytm</div></div>';
+    var paid=(b.payment_status==='paid');
+    // Payment section
+    var payBlock;
+    if(!paid){
+      var upiBtn='';
+      if(b.provider_upi){
+        var upiUrl='upi://pay?pa='+encodeURIComponent(b.provider_upi)+'&pn='+encodeURIComponent(b.provider_name||'Provider')+'&am='+amt+'&cu=INR&tn='+encodeURIComponent('HamaraService '+(b.id||''));
+        upiBtn='<a class="btn teal" style="text-decoration:none;margin-bottom:8px" href="'+upiUrl+'">💳 Pay ₹'+amt+' via UPI</a>';
+      }
+      payBlock='<div class="card" style="border:2px solid var(--amber)"><div style="font-weight:800;font-size:15px;margin-bottom:4px">💰 Payment Pending</div><div style="font-size:13px;color:var(--muted);margin-bottom:12px">Pay ₹'+amt+' to '+(b.provider_name||'your provider')+'</div>'+upiBtn+'<button class="btn green" onclick="markPaid()">✓ I have paid ₹'+amt+'</button></div>';
+    } else {
+      payBlock='<div class="card" style="text-align:center;border:2px solid var(--green)"><div style="font-size:15px;font-weight:800;color:var(--green)">✅ Payment Done · ₹'+amt+'</div></div>';
     }
+    // Review section
     var rateBlock='';
     if(!b.rating){
       rateBlock='<div class="card" id="rateCard" style="text-align:center">'
+        +(b.review_requested?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:6px">⭐ Your provider requested a review</div>':'')
         +'<div style="font-size:15px;font-weight:800;margin-bottom:10px">Rate your experience</div>'
         +'<div id="stars" style="font-size:34px;letter-spacing:6px;cursor:pointer">'
         +[1,2,3,4,5].map(function(i){return '<span data-s="'+i+'" onclick="setStar('+i+')" style="opacity:.35">⭐</span>';}).join('')
-        +'</div>'
-        +'<textarea class="inp" id="reviewTxt" rows="2" placeholder="Write a short review (optional)" style="margin-top:10px"></textarea>'
+        +'</div><textarea class="inp" id="reviewTxt" rows="2" placeholder="Write a short review (optional)" style="margin-top:10px"></textarea>'
         +'<button class="btn" style="margin-top:6px" onclick="submitReview(\''+b.id+'\')">Submit Review</button></div>';
     } else {
       rateBlock='<div class="card" style="text-align:center;font-size:14px">⭐ You rated this '+b.rating+'/5 — thank you!</div>';
     }
-    $('radarActive').innerHTML='<div class="card" style="text-align:center"><div style="font-size:42px">🎉</div>'
-      +'<div style="font-size:17px;font-weight:800;margin:6px 0">Service Completed!</div>'
-      +'<div style="font-size:14px;color:var(--muted)">'+(b.provider_name||'')+' · ₹'+amt+'</div></div>'
-      +payBtn+rateBlock
-      +'<div style="height:8px"></div><button class="btn ghost" onclick="show(\'pgHome\')">← Back to Home</button>';
+    $('radarActive').innerHTML='<div class="card" style="text-align:center"><div style="font-size:42px">🎉</div><div style="font-size:17px;font-weight:800;margin:6px 0">Service Completed!</div><div style="font-size:14px;color:var(--muted)">'+(b.provider_name||'')+' · ₹'+amt+'</div></div>'
+      +payBlock+rateBlock
+      +'<div style="height:8px"></div><button class="btn ghost" onclick="goHomeFresh()">← Back to Home</button>';
   } else if(st==='cancelled'){
     clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
     toast('Booking cancelled');show('pgHome');
   }
 }
-function acceptPrice(p){
+function confirmBooking(p){
+  api('bookings.php','confirm_price',{booking_id:activeBookingId,confirmed_price:p}).then(function(res){
+    if(res.success){toast('✓ Booking confirmed');_lastRenderKey='';checkBooking();}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+function notInterested(){
+  if(!confirm('Decline this provider and search for another?'))return;
+  api('bookings.php','decline',{booking_id:activeBookingId}).then(function(res){
+    if(res.success){toast('Searching for another provider…');_lastRenderKey='';checkBooking();}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+function genStartOtp(){
+  api('bookings.php','generate_start_otp',{booking_id:activeBookingId}).then(function(res){
+    if(res.success){toast('🔑 Start OTP generated — share with provider');_lastRenderKey='';checkBooking();}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+function markPaid(){
+  if(!confirm('Confirm you have paid the provider?'))return;
+  api('bookings.php','mark_paid',{booking_id:activeBookingId}).then(function(res){
+    if(res.success){toast('✅ Payment marked as done');_lastRenderKey='';checkBooking();}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+function goHomeFresh(){
+  localStorage.removeItem('hs_active_bk');activeBookingId='';_lastStatus=null;_lastPayStatus=null;_lastReviewReq=0;
+  show('pgHome');
+}
+function acceptPrice(p){confirmBooking(p);} // legacy alias
+
+function _acceptPriceOld(p){
   api('bookings.php','confirm_price',{booking_id:activeBookingId,confirmed_price:p}).then(function(res){
     if(res.success){toast('Price confirmed ✓');checkBooking();}
     else toast(res.error||'Failed');
