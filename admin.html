@@ -2634,19 +2634,30 @@ function getCustomers(){
   try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}
 }
 function syncCustomersFromFirebase(cb){
-  fetch('https://hamaraservice.com/api/customers.php?action=list&key=hamaraAdmin2024').then(function(r){ return r.json(); }).then(function(res) {
-    var mysql = (res.success && res.data) ? res.data : [];
-    // MERGE MySQL (app-registered) with any existing Firebase-origin customers
+  var url='https://hamaraservice.com/api/customers.php?action=list&key=hamaraAdmin2024';
+  fetch(url,{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(res){
+    var mysql = (res && res.success && Array.isArray(res.data)) ? res.data : (Array.isArray(res)?res:[]);
     var ex = getCustomers();
     var byKey = {};
-    mysql.forEach(function(c){ var k=c.id||c.uid||c.email; if(k) byKey[k]=c; });
-    ex.forEach(function(c){ var k=c.id||c.uid||c.email; if(k && !byKey[k]) byKey[k]=c; });
+    mysql.forEach(function(c){ var k=c.id||c.uid||c.email||c.phone; if(k) byKey[k]=c; });
+    ex.forEach(function(c){ var k=c.id||c.uid||c.email||c.phone; if(k && !byKey[k]) byKey[k]=c; });
     var merged = Object.keys(byKey).map(function(k){ return byKey[k]; });
     localStorage.setItem('hs_customers', JSON.stringify(merged));
     if (document.getElementById('custBody')) loadCustomers(null);
+    console.log('[Admin] customers: MySQL='+mysql.length+' merged='+merged.length);
     if (cb) cb(merged);
-  }).catch(function(){ if (cb) cb(getCustomers()); });
+  }).catch(function(e){
+    console.error('[Admin] customer fetch failed:', e.message);
+    if (document.getElementById('custBody') && !getCustomers().length){
+      document.getElementById('custBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:#c0392b;padding:20px">⚠️ Could not load customers from server ('+e.message+'). Tap the Customers tab again to retry.</td></tr>';
+    }
+    if (cb) cb(getCustomers());
+  });
 }
+
 function saveCustomers(c){
   localStorage.setItem("hs_customers",JSON.stringify(c));
   var obj=c.reduce(function(m,cu){if(cu.id)m[cu.id]=cu;return m;},{});
@@ -2787,7 +2798,7 @@ function showPage(name){
     getHSPrices(function(){ loadPayments(); }); // ensure commission rates loaded first
   }
   if(name==='orders') loadOrders(null,null);
-  if(name==='customers') loadCustomers(null);
+  if(name==='customers'){ loadCustomers(null); if(typeof syncCustomersFromFirebase==='function') syncCustomersFromFirebase(function(){ loadCustomers(null); }); }
   if(name==='analytics') loadAnalytics();
 }
 
