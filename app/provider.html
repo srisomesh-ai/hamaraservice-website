@@ -662,7 +662,9 @@ function requestReview(){
 var _lastCompletedId=null;
 function requestReview2(id){
   api('bookings.php','request_review',{booking_id:id}).then(function(res){
-    if(res.success)toast('⭐ Review request sent');else toast(res.error||'Failed');
+    if(res.success)toast('⭐ Review request sent to customer');
+    else if(res.error==='PAYMENT_PENDING')toast('Wait for the customer to pay before requesting a review');
+    else toast(res.error||'Failed');
   }).catch(function(){toast('Network error');});
 }
 
@@ -675,8 +677,7 @@ function showCompletedSheet(){
     +'<div style="text-align:center;font-size:42px">🎉</div>'
     +'<div style="text-align:center;font-size:18px;font-weight:900;margin:6px 0">Job Completed!</div>'
     +'<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px">The customer has been asked to pay. You will see payment status update on your dashboard.</div>'
-    +'<button class="btn" onclick="requestReview();this.textContent=\'⭐ Review Requested\';this.disabled=true">⭐ Ask Customer for Review</button>'
-    +'<div style="height:8px"></div>'
+    +'<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px">Once the customer pays, you can ask for a review from your dashboard.</div>'
     +'<button class="btn ghost" onclick="this.closest(\'div[style*=fixed]\').remove()">Done</button>'
     +'</div>';
   document.body.appendChild(ov);
@@ -739,7 +740,11 @@ function renderActiveJob(){
       +'<div style="font-size:32px">'+(paid?'💰':'⏳')+'</div>'
       +'<div style="font-weight:900;font-size:15px;margin:4px 0">'+(paid?'Payment Received':'Payment Pending')+'</div>'
       +'<div style="font-size:13px;color:var(--muted)">₹'+(b.confirmed_price||b.quoted_price||0)+(paid?' paid by customer':' — waiting for customer to pay')+'</div></div>';
-    if(paid){h+='<div style="height:10px"></div><button class="btn" onclick="requestReview2(\''+b.id+'\')">⭐ Ask for Review</button>';}
+    if(paid){
+      h+='<div style="height:10px"></div><button class="btn" onclick="requestReview2(\''+b.id+'\')">⭐ Ask Customer for Review</button>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px">You can request a review once the customer completes payment.</div>';
+    }
     h+='</div>';el.innerHTML=h;
     if(st==='active'&&!b.completion_otp)startJobTimer(b);
     return;
