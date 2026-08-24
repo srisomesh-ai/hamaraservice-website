@@ -126,6 +126,53 @@ switch ($action) {
       ':notes'    => $b['notes'] ?? '',
     ]);
 
+    // ── Notify nearby available providers (push so they see it even when app closed) ──
+    try {
+      $blat = (float)($b['lat'] ?? 0);
+      $blng = (float)($b['lng'] ?? 0);
+      $city = $b['city'] ?? '';
+      $svcId = $b['svc_id'] ?? '';
+      // approved + available providers, matched by radius (if GPS) or city/area
+      $pstmt = $db->prepare("
+        SELECT p.id, p.fcm_token, p.lat, p.lng, p.radius_km, p.city, p.areas, p.services,
+          CASE WHEN p.lat IS NOT NULL AND p.lat != 0 AND :blat != 0
+            THEN 6371 * ACOS(LEAST(1, COS(RADIANS(:blat2)) * COS(RADIANS(p.lat)) *
+                 COS(RADIANS(p.lng) - RADIANS(:blng)) +
+                 SIN(RADIANS(:blat3)) * SIN(RADIANS(p.lat))))
+            ELSE NULL END AS dist
+        FROM providers p
+        WHERE p.status = 'approved' AND p.available = 1 AND p.fcm_token IS NOT NULL AND p.fcm_token != ''
+      ");
+      $pstmt->execute([':blat'=>$blat, ':blat2'=>$blat, ':blat3'=>$blat, ':blng'=>$blng]);
+      $provs = $pstmt->fetchAll();
+      $svcName = $b['svc_name'] ?? 'a service';
+      foreach ($provs as $pr) {
+        // service filter: if provider has a services list, require this svc
+        if (!empty($pr['services'])) {
+          $svcList = json_decode($pr['services'], true);
+          if (is_array($svcList) && !empty($svcList)) {
+            $has = false;
+            foreach ($svcList as $s) {
+              $sid = is_array($s) ? ($s['svc_id'] ?? $s['id'] ?? '') : $s;
+              if ($sid === $svcId) { $has = true; break; }
+            }
+            if (!$has) continue;
+          }
+        }
+        // location filter: within radius OR city/area match OR no GPS on either side
+        $ok = false;
+        if ($pr['dist'] !== null) { $ok = ($pr['dist'] <= (float)($pr['radius_km'] ?: 10)); }
+        else {
+          $hay = strtolower(($pr['city'] ?? '') . ' ' . ($pr['areas'] ?? ''));
+          $ok = ($city === '' || strpos($hay, strtolower($city)) !== false);
+        }
+        if (!$ok) continue;
+        sendPush($pr['fcm_token'], "New Job Nearby 🔔",
+          "$svcName request near you. Open to quote your price.",
+          ['event'=>'new_job','bookingId'=>$id,'role'=>'provider']);
+      }
+    } catch (Exception $e) { /* never block booking on push failure */ }
+
     ok(['id' => $id, 'status' => 'searching']);
   }
 
