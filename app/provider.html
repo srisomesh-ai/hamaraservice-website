@@ -74,6 +74,8 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .qa small{font-weight:600;color:var(--muted)}
 .qa:active{transform:scale(.96)}
 .btn.red-ghost{background:#fff;color:var(--red);border:2px solid var(--red)}
+@keyframes notifSlide{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
 </style>
 <script>
 (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once"):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
@@ -498,7 +500,7 @@ function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(pollJobs,500
 function pollJobs(){
   // active job first
   api('bookings.php','active',null,'&id='+encodeURIComponent(ME.id)+'&role=provider').then(function(res){
-    if(res.success&&res.data&&res.data.id){activeJob=res.data;renderActiveJob();}
+    if(res.success&&res.data&&res.data.id){pDetect(res.data);activeJob=res.data;renderActiveJob();}
     else{activeJob=null;renderActiveJob();}
   }).catch(function(){});
   if(!available)return;
@@ -551,6 +553,92 @@ function acceptJob(bid){
   }).catch(function(){dismissJob();toast('Network error');});
 }
 
+
+var _jobTimerInt=null;
+function startJobTimer(b){
+  clearInterval(_jobTimerInt);
+  if(!b.started_at)return;
+  var mins=b.min_duration_min||5;
+  // parse server IST timestamp as ms
+  var startMs=Date.parse(b.started_at.replace(' ','T')+'+05:30');
+  if(isNaN(startMs))startMs=Date.now();
+  function tick(){
+    var el=document.getElementById('jobTimer');if(!el){clearInterval(_jobTimerInt);return;}
+    var s=Math.floor((Date.now()-startMs)/1000);if(s<0)s=0;
+    var m=Math.floor(s/60),ss=s%60;
+    el.textContent=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+    var btn=document.getElementById('reqCompleteBtn');
+    if(btn){
+      if(s>=mins*60){btn.disabled=false;btn.style.opacity='1';btn.textContent='✅ Complete Job';}
+      else{var rem=mins*60-s;var rm=Math.ceil(rem/60);btn.textContent='⏳ Wait '+rm+' min';}
+    }
+  }
+  tick();_jobTimerInt=setInterval(tick,1000);
+}
+function requestCompletion(){
+  api('bookings.php','request_completion_otp',{booking_id:activeJob.id}).then(function(res){
+    if(res.success){toast('🔑 Ask customer for the completion OTP now');pollJobs();}
+    else if((res.error||'').indexOf('TOO_EARLY')===0){toast('Please wait '+res.error.split(':')[1]+' more min');}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+function requestReview(){
+  api('bookings.php','request_review',{booking_id:_lastCompletedId}).then(function(res){
+    if(res.success)toast('⭐ Review request sent to customer');
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+var _lastCompletedId=null;
+function requestReview2(id){
+  api('bookings.php','request_review',{booking_id:id}).then(function(res){
+    if(res.success)toast('⭐ Review request sent');else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
+}
+
+function showCompletedSheet(){
+  var id=_lastCompletedId;
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.innerHTML='<div style="background:#fff;width:100%;border-radius:20px 20px 0 0;padding:24px 18px;animation:slideUp .3s">'
+    +'<div style="text-align:center;font-size:42px">🎉</div>'
+    +'<div style="text-align:center;font-size:18px;font-weight:900;margin:6px 0">Job Completed!</div>'
+    +'<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px">The customer has been asked to pay. You will see payment status update on your dashboard.</div>'
+    +'<button class="btn" onclick="requestReview();this.textContent=\'⭐ Review Requested\';this.disabled=true">⭐ Ask Customer for Review</button>'
+    +'<div style="height:8px"></div>'
+    +'<button class="btn ghost" onclick="this.closest(\'div[style*=fixed]\').remove()">Done</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+}
+
+
+
+// ── PROVIDER POPUP NOTIFICATIONS ──
+var _pLastStatus=null,_pLastPay=null;
+function popNotify(icon,title,msg,color){
+  var ov=document.getElementById('notifPop');
+  if(!ov){ov=document.createElement('div');ov.id='notifPop';ov.style.cssText='position:fixed;left:0;right:0;top:0;z-index:9999;display:flex;justify-content:center;pointer-events:none';document.body.appendChild(ov);}
+  var card=document.createElement('div');
+  card.style.cssText='pointer-events:auto;margin-top:14px;max-width:340px;width:90%;background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.22);display:flex;gap:12px;align-items:center;border-left:5px solid '+(color||'#0f4c5c')+';animation:notifSlide .4s';
+  card.innerHTML='<div style="font-size:28px">'+icon+'</div><div style="flex:1"><div style="font-weight:800;font-size:14px">'+title+'</div><div style="font-size:12.5px;color:#5a6b70;margin-top:2px">'+msg+'</div></div>';
+  ov.appendChild(card);
+  try{if(navigator.vibrate)navigator.vibrate(80);}catch(e){}
+  setTimeout(function(){card.style.transition='all .4s';card.style.opacity='0';card.style.transform='translateY(-20px)';setTimeout(function(){card.remove();},400);},4200);
+}
+function pDetect(b){
+  if(!b){return;}
+  var st=b.status;
+  if(_pLastStatus!==null&&st!==_pLastStatus){
+    if(st==='confirmed')popNotify('✅','Customer Confirmed!','₹'+(b.confirmed_price||b.quoted_price||0)+' — head to the location','#1a8a4a');
+    else if(st==='searching'&&_pLastStatus==='price_quoted')popNotify('❌','Customer Declined','They chose to search another provider','#c0392b');
+    else if(st==='cancelled')popNotify('❌','Booking Cancelled','This job was cancelled','#c0392b');
+  }
+  if(_pLastPay!==null&&b.payment_status!==_pLastPay&&b.payment_status==='paid'){
+    popNotify('💰','Payment Received!','Customer paid ₹'+(b.confirmed_price||0),'#1a8a4a');
+  }
+  _pLastStatus=st;_pLastPay=b.payment_status;
+}
+
 function navBtn(b){
   // Only show once the job is confirmed (provider is heading to customer)
   if(['price_quoted','negotiating','negotiation_final'].indexOf(b.status)>-1)return '';
@@ -574,24 +662,46 @@ function renderActiveJob(){
     +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+b.address+'</div>'
     +navBtn(b)
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.final_price||b.quoted_price||0)+'</div>';
+  if(st==='completed'){
+    var paid=(b.payment_status==='paid');
+    h+='<div style="background:'+(paid?'#e8f7ee':'#fff8e6')+';border-radius:10px;padding:12px;text-align:center">'
+      +'<div style="font-size:32px">'+(paid?'💰':'⏳')+'</div>'
+      +'<div style="font-weight:900;font-size:15px;margin:4px 0">'+(paid?'Payment Received':'Payment Pending')+'</div>'
+      +'<div style="font-size:13px;color:var(--muted)">₹'+(b.confirmed_price||b.quoted_price||0)+(paid?' paid by customer':' — waiting for customer to pay')+'</div></div>';
+    if(paid){h+='<div style="height:10px"></div><button class="btn" onclick="requestReview2(\''+b.id+'\')">⭐ Ask for Review</button>';}
+    h+='</div>';el.innerHTML=h;
+    if(st==='active'&&!b.completion_otp)startJobTimer(b);
+    return;
+  }
   if(st==='price_quoted'){
-    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:4px">⏳ Waiting for customer to accept your quote ₹'+(b.quoted_price||0)+'</div>';
-  } else if(st==='negotiating'){
-    h+='<div style="background:#fff8e6;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:10px">Customer counter: <b>₹'+(b.counter_price||0)+'</b></div>'
-      +'<button class="btn green" onclick="acceptCounter()">Accept ₹'+(b.counter_price||0)+'</button><div style="height:8px"></div>'
-      +'<button class="btn ghost" onclick="finalOffer()">Send Final Offer</button>';
-  } else if(st==='negotiation_final'){
-    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Final offer ₹'+(b.final_price||0)+' sent — waiting for customer</div>';
+    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Waiting for customer to confirm your price ₹'+(b.quoted_price||0)+'</div>';
   } else if(st==='confirmed'||st==='price_confirmed'){
-    h+='<label>Enter Customer OTP (ask on arrival)</label><input class="inp" id="jobOtp" type="number" maxlength="4" placeholder="4-digit OTP">'
-      +'<button class="btn teal" onclick="verifyOtp()">Verify & Start Job</button>';
+    if(b.start_otp||b.otp){
+      h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">✅ Customer confirmed. Ask them for the <b>Start OTP</b> to begin.</div>'
+        +'<label>Start OTP (from customer)</label><input class="inp" id="jobOtp" type="number" placeholder="4-digit OTP">'
+        +'<button class="btn teal" onclick="verifyOtp()">🔑 Verify & Start Job</button>';
+    } else {
+      h+='<div style="background:#fff8e6;border-radius:10px;padding:10px;font-size:13px">✅ Job confirmed! Head to the customer. When you arrive, ask them to <b>generate the Start OTP</b> in their app.</div>';
+    }
   } else if(st==='active'){
-    h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">🧰 Job in progress. When finished, ask the customer for the <b>completion OTP</b>.</div>'
-      +'<label>Completion OTP (from customer)</label><input class="inp" id="doneOtp" type="number" maxlength="4" placeholder="4-digit OTP">'
-      +'<button class="btn green" onclick="completeJob()">✅ Verify & Complete Job</button>';
+    var mins=b.min_duration_min||5;
+    var elapsed=b.started_at?Math.floor((Date.now()-new Date(b.started_at.replace(' ','T')+'Z').getTime()+ (new Date().getTimezoneOffset()*60000))/60000):0;
+    // simpler: compute from started_at as server IST; fall back to a client timer
+    if(b.completion_otp){
+      h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">Ask the customer for the <b>Completion OTP</b> and enter it.</div>'
+        +'<label>Completion OTP (from customer)</label><input class="inp" id="doneOtp" type="number" placeholder="4-digit OTP">'
+        +'<button class="btn green" onclick="completeJob()">✅ Verify & Complete Job</button>';
+    } else {
+      h+='<div id="jobTimerBox" style="background:#eef7fa;border-radius:10px;padding:12px;font-size:13.5px;text-align:center;margin-bottom:10px">'
+        +'<div style="font-size:12px;color:var(--muted)">Job in progress</div>'
+        +'<div id="jobTimer" style="font-size:22px;font-weight:900;color:var(--teal);margin:4px 0">--:--</div>'
+        +'<div style="font-size:11.5px;color:var(--muted)">Complete becomes available after '+mins+' min</div></div>'
+        +'<button class="btn green" id="reqCompleteBtn" onclick="requestCompletion()" disabled style="opacity:.5">⏳ Complete Job</button>';
+    }
   }
   h+='</div>';
   el.innerHTML=h;
+  if(st==='active'&&!b.completion_otp)startJobTimer(b);
 }
 function acceptCounter(){api('bookings.php','accept_counter',{booking_id:activeJob.id}).then(function(res){if(res.success)toast('Accepted ✓');pollJobs();});}
 function finalOffer(){var v=prompt('Your final price (₹):');if(!v)return;
@@ -609,7 +719,7 @@ function completeJob(){
   var o=($('doneOtp')&&$('doneOtp').value.trim())||'';
   if(o.length<4){toast('Ask customer for the 4-digit completion OTP');return;}
   api('bookings.php','complete',{booking_id:activeJob.id,completion_otp:o}).then(function(res){
-    if(res.success){toast('🎉 Job completed! Payment: ask customer to pay via UPI');activeJob=null;refreshProfile();}
+    if(res.success){_lastCompletedId=activeJob.id;toast('🎉 Job completed!');showCompletedSheet();activeJob=null;refreshProfile();}
     else if(res.error==='COMPLETION_OTP_REQUIRED')toast('Completion OTP required');
     else toast(res.error||'Wrong OTP');
     pollJobs();
