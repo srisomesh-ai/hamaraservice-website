@@ -439,7 +439,18 @@ switch ($action) {
     if (empty($id)) err('id required');
 
     $stmt = $db->prepare("
-      SELECT b.*, p.upi_id AS provider_upi, p.rating AS provider_rating, p.photo AS provider_photo
+      SELECT b.*,
+             p.upi_id AS provider_upi, p.rating AS provider_rating,
+             p.photo AS provider_photo, p.review_count AS provider_reviews,
+             p.lat AS provider_lat, p.lng AS provider_lng,
+             CASE
+               WHEN p.lat IS NOT NULL AND p.lat != 0 AND b.lat IS NOT NULL AND b.lat != 0
+               THEN ROUND(6371 * ACOS(
+                    LEAST(1, COS(RADIANS(b.lat)) * COS(RADIANS(p.lat)) *
+                    COS(RADIANS(p.lng) - RADIANS(b.lng)) +
+                    SIN(RADIANS(b.lat)) * SIN(RADIANS(p.lat)))), 1)
+               ELSE NULL
+             END AS distance_km
       FROM bookings b
       LEFT JOIN providers p ON p.id = b.provider_id
       WHERE b.id = ?
