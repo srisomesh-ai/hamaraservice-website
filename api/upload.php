@@ -6,12 +6,30 @@
 //   Auth: Bearer JWT (provider). Saves to /uploads/providers/{id}.jpg
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
+setCorsHeaders();
+
+define('UPLOAD_MAX_BYTES', 5 * 1024 * 1024);
 
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
-// auto-migrate photo column
-try { $db->exec("ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL"); } catch (Exception $e) {}
+// auto-migrate photo column (once)
+runMigrationsOnce($db, 'upload_v1', ["ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL"]);
+
+// Validate that $binary really is a JPEG/PNG/WebP image; returns the extension.
+function detectImageExt($binary) {
+  $info = @getimagesizefromstring($binary);
+  if (!$info || empty($info[0]) || empty($info[1])) return null;
+  if ($info[0] > 6000 || $info[1] > 6000) return null;
+  $map = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png'];
+  if (defined('IMAGETYPE_WEBP')) $map[IMAGETYPE_WEBP] = 'webp';
+  $ext = $map[$info[2]] ?? null;
+  if ($ext && class_exists('finfo')) {
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->buffer($binary);
+    if (!in_array($mime, ['image/jpeg','image/png','image/webp'], true)) return null;
+  }
+  return $ext;
+}
 
 switch ($action) {
 
@@ -23,29 +41,36 @@ switch ($action) {
     if (!is_dir($dir)) @mkdir($dir, 0755, true);
 
     $binary = null;
-    $ext = 'jpg';
 
     // Option A: multipart file
     if (!empty($_FILES['photo']['tmp_name'])) {
+      if (($_FILES['photo']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) err('Upload failed');
+      if (!is_uploaded_file($_FILES['photo']['tmp_name'])) err('Upload failed');
+      if (filesize($_FILES['photo']['tmp_name']) > UPLOAD_MAX_BYTES) err('Image too large (max 5MB)');
       $binary = file_get_contents($_FILES['photo']['tmp_name']);
-      $type = mime_content_type($_FILES['photo']['tmp_name']);
-      if (strpos($type, 'png') !== false) $ext = 'png';
-      elseif (strpos($type, 'webp') !== false) $ext = 'webp';
     } else {
       // Option B: base64 data URL in JSON
       $b = getBody();
-      $img = $b['image'] ?? '';
+      $img = (string)($b['image'] ?? '');
+      if (strlen($img) > UPLOAD_MAX_BYTES * 1.4 + 100) err('Image too large (max 5MB)');
       if (preg_match('/^data:image\/(\w+);base64,(.+)$/s', $img, $m)) {
-        $ext = ($m[1] === 'png') ? 'png' : (($m[1] === 'webp') ? 'webp' : 'jpg');
-        $binary = base64_decode($m[2]);
+        $binary = base64_decode($m[2], true);
       }
     }
 
     if (!$binary) err('No image provided');
-    if (strlen($binary) > 5 * 1024 * 1024) err('Image too large (max 5MB)');
+    if (strlen($binary) > UPLOAD_MAX_BYTES) err('Image too large (max 5MB)');
+
+    // Extension from the actual content, never from the client
+    $ext = detectImageExt($binary);
+    if (!$ext) err('Only JPEG, PNG or WebP images are allowed');
 
     // sanitize id for filename
     $safe = preg_replace('/[^A-Za-z0-9\-]/', '_', $pid);
+    // remove an older photo with a different extension
+    foreach (['jpg','png','webp'] as $e) {
+      if ($e !== $ext && is_file("$dir/$safe.$e")) @unlink("$dir/$safe.$e");
+    }
     $file = $safe . '.' . $ext;
     $path = $dir . '/' . $file;
 

@@ -490,7 +490,8 @@ if(typeof firebase!=='undefined') firebase.auth().onAuthStateChanged(function(u)
     if(!prices || prices.error) return;
 
     // Visit price
-    if(prices.visit && prices.visit.price !== undefined) visitPrice = parseInt(prices.visit.price);
+    if(prices.visit && prices.visit.visit !== undefined) visitPrice = parseInt(prices.visit.visit);
+    else if(prices.visit && prices.visit.price !== undefined) visitPrice = parseInt(prices.visit.price);
     else if(prices.visit !== undefined && typeof prices.visit === 'number') visitPrice = parseInt(prices.visit);
     else if(prices.base !== undefined) visitPrice = parseInt(prices.base);
 
@@ -502,6 +503,7 @@ if(typeof firebase!=='undefined') firebase.auth().onAuthStateChanged(function(u)
       });
     }
 
+    if(visitPrice > 0 && typeof VISIT_PRICE !== 'undefined') VISIT_PRICE = visitPrice;
     if(typeof updatePrice === 'function') updatePrice();
   }
 
@@ -539,47 +541,6 @@ if(typeof firebase!=='undefined') firebase.auth().onAuthStateChanged(function(u)
   });
 })();
 
-(function(){
-  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-  var _API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
-  var _PATH='hs_service_prices/SVC021';
-  var _tok='';
-  function getToken(cb){
-    if(_tok){cb(_tok);return;}
-    var x=new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');};};
-    x.onerror=function(){cb('');};
-    x.send('{}');
-  }
-  function applyPrices(d){
-    if(!d||d.error) return;
-    var p=0;
-    if(d.visit&&d.visit.visit!==undefined) p=parseInt(d.visit.visit);
-    else if(d.base!==undefined) p=parseInt(d.base);
-    if(p>0){
-      if(typeof VISIT_PRICE!=='undefined') VISIT_PRICE=p;
-      if(typeof visitPrice!=='undefined') visitPrice=p;
-      var vd=document.getElementById('visitPriceDisplay');
-      if(vd) vd.textContent='₹'+p.toLocaleString('en-IN');
-    }
-    if(d.base!==undefined) document.querySelectorAll('.pill').forEach(function(pl){
-      if(pl.textContent.indexOf('from')>=0&&pl.textContent.indexOf('₹')>=0)
-        pl.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
-    });
-    if(typeof updatePrice==='function') updatePrice();
-  }  function load(){
-    getToken(function(tok){
-      var url=_DB+'/'+_PATH+'.json'+(tok?'?auth='+tok:'');
-      var x=new XMLHttpRequest();x.open('GET',url,true);x.timeout=6000;
-      x.onload=function(){try{var d=JSON.parse(x.responseText);if(d&&!d.error)applyPrices(d);}catch(e){};};
-      x.onerror=function(){};x.send();
-    });
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}else{load();}
-  setInterval(load,30000);
-})();
 </script>
 
 <script>
@@ -592,7 +553,7 @@ if(typeof firebase!=='undefined') firebase.auth().onAuthStateChanged(function(u)
   // simple in-app back bar instead
   var bar=document.createElement('div');
   bar.style.cssText='position:sticky;top:0;z-index:950;background:#0f4c5c;color:#fff;padding:12px 16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px';
-  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split('—')[0]||'Service')+'</span>';
+  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split(/\s*[—–]\s*/)[0]||'Service')+'</span>';
   document.body.insertBefore(bar, document.body.firstChild);
 })();
 </script>

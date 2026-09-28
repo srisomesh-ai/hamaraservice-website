@@ -4,68 +4,123 @@
 //  HamaraService Email System
 //  Handles all transactional emails via Hostinger SMTP
 //
-//  SETUP: Fill in your email password below (line ~20)
-//  Then upload to /public_html/api/email.php
+//  SMTP credentials come from config (SMTP_HOST/PORT/USER/PASS) —
+//  see api/config.example.php. Nothing secret lives in this file.
+//
+//  Access rules (this endpoint must not be an open mail relay):
+//   - provider_approved (and any type) : admin key (X-Admin-Key header)
+//   - customer_welcome / provider_welcome / admin_provider_pending :
+//       allowed without admin key ONLY for an account that exists in the
+//       DB and was created within the last 10 minutes; names/ids are taken
+//       from the DB, not from the request. One mail per type+address per 10 min.
 // ============================================================
+require_once __DIR__ . '/db.php';
 
-// ── CONFIG ────────────────────────────────────────────────────
-define('SMTP_HOST',   'smtp.hostinger.com');
-define('SMTP_PORT',   587);
-define('SMTP_USER',   'support@hamaraservice.in');
-define('SMTP_PASS',   'Simhadriappanna@143');  // ← fill this
+// ── CONFIG (non-secret) ───────────────────────────────────────
 define('FROM_NAME',   'HamaraService');
 define('FROM_EMAIL',  'support@hamaraservice.in');
 define('ADMIN_EMAIL', 'support@hamaraservice.in');   // admin gets notified here
 define('SITE_URL',    'https://hamaraservice.in');
 
 // ── CORS ──────────────────────────────────────────────────────
-$allowed = ['https://hamaraservice.in','https://www.hamaraservice.in','http://hamaraservice.in','http://www.hamaraservice.in'];
+$allowed = ['https://hamaraservice.in','https://www.hamaraservice.in','http://hamaraservice.in','http://www.hamaraservice.in',
+            'https://hamaraservice.com','https://www.hamaraservice.com'];
 $origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
 header('Access-Control-Allow-Origin: ' . (in_array($origin, $allowed) ? $origin : $allowed[0]));
+header('Vary: Origin');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, X-Admin-Key, Authorization');
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')    { http_response_code(405); echo json_encode(['error'=>'Method not allowed']); exit; }
 
+function mailDeny($msg, $code = 403) {
+  http_response_code($code);
+  echo json_encode(['error' => $msg]);
+  exit;
+}
+
+// Recently-created account lookups (10 minute window)
+function recentCustomer($email) {
+  $st = getDB()->prepare("SELECT id, name, email FROM customers
+                          WHERE email = ? AND created_at >= (NOW() - INTERVAL 10 MINUTE) LIMIT 1");
+  $st->execute([$email]);
+  return $st->fetch() ?: null;
+}
+function recentProvider($id, $email) {
+  $db = getDB();
+  if ($id !== '') {
+    $st = $db->prepare("SELECT id, name, email, phone, city FROM providers
+                        WHERE id = ? AND registered_at >= (NOW() - INTERVAL 10 MINUTE) LIMIT 1");
+    $st->execute([$id]);
+  } else {
+    $st = $db->prepare("SELECT id, name, email, phone, city FROM providers
+                        WHERE email = ? AND registered_at >= (NOW() - INTERVAL 10 MINUTE) LIMIT 1");
+    $st->execute([strtolower($email)]);
+  }
+  $p = $st->fetch();
+  if (!$p) return null;
+  $sv = $db->prepare("SELECT svc_name FROM provider_services WHERE provider_id = ? AND enabled = 1");
+  $sv->execute([$p['id']]);
+  $p['service'] = implode(', ', array_filter($sv->fetchAll(PDO::FETCH_COLUMN)));
+  return $p;
+}
+// One mail per type+recipient per 10 minutes (unauthenticated sends only)
+function mailRecentlySent($type, $key) {
+  $f = rtrim(sys_get_temp_dir(), '/\\') . '/hs_mail_' . md5($type . '|' . strtolower($key));
+  if (is_file($f) && filemtime($f) > time() - 600) return true;
+  @touch($f);
+  return false;
+}
+
 // ── INPUT ─────────────────────────────────────────────────────
-$body = json_decode(file_get_contents('php://input'), true);
-$type = $body['type'] ?? '';
+$body    = getBody();
+$type    = (string)($body['type'] ?? '');
+$isAdmin = isAdminRequest();
 
 switch ($type) {
 
   // 1. Customer welcome email after registration
   case 'customer_welcome':
-    $result = sendCustomerWelcome(
-      $body['name']  ?? 'Customer',
-      $body['email'] ?? ''
-    );
+    if ($isAdmin) {
+      $result = sendCustomerWelcome($body['name'] ?? 'Customer', $body['email'] ?? '');
+      break;
+    }
+    $email = cleanEmail($body['email'] ?? '');
+    $c = $email ? recentCustomer($email) : null;
+    if (!$c) mailDeny('Not allowed');
+    if (mailRecentlySent($type, $c['email'])) { $result = ['success' => true, 'deduped' => true]; break; }
+    $result = sendCustomerWelcome($c['name'] ?: 'Customer', $c['email']);
     break;
 
   // 2. Service provider welcome email after registration (pending)
   case 'provider_welcome':
-    $result = sendProviderWelcome(
-      $body['name']  ?? 'Provider',
-      $body['email'] ?? '',
-      $body['id']    ?? '',
-      $body['service'] ?? ''
-    );
+    if ($isAdmin) {
+      $result = sendProviderWelcome($body['name'] ?? 'Provider', $body['email'] ?? '', $body['id'] ?? '', $body['service'] ?? '');
+      break;
+    }
+    $p = recentProvider((string)($body['id'] ?? ''), cleanEmail($body['email'] ?? ''));
+    if (!$p) mailDeny('Not allowed');
+    if (mailRecentlySent($type, $p['email'])) { $result = ['success' => true, 'deduped' => true]; break; }
+    $result = sendProviderWelcome($p['name'] ?: 'Provider', $p['email'], $p['id'], $p['service']);
     break;
 
-  // 3. Admin notification — new provider needs approval
+  // 3. Admin notification — new provider needs approval (always goes to ADMIN_EMAIL)
   case 'admin_provider_pending':
-    $result = sendAdminProviderPending(
-      $body['name']    ?? '',
-      $body['email']   ?? '',
-      $body['id']      ?? '',
-      $body['phone']   ?? '',
-      $body['service'] ?? '',
-      $body['city']    ?? ''
-    );
+    if ($isAdmin) {
+      $result = sendAdminProviderPending($body['name'] ?? '', $body['email'] ?? '', $body['id'] ?? '',
+                                         $body['phone'] ?? '', $body['service'] ?? '', $body['city'] ?? '');
+      break;
+    }
+    $p = recentProvider((string)($body['id'] ?? ''), cleanEmail($body['email'] ?? ''));
+    if (!$p) mailDeny('Not allowed');
+    if (mailRecentlySent($type, $p['id'])) { $result = ['success' => true, 'deduped' => true]; break; }
+    $result = sendAdminProviderPending($p['name'], $p['email'], $p['id'], $p['phone'], $p['service'], $p['city']);
     break;
 
-  // 4. Provider approved — send access email
+  // 4. Provider approved — send access email (admin only)
   case 'provider_approved':
+    if (!$isAdmin) mailDeny('Unauthorized', 401);
     $result = sendProviderApproved(
       $body['name']  ?? 'Provider',
       $body['email'] ?? '',
@@ -75,7 +130,7 @@ switch ($type) {
 
   default:
     http_response_code(400);
-    echo json_encode(['error' => 'Unknown email type: '.$type]);
+    echo json_encode(['error' => 'Unknown email type']);
     exit;
 }
 
@@ -298,8 +353,13 @@ function esc($str) { return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
 // ════════════════════════════════════════════════════════════════
 
 function sendSMTP($toEmail, $toName, $subject, $htmlBody) {
-  if (!$toEmail || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
-    return ['error' => 'Invalid email: ' . $toEmail];
+  $toEmail = cleanEmail($toEmail);
+  if (!$toEmail) {
+    return ['error' => 'Invalid email address'];
+  }
+  if (SMTP_USER === '' || SMTP_PASS === '') {
+    error_log('HamaraService: SMTP credentials not configured');
+    return ['error' => 'Email is not configured'];
   }
 
   $host   = SMTP_HOST;
@@ -344,6 +404,7 @@ function sendSMTP($toEmail, $toName, $subject, $htmlBody) {
 
   stream_set_timeout($sock, 15);
 
+  if (!function_exists('smtp_read')) {
   function smtp_read($sock) {
     $buf = '';
     while (!feof($sock)) {
@@ -358,6 +419,7 @@ function sendSMTP($toEmail, $toName, $subject, $htmlBody) {
     fwrite($sock, $cmd . "\r\n");
     return smtp_read($sock);
   }
+  }
 
   smtp_read($sock);                                                      // 220 greeting
   smtp_send($sock, "EHLO hamaraservice.in");                            // EHLO
@@ -370,7 +432,7 @@ function sendSMTP($toEmail, $toName, $subject, $htmlBody) {
 
   if (strpos($authResp, '235') === false) {
     fclose($sock);
-    return ['error' => 'SMTP auth failed. Check email password in api/email.php'];
+    return ['error' => 'SMTP auth failed. Check SMTP_USER/SMTP_PASS in the server config'];
   }
 
   smtp_send($sock, "MAIL FROM:<$from>");

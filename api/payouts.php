@@ -15,6 +15,18 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
+// balance/history: the provider themself (id defaults to theirs) or admin (?id= required)
+function payoutSubject() {
+  $id = $_GET['id'] ?? '';
+  if (isAdminRequest()) {
+    if (empty($id)) err('id required');
+    return $id;
+  }
+  $prov = requireProvider();
+  if (!empty($id) && (string)$id !== (string)$prov['id']) err('Forbidden', 403);
+  return $prov['id'];
+}
+
 switch ($action) {
 
   // ── REQUEST WITHDRAWAL ────────────────────────────────
@@ -25,12 +37,19 @@ switch ($action) {
     $amount = (int)($b['amount'] ?? 0);
     if ($amount < 100) err('Minimum withdrawal is ₹100');
 
-    // Check balance
-    $stmt = $db->prepare("SELECT pending_earned FROM providers WHERE id = ?");
+    // Atomic: lock the provider row, check and deduct in one transaction so
+    // concurrent requests can never withdraw more than the balance.
+    $db->beginTransaction();
+    $stmt = $db->prepare("SELECT pending_earned FROM providers WHERE id = ? FOR UPDATE");
     $stmt->execute([$prov['id']]);
     $balance = (int)$stmt->fetchColumn();
 
-    if ($amount > $balance) err("Insufficient balance. Available: ₹$balance");
+    if ($amount > $balance) { $db->rollBack(); err("Insufficient balance. Available: ₹$balance"); }
+
+    // Hold amount — deduct from pending (guarded)
+    $hold = $db->prepare("UPDATE providers SET pending_earned = pending_earned - ? WHERE id = ? AND pending_earned >= ?");
+    $hold->execute([$amount, $prov['id'], $amount]);
+    if ($hold->rowCount() === 0) { $db->rollBack(); err('Insufficient balance'); }
 
     // Create payout request
     $stmt = $db->prepare("
@@ -50,18 +69,14 @@ switch ($action) {
     ]);
 
     $payoutId = $db->lastInsertId();
-
-    // Hold amount — deduct from pending
-    $db->prepare("UPDATE providers SET pending_earned = pending_earned - ? WHERE id = ?")
-       ->execute([$amount, $prov['id']]);
+    $db->commit();
 
     ok(['id' => $payoutId, 'status' => 'pending', 'amount' => $amount]);
   }
 
   // ── PROVIDER BALANCE ──────────────────────────────────
   case 'balance': {
-    $id = $_GET['id'] ?? '';
-    if (empty($id)) err('id required');
+    $id = payoutSubject();
 
     $stmt = $db->prepare("
       SELECT total_earned, pending_earned, completed_bookings
@@ -89,8 +104,7 @@ switch ($action) {
 
   // ── PAYOUT HISTORY ────────────────────────────────────
   case 'history': {
-    $id = $_GET['id'] ?? '';
-    if (empty($id)) err('id required');
+    $id = payoutSubject();
 
     $stmt = $db->prepare("
       SELECT id, amount, account_type, upi_id, status,
@@ -117,10 +131,12 @@ switch ($action) {
     if (!$payout) err('Payout not found');
     if ($payout['status'] !== 'pending') err('Already processed');
 
-    $db->prepare("
+    $u = $db->prepare("
       UPDATE payouts SET status = 'approved', processed_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    ")->execute([$id]);
+      WHERE id = ? AND status = 'pending'
+    ");
+    $u->execute([$id]);
+    if ($u->rowCount() === 0) err('Already processed');
 
     // Notify provider
     $fcm = '';
@@ -166,15 +182,21 @@ switch ($action) {
     if (!$payout) err('Payout not found');
     if ($payout['status'] !== 'pending') err('Already processed');
 
-    $db->prepare("
+    // Status flip + refund in one transaction; the status guard makes a
+    // double-reject unable to refund twice.
+    $db->beginTransaction();
+    $u = $db->prepare("
       UPDATE payouts SET status = 'rejected', note = ?, processed_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    ")->execute([$note, $id]);
+      WHERE id = ? AND status = 'pending'
+    ");
+    $u->execute([$note, $id]);
+    if ($u->rowCount() === 0) { $db->rollBack(); err('Already processed'); }
 
     // Refund balance
     $db->prepare("
       UPDATE providers SET pending_earned = pending_earned + ? WHERE id = ?
     ")->execute([$payout['amount'], $payout['provider_id']]);
+    $db->commit();
 
     ok(['rejected' => true]);
   }

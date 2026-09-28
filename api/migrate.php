@@ -1,15 +1,17 @@
 <?php
 // ═══════════════════════════════════════════════════════
 // HamaraService — Firebase → MySQL Migration Tool
-// Run once: hamaraservice.com/api/migrate.php?key=hamaraAdmin2024
+// Run once (admin key in X-Admin-Key header — see below)
 // Reads providers and customers from Firebase REST API
 // and inserts them into MySQL
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
 
-$key = $_GET['key'] ?? '';
-if ($key !== 'hamaraAdmin2024') err('Unauthorized', 401);
+// Admin only. Key via X-Admin-Key header or POST field "key" — NOT the
+// query string (URLs end up in access logs and browser history), e.g.:
+//   curl -X POST -H "X-Admin-Key: <ADMIN_KEY>" https://hamaraservice.com/api/migrate.php
+requireAdmin(false);
 
 $db = getDB();
 
@@ -81,7 +83,9 @@ if ($provData && is_array($provData)) {
                 ':phone'     => $p['phone']      ?? '',
                 ':email'     => strtolower($p['email'] ?? ''),
                 ':whatsapp'  => $p['whatsapp']   ?? $p['phone'] ?? '',
-                ':pwd'       => $p['password']   ?? password_hash('changeme123', PASSWORD_BCRYPT),
+                // No known password → random unusable hash (provider must reset);
+                // a legacy plain-text password is re-hashed on first login.
+                ':pwd'       => $p['password']   ?? password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT),
                 ':gender'    => $p['gender']     ?? '',
                 ':exp'       => $p['experience'] ?? '',
                 ':bio'       => $p['bio']        ?? '',

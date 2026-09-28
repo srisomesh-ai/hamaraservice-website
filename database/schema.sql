@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS providers (
   lat           DECIMAL(10,7),
   lng           DECIMAL(10,7),
   radius_km     INT          DEFAULT 5,
-  status        ENUM('pending','approved','suspended','rejected') DEFAULT 'pending',
+  status        ENUM('pending','approved','suspended','rejected','deleted') DEFAULT 'pending',
   available     TINYINT(1)   DEFAULT 0,
   rating        DECIMAL(3,1) DEFAULT 0,
   review_count  INT          DEFAULT 0,

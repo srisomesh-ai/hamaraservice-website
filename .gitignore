@@ -1,0 +1,20 @@
+# ── Secrets: never commit ──────────────────────────────
+api/config.php
+hs-config.php
+private/*
+!private/.htaccess
+*.env
+.env*
+
+# Firebase / Google service-account keys and other credential JSON
+*service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+*credentials*.json
+# (catalog.json, app/manifest.json and package-lock.json stay tracked —
+#  JSON is only ignored under private/ or when named like a credential)
+
+# ── Runtime data ──────────────────────────────────────
+uploads/*
+!uploads/.htaccess
+*.log

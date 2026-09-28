@@ -240,7 +240,9 @@ document.title = C.name + ' – Hamara Service';
 
   function applyPrice(data) {
     if (!data || data === 'null') return false;
-    var newPrice = data.base != null ? parseInt(data.base) : null;
+    // Prefer the admin visit fee (visit.visit), fall back to base
+    var newPrice = (data.visit && data.visit.visit != null) ? parseInt(data.visit.visit)
+                 : (data.base != null ? parseInt(data.base) : null);
     if (newPrice && newPrice > 0) { C.price = newPrice; updatePriceDisplays(); return true; }
     return false;
   }
@@ -333,15 +335,16 @@ function updatePriceDisplays() {
   var mp = document.querySelector('.mob-book-price');
   if (bp) bp.innerHTML = '₹' + C.price + ' <sub>' + C.unit + '</sub>';
   if (mp) mp.innerHTML = '₹' + C.price + ' <sub>' + C.unit + '</sub>';
-  // Also update the price calculator base price
-  var calcNote = document.querySelector('.calc-sum-label');
-  if (calcNote) {
+  // Recompute the inline calculator total from state (base price may have changed)
+  if (document.getElementById('calcTotalPrice') && calcSel && Object.keys(calcSel).length) {
+    calcUpdateTotal();
+  } else {
     var priceEl = document.getElementById('calcTotalPrice');
-    if (priceEl && priceEl.textContent.includes('499')) {
-      priceEl.textContent = '₹' + C.price;
-    }
+    if (priceEl) priceEl.textContent = '₹' + Number(C.price).toLocaleString('en-IN');
   }
 }
+// Called from inline scripts on the service page (e.g. live price sync)
+window.updatePriceDisplays = updatePriceDisplays;
 
 
 // Header
@@ -362,7 +365,7 @@ document.body.innerHTML = `
       <div class="svc-hero-name">${C.name}</div>
       <div class="svc-hero-tagline">${C.tagline}</div>
       <div class="svc-hero-pills">
-        <div class="svc-pill">⏱ Min ${C.minHours} ${C.minHours===0.5?'hour':'hours'}</div>
+        <div class="svc-pill">⏱ Min ${C.minHours} ${C.minHours<=1?'hour':'hours'}</div>
         <div class="svc-pill">⏳ ${C.duration}</div>
         <div class="svc-pill green">✅ Verified Pro</div>
         <div class="svc-pill">🛡 30-day guarantee</div>
@@ -567,7 +570,8 @@ function calcChipClick(el) {
   calcUpdateTotal();
 }
 
-function calcUpdateTotal() {
+// Compute the calculator total + notes from the current selection state
+function calcComputeTotal() {
   var total = 0;
   var notes = [];
   var baseSet = false;
@@ -608,6 +612,12 @@ function calcUpdateTotal() {
     });
   });
 
+  return { total: total, notes: notes };
+}
+
+function calcUpdateTotal() {
+  var r = calcComputeTotal();
+  var total = r.total, notes = r.notes;
   // Update display
   var priceEl = document.getElementById('calcTotalPrice');
   var noteEl  = document.getElementById('calcPriceNote');
@@ -646,9 +656,8 @@ function calcBookNow() {
     }
   });
 
-  // Calculate current price from price bar
-  var priceEl = document.getElementById('totalPrice') || document.querySelector('.pb-price');
-  var totalPrice = priceEl ? priceEl.textContent.replace(/[^0-9]/g,'') : '';
+  // Calculate current price from selection state
+  var totalPrice = String(calcComputeTotal().total || '');
 
   sessionStorage.setItem('hs_service_options', JSON.stringify({
     service:  C.name,
@@ -688,10 +697,9 @@ window.mainBookNow = function() {
       else if(typeof val==='object'&&val!==null){summary2.push(label+': '+(val.label||val.val||JSON.stringify(val)));}
       else{summary2.push(label+': '+val);}
     });
-    var pEl=document.getElementById('totalPrice')||document.querySelector('.pb-price');
     sessionStorage.setItem('hs_service_options', JSON.stringify({
       service: C.name, icon: C.icon||'🔧', svcId: C.id||'',
-      price: pEl?pEl.textContent.replace(/[^0-9]/g,''):'',
+      price: String(calcComputeTotal().total || ''),
       summary: summary2, selections: calcSel, notes: ''
     }));
     doBook();
@@ -855,8 +863,7 @@ window.confirmBook = function(){
     var vStr = Array.isArray(v) ? v.join(', ') : String(v);
     if (vStr.trim()) subSummary.push(vStr);
   });
-  var subPriceEl = document.getElementById('totalPrice') || document.querySelector('.pb-price');
-  var subPrice = subPriceEl ? subPriceEl.textContent.replace(/[^0-9]/g,'') : '';
+  var subPrice = String(C.price || '');
   sessionStorage.setItem('hs_service_options',JSON.stringify({
     service: C.name,
     icon: C.icon || '🔧',
@@ -884,6 +891,10 @@ window.showToast = function(msg){
   t.textContent=msg; t.style.display='block';
   clearTimeout(t._t); t._t=setTimeout(function(){t.style.display='none';},3000);
 };
+
+// Inline onclick handlers need these on window (this file runs inside an IIFE)
+window.calcChipClick = calcChipClick;
+window.calcBookNow   = calcBookNow;
 
 // Render inline price calculator
 renderPriceCalculator();

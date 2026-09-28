@@ -2,12 +2,16 @@
 // HamaraService — Booking Event Notifier
 // Called by Firebase Realtime Database via cron or triggered from app
 // Place at: hamaraservice.com/api/notify_booking.php
+// Requires the admin key (X-Admin-Key) or a valid provider/customer token
+// (Authorization: Bearer ...).
 
-header('Content-Type: application/json');
-require_once __DIR__ . '/send_notification.php';
+require_once __DIR__ . '/send_notification.php';   // functions only
+setCorsHeaders();
+if (!resolveAuth()) err('Unauthorized', 401);
 
 // ── Notification templates ────────────────────────────────────
 function getNotification($event, $data) {
+    $data = array_merge(['providerName'=>'','service'=>'','otp'=>'','price'=>'','amount'=>'','rating'=>'','message'=>''], $data);
     switch ($event) {
         // Customer notifications
         case 'booking_accepted':
@@ -63,20 +67,21 @@ function getNotification($event, $data) {
 }
 
 // ── Process request ───────────────────────────────────────────
-$input = json_decode(file_get_contents('php://input'), true);
+$input = getBody();
 if (!$input) $input = $_POST;
 
-$event    = $input['event']    ?? '';
-$fcmToken = $input['fcmToken'] ?? '';
-$data     = $input['data']     ?? [];
+$event    = (string)($input['event']    ?? '');
+$fcmToken = (string)($input['fcmToken'] ?? '');
+$data     = is_array($input['data'] ?? null) ? array_filter($input['data'], 'is_scalar') : [];
 
-if (empty($event) || empty($fcmToken)) {
+if ($event === '' || $fcmToken === '') {
     echo json_encode(['error' => 'event and fcmToken required']);
     exit;
 }
 
 $notification = getNotification($event, $data);
-$serviceAccount = json_decode(file_get_contents(__DIR__ . '/service-account.json'), true);
+$serviceAccount = loadServiceAccount();
+if (!$serviceAccount) err('Push service not configured', 500);
 
 $result = sendFCM(
     $fcmToken,

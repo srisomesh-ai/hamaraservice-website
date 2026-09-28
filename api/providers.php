@@ -20,10 +20,29 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
-// ── auto-migrate: upi_id + areas ──
-try { $db->exec("ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL"); } catch (Exception $e) {}
-try { $db->exec("ALTER TABLE providers ADD COLUMN areas TEXT NULL"); } catch (Exception $e) {}
-try { $db->exec("ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL"); } catch (Exception $e) {}
+// ── auto-migrate (runs once per server, not per request) ──
+runMigrationsOnce($db, 'providers_v1', [
+  "ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL",
+  "ALTER TABLE providers ADD COLUMN areas TEXT NULL",
+  "ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL",
+  "ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL",
+  // 'deleted' status (admin delete) — only widen the column if it is an ENUM
+  // lacking it; a VARCHAR column (setup.php) already accepts it.
+  function ($db) {
+    $t = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'providers' AND COLUMN_NAME = 'status'")->fetchColumn();
+    if ($t && stripos($t, 'enum(') === 0 && stripos($t, "'deleted'") === false) {
+      $db->exec("ALTER TABLE providers MODIFY status " . substr($t, 0, -1) . ",'deleted') DEFAULT 'pending'");
+    }
+  },
+]);
+
+// Strip CR/LF so user input can never inject mail headers
+function hdrSafe($s) { return trim(str_replace(["\r", "\n", "\0"], ' ', (string)$s)); }
+
+// Private profile fields — only for the provider themself or admin
+$PRIVATE_PROVIDER_FIELDS = ['password_hash','id_number','id_type','upi_id','email','phone','whatsapp',
+                            'address','total_earned','pending_earned','fcm_token'];
 
 switch ($action) {
 
@@ -36,6 +55,9 @@ switch ($action) {
     foreach ($required as $f) {
       if (empty($b[$f])) err("$f is required");
     }
+
+    if (!cleanEmail($b['email'])) err('Invalid email address');
+    if (strlen((string)$b['password']) < 6) err('Password must be at least 6 characters');
 
     // Check email not already registered
     $check = $db->prepare("SELECT id FROM providers WHERE email = ?");
@@ -52,7 +74,7 @@ switch ($action) {
     $exists = $db->prepare("SELECT id FROM providers WHERE id = ?");
     $exists->execute([$id]);
     if ($exists->fetch()) {
-      $id = $id . rand(10,99);
+      $id = $id . random_int(10,99);
     }
 
     // Hash password
@@ -121,8 +143,8 @@ switch ($action) {
     }
 
     // ── Email notifications ──────────────────────────────
-    $provName  = $b['name']  ?? '';
-    $provEmail = $b['email'] ?? '';
+    $provName  = hdrSafe($b['name']  ?? '');
+    $provEmail = cleanEmail($b['email'] ?? '');
     $provPhone = $b['phone'] ?? '';
     $provCity  = $b['city']  ?? '';
     $svcNames  = implode(', ', array_column($b['services'] ?? [], 'name'));
@@ -222,9 +244,12 @@ HamaraService Team";
     $provider = $stmt->fetch();
 
     if (!$provider) err('Email or password incorrect');
-    // Check password — support both hashed and plain (migration)
-    $pwdMatch = password_verify($pwd, $provider['password_hash']);
-    if (!$pwdMatch && $pwd === $provider['password_hash']) {
+    // Check password — bcrypt; a legacy plain-text value (imported from
+    // Firebase) is accepted once and immediately re-hashed.
+    $stored   = (string)$provider['password_hash'];
+    $isHash   = password_get_info($stored)['algo'] !== null && password_get_info($stored)['algo'] !== 0;
+    $pwdMatch = $isHash && password_verify($pwd, $stored);
+    if (!$pwdMatch && !$isHash && $stored !== '' && hash_equals($stored, $pwd)) {
       // Plain text password — upgrade to hash
       $newHash = password_hash($pwd, PASSWORD_BCRYPT);
       $db->prepare("UPDATE providers SET password_hash = ? WHERE id = ?")
@@ -238,6 +263,8 @@ HamaraService Team";
       err('Account suspended. Contact support.');
     if ($provider['status'] === 'rejected')
       err('Application rejected. Contact support.');
+    if ($provider['status'] === 'deleted')
+      err('Email or password incorrect');
 
     // Remove sensitive fields
     unset($provider['password_hash']);
@@ -270,6 +297,31 @@ HamaraService Team";
     $p = $stmt->fetch();
     if (!$p) err('Provider not found', 404);
 
+    // Full profile only for the provider themself or admin
+    $self = false;
+    if (isAdminRequest()) {
+      $self = true;
+    } else {
+      $claims = providerClaims(getBearerToken());
+      $self = $claims && (string)$claims['id'] === (string)$id;
+    }
+    if (!$self) {
+      if ($p['status'] === 'deleted') err('Provider not found', 404);
+      // A customer with a live booking assigned to this provider may call them
+      $canContact = false;
+      $viewer = resolveAuth();
+      if ($viewer && $viewer['role'] === 'customer') {
+        $c = $db->prepare("SELECT 1 FROM bookings WHERE provider_id = ? AND customer_id = ?
+                           AND status NOT IN ('cancelled','searching') LIMIT 1");
+        $c->execute([$id, $viewer['uid']]);
+        $canContact = (bool)$c->fetchColumn();
+      }
+      foreach ($PRIVATE_PROVIDER_FIELDS as $f) {
+        if ($canContact && in_array($f, ['phone','whatsapp'], true)) continue;
+        unset($p[$f]);
+      }
+    }
+
     // Get their services
     $svc = $db->prepare("SELECT * FROM provider_services WHERE provider_id = ? AND enabled = 1");
     $svc->execute([$id]);
@@ -289,11 +341,15 @@ HamaraService Team";
                 'address','city','lat','lng','radius_km','available','upi_id','areas','photo'];
     foreach ($allowed as $f) {
       if (isset($b[$f])) {
+        if (is_array($b[$f])) $b[$f] = json_encode($b[$f]);   // e.g. areas
         $fields[]   = "$f = :$f";
         $params[":$f"] = $b[$f];
       }
     }
     if (empty($fields)) err('Nothing to update');
+    if (isset($params[':photo']) && $params[':photo'] !== ''
+        && !preg_match('#^(/uploads/providers/[A-Za-z0-9_\-]+\.(jpg|png|webp)|https://[^\s"\'<>]+)$#', (string)$params[':photo']))
+      err('Invalid photo URL');
 
     $db->prepare("UPDATE providers SET " . implode(', ', $fields) . " WHERE id = :id")
        ->execute($params);
@@ -343,7 +399,7 @@ HamaraService Team";
 
     // Haversine distance in SQL
     $sql = "
-      SELECT p.id, p.name, p.phone, p.rating, p.review_count,
+      SELECT p.id, p.name, p.rating, p.review_count,
              p.lat, p.lng, p.radius_km, p.city,
              (6371 * ACOS(
                COS(RADIANS(:lat)) * COS(RADIANS(p.lat))
@@ -515,12 +571,13 @@ HamaraService Team";
        ->execute([$id]);
 
     // Get FCM token to notify provider
-    $stmt = $db->prepare("SELECT fcm_token, name FROM providers WHERE id = ?");
+    $stmt = $db->prepare("SELECT fcm_token, name, email FROM providers WHERE id = ?");
     $stmt->execute([$id]);
     $p = $stmt->fetch();
 
     // Send approval email to provider
-    if (!empty($p['email'] ?? '')) {
+    $toEmail = cleanEmail($p['email'] ?? '');
+    if ($toEmail !== '') {
       $aSubject = 'Account Approved — HamaraService';
       $aBody = "Dear {$p['name']},
 
@@ -541,7 +598,7 @@ HamaraService Team";
 "
         . "Best regards,
 HamaraService Team";
-      @mail($p['email'], $aSubject, $aBody,
+      @mail($toEmail, $aSubject, $aBody,
         implode("
 ", [
           'From: HamaraService <info@hamaraservice.com>',
@@ -602,11 +659,9 @@ HamaraService Team";
     // Simple approach: store as JSON in provider_services extras column
     // Actually use a dedicated JSON column approach via provider_services notes
 
-    // Store prices as JSON in a new column
-    // Check if column exists, add if not
-    try {
-      $db->exec("ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL");
-    } catch (Exception $e) {} // Ignore if already exists
+    // Stored as JSON in provider_services.option_prices (column added by migration above)
+    if (!is_array($prices)) err('option_prices must be an object');
+    $prices = array_filter(array_map('intval', $prices), function ($v) { return $v >= 0; });
 
     $stmt = $db->prepare("
       INSERT INTO provider_services
@@ -635,10 +690,6 @@ HamaraService Team";
   // ── GET PER-OPTION PRICES ─────────────────────────────────
   case 'get_option_prices': {
     $prov = requireProvider();
-
-    try {
-      $db->exec("ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL");
-    } catch (Exception $e) {}
 
     $stmt = $db->prepare("
       SELECT svc_id, option_prices, min_price, max_price

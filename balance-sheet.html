@@ -112,10 +112,29 @@ tr:last-child td{border-bottom:none;}
   .stats-grid{grid-template-columns:1fr 1fr;}
   .filters{flex-direction:column;align-items:stretch;}
 }
+/* Admin gate */
+#bsGate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0d3d47,#1B6B7A,#0d3d47);display:flex;align-items:center;justify-content:center;padding:16px;}
+#bsGate .gbox{background:white;border-radius:18px;padding:28px 24px;width:100%;max-width:360px;box-shadow:var(--shadow-lg);}
+#bsGate .gtitle{font-family:"Sora",sans-serif;font-size:20px;font-weight:800;margin-bottom:4px;}
+#bsGate .gsub{font-size:13px;color:var(--muted);margin-bottom:16px;}
+#bsGate input{width:100%;padding:11px 13px;border:2px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:12px;font-family:inherit;}
+#bsGate button{width:100%;padding:12px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+#bsGate .gerr{display:none;color:var(--brand);font-size:12px;font-weight:700;margin-bottom:10px;}
+.dash-wrap.locked{display:none;}
 </style>
 </head>
 <body>
-<div class="dash-wrap">
+<!-- Admin gate: the key is verified by the API before any data loads -->
+<div id="bsGate">
+  <div class="gbox">
+    <div class="gtitle">Balance Sheet</div>
+    <div class="gsub">Admin only — enter the admin key</div>
+    <div class="gerr" id="gateErr"></div>
+    <input type="password" id="gateKey" placeholder="Admin key" autocomplete="current-password" onkeydown="if(event.key==='Enter')bsLogin()"/>
+    <button id="gateBtn" onclick="bsLogin()">Unlock</button>
+  </div>
+</div>
+<div class="dash-wrap locked" id="bsApp">
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sb-logo">
@@ -247,6 +266,48 @@ var db = firebase.database();
 
 var _all = [];
 
+// ── Admin gate (same flow as admin.html) ─────────────────────────────────────
+var HS_API = 'https://hamaraservice.com/api';
+function getAdminKey(){
+  try { return sessionStorage.getItem('hs_admin_key') || ''; } catch(e) { return ''; }
+}
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+var _bsStarted = false;
+function bsUnlock(){
+  document.getElementById('bsGate').style.display = 'none';
+  document.getElementById('bsApp').classList.remove('locked');
+  if (!_bsStarted) { _bsStarted = true; startBalanceSheet(); }
+}
+function bsLogin(){
+  var key = (document.getElementById('gateKey').value || '').trim();
+  var err = document.getElementById('gateErr');
+  var btn = document.getElementById('gateBtn');
+  err.style.display = 'none';
+  if (!key) { err.textContent = 'Enter the admin key.'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  fetch(HS_API + '/providers.php?action=list', { headers: { 'X-Admin-Key': key }, cache: 'no-store' })
+  .then(function(r){
+    btn.disabled = false;
+    if (r.status >= 200 && r.status < 300) {
+      try { sessionStorage.setItem('hs_admin_key', key); sessionStorage.setItem('hs_admin_session', '1'); } catch(e) {}
+      bsUnlock();
+    } else {
+      err.textContent = (r.status === 401 || r.status === 403) ? 'Invalid admin key.' : 'Login failed (HTTP ' + r.status + ').';
+      err.style.display = 'block';
+      document.getElementById('gateKey').value = '';
+    }
+  })
+  .catch(function(){
+    btn.disabled = false;
+    err.textContent = 'Could not reach the server.';
+    err.style.display = 'block';
+  });
+}
+
 function fmt(n){ return Number(n||0).toLocaleString('en-IN'); }
 function fmtDt(iso){
   if (!iso) return '—';
@@ -256,7 +317,8 @@ function fmtDt(iso){
 }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
 
-// Live listener
+// Live listener — started only after the admin gate is passed
+function startBalanceSheet(){
 db.ref('hs_balance_sheet').on('value', function(snap) {
   _all = [];
   if (snap.exists()) snap.forEach(function(c){ var v=c.val(); if(v&&v.id) _all.push(v); });
@@ -272,8 +334,9 @@ db.ref('hs_balance_sheet').on('value', function(snap) {
   document.getElementById('syncChip').style.color = 'var(--green-dark)';
 }, function(e){
   document.getElementById('loadingState').innerHTML =
-    '<span style="color:var(--brand)">⚠ Firebase error: '+e.message+'</span>';
+    '<span style="color:var(--brand)">⚠ Firebase error: '+esc(e.message)+'</span>';
 });
+}
 
 function updateProviderFilter(){
   var sel = document.getElementById('filterProvider'), cur = sel.value;
@@ -304,8 +367,8 @@ function getFiltered(){
 function updateSummary(){
   var entries=getFiltered(), gmv=0, comm=0, net=0, wd=0;
   entries.forEach(function(e){
-    if(e.type==='payment'){ gmv+=e.grossAmount||0; comm+=e.commission||0; net+=e.netEarning||0; }
-    if(e.type==='withdrawal_approved') wd+=e.amount||0;
+    if(e.type==='payment'){ gmv+=Number(e.grossAmount)||0; comm+=Number(e.commission)||0; net+=Number(e.netEarning)||0; }
+    if(e.type==='withdrawal_approved') wd+=Number(e.amount)||0;
   });
   document.getElementById('s-gmv').textContent  = '₹'+fmt(gmv);
   document.getElementById('s-comm').textContent = '₹'+fmt(comm);
@@ -324,8 +387,8 @@ function renderTable(){
   _all.forEach(function(e){
     var pid=e.providerId; if(!pid) return;
     if(!runBal[pid]) runBal[pid]=0;
-    if(e.type==='payment') runBal[pid]+=(e.netEarning||0);
-    if(e.type==='withdrawal_approved') runBal[pid]-=(e.amount||0);
+    if(e.type==='payment') runBal[pid]+=(Number(e.netEarning)||0);
+    if(e.type==='withdrawal_approved') runBal[pid]-=(Number(e.amount)||0);
     e._runBal = runBal[pid];
   });
 
@@ -349,17 +412,17 @@ function renderTable(){
     var balCls = (e._runBal||0)>=0 ? 'balance-pos' : 'balance-neg';
     return '<tr>'
       +'<td class="mono">'+fmtDt(e.createdAt)+'</td>'
-      +'<td><span class="type-chip type-'+e.type+'">'+(TYPE_LABELS[e.type]||e.type)+'</span></td>'
-      +'<td><strong>'+(e.providerName||'—')+'</strong><br/>'
-        +'<span style="font-size:11px;color:var(--muted)">'+(e.providerId||'')+'</span></td>'
-      +'<td style="font-size:12px;color:var(--muted)">'+(e.service||e.bookingId||e.refId||'—')+'</td>'
+      +'<td><span class="type-chip type-'+esc(e.type)+'">'+esc(TYPE_LABELS[e.type]||e.type)+'</span></td>'
+      +'<td><strong>'+esc(e.providerName||'—')+'</strong><br/>'
+        +'<span style="font-size:11px;color:var(--muted)">'+esc(e.providerId||'')+'</span></td>'
+      +'<td style="font-size:12px;color:var(--muted)">'+esc(e.service||e.bookingId||e.refId||'—')+'</td>'
       +'<td class="amount-cr">'+(isPay?'₹'+fmt(e.grossAmount):'—')+'</td>'
       +'<td style="color:var(--purple);font-weight:700">'+(isPay?'₹'+fmt(e.commission):'—')+'</td>'
       +'<td class="amount-cr">'+(isPay?'₹'+fmt(e.netEarning):'—')+'</td>'
       +'<td class="amount-dr">'+(!isPay?'₹'+fmt(e.amount):'—')+'</td>'
       +'<td class="'+balCls+'">₹'+fmt(e._runBal||0)+'</td>'
-      +'<td><span class="badge '+(e.status||'pending')+'">'
-        +cap(e.status==='withdrawal_approved'?'approved':e.status==='withdrawal_rejected'?'rejected':e.status||'')
+      +'<td><span class="badge '+esc(e.status||'pending')+'">'
+        +esc(cap(e.status==='withdrawal_approved'?'approved':e.status==='withdrawal_rejected'?'rejected':e.status||''))
         +'</span></td>'
       +'</tr>';
   }).join('');
@@ -394,6 +457,9 @@ function exportCSV(){
   a.download='balance-sheet-'+new Date().toISOString().split('T')[0]+'.csv';
   a.click();
 }
+
+// Resume an admin session from this tab (e.g. opened from admin.html)
+if (getAdminKey()) bsUnlock();
 </script>
 </body>
 </html>

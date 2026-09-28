@@ -337,6 +337,7 @@ function show(p,fromPop){
 window.addEventListener('popstate',function(){
   if(_curPage!=='pgDash'&&_curPage!=='pgAuth'){show('pgDash',true);}
 });
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
 function api(ep,action,body,extraQ){
   var url=API+'/'+ep+'?action='+action+(extraQ||'');
@@ -609,14 +610,14 @@ function showJobPopup(b){
   var secs=30;
   pop.innerHTML='<div class="job-card">'
     +'<div class="count" id="jpCount">Respond in 30s</div>'
-    +'<div style="font-size:34px;text-align:center">'+(b.svc_icon||'🔔')+'</div>'
-    +'<div style="font-size:18px;font-weight:900;text-align:center;margin:6px 0">'+b.svc_name+'</div>'
-    +(b.notes?'<div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px">'+b.notes+'</div>':'')
-    +'<div style="font-size:13px;margin:10px 0"><b>📍</b> '+b.address+'</div>'
-    +(b.slot_time?'<div style="font-size:13px;margin-bottom:12px"><b>🕐</b> '+b.slot_time+'</div>':'')
+    +'<div style="font-size:34px;text-align:center">'+esc(b.svc_icon||'🔔')+'</div>'
+    +'<div style="font-size:18px;font-weight:900;text-align:center;margin:6px 0">'+esc(b.svc_name)+'</div>'
+    +(b.notes?'<div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px">'+esc(b.notes)+'</div>':'')
+    +'<div style="font-size:13px;margin:10px 0"><b>📍</b> '+esc(b.address)+'</div>'
+    +(b.slot_time?'<div style="font-size:13px;margin-bottom:12px"><b>🕐</b> '+esc(b.slot_time)+'</div>':'')
     +'<label>Your Price (₹)</label><input class="inp" id="jpPrice" type="number" value="'+(myPriceFor(b)||'')+'" placeholder="Your price">'
     +'<div style="font-size:11.5px;color:var(--muted);margin:-4px 0 8px">'+(myPriceFor(b)?'Your saved price — edit if needed':'Set your price for this job')+'</div>'
-    +'<button class="btn green" onclick="acceptJob(\''+b.id+'\')">✓ Accept'+(myPriceFor(b)?' at ₹'+myPriceFor(b):' & Quote')+'</button>'
+    +'<button class="btn green" data-bid="'+esc(b.id)+'" onclick="acceptJob(this.dataset.bid)">✓ Accept'+(myPriceFor(b)?' at ₹'+myPriceFor(b):' & Quote')+'</button>'
     +'<div style="height:8px"></div>'
     +'<button class="btn red-ghost" onclick="dismissJob()">Skip</button>'
     +'</div>';
@@ -741,11 +742,11 @@ function renderActiveJob(){
   if(!activeJob){el.innerHTML='<div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div>';return;}
   var b=activeJob,st=b.status;
   var h='<div class="card">'
-    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:26px">'+(b.svc_icon||'🔧')+'</span>'
-    +'<div style="flex:1"><div style="font-weight:800">'+b.svc_name+'</div><div style="font-size:12px;color:var(--muted)">'+b.id+'</div></div>'
-    +'<span class="badge '+st+'">'+st.replace(/_/g,' ')+'</span></div>'
-    +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+(b.customer_name||'Customer')+' '+(b.customer_phone?('· <a href="tel:'+b.customer_phone+'">📞 '+b.customer_phone+'</a>'):'')+'</div>'
-    +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+b.address+'</div>'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:26px">'+esc(b.svc_icon||'🔧')+'</span>'
+    +'<div style="flex:1"><div style="font-weight:800">'+esc(b.svc_name)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(b.id)+'</div></div>'
+    +'<span class="badge '+esc(st)+'">'+esc(st.replace(/_/g,' '))+'</span></div>'
+    +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+esc(b.customer_name||'Customer')+' '+(b.customer_phone?('· <a href="tel:'+esc(String(b.customer_phone).replace(/[^0-9+]/g,''))+'">📞 '+esc(b.customer_phone)+'</a>'):'')+'</div>'
+    +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+esc(b.address)+'</div>'
     +navBtn(b)
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.final_price||b.quoted_price||0)+'</div>';
   if(st==='completed'){
@@ -963,7 +964,7 @@ function savePrices(svcId){
   });
   if(bad){toast('⚠️ '+bad);return;}
   if(!Object.keys(prices).length){toast('Enter at least one price');return;}
-  api('providers.php','save_option_prices',{svc_id:svcId,prices:prices}).then(function(res){
+  api('providers.php','save_option_prices',{svc_id:svcId,option_prices:prices}).then(function(res){
     if(res.success){myPrices[svcId]=prices;toast('✅ Prices saved');closeSheet();}
     else toast(res.error||'Save failed');
   });

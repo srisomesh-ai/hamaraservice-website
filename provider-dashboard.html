@@ -429,7 +429,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 .dash-save-btn{background:#1B6B7A;color:white;border:none;border-radius:10px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;font-family:'DM Sans',sans-serif;}
 </style>
 </head>
-<script>window.HS_SOUND_ROLE='provider';</script>
 <body>
 
 <!-- SIDEBAR -->
@@ -926,6 +925,35 @@ let pendingBooking = null;
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const TIME_SLOTS = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
 
+// ════════ MySQL API (provider JWT from provider-portal login) ════════
+var HS_API = 'https://hamaraservice.com/api';
+function provJwt() { return localStorage.getItem('hs_provider_jwt') || ''; }
+// Calls HS_API + path with the provider JWT. Resolves to the parsed JSON
+// ({success, data|error}); network / parse failures resolve to {success:false}.
+function provApi(path, body, method) {
+  var opts = { headers: { 'Authorization': 'Bearer ' + provJwt() } };
+  if (body !== undefined && body !== null) {
+    opts.method = method || 'POST';
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  } else if (method) {
+    opts.method = method;
+  }
+  return fetch(HS_API + path, opts)
+    .then(function(r){ return r.json().catch(function(){ return { success:false, error:'HTTP ' + r.status }; }); })
+    .catch(function(e){ return { success:false, error:(e && e.message) || 'Network error' }; });
+}
+// HTML-escape provider/customer/booking supplied text before innerHTML
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+// Escape a value for a single-quoted JS string inside an onclick="..." attribute
+function jsq(v) {
+  return esc(String(v == null ? '' : v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[\r\n]/g,' '));
+}
+
 // ════════ BOOKING DB ════════
 function getBK() {
   // Return localStorage cache (always synced from Firebase on load)
@@ -1023,13 +1051,26 @@ async function syncBKFromFirebase() {
 function getReviews() {
   try { return JSON.parse(JSON.stringify(_REVIEWS) || '[]'); } catch(e) { return []; }
 }
+function _normApiReview(r, i) {
+  return {
+    bookingId: r.booking_id || ('rv' + i),
+    customer:  r.customer_name || 'Customer',
+    stars:     Number(r.rating) || 0,
+    text:      r.comment || '',
+    date:      r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '',
+    submittedAt: r.created_at || ''
+  };
+}
 function loadReviewsFromFirebase(cb) {
-  Promise.resolve(fbRead('reviews')).then(function(data) {
-    if (!data) { if(cb) cb(getReviews()); return; }
-    var rvs = Object.values(data).filter(function(r){ return r && r.providerId === P.id; });
-    _REVIEWS = rvs;
-    if(cb) cb(rvs);
-  }).catch(function(){ if(cb) cb(getReviews()); });
+  // Reviews live in MySQL (reviews.php?action=provider)
+  fetch(HS_API + '/reviews.php?action=provider&id=' + encodeURIComponent(P.id))
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      if (!res || !res.success || !Array.isArray(res.data)) { if(cb) cb(getReviews()); return; }
+      var rvs = res.data.map(_normApiReview).filter(function(r){ return r.stars > 0; });
+      _REVIEWS = rvs;
+      if(cb) cb(rvs);
+    }).catch(function(){ if(cb) cb(getReviews()); });
 }function saveReviews(rv) {
   _REVIEWS = rv;
   // Write each review to Firebase
@@ -1051,6 +1092,7 @@ function computeStats(){
   // For each completed booking, compute commission from catalog
   let grossEarned = 0, commissionTotal = 0, netEarned = 0;
   completed.forEach(b => {
+    b.amount = Number(b.amount || b.amountPaid || b.confirmed_price || 0) || 0;
     const svc = catalog.find(s => s.name === b.service);
     const commPct = getCommRate(b.service);
     const commAmt = Math.round(b.amount * commPct / 100);
@@ -1071,15 +1113,15 @@ function computeStats(){
     .filter(p => p.providerId === P.id);
   const withdrawn = payouts
     .filter(p => p.status === "approved")
-    .reduce((s,p) => s+p.amount, 0);
+    .reduce((s,p) => s+(Number(p.amount)||0), 0);
   const pendingWithdraw = payouts
     .filter(p => p.status === "pending")
-    .reduce((s,p) => s+p.amount, 0);
+    .reduce((s,p) => s+(Number(p.amount)||0), 0);
   const available = Math.max(netEarned - withdrawn - pendingWithdraw, 0);
 
   const reviews = getReviews();
   const avgRating = reviews.length
-    ? (reviews.reduce((s,r) => s+r.stars, 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((s,r) => s+(Number(r.stars)||0), 0) / reviews.length).toFixed(1)
     : null;
 
   return {
@@ -1099,6 +1141,8 @@ window.addEventListener('load', () => {
     P = JSON.parse(saved);
     if (!P || !P.id) { window.location.href = 'provider-portal.html'; return; }
     var _jwt = localStorage.getItem('hs_provider_jwt') || '';
+    // No provider JWT → every MySQL call would 401; force a fresh login
+    if (!_jwt) { localStorage.removeItem('hs_current_provider'); window.location.href = 'provider-portal.html'; return; }
     fetch('https://hamaraservice.com/api/providers.php?action=get&id=' + P.id, {
       headers: { 'Authorization': 'Bearer ' + _jwt }
     })
@@ -1119,6 +1163,16 @@ window.addEventListener('load', () => {
           window.location.href = 'provider-portal.html';
           return;
         }
+        // ── Deleted / rejected / not yet approved ───────────────────────────
+        if (fbP.status === 'deleted' || fbP.status === 'rejected' || (fbP.status && fbP.status !== 'approved')) {
+          localStorage.removeItem('hs_current_provider');
+          localStorage.removeItem('hs_provider_jwt');
+          alert(fbP.status === 'pending'
+            ? '\u23f3 Your account is awaiting admin approval.'
+            : '\u26d4 Your account is no longer active. Please contact support.');
+          window.location.href = 'provider-portal.html';
+          return;
+        }
         // ── Valid provider — preserve local available toggle ────────────────
         var localAvail = P.available;
         P = fbP;
@@ -1135,6 +1189,7 @@ window.addEventListener('load', () => {
 
 function doLogout() {
   localStorage.removeItem('hs_current_provider');
+  localStorage.removeItem('hs_provider_jwt');
   window.location.href = 'provider-portal.html';
 }
 
@@ -1238,9 +1293,9 @@ function loadOverview() {
   // Recent bookings (latest 5)
   const recent = [...s.bk].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5);
   document.getElementById('recentBody').innerHTML = recent.map(b => `
-    <tr><td><strong>${b.id}</strong></td><td>${b.customer}</td><td>${b.service}</td>
-    <td>${b.date}</td><td><strong>₹${b.amount}</strong></td>
-    <td><span class="badge ${b.status}">${cap(b.status)}</span></td></tr>
+    <tr><td><strong>${esc(b.id)}</strong></td><td>${esc(b.customer)}</td><td>${esc(b.service)}</td>
+    <td>${esc(b.date)}</td><td><strong>₹${Number(b.amount)||0}</strong></td>
+    <td><span class="badge ${esc(b.status)}">${esc(cap(b.status))}</span></td></tr>
   `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No bookings yet</td></tr>';
 }
 
@@ -1251,17 +1306,17 @@ function loadAllBookings(filter = 'all') {
   bk = bk.sort((a,b) => new Date(b.date) - new Date(a.date));
   document.getElementById('allBkBody').innerHTML = bk.map(b => `
     <tr>
-      <td><strong>${b.id}</strong></td>
-      <td>${b.customer}<br/><small style="color:var(--muted)">${b.phone}</small></td>
-      <td>${b.service}</td>
-      <td>${b.date}<br/><small style="color:var(--muted)">${b.time}</small></td>
-      <td><strong>₹${b.amount}</strong></td>
-      <td><span class="badge ${b.status}">${cap(b.status)}</span></td>
+      <td><strong>${esc(b.id)}</strong></td>
+      <td>${esc(b.customer)}<br/><small style="color:var(--muted)">${esc(b.phone||'')}</small></td>
+      <td>${esc(b.service)}</td>
+      <td>${esc(b.date||'')}<br/><small style="color:var(--muted)">${esc(b.time||'')}</small></td>
+      <td><strong>₹${Number(b.amount)||0}</strong></td>
+      <td><span class="badge ${esc(b.status)}">${esc(cap(b.status))}</span></td>
       <td>
         ${['pending','accepted','confirmed','active','searching'].includes(b.status)
-          ? `<button class="nav-btn-track" onclick="openProviderTracking('${b.id}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
-             <br/><button class="abtn complete" onclick="updateStatus('${b.id}','completed')">✅ Complete Job</button>
-             <button class="abtn cancel" onclick="updateStatus('${b.id}','cancelled')">❌</button>`
+          ? `<button class="nav-btn-track" onclick="openProviderTracking('${jsq(b.id)}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
+             <br/><button class="abtn complete" onclick="updateStatus('${jsq(b.id)}','completed')">✅ Complete Job</button>
+             <button class="abtn cancel" onclick="updateStatus('${jsq(b.id)}','cancelled')">❌</button>`
           : b.status === 'payment_pending' || b.status === 'otp_sent'
           ? `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Customer Payment</div>`
           : b.status === 'paid'
@@ -1269,9 +1324,9 @@ function loadAllBookings(filter = 'all') {
           : b.status === 'cancelled'
           ? `<span class="badge cancelled">Cancelled</span>`
           : b.status === 'completed'
-          ? `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>`
-          : `<button class="abtn view" onclick="viewBk('${b.id}')">👁 View</button>
-             <br/><button class="btn-track-cust" onclick="openCustomerTracking('${b.id}')" style="margin-top:4px">📍 Track</button>`}
+          ? `<button class="abtn view" onclick="viewBk('${jsq(b.id)}')">👁 View</button>`
+          : `<button class="abtn view" onclick="viewBk('${jsq(b.id)}')">👁 View</button>
+             <br/><button class="btn-track-cust" onclick="openCustomerTracking('${jsq(b.id)}')" style="margin-top:4px">📍 Track</button>`}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
@@ -1295,69 +1350,52 @@ function updateStatus(id, status) {
     initiateOTPCompletion(id);
     return;
   }
-  // Cancellation — direct
+  // Cancellation — via MySQL API (assigned provider may cancel)
   if (!confirm('Cancel this booking? This cannot be undone.')) return;
-  const bk = getBK();
-  const idx = bk.findIndex(b => b.id === id);
-  if (idx > -1) {
-    bk[idx].status = 'cancelled';
-    saveBK(bk);
+  provApi('/bookings.php?action=cancel', { booking_id: id }).then(function(res){
+    if (!res.success) { showToast('⚠️ ' + (res.error || 'Could not cancel booking')); return; }
+    const bk = getBK();
+    const idx = bk.findIndex(b => b.id === id);
+    if (idx > -1) { bk[idx].status = 'cancelled'; _BK = bk; }
     syncProviderStats();
     loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
     showToast('❌ Booking cancelled');
-  }
+  });
 }
 
 // ─── STEP 1: Provider clicks "Close Job" ────────────────────────
-// Generates OTP → sends to customer (via Firebase) → customer sees code
-// Provider asks customer to read their code, then enters it here
+// Server generates the completion OTP and pushes it to the customer
+// (bookings.php?action=request_completion_otp). The OTP is never sent to the
+// provider — they ask the customer to read it out, then enter it here.
 function initiateOTPCompletion(bookingId) {
   buzz('otp');
-  const bk = getBK();
-  const booking = bk.find(b => b.id === bookingId);
+  const booking = getBK().find(b => b.id === bookingId);
   if (!booking) return;
 
-  // Generate 4-digit OTP
-  const otp = String(Math.floor(1000 + Math.random() * 9000));
-  const bkIdx = bk.findIndex(b => b.id === bookingId);
-  bk[bkIdx].completionOTP = otp;
-  bk[bkIdx].otpGeneratedAt = new Date().toISOString();
-  bk[bkIdx].status = 'otp_sent';
-  saveBK(bk);
+  showToast('⏳ Requesting completion code from customer…');
+  provApi('/bookings.php?action=request_completion_otp', { booking_id: bookingId }).then(function(res){
+    if (!res.success) {
+      var msg = res.error || 'Could not request completion code';
+      if (/^TOO_EARLY:/.test(msg)) msg = 'Too early to close this job — try again in ' + msg.split(':')[1] + ' min';
+      showToast('⚠️ ' + msg);
+      return;
+    }
+    pendingCompleteId = bookingId;
 
-  pendingCompleteId = bookingId;
+    // Show the provider entry modal — ask customer to read their code
+    document.getElementById('otpBookingInfo').textContent =
+      'Service: ' + booking.service + ' · Customer: ' + (booking.customer || '—');
+    document.getElementById('otpCustomerInstruction').textContent =
+      'Ask ' + (booking.customer || 'the customer') + ' to open their app and read you the 4-digit code.';
 
-  // Write OTP to Firebase so user panel can show it to customer
-  fbWrite('job_otp/' + bookingId, {
-    otp: otp,
-    bookingId: bookingId,
-    service: booking.service,
-    customer: booking.customer || 'Customer',
-    customerId: booking.customerId || booking.uid || '',
-    providerName: P.name,
-    generatedAt: Date.now(),
-    status: 'waiting'
+    ['od1','od2','od3','od4'].forEach(id => {
+      const el = document.getElementById(id);
+      el.value = ''; el.classList.remove('filled');
+    });
+    document.getElementById('otpErr').style.display = 'none';
+    document.getElementById('otpRequestModal').classList.add('show');
+    setTimeout(() => document.getElementById('od1').focus(), 300);
   });
-
-  // Update status on BOTH paths so user-panel listeners fire
-  fbWrite('active_bookings/' + bookingId + '/status', 'otp_sent');
-  fbWrite('active_bookings/' + bookingId + '/otpSentAt', Date.now());
-  fbWrite('bookings/' + bookingId + '/status', 'otp_sent');
-  fbWrite('bookings/' + bookingId + '/otpSentAt', Date.now());
-
-  // Show the provider entry modal — ask customer to read their code
-  document.getElementById('otpBookingInfo').textContent =
-    'Service: ' + booking.service + ' · Customer: ' + (booking.customer || '—');
-  document.getElementById('otpCustomerInstruction').textContent =
-    'Ask ' + (booking.customer || 'the customer') + ' to open their app and read you the 4-digit code.';
-
-  ['od1','od2','od3','od4'].forEach(id => {
-    const el = document.getElementById(id);
-    el.value = ''; el.classList.remove('filled');
-  });
-  document.getElementById('otpErr').style.display = 'none';
-  document.getElementById('otpRequestModal').classList.add('show');
-  setTimeout(() => document.getElementById('od1').focus(), 300);
 }
 
 // ─── OTP DIGIT INPUT LOGIC ───────────────────────────────────────
@@ -1384,54 +1422,58 @@ function getEnteredOTP() {
   return ['od1','od2','od3','od4'].map(id => document.getElementById(id).value).join('');
 }
 
-// ─── STEP 3: Provider enters OTP → Verify ───────────────────────
+// ─── STEP 3: Provider enters OTP → Verify (server-side) ─────────
+var _otpVerifying = false;
 function verifyOTP() {
   const entered = getEnteredOTP();
   if (entered.length < 4) { showToast('⚠️ Enter all 4 digits'); return; }
+  if (_otpVerifying) return;
 
-  const bk = getBK();
-  const booking = bk.find(b => b.id === pendingCompleteId);
+  const bookingId = pendingCompleteId;
+  const booking = getBK().find(b => b.id === bookingId);
   if (!booking) { closeModal('otpRequestModal'); return; }
 
-  if (entered !== booking.completionOTP) {
-    document.getElementById('otpErr').style.display = 'block';
-    ['od1','od2','od3','od4'].forEach(id => {
-      const el = document.getElementById(id);
-      el.style.borderColor = 'var(--red)';
-      el.style.background = 'var(--red-light)';
-      setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 1500);
-    });
-    return;
-  }
+  _otpVerifying = true;
+  provApi('/bookings.php?action=complete', { booking_id: bookingId, completion_otp: entered }).then(function(res){
+    _otpVerifying = false;
+    if (!res.success) {
+      if (/invalid/i.test(res.error || '')) {
+        document.getElementById('otpErr').style.display = 'block';
+        ['od1','od2','od3','od4'].forEach(id => {
+          const el = document.getElementById(id);
+          el.style.borderColor = 'var(--red)';
+          el.style.background = 'var(--red-light)';
+          setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 1500);
+        });
+      } else {
+        showToast('⚠️ ' + (res.error || 'Could not complete job'));
+      }
+      return;
+    }
 
-  // ✅ OTP correct — job closed, now customer needs to pay
-  const idx = bk.findIndex(b => b.id === pendingCompleteId);
-  bk[idx].status = 'payment_pending';
-  bk[idx].otpVerifiedAt = new Date().toISOString();
-  bk[idx].completionOTP = null;
-  saveBK(bk);
+    // ✅ OTP verified by server — job completed
+    const bk = getBK();
+    const idx = bk.findIndex(b => b.id === bookingId);
+    const d = res.data || {};
+    if (idx > -1) {
+      bk[idx].status = 'completed';
+      bk[idx].completedAt = new Date().toISOString();
+      if (d.amount) bk[idx].amount = Number(d.amount) || bk[idx].amount;
+      if (d.provider_earns != null) bk[idx].providerEarned = Number(d.provider_earns) || 0;
+      _BK = bk;
+    }
 
-  // Signal Firebase: OTP verified → user panel will open payment screen
-  fbWrite('job_otp/' + pendingCompleteId + '/status', 'verified');
-  fbWrite('job_otp/' + pendingCompleteId + '/verifiedAt', Date.now());
-  fbWrite('active_bookings/' + pendingCompleteId + '/status', 'payment_pending');
-  fbWrite('active_bookings/' + pendingCompleteId + '/otpVerifiedAt', Date.now());
-  fbWrite('bookings/' + pendingCompleteId + '/status', 'payment_pending');
-  fbWrite('bookings/' + pendingCompleteId + '/otpVerifiedAt', Date.now());
+    currentRatingBookingId = bookingId;
+    pendingCompleteId = null;
+    closeModal('otpRequestModal');
 
-  currentRatingBookingId = pendingCompleteId;
-  pendingCompleteId = null;
+    syncProviderStats();
+    loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
+    showToast('✅ Job completed! Waiting for customer payment confirmation.');
 
-  closeModal('otpRequestModal');
-
-  // Refresh provider panel — shows "Awaiting Payment" badge
-  syncProviderStats();
-  loadAllBookings(); loadOverview(); loadNotifications();
-
-  showToast('✅ Job verified! Customer will now be prompted to pay.');
-
-  // Provider just waits — poll Firebase for payment confirmation from user panel
-  startPaymentPolling(currentRatingBookingId || bk[idx].id);
+    // Poll the booking for payment status (cash / online)
+    startPaymentPolling(bookingId);
+  });
 }
 
 // ─── PAYMENT WINDOW ──────────────────────────────────────────────
@@ -1515,30 +1557,41 @@ let _payPollBookingId = null;
 function startPaymentPolling(bookingId) {
   stopPaymentPolling();
   _payPollBookingId = bookingId;
+  var _pollStarted = Date.now();
   pollInterval = setInterval(() => {
-    // 1. Check local storage (same-device scenario)
+    // Give up after 15 minutes — the bookings list refresh will still show it
+    if (Date.now() - _pollStarted > 15 * 60 * 1000) { stopPaymentPolling(); return; }
+    // 1. Check in-memory cache (same-device scenario)
     const bk = getBK();
     const b = bk.find(x => x.id === _payPollBookingId);
-    if (b && (b.status === 'paid' || b.status === 'completed')) {
+    if (b && (b.status === 'paid' || b.paymentStatus === 'paid')) {
       stopPaymentPolling();
       syncProviderStats();
       loadAllBookings(); loadOverview(); loadEarnings();
       showPaymentReceivedAlert(b);
       return;
     }
-    // 2. Check Firebase (cross-device — user paid on their own phone)
-    fbRead('active_bookings/' + _payPollBookingId).then(function(data) {
-      if (data && (data.status === 'paid' || data.status === 'completed')) {
+    // 2. Check MySQL (cross-device — user paid on their own phone)
+    provApi('/bookings.php?action=get&id=' + encodeURIComponent(_payPollBookingId)).then(function(res) {
+      var data = (res && res.success && res.data) ? res.data : null;
+      if (data) {
+        data.paidAt = data.paidAt || data.paid_at;
+        data.paymentMethod = data.paymentMethod || data.payment_method;
+        data.txnId = data.txnId || data.razorpay_payment_id;
+        if (data.payment_status === 'paid') data.status = 'paid';
+      }
+      if (data && data.status === 'paid') {
         stopPaymentPolling();
         // Sync payment info into local booking
         const bkLocal = getBK();
         const localIdx = bkLocal.findIndex(x => x.id === _payPollBookingId);
         if (localIdx > -1) {
-          bkLocal[localIdx].status = data.status || 'paid';
+          bkLocal[localIdx].status = 'completed';
+          bkLocal[localIdx].paymentStatus = 'paid';
           bkLocal[localIdx].paidAt = data.paidAt || new Date().toISOString();
           bkLocal[localIdx].paymentMethod = data.paymentMethod || 'online';
           bkLocal[localIdx].txnId = data.txnId || '';
-          saveBK(bkLocal);
+          _BK = bkLocal;
         }
         syncProviderStats();
         loadAllBookings(); loadOverview(); loadEarnings();
@@ -1638,11 +1691,11 @@ function viewBk(id) {
   document.getElementById('vmTitle').textContent = '📋 ' + b.id;
   document.getElementById('vmSub').textContent = 'Service: ' + b.service;
   document.getElementById('vmBody').innerHTML = `
-    <strong>Customer:</strong> ${b.customer}<br/>
-    <strong>Phone:</strong> ${b.phone}<br/>
-    <strong>Date:</strong> ${b.date} at ${b.time}<br/>
-    <strong>Amount:</strong> ₹${b.amount}<br/>
-    <strong>Status:</strong> ${cap(b.status)}
+    <strong>Customer:</strong> ${esc(b.customer)}<br/>
+    <strong>Phone:</strong> ${esc(b.phone||'')}<br/>
+    <strong>Date:</strong> ${esc(b.date||'')} at ${esc(b.time||'')}<br/>
+    <strong>Amount:</strong> ₹${Number(b.amount)||0}<br/>
+    <strong>Status:</strong> ${esc(cap(b.status))}
   `;
   document.getElementById('viewModal').classList.add('show');
 }
@@ -1660,12 +1713,7 @@ function syncProviderStats() {
     P = all[idx];
     if(all&&all[0]) P = all[0];
     localStorage.setItem('hs_current_provider', JSON.stringify(P));
-    // Sync stats to Firebase so admin sees live numbers
-    fbWrite('providers/' + P.id + '/totalBookings',     s.bk.length);
-    fbWrite('providers/' + P.id + '/completedBookings', s.completed.length);
-    fbWrite('providers/' + P.id + '/totalEarned',       s.totalEarned);
-    if (s.avgRating) fbWrite('providers/' + P.id + '/rating', +s.avgRating);
-    fbWrite('providers/' + P.id + '/reviews',           s.reviews.length);
+    // (Totals/rating are computed server-side in MySQL — nothing to push.)
   }
 }
 
@@ -1740,7 +1788,7 @@ function _persistServices(){
     var i=all.findIndex(function(p){return p.id===P.id;});
     if(i>-1){all[i].services=P.services;if(all&&all[0]) P = all[0];}
     localStorage.setItem('hs_current_provider',JSON.stringify(P));
-    if(typeof fbWrite==='function')fbWrite('providers/'+P.id+'/services',P.services);
+    _saveServicesToApi(P.services);
   }catch(e){console.warn('[svc]',e.message);}
 }
 function openAddServiceModal(){
@@ -1844,7 +1892,12 @@ function addService(i){
 
 var _commCache=null;
 function _loadCommRates(){
-  if(typeof fbRead==='function')Promise.resolve(fbRead('hs_service_prices')).then(function(d){if(d){_commCache=d;_PRICES=d;}}).catch(function(){});
+  // Admin reference prices + commission live in MySQL (services.php?action=price_ranges)
+  fetch(HS_API+'/services.php?action=price_ranges').then(function(r){return r.json();}).then(function(res){
+    var d=(res&&res.success&&res.data)?res.data:{};var px={};
+    Object.keys(d).forEach(function(k){if(d[k]&&d[k].admin_prices)px[k]=d[k].admin_prices;});
+    if(Object.keys(px).length){_commCache=px;_PRICES=px;}
+  }).catch(function(){});
   if(!_commCache){try{_commCache=_PRICES;}catch(e){}}
 }
 function getCommRate(name){
@@ -2543,9 +2596,41 @@ function renderSvcProfileGrid() {
     _psvcPxLoaded = true;
     fetch('https://hamaraservice.com/api/services.php?action=price_ranges')
       .then(function(r){return r.json();})
-      .then(function(res){ var d=(res.success&&res.data)?res.data:{}; if(Object.keys(d).length){_psvcPx=d; renderSvcProfileGrid();} })
+      .then(function(res){
+        var d=(res.success&&res.data)?res.data:{};
+        // unwrap price_ranges → { SVC001: admin_prices }
+        var px={}; Object.keys(d).forEach(function(k){ if(d[k]&&d[k].admin_prices) px[k]=d[k].admin_prices; });
+        if(Object.keys(px).length){_psvcPx=px; renderSvcProfileGrid();}
+      })
       .catch(function(){});
   }
+}
+
+// Persist the provider's selected services to MySQL (providers.php?action=services).
+// `result` = [{ id|svcId, name, icon, subRates:[{custPrice, rate}] }]. Catalog
+// services that are not in `result` are sent as enabled:0 so un-ticking works.
+function _saveServicesToApi(result, cb) {
+  var byId = {};
+  var catalog = [];
+  try { catalog = buildServices(); } catch(e) {}
+  var nameToId = {}; catalog.forEach(function(g){ nameToId[g.name] = g.id; });
+  (result || []).forEach(function(r){
+    var id = r.id || r.svcId || nameToId[r.name] || '';
+    if (!id) return;
+    var prices = (r.subRates || []).map(function(x){ return Number(x.custPrice || x.rate) || 0; }).filter(function(v){ return v > 0; });
+    byId[id] = {
+      svc_id: id, svc_name: r.name || '', svc_icon: r.icon || '', enabled: 1,
+      min_price: prices.length ? Math.min.apply(null, prices) : (Number(r.price) || 0),
+      max_price: prices.length ? Math.max.apply(null, prices) : (Number(r.price) || 0)
+    };
+  });
+  catalog.forEach(function(g){
+    if (!byId[g.id]) byId[g.id] = { svc_id: g.id, svc_name: g.name, svc_icon: g.icon || '', enabled: 0, min_price: 0, max_price: 0 };
+  });
+  var payload = Object.keys(byId).map(function(k){ return byId[k]; });
+  provApi('/providers.php?action=services', { services: payload }).then(function(res){
+    if (cb) cb(res);
+  });
 }
 
 // Override saveServices to collect from _psvcSel
@@ -2567,9 +2652,12 @@ function saveServices() {
     result.push({name:g.name,icon:g.icon,id:g.id,price:subRates[0].rate,subRates:subRates});
   });
   P.services = result;
-  fbWrite('providers/'+P.id, P);
   localStorage.setItem('hs_current_provider', JSON.stringify(P));
-  showToast('✅ Services saved — '+result.length+' service(s) updated');
+  showToast('⏳ Saving services…');
+  _saveServicesToApi(result, function(res){
+    if (res && res.success) showToast('✅ Services saved — '+result.length+' service(s) updated');
+    else showToast('⚠️ Services saved on this device only: ' + ((res && res.error) || 'server error'));
+  });
   loadOverview();
 }
 
@@ -2605,26 +2693,14 @@ function saveProfile() {
     P = all[idx];
     if(all&&all[0]) P = all[0];
     localStorage.setItem('hs_current_provider', JSON.stringify(P));
-    // Write to Firebase so admin and other devices see the update
-    fbWrite('providers/' + P.id, P);
     document.getElementById('sb_name').textContent = P.name;
-    showToast('✅ Profile saved!');
-  }
-}
-
-function saveServices() {
-  const all = JSON.parse(JSON.stringify(P ? [P] : []) || '[]');
-  const idx = all.findIndex(p => p.id === P.id);
-  if (idx > -1) {
-    (P.services || []).forEach((s, i) => {
-      const inp = document.getElementById(`sp_${i}`);
-      if (inp) all[idx].services[i].price = parseInt(inp.value) || s.price;
+    // Save to MySQL (email / ID proof are not editable via the API)
+    provApi('/providers.php?action=update', {
+      name: P.name, phone: P.phone, whatsapp: P.whatsapp, bio: P.bio,
+      experience: P.experience, gender: P.gender
+    }).then(function(res){
+      showToast(res.success ? '✅ Profile saved!' : '⚠️ Profile not saved: ' + (res.error || 'server error'));
     });
-    P = all[idx];
-    if(all&&all[0]) P = all[0];
-    localStorage.setItem('hs_current_provider', JSON.stringify(P));
-    fbWrite('providers/' + P.id + '/services', P.services);
-    showToast('✅ Services & prices updated!');
   }
 }
 
@@ -2671,8 +2747,9 @@ function saveAvailability() {
     P = all[idx];
     if(all&&all[0]) P = all[0];
     localStorage.setItem('hs_current_provider', JSON.stringify(P));
-    fbWrite('providers/' + P.id + '/availability', P.availability);
-    showToast('✅ Availability saved!');
+    // NOTE: the MySQL API has no column for the weekly schedule yet, so this
+    // is stored on this device only.
+    showToast('✅ Availability saved on this device');
   }
 }
 
@@ -2749,27 +2826,22 @@ function saveLocation() {
     P=all[idx];
     if(all&&all[0]) P = all[0];
     localStorage.setItem('hs_current_provider',JSON.stringify(P));
-    // Write to Firebase so customer radar uses updated location/radius
-    fbWrite('providers/' + P.id + '/lat', newLat);
-    fbWrite('providers/' + P.id + '/lng', newLng);
-    fbWrite('providers/' + P.id + '/radius', newRadius);
-    fbWrite('providers/' + P.id + '/address', P.address);
-    showToast('✅ Location saved! Customers in '+newRadius+'km can find you.');
+    P.radius_km = newRadius;
+    localStorage.setItem('hs_current_provider',JSON.stringify(P));
+    // Save to MySQL so customer radar uses updated location/radius
+    provApi('/providers.php?action=update', { lat:newLat, lng:newLng, radius_km:newRadius, address:P.address||'' }).then(function(res){
+      showToast(res.success ? '✅ Location saved! Customers in '+newRadius+'km can find you.' : '⚠️ Location not saved: ' + (res.error || 'server error'));
+    });
   }
 }
 
 // ════════ RATINGS ════════
 function loadRatings() {
   _renderRatings(); // render cached immediately — never blank
-  if (typeof fbRead !== 'function' || !P || !P.id) { return; }
-  Promise.resolve(fbRead('provider_reviews/' + P.id)).then(function(pData) {
-    var collected = [];
-    if (pData) Object.keys(pData).forEach(function(k){ var r=pData[k]||{}; if(Number(r.stars)>0) collected.push(_normReview(r,k)); });
-    return Promise.resolve(fbRead('reviews')).then(function(allData) {
-      if (allData) Object.keys(allData).forEach(function(k){
-        var r=allData[k]||{};
-        if(Number(r.stars)>0 && r.providerId===P.id && !collected.find(function(x){return x.bookingId===(r.bookingId||k);})) collected.push(_normReview(r,k));
-      });
+  if (!P || !P.id) { return; }
+  fetch(HS_API + '/reviews.php?action=provider&id=' + encodeURIComponent(P.id)).then(function(r){ return r.json(); }).then(function(res) {
+    var collected = (res && res.success && Array.isArray(res.data)) ? res.data.map(_normApiReview).filter(function(r){ return r.stars > 0; }) : [];
+    return Promise.resolve(null).then(function() {
       var prev=getReviews(),prevIds={};prev.forEach(function(r){prevIds[r.bookingId]=true;});
       var newOnes=collected.filter(function(r){return !prevIds[r.bookingId];});
       if(collected.length) _REVIEWS = collected;
@@ -2807,11 +2879,11 @@ function _renderRatings() {
   document.getElementById('reviewsList').innerHTML = reviews.length
     ? reviews.map(r=>`<div style="border:1.5px solid var(--border);border-radius:9px;padding:11px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <strong style="font-size:13px">${r.customer}</strong>
-          <span style="color:#f59e0b;font-size:13px">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+          <strong style="font-size:13px">${esc(r.customer)}</strong>
+          <span style="color:#f59e0b;font-size:13px">${'★'.repeat(Math.max(0,Math.min(5,r.stars|0)))}${'☆'.repeat(5-Math.max(0,Math.min(5,r.stars|0)))}</span>
         </div>
-        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">${r.text}</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:700">${r.date}</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">${esc(r.text)}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700">${esc(r.date)}</div>
       </div>`).join('')
     : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px;font-weight:700">No reviews yet</div>';
 }
@@ -2830,7 +2902,7 @@ function loadNotifications() {
   document.getElementById('notifList').innerHTML = notifs.map(n=>`
     <div class="notif-item ${n.unread?'unread':''}">
       <div class="notif-icon-wrap ${n.type}">${n.icon}</div>
-      <div style="flex:1"><div class="notif-title">${n.title}</div><div class="notif-sub">${n.sub}</div><div class="notif-time">${n.time}</div></div>
+      <div style="flex:1"><div class="notif-title">${esc(n.title)}</div><div class="notif-sub">${esc(n.sub)}</div><div class="notif-time">${esc(n.time)}</div></div>
       ${n.unread?'<div class="unread-dot"></div>':''}
     </div>`).join('') || '<div style="text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:700">No notifications</div>';
 }
@@ -2844,8 +2916,10 @@ function toggleAvailability() {
     all[idx].available=isOn; P=all[idx];
     if(all&&all[0]) P = all[0];
     localStorage.setItem('hs_current_provider',JSON.stringify(P));
-    // Sync to Firebase so customer radar and admin see live status
-    fbWrite('providers/' + P.id + '/available', isOn);
+    // Sync to MySQL so customer radar and admin see live status
+    provApi('/providers.php?action=available', { available: isOn }).then(function(res){
+      if (!res.success) showToast('⚠️ Status not saved on server: ' + (res.error || 'error'));
+    });
   }
   updateAvailLabel();
   showToast(isOn?'🟢 You are now AVAILABLE for bookings!':'🔴 You are now UNAVAILABLE');
@@ -2923,19 +2997,51 @@ function startBookingPoller() {
   bookingPoller = setInterval(checkForNewBookings, 5000);
 }
 
+// Normalise a MySQL booking row (bookings.php) to the shape the alert UI uses
+function _normOpenBooking(r) {
+  return Object.assign({}, r, {
+    id:       r.id,
+    service:  r.svc_name || r.service || '',
+    svcId:    r.svc_id || r.svcId || '',
+    customer: r.customer_name || r.customer || 'Customer',
+    phone:    r.customer_phone || r.phone || '',
+    lat:      Number(r.lat) || 0,
+    lng:      Number(r.lng) || 0,
+    address:  r.address || '',
+    date:     r.slot_date || r.date || '',
+    time:     r.slot_time || r.time || '',
+    priceVal: Number(r.quoted_price || r.final_price || r.amount || r.priceVal || 0) || 0,
+    acceptedBy: (r.provider_id && r.provider_id !== P.id) ? { id: r.provider_id, name: r.provider_name || 'Another provider' } : null
+  });
+}
+
 async function checkForNewBookings() {
   try {
-    var data = await fbRead('active_bookings');
-    if (!data) return;
+    var res = await provApi('/bookings.php?action=open&limit=50');
+    if (!res || !res.success || !Array.isArray(res.data)) return;
+    var rows = res.data.map(_normOpenBooking);
 
-    var provLat      = P.lat || 17.3850;
-    var provLng      = P.lng || 78.4867;
-    var provServices = (P.services || []).map(function(s){ return (s.name||'').toLowerCase(); });
-    var provRadius   = P.radius || 10;
+    var provLat      = Number(P.lat) || 17.3850;
+    var provLng      = Number(P.lng) || 78.4867;
+    var provServices = (P.services || []).map(function(s){ return (s.name||s.svc_name||'').toLowerCase(); }).filter(Boolean);
+    var provSvcIds   = (P.services || []).map(function(s){ return s.svc_id || s.id || ''; }).filter(Boolean);
+    var provRadius   = Number(P.radius_km || P.radius) || 10;
 
-    var keys = Object.keys(data);
-    for (var i = 0; i < keys.length; i++) {
-      var bk = data[keys[i]];
+    // A booking we are alerting on that is no longer in the open list was taken / cancelled
+    var openIds = {}; rows.forEach(function(r){ openIds[r.id] = true; });
+    Object.keys(seenBookingIds).forEach(function(id){
+      if (seenBookingIds[id] === 'alerting' && !openIds[id] && pendingBooking && pendingBooking.id === id) {
+        saveSeenId(id, 'taken');
+        clearInterval(alertCountdown);
+        document.getElementById('incomingAlert').style.display = 'none';
+        sessionStorage.removeItem('hs_alert');
+        pendingBooking = null;
+        showJobTakenPopup('Another provider');
+      }
+    });
+
+    for (var i = 0; i < rows.length; i++) {
+      var bk = rows[i];
       if (!bk || !bk.id) continue;
 
       // ── If this booking is currently showing in our alert, check if
@@ -2961,9 +3067,9 @@ async function checkForNewBookings() {
       var dist = haversineKm(provLat, provLng, custLat, custLng);
       if (dist > provRadius) continue;
 
-      if (provServices.length > 0) {
+      if (provServices.length > 0 || provSvcIds.length > 0) {
         var reqSvc = (bk.service || '').toLowerCase();
-        var matches = provServices.some(function(s){
+        var matches = (bk.svcId && provSvcIds.indexOf(bk.svcId) > -1) || provServices.some(function(s){
           return reqSvc.includes(s) || s.includes(reqSvc.split(' ')[0]);
         });
         if (!matches) continue;
@@ -3039,16 +3145,16 @@ function resumeAlertIfActive() {
     var _rsumHtml = '';
     if (bk.summary && bk.summary.length > 0) {
       _rsumHtml = '<br/><strong>Selected:</strong> ' + bk.summary.map(function(s){
-        return '<span style="display:inline-block;margin:2px 2px 0;padding:2px 8px;background:#e6f4f6;border:1px solid #1B6B7A;border-radius:100px;font-size:11px;font-weight:700;color:#1B6B7A;">✓ '+s+'</span>';
+        return '<span style="display:inline-block;margin:2px 2px 0;padding:2px 8px;background:#e6f4f6;border:1px solid #1B6B7A;border-radius:100px;font-size:11px;font-weight:700;color:#1B6B7A;">✓ '+esc(s)+'</span>';
       }).join('');
     }
     document.getElementById('alertDetail').innerHTML =
-      '<strong>Customer:</strong> '+(bk.customer||'')+'<br/>'+
-      '<strong>Service:</strong> '+bk.service+_rsumHtml+'<br/>'+
-      '<strong>Distance:</strong> '+ds+' away<br/>'+
-      '<strong>Address:</strong> '+(bk.address||'')+'<br/>'+
-      '<strong>Date:</strong> '+bk.date+' at '+bk.time+'<br/>'+
-      '<strong>Amount:</strong> &#8377;'+(bk.priceVal||bk.price||'');
+      '<strong>Customer:</strong> '+esc(bk.customer||'')+'<br/>'+
+      '<strong>Service:</strong> '+esc(bk.service)+_rsumHtml+'<br/>'+
+      '<strong>Distance:</strong> '+esc(ds)+' away<br/>'+
+      '<strong>Address:</strong> '+esc(bk.address||'')+'<br/>'+
+      '<strong>Date:</strong> '+esc(bk.date||'')+' at '+esc(bk.time||'')+'<br/>'+
+      '<strong>Amount:</strong> &#8377;'+esc(bk.priceVal||bk.price||'');
     runAlertCountdown(remaining);
   } catch(e) { sessionStorage.removeItem('hs_alert'); }
 }
@@ -3114,6 +3220,7 @@ function showRealBookingAlert(bk, dist) {
     date:        bk.date || '',
     time:        bk.time || '',
     amount:      bk.priceVal || 0,
+    svcId:       bk.svcId || bk.svc_id || '',
     status:      'pending',
     customerLat: bk.lat,
     customerLng: bk.lng,
@@ -3127,16 +3234,16 @@ function showRealBookingAlert(bk, dist) {
   var _sumHtml = '';
   if (bk.summary && bk.summary.length > 0) {
     _sumHtml = '<br/><strong>Selected:</strong> ' + bk.summary.map(function(s){
-      return '<span style="display:inline-block;margin:2px 2px 0;padding:2px 8px;background:#e6f4f6;border:1px solid #1B6B7A;border-radius:100px;font-size:11px;font-weight:700;color:#1B6B7A;">✓ '+s+'</span>';
+      return '<span style="display:inline-block;margin:2px 2px 0;padding:2px 8px;background:#e6f4f6;border:1px solid #1B6B7A;border-radius:100px;font-size:11px;font-weight:700;color:#1B6B7A;">✓ '+esc(s)+'</span>';
     }).join('');
   }
   document.getElementById('alertDetail').innerHTML =
-    '<strong>Customer:</strong> '+bk.customer+'<br/>'+
-    '<strong>Service:</strong> '+bk.service+_sumHtml+'<br/>'+
-    '<strong>Distance:</strong> '+distStr+' away<br/>'+
-    '<strong>Address:</strong> '+(bk.address||'—')+'<br/>'+
-    '<strong>Date:</strong> '+bk.date+' at '+bk.time+'<br/>'+
-    '<strong>Amount:</strong> ₹'+(bk.priceVal||bk.price||'—');
+    '<strong>Customer:</strong> '+esc(bk.customer)+'<br/>'+
+    '<strong>Service:</strong> '+esc(bk.service)+_sumHtml+'<br/>'+
+    '<strong>Distance:</strong> '+esc(distStr)+' away<br/>'+
+    '<strong>Address:</strong> '+esc(bk.address||'—')+'<br/>'+
+    '<strong>Date:</strong> '+esc(bk.date||'')+' at '+esc(bk.time||'')+'<br/>'+
+    '<strong>Amount:</strong> ₹'+esc(bk.priceVal||bk.price||'—');
 
   sessionStorage.setItem('hs_alert', JSON.stringify({
     id: bk.id, startTime: Date.now(), bk: JSON.stringify(bk), dist: dist
@@ -3150,93 +3257,66 @@ async function acceptNewBooking() {
   var bkId   = pendingBooking.fbKey || pendingBooking.id;
   var bkSnap = pendingBooking;
 
-  // Disable accept button immediately to prevent double-tap
   var acceptBtn = document.getElementById('acceptBtn');
-  if (acceptBtn) { acceptBtn.disabled = true; acceptBtn.textContent = 'Checking…'; }
-
-  // ── STEP 1: Read current state from Firebase (async/await) ────
-  var current = await fbRead('active_bookings/' + bkId);
-
   function reEnable() {
     if (acceptBtn) { acceptBtn.disabled = false; acceptBtn.textContent = '✅ Accept'; }
   }
 
-  if (!current) { reEnable(); showToast('⚠️ Booking no longer available.'); return; }
-
-  // Already accepted by someone else?
-  if (current.acceptedBy && current.acceptedBy.id && current.acceptedBy.id !== P.id) {
-    clearInterval(alertCountdown);
-    document.getElementById('incomingAlert').style.display = 'none';
-    saveSeenId(bkId, 'taken'); sessionStorage.removeItem('hs_alert');
-    pendingBooking = null;
-    showJobTakenPopup(current.acceptedBy.name || 'Another provider');
-    return;
+  // MySQL flow: provider accepts by quoting a price; customer then confirms it
+  var suggested = Number(bkSnap.amount) || 0;
+  if (!suggested) {
+    var mySvc = (P.services || []).find(function(s){
+      return (s.svc_id || s.id) === bkSnap.svcId || (s.name || s.svc_name) === bkSnap.service;
+    });
+    if (mySvc) suggested = Number(mySvc.min_price || mySvc.price) || 0;
   }
+  var q = prompt('Quote your price (₹) for ' + (bkSnap.service || 'this job') + ':', suggested ? String(suggested) : '');
+  if (q === null) return; // provider dismissed — keep the alert open
+  var price = parseInt(String(q).replace(/[^0-9]/g, ''), 10);
+  if (!price || price <= 0) { showToast('⚠️ Enter a valid price'); return; }
 
-  // Status changed away from 'searching'?
-  if (current.status && current.status !== 'searching') {
-    clearInterval(alertCountdown);
-    document.getElementById('incomingAlert').style.display = 'none';
-    saveSeenId(bkId, 'taken');
-    pendingBooking = null;
+  // Disable accept button immediately to prevent double-tap
+  if (acceptBtn) { acceptBtn.disabled = true; acceptBtn.textContent = 'Sending…'; }
+
+  var res = await provApi('/bookings.php?action=accept', { booking_id: bkId, quoted_price: price });
+  if (!res || !res.success) {
+    var msg = (res && res.error) || 'Could not accept booking';
+    if (/not available/i.test(msg)) {
+      clearInterval(alertCountdown);
+      document.getElementById('incomingAlert').style.display = 'none';
+      saveSeenId(bkId, 'taken'); sessionStorage.removeItem('hs_alert');
+      pendingBooking = null;
+      reEnable();
+      showJobTakenPopup('Another provider');
+      return;
+    }
     reEnable();
-    showToast('⚠️ This booking is no longer available.');
+    showToast('⚠️ ' + msg);
     return;
   }
 
-  // ── STEP 2: We won — write to Firebase ───────────────────────
   clearInterval(alertCountdown);
   document.getElementById('incomingAlert').style.display = 'none';
   saveSeenId(bkId, 'accepted'); sessionStorage.removeItem('hs_alert');
+  reEnable();
 
-  var providerInfo = {
-    id:         P.id,
-    name:       P.name,
-    phone:      P.phone || '',
-    rating:     P.rating || 4.8,
-    totalJobs:  P.totalJobs || P.completedBookings || 0,
-    lat:        P.lat || null,
-    lng:        P.lng || null,
-    acceptedAt: new Date().toISOString(),
-  };
-
-  var atomicUpdate = {
-    status:      'accepted',
-    acceptedBy:  providerInfo,
-    providerData: providerInfo,
-    providerName: P.name,
-    providerId:   P.id,
-    acceptedAt:   new Date().toISOString()
-  };
-
-  // PATCH active_bookings so customer's poller sees status=accepted
-  await fbRestPatch('active_bookings/' + bkId, atomicUpdate);
-
-  // Write full booking record
-  await fbWrite('bookings/' + bkId, Object.assign({}, bkSnap, {
-    id:           bkId,
-    providerId:   P.id,
-    providerName: P.name,
-    acceptedBy:   providerInfo,
-    providerData: providerInfo,
-    status:       'accepted',
-    acceptedAt:   new Date().toISOString(),
-    amount:       bkSnap.amount || bkSnap.priceVal || 0
-  }));
-
-  fbDelete('notifications/search_' + bkId);
-
-  // Save to local dashboard
+  // Save to local dashboard (status from server: price_quoted)
   var localBk = getBK();
   if (!localBk.find(function(b){ return b.id === bkId; })) {
-    localBk.unshift(Object.assign({}, bkSnap, atomicUpdate, { providerId: P.id }));
-    saveBK(localBk);
+    localBk.unshift(Object.assign({}, bkSnap, {
+      id: bkId, providerId: P.id, providerName: P.name,
+      status: (res.data && res.data.status) || 'price_quoted',
+      amount: price, acceptedAt: new Date().toISOString()
+    }));
+    _BK = localBk;
   }
 
   syncProviderStats();
   loadOverview(); loadAllBookings(); loadNotifications();
-  showToast('✅ Booking accepted! Customer is being notified…');
+  showToast('✅ Quote of ₹' + price + ' sent! Waiting for the customer to confirm…');
   pendingBooking = null;
+  // Refresh from server so the booking shows its real state
+  loadBKFromFirebase(function(){ loadOverview(); loadAllBookings(); });
 }
 
 function rejectNewBooking() {
@@ -3270,28 +3350,27 @@ function cancelWithdraw(id){
 }
 
 
-// Debug: test if Firebase write works (call from browser console: testFBWrite())
-function testFBWrite() {
-  fetch('https://hamaraservice.com/api/test-db.php?key=hamaraAdmin2024')
-  .then(function(r){ return r.json(); })
-  .then(function(res){ showToast(res.success ? '✅ MySQL OK — ' + res.data.message : '❌ MySQL FAILED'); })
-  .catch(function(e){ showToast('❌ MySQL ERROR: '+e.message); });
-}
-
-
-// ── Sync withdrawal status from Firebase ─────────────────────────────────────
+// ── Sync withdrawal status from MySQL (payouts.php?action=history) ─────────────
 function syncPayoutsFromFirebase(cb) {
   if (!P || !P.id) { if(cb) cb(); return; }
-  fetch('https://hamaraservice.com/api/providers.php?action=get&id=' + P.id + '/withdrawals.json?_=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(data) {
-      if (!data || typeof data !== 'object') {
-        _PAYOUTS = []; loadEarnings(); if(cb) cb(); return;
-      }
-      var entries = Object.values(data).filter(function(v){ return v && v.id; });
-      if (!entries.length) {
-        _PAYOUTS = []; loadEarnings(); if(cb) cb(); return;
-      }
+  provApi('/payouts.php?action=history&_=' + Date.now())
+    .then(function(res) {
+      if (!res || !res.success || !Array.isArray(res.data)) { if(cb) cb(); return; }
+      var entries = res.data.map(function(r){
+        return {
+          id:          String(r.id),
+          providerId:  P.id,
+          providerName: P.name || P.id,
+          amount:      Number(r.amount) || 0,
+          accountType: r.account_type || 'upi',
+          account:     r.upi_id || r.account_no || '',
+          upi:         r.upi_id || '',
+          status:      r.status || 'pending',
+          requestedAt: r.requested_at || null,
+          processedAt: r.processed_at || null,
+          note:        r.note || ''
+        };
+      });
       var notified = {};
       try { notified = JSON.parse(sessionStorage.getItem('hs_wd_notified')||'{}'); } catch(e){}
       entries.forEach(function(fb) {
@@ -3304,34 +3383,16 @@ function syncPayoutsFromFirebase(cb) {
             setTimeout((function(e){ return function(){ showWdPopup(e); }; })(fb), 400);
         }
       });
-      sessionStorage.setItem('hs_wd_notified', JSON.stringify(notified));
+      try { sessionStorage.setItem('hs_wd_notified', JSON.stringify(notified)); } catch(e){}
       _PAYOUTS = entries;
       loadEarnings(); if(cb) cb();
-    })
-    .catch(function(){ if(cb) cb(); });
+    });
 }
 
 // ── Admin reset signal listener ───────────────────────────────────────────────
-function startResetListener() {
-  var _last = sessionStorage.getItem('hs_last_reset') || '0';
-  function check() {
-    // Reset check removed — no Firebase needed
-fetch('https://hamaraservice.com/api/test-db.php?_=' + Date.now())
-      .then(function(r){ return r.json(); })
-      .then(function(d) {
-        if (!d || !d.ts) return;
-        var ts = String(d.ts);
-        if (ts !== _last) {
-          _last = ts; sessionStorage.setItem('hs_last_reset', ts);
-          _BK=[]; _REVIEWS=[]; _CATALOG=[]; _PRICES={}; _PAYOUTS=[];
-          loadAllBookings(); loadOverview(); loadEarnings();
-          showToast('\u{1F504} Admin reset data — refreshed.');
-        }
-      }).catch(function(){});
-  }
-  check();
-  setInterval(check, 30000);
-}
+// Previously polled test-db.php every 30 s (and used the admin key). There is no
+// reset endpoint in the MySQL API, so this is now a no-op kept for callers.
+function startResetListener() {}
 
 function processWithdraw(){
   const amt = parseInt(document.getElementById("wdAmt").value);
@@ -3346,6 +3407,7 @@ function processWithdraw(){
 
   // Create payout request
   const payouts = _PAYOUTS;
+  const isUpi = (type === 'upi' || type === 'wallet');
   const req = {
     id: "WD-"+Date.now().toString(36).toUpperCase(),
     providerId: P.id,
@@ -3354,8 +3416,8 @@ function processWithdraw(){
     amount: amt,
     account: acc,
     accountType: type,
-    upi:  type==='upi'  ? acc : '',
-    bank: type!=='upi'  ? acc : '',
+    upi:  isUpi  ? acc : '',
+    bank: !isUpi ? acc : '',
     status: "pending",
     requestedAt: new Date().toISOString(),
     processedAt: null,
@@ -3363,28 +3425,27 @@ function processWithdraw(){
   };
   payouts.push(req);
   _PAYOUTS = payouts;
-  // Submit payout request to MySQL API
-  var _jwt2 = localStorage.getItem('hs_provider_jwt') || '';
-  fetch('https://hamaraservice.com/api/payouts.php?action=request', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + _jwt2, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      amount:       req.amount,
-      account_type: req.bankType || 'upi',
-      upi_id:       req.upi || '',
-      account_no:   req.accountNo || '',
-      ifsc:         req.ifsc || '',
-      bank_name:    req.bankName || '',
-    })
-  }).then(function(r){ return r.json(); })
-  .then(function(res){
-    if(res.success){ console.log('Payout request saved to MySQL:', res.data.id); }
-    else { showToast('⚠️ ' + (res.error || 'Payout request failed')); }
-  }).catch(function(e){ showToast('⚠️ Network error — try again'); });
-
   closeModal("withdrawModal");
   loadEarnings();
-  showToast("✅ Withdrawal ₹"+amt+" requested — admin notified within 24 hrs.");
+  // Submit payout request to MySQL API
+  provApi('/payouts.php?action=request', {
+    amount:       req.amount,
+    account_type: type,
+    upi_id:       isUpi ? acc : '',
+    account_no:   isUpi ? '' : acc,
+    ifsc:         '',
+    bank_name:    type === 'wallet' ? 'wallet' : '',
+  }).then(function(res){
+    if (res.success) {
+      showToast("✅ Withdrawal ₹"+amt+" requested — admin notified within 24 hrs.");
+    } else {
+      // Roll back the optimistic entry
+      _PAYOUTS = _PAYOUTS.filter(function(x){ return x.id !== req.id; });
+      loadEarnings();
+      showToast('⚠️ ' + (res.error || 'Payout request failed'));
+    }
+    syncPayoutsFromFirebase();
+  });
 }
 
 // ════════ NAV ════════
@@ -3402,7 +3463,7 @@ function showPage(name){
 }
 
 // ════════ UTILS ════════
-function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function cap(s){s=String(s==null?'':s);return s.charAt(0).toUpperCase()+s.slice(1);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500);}
 
@@ -3435,7 +3496,10 @@ function buzz(type){
 // STEP 5: Replace the URL below
 const FB_URL = 'https://hamaraservice.com/api'; // MySQL API
 const FB_URL_ALT = 'https://hamaraservice.com/api'; // same
-const FB_ENABLED = true; // MySQL configured ✅
+// The MySQL API has no /api/<path>.json REST paths, so remote fbRead/fbWrite
+// calls always 404'd. Disabled: fbRead/fbWrite now only use sessionStorage +
+// BroadcastChannel (same device). Booking / profile / payout flows use provApi().
+const FB_ENABLED = false;
 
 // BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
 var trackChannel = null;
@@ -3867,7 +3931,9 @@ if (typeof window.mobToggleMore !== 'function') {
 }
 
 // ─── ANDROID MOBILE MODE CONTROLLER ─────────────────────────────────────────
-(function(){
+// Runs after DOMContentLoaded: #mobileNav and the drawer are declared *after*
+// this <script>, so running immediately threw "Cannot read properties of null".
+function _hsMobileModeInit(){
   // Detect mobile: width ≤ 768 OR primary input is touch
   var isMobile = window.matchMedia('(max-width:768px)').matches ||
                  window.matchMedia('(pointer:coarse)').matches;
@@ -3876,7 +3942,8 @@ if (typeof window.mobToggleMore !== 'function') {
 
   // Activate mobile mode
   document.body.classList.add('mobile-mode');
-  document.getElementById('mobileNav').style.display = 'flex';
+  var _mn = document.getElementById('mobileNav');
+  if (_mn) _mn.style.display = 'flex';
 
   // ── Sync provider name/ID into drawer ───────────────────────────────────
   function syncMobHeader(){
@@ -3980,10 +4047,13 @@ if (typeof window.mobToggleMore !== 'function') {
     var stillMobile = window.matchMedia('(max-width:768px)').matches ||
                       window.matchMedia('(pointer:coarse)').matches;
     document.body.classList.toggle('mobile-mode', stillMobile);
-    document.getElementById('mobileNav').style.display = stillMobile ? 'flex' : 'none';
+    var mn = document.getElementById('mobileNav');
+    if (mn) mn.style.display = stillMobile ? 'flex' : 'none';
   });
 
-})();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _hsMobileModeInit);
+else _hsMobileModeInit();
 
 
 
@@ -4240,7 +4310,7 @@ function showJobTakenPopup(provName) {
     '<div style="font-size:48px;margin-bottom:12px;">&#x1F614;</div>' +
     '<h3 style="font-size:17px;font-weight:800;color:#0f1117;margin-bottom:8px;">Order Already Accepted</h3>' +
     '<p style="font-size:14px;color:#6b7280;line-height:1.6;margin-bottom:18px;">' +
-    '<strong style="color:#E8251A;">'+(provName||'Another provider')+'</strong> accepted this order before you.<br/>' +
+    '<strong style="color:#E8251A;">'+esc(provName||'Another provider')+'</strong> accepted this order before you.<br/>' +
     'Wait for the next order — it is coming soon!</p>' +
     '<button id="_jtcClose" style="width:100%;padding:13px;background:#E8251A;color:white;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Got it</button>' +
     '</div>';
@@ -5374,9 +5444,15 @@ function dashInitServices() {
   _DS.loaded = true;
 
   // Load prices via fetch
-  fetch('https://hamaraservice.com/api/services.php?action=price_ranges?_='+Date.now())
+  fetch('https://hamaraservice.com/api/services.php?action=price_ranges&_='+Date.now())
     .then(function(r){ return r.json(); })
-    .then(function(d){ _DS.prices = d || {}; })
+    .then(function(d){
+      // { success, data:{ SVC001:{ min, max, admin_prices:{ sweep:{1bhk:149} } } } }
+      var data = (d && d.success && d.data) ? d.data : {};
+      var px = {};
+      Object.keys(data).forEach(function(k){ if (data[k] && data[k].admin_prices) px[k] = data[k].admin_prices; });
+      _DS.prices = px;
+    })
     .catch(function(){})
     .finally(function(){
       var banner = document.getElementById('dashSvcBanner');
@@ -5522,15 +5598,20 @@ function dashSaveSvcs() {
   var status = document.getElementById('dashSaveStatus');
   if (status) status.textContent = '⏳ Saving...';
 
-  // Save to Firebase using dashboard's fbWrite
-  fbWrite('providers/'+P.id+'/services', result);
-
   // Update localStorage so it persists on refresh
   P.services = result;
   localStorage.setItem('hs_current_provider', JSON.stringify(P));
 
-  if (status) status.textContent = '✅ Saved '+result.length+' services!';
-  showToast('✅ Services updated!');
+  // Save to MySQL
+  _saveServicesToApi(result, function(res){
+    if (res && res.success) {
+      if (status) status.textContent = '✅ Saved '+result.length+' services!';
+      showToast('✅ Services updated!');
+    } else {
+      if (status) status.textContent = '⚠️ Saved on this device only';
+      showToast('⚠️ Services not saved on server: ' + ((res && res.error) || 'error'));
+    }
+  });
 }
 </script>
 

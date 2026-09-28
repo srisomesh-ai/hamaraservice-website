@@ -591,8 +591,8 @@ function bookNow() {
     icon: "🔧",
     price: (document.getElementById("totalPrice")||{textContent:""}).textContent.replace(/[^0-9]/g,""),
     summary: (function(){ var _s=[]; document.querySelectorAll('#calcCard .calc-chip.active,[data-group].active').forEach(function(c){ var t=c.childNodes[0]&&c.childNodes[0].textContent?c.childNodes[0].textContent.trim():c.textContent.trim(); if(t) _s.push('Car Mechanic > '+t); }); return _s; })()
-  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
   }));
+  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
   var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
   var url  = 'user-booking.html?service=' + encodeURIComponent('Car Mechanic');
   if(user) { window.location.href = url; }
@@ -634,7 +634,7 @@ firebase.auth().onAuthStateChanged(function(u) {
   setInterval(load,30000);
   window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
 })();
-/script>
+</script>
 
 <script>
 /* HS-APP-MODE */
@@ -646,7 +646,7 @@ firebase.auth().onAuthStateChanged(function(u) {
   // simple in-app back bar instead
   var bar=document.createElement('div');
   bar.style.cssText='position:sticky;top:0;z-index:950;background:#0f4c5c;color:#fff;padding:12px 16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px';
-  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split('—')[0]||'Service')+'</span>';
+  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split(/\s*[—–]\s*/)[0]||'Service')+'</span>';
   document.body.insertBefore(bar, document.body.firstChild);
 })();
 </script>

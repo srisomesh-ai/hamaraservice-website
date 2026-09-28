@@ -433,6 +433,7 @@ function show(p,fromPop){
 window.addEventListener('popstate',function(e){
   if(_curPage!=='pgHome'){show('pgHome',true);}
 });
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none';},3000);}
 function api(ep,action,body,method){
   var url=API+'/'+ep+'?action='+action;
@@ -522,9 +523,9 @@ function tileHtml(s){
   var r=priceRanges[s.id];
   var pr=(r&&r.min>0)?r.min:(s.base||99);
   var img=svcImages[s.id]||('/assets/services/'+s.id+'.jpg');
-  return '<div class="svc-tile" onclick="openSvc(\''+s.id+'\')">'
-    +'<div class="ico-wrap"><img class="ico-img" src="'+img+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><span class="ico-emoji" style="display:none">'+s.icon+'</span></div>'
-    +'<div class="nm">'+s.name+'</div><div class="pr"><span class="from">from </span>₹'+pr+'</div></div>';
+  return '<div class="svc-tile" data-sid="'+esc(s.id)+'" onclick="openSvc(this.dataset.sid)">'
+    +'<div class="ico-wrap"><img class="ico-img" src="'+esc(img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><span class="ico-emoji" style="display:none">'+esc(s.icon)+'</span></div>'
+    +'<div class="nm">'+esc(s.name)+'</div><div class="pr"><span class="from">from </span>₹'+esc(pr)+'</div></div>';
 }
 function renderHome(){
   var q=($('homeSearch').value||'').trim().toLowerCase();
@@ -1111,7 +1112,7 @@ function payNow(amt){
     var b=res.data||{};
     // create order on server
     fetch('https://hamaraservice.com/api/create-order.php',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:Object.assign({'Content-Type':'application/json'},TOKEN?{'Authorization':'Bearer '+TOKEN}:{}),
       body:JSON.stringify({bookingId:activeBookingId,amount:amt,service:b.svc_name||'Home Service',customerId:ME.id||'',providerId:b.provider_id||''})
     }).then(function(r){return r.json();}).then(function(order){
       if(!order.order_id){var em=order.error||'error';if(order.details&&order.details.error&&order.details.error.description)em=order.details.error.description;toast('Could not start payment: '+em);console.error('[RZP] order error',order);return;}
@@ -1200,12 +1201,12 @@ function showBookings(){
     if(!arr.length){$('bkList').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">No bookings yet</div>';return;}
     var h='';
     arr.forEach(function(b){
-      h+='<div class="card bk-item" onclick="openBkDetail(\''+b.id+'\')">'
-        +'<div class="ic">'+(b.svc_icon||'🔧')+'</div>'
-        +'<div style="flex:1"><div style="font-weight:800;font-size:14px">'+b.svc_name+'</div>'
-        +'<div style="font-size:12px;color:var(--muted)">'+(b.created_at||'').substring(0,16)+'</div></div>'
-        +'<div style="text-align:right"><span class="badge '+b.status+'">'+b.status.replace(/_/g,' ')+'</span>'
-        +((b.confirmed_price>0||b.amount>0)?'<div style="font-weight:900;color:var(--teal);margin-top:4px">₹'+(b.confirmed_price||b.amount)+'</div>':'')
+      h+='<div class="card bk-item" data-bid="'+esc(b.id)+'" onclick="openBkDetail(this.dataset.bid)">'
+        +'<div class="ic">'+esc(b.svc_icon||'🔧')+'</div>'
+        +'<div style="flex:1"><div style="font-weight:800;font-size:14px">'+esc(b.svc_name)+'</div>'
+        +'<div style="font-size:12px;color:var(--muted)">'+esc((b.created_at||'').substring(0,16))+'</div></div>'
+        +'<div style="text-align:right"><span class="badge '+esc(b.status)+'">'+esc(String(b.status||'').replace(/_/g,' '))+'</span>'
+        +((b.confirmed_price>0||b.amount>0)?'<div style="font-weight:900;color:var(--teal);margin-top:4px">₹'+esc(b.confirmed_price||b.amount)+'</div>':'')
         +'</div></div>';
     });
     $('bkList').innerHTML=h;

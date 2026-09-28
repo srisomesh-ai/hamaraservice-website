@@ -2,11 +2,10 @@
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
 
-// Only allow with admin key
-$key = $_GET['key'] ?? '';
-if ($key !== 'hamaraAdmin2024') {
-    err('Unauthorized', 401);
-}
+// Admin only. Key via X-Admin-Key header or POST field "key" — NOT the
+// query string (URLs end up in access logs and browser history), e.g.:
+//   curl -X POST -H "X-Admin-Key: <ADMIN_KEY>" https://hamaraservice.com/api/setup.php
+requireAdmin(false);
 
 $db = getDB();
 $results = [];

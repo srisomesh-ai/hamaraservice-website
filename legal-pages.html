@@ -371,7 +371,7 @@ li{font-size:14px;color:var(--ink2);margin-bottom:6px}
   <div class="card">
     <h2>For Service Providers</h2>
     <p>Are you a skilled professional looking to join our network?</p>
-    <p>Register at: <a href="https://hamaraservice.com/provider-register.html" style="color:var(--teal)">hamaraservice.com/provider-register.html</a></p>
+    <p>Register at: <a href="https://hamaraservice.com/provider-portal.html" style="color:var(--teal)">hamaraservice.com/provider-portal.html</a></p>
     <p>Provider support: <a href="mailto:providers@hamaraservice.com" style="color:var(--teal)">providers@hamaraservice.com</a></p>
   </div>
 
@@ -390,11 +390,15 @@ function show(id, el) {
   return false;
 }
 // Show section from URL hash
+// Only known tab ids are accepted — the hash is never injected into a selector
+var LEGAL_TABS = ['refund', 'privacy', 'terms', 'contact'];
 var hash = location.hash.replace('#','');
-if (hash) {
-  var el = document.getElementById(hash);
-  var nav = document.querySelector('[onclick*="'+hash+'"]');
-  if (el) show(hash, nav);
+if (LEGAL_TABS.indexOf(hash) !== -1) {
+  var nav = null;
+  document.querySelectorAll('.page-nav a').forEach(function(a){
+    if ((a.getAttribute('onclick') || '').indexOf("'" + hash + "'") !== -1) nav = a;
+  });
+  show(hash, nav);
 }
 </script>
 

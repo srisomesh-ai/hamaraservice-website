@@ -663,9 +663,9 @@ fbAuth.onAuthStateChanged(function(u) {
 });
 
 
-// After login — always go to user-panel.html
+// After login — go to user-panel.html. hs_after_login is intentionally kept:
+// user-panel.html reads it and forwards to the page that sent the user here.
 function goAfterLogin() {
-  sessionStorage.removeItem('hs_after_login');
   window.location.replace('user-panel.html');
 }
 // ── UI ────────────────────────────────────────────────────────────────────────
@@ -837,7 +837,7 @@ function doLogin() {
     })
     .catch(function(e) {
     btn.classList.remove('loading'); btn.disabled=false;
-    if (e.code==='auth/user-not-found'||e.code==='auth/invalid-credential') {
+    if (e.code==='auth/user-not-found') {
       switchTab('reg');
       document.getElementById('rEmail').value = email;
       vEmail();
@@ -846,6 +846,7 @@ function doLogin() {
     }
     var m = {
       'auth/wrong-password':'Incorrect password.',
+      'auth/invalid-credential':'Incorrect email or password.',
       'auth/invalid-email':'Invalid email.',
       'auth/too-many-requests':'Too many attempts. Wait a few minutes.',
       'auth/user-disabled':'This account has been suspended.'

@@ -1,18 +1,27 @@
 <?php
 // HamaraService Push Notification Sender
 // Place at: hamaraservice.com/api/send_notification.php
-// Requires: service-account.json in same folder
+//
+// Service account JSON path comes from config: SERVICE_ACCOUNT_PATH
+// (keep the file OUTSIDE the web root — see api/config.example.php).
+//
+// Direct HTTP use requires the admin key (X-Admin-Key) or a valid
+// provider / customer token (Authorization: Bearer ...).
+// When included by another script (notify_booking.php) only the
+// functions below are defined; the request handler does not run.
 
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+require_once __DIR__ . '/db.php';
 
 // ── Load service account ──────────────────────────────────────
-$serviceAccountPath = __DIR__ . '/service-account.json';
-if (!file_exists($serviceAccountPath)) {
-    echo json_encode(['error' => 'Service account not found']);
-    exit;
+function loadServiceAccount() {
+    $path = SERVICE_ACCOUNT_PATH;
+    if ($path === '' || !is_file($path) || !is_readable($path)) {
+        error_log('HamaraService: SERVICE_ACCOUNT_PATH not configured or unreadable');
+        return null;
+    }
+    $sa = json_decode((string)file_get_contents($path), true);
+    return (is_array($sa) && !empty($sa['private_key']) && !empty($sa['client_email'])) ? $sa : null;
 }
-$serviceAccount = json_decode(file_get_contents($serviceAccountPath), true);
 
 // ── Get OAuth2 access token ──────────────────────────────────
 function getAccessToken($serviceAccount) {
@@ -33,22 +42,25 @@ function getAccessToken($serviceAccount) {
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
         CURLOPT_POSTFIELDS => http_build_query([
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion'  => $jwt,
         ]),
     ]);
-    $response = json_decode(curl_exec($ch), true);
+    $response = json_decode((string)curl_exec($ch), true);
     curl_close($ch);
     return $response['access_token'] ?? null;
 }
 
-function base64url_encode($data) {
-    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+if (!function_exists('base64url_encode')) {
+    function base64url_encode($data) {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
 }
 
 // ── Send FCM notification ────────────────────────────────────
-function sendFCM($token, $title, $body, $data = [], $serviceAccount) {
+function sendFCM($token, $title, $body, $data, $serviceAccount) {
     $accessToken = getAccessToken($serviceAccount);
     if (!$accessToken) return ['error' => 'Could not get access token'];
 
@@ -82,7 +94,7 @@ function sendFCM($token, $title, $body, $data = [], $serviceAccount) {
                     ],
                 ],
             ],
-            'data' => array_map('strval', $data),
+            'data' => array_map('strval', array_filter((array)$data, 'is_scalar')),
         ],
     ];
 
@@ -90,30 +102,36 @@ function sendFCM($token, $title, $body, $data = [], $serviceAccount) {
     curl_setopt_array($ch, [
         CURLOPT_POST           => true,
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
         CURLOPT_HTTPHEADER     => [
             'Authorization: Bearer ' . $accessToken,
             'Content-Type: application/json',
         ],
         CURLOPT_POSTFIELDS => json_encode($message),
     ]);
-    $response = json_decode(curl_exec($ch), true);
+    $response = json_decode((string)curl_exec($ch), true);
     curl_close($ch);
     return $response;
 }
 
-// ── Main: receive request and send notification ──────────────
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) $input = $_POST;
+// ── Main: only when this file is the requested script ────────
+if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
+    setCorsHeaders();
+    if (!isAdminRequest() && !resolveAuth()) err('Unauthorized', 401);
 
-$token  = $input['token']  ?? '';
-$title  = $input['title']  ?? 'HamaraService';
-$body   = $input['body']   ?? '';
-$data   = $input['data']   ?? [];
+    $input = getBody();
+    if (!$input) $input = $_POST;
 
-if (empty($token) || empty($body)) {
-    echo json_encode(['error' => 'token and body required']);
-    exit;
+    $token  = (string)($input['token']  ?? '');
+    $title  = (string)($input['title']  ?? 'HamaraService');
+    $body   = (string)($input['body']   ?? '');
+    $data   = is_array($input['data'] ?? null) ? $input['data'] : [];
+
+    if ($token === '' || $body === '') err('token and body required');
+
+    $serviceAccount = loadServiceAccount();
+    if (!$serviceAccount) err('Push service not configured', 500);
+
+    $result = sendFCM($token, $title, $body, $data, $serviceAccount);
+    echo json_encode($result);
 }
-
-$result = sendFCM($token, $title, $body, $data, $serviceAccount);
-echo json_encode($result);

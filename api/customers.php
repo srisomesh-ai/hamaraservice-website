@@ -14,6 +14,10 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
+runMigrationsOnce($db, 'customers_v1', [
+  "ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''",
+]);
+
 switch ($action) {
 
   // ── REGISTER / UPSERT ─────────────────────────────────
@@ -27,16 +31,15 @@ switch ($action) {
     $email = strtolower(trim($b['email'] ?? ''));
     $pwd   = $b['password'] ?? '';
     if (empty($name) || empty($email) || empty($pwd)) err('name, email, password required');
-    if (strlen($pwd) < 4) err('Password too short');
-
-    try { $db->exec("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) err('Invalid email address');
+    if (strlen($pwd) < 6) err('Password must be at least 6 characters');
 
     // Email must not exist
     $chk = $db->prepare("SELECT id FROM customers WHERE email = ? LIMIT 1");
     $chk->execute([$email]);
     if ($chk->fetch()) err('Email already registered. Please login.');
 
-    $id = 'HS-CUST-' . strtoupper(substr(preg_replace('/[^a-z]/','',explode('@',$email)[0]).'xxxx',0,4)) . rand(100000,999999);
+    $id = 'HS-CUST-' . strtoupper(substr(preg_replace('/[^a-z]/','',explode('@',$email)[0]).'xxxx',0,4)) . random_int(100000,999999);
     $db->prepare("
       INSERT INTO customers (id, name, phone, email, password_hash, auth_method)
       VALUES (?, ?, ?, ?, ?, 'web')
@@ -53,20 +56,26 @@ switch ($action) {
     $pwd   = $b['password'] ?? '';
     if (empty($email) || empty($pwd)) err('email and password required');
 
-    try { $db->exec("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
-
     $stmt = $db->prepare("SELECT * FROM customers WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $c = $stmt->fetch();
     if (!$c) err('NOT_REGISTERED', 404);
-    if (empty($c['password_hash']) || !password_verify($pwd, $c['password_hash'])) {
-      // allow plain match upgrade
-      if ($pwd === ($c['password_hash'] ?? '__nope__')) {
+    // bcrypt; a legacy plain-text value is accepted once and re-hashed.
+    // Accounts with no password (Firebase/Google sign-in) cannot web-login.
+    $stored = (string)($c['password_hash'] ?? '');
+    $algo   = $stored !== '' ? password_get_info($stored)['algo'] : null;
+    $isHash = $algo !== null && $algo !== 0;
+    if ($isHash) {
+      if (!password_verify($pwd, $stored)) err('Incorrect password', 401);
+      if (password_needs_rehash($stored, PASSWORD_BCRYPT)) {
         $db->prepare("UPDATE customers SET password_hash = ? WHERE id = ?")
            ->execute([password_hash($pwd, PASSWORD_BCRYPT), $c['id']]);
-      } else {
-        err('Incorrect password', 401);
       }
+    } elseif ($stored !== '' && hash_equals($stored, $pwd)) {
+      $db->prepare("UPDATE customers SET password_hash = ? WHERE id = ?")
+         ->execute([password_hash($pwd, PASSWORD_BCRYPT), $c['id']]);
+    } else {
+      err('Incorrect password', 401);
     }
     $token = makeJWT(['type'=>'customer','uid'=>$c['id'],'email'=>$email,'name'=>$c['name']]);
     ok(['token'=>$token, 'customer'=>[
@@ -174,7 +183,7 @@ switch ($action) {
     $b = getBody();
     $old = $b['old_password'] ?? '';
     $new = $b['new_password'] ?? '';
-    if (strlen($new) < 4) err('New password too short');
+    if (strlen($new) < 6) err('New password must be at least 6 characters');
     $stmt = $db->prepare("SELECT password_hash FROM customers WHERE id = ? LIMIT 1");
     $stmt->execute([$user['uid']]);
     $row = $stmt->fetch();

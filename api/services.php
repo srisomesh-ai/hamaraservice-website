@@ -12,17 +12,20 @@
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
 
-// Global error handler — always return JSON even on fatal errors
+// Global error handler — always return JSON even on fatal errors.
+// Details go to the server error log, never to the client.
 set_exception_handler(function($e) {
+  error_log('services.php: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
   http_response_code(500);
-  echo json_encode(['success' => false, 'error' => 'Server: ' . $e->getMessage()]);
+  echo json_encode(['success' => false, 'error' => 'Server error']);
   exit;
 });
 register_shutdown_function(function() {
   $err = error_get_last();
   if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+    error_log('services.php fatal: ' . $err['message'] . ' @ ' . $err['file'] . ':' . $err['line']);
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Fatal: ' . $err['message']]);
+    echo json_encode(['success' => false, 'error' => 'Server error']);
   }
 });
 
@@ -35,6 +38,12 @@ if ($action === 'version') {
 }
 
 $db     = getDB();
+
+runMigrationsOnce($db, 'services_v1', [
+  "ALTER TABLE services ADD COLUMN price_data JSON NULL",
+  "ALTER TABLE services ADD COLUMN min_price INT NOT NULL DEFAULT 0",
+  "ALTER TABLE services ADD COLUMN max_price INT NOT NULL DEFAULT 0",
+]);
 
 function buildPriceRanges($db, $city = '') {
   /* 1. Provider-set ranges (what approved providers actually charge) */
@@ -63,7 +72,6 @@ function buildPriceRanges($db, $city = '') {
     ];
   }
   /* 2. Admin reference + min/max per option */
-  try { $db->exec("ALTER TABLE services ADD COLUMN price_data JSON NULL"); } catch (Throwable $e) {}
   foreach ($db->query("SELECT id, price_data FROM services WHERE price_data IS NOT NULL")->fetchAll() as $row) {
     $pd = json_decode($row['price_data'], true);
     if (!$pd) continue;
@@ -187,7 +195,11 @@ switch ($action) {
         id         VARCHAR(20) PRIMARY KEY,
         name       VARCHAR(120) NOT NULL DEFAULT '',
         icon       VARCHAR(10)  NOT NULL DEFAULT '',
-        cat        VARCHAR(60)  NOT NULL DEFAULT '',
+        category   VARCHAR(50)  NULL,
+        base_price INT NOT NULL DEFAULT 0,
+        description TEXT NULL,
+        is_active  TINYINT(1) NOT NULL DEFAULT 1,
+        sort_order INT NOT NULL DEFAULT 0,
         min_price  INT NOT NULL DEFAULT 0,
         max_price  INT NOT NULL DEFAULT 0,
         price_data JSON NULL
@@ -260,7 +272,11 @@ switch ($action) {
         id         VARCHAR(20) PRIMARY KEY,
         name       VARCHAR(120) NOT NULL DEFAULT '',
         icon       VARCHAR(10)  NOT NULL DEFAULT '',
-        cat        VARCHAR(60)  NOT NULL DEFAULT '',
+        category   VARCHAR(50)  NULL,
+        base_price INT NOT NULL DEFAULT 0,
+        description TEXT NULL,
+        is_active  TINYINT(1) NOT NULL DEFAULT 1,
+        sort_order INT NOT NULL DEFAULT 0,
         min_price  INT NOT NULL DEFAULT 0,
         max_price  INT NOT NULL DEFAULT 0,
         price_data JSON NULL

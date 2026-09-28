@@ -10,47 +10,60 @@ setCorsHeaders();
 $action = $_GET["action"] ?? "";
 $db     = getDB();
 
+runMigrationsOnce($db, "reviews_v1", [
+  "ALTER TABLE bookings ADD COLUMN rating INT NULL",
+  "ALTER TABLE bookings ADD COLUMN review TEXT NULL",
+  // one review per booking (silently skipped if legacy duplicates exist)
+  "ALTER TABLE reviews ADD UNIQUE KEY uniq_review_booking (booking_id)",
+]);
+
 switch ($action) {
 
   case "submit": {
     $user = requireCustomer();
     $b    = getBody();
     $bookingId  = $b["booking_id"]  ?? "";
-    $providerId = $b["provider_id"] ?? "";
     $rating     = (int)($b["rating"] ?? 0);
-    $comment    = $b["comment"] ?? "";
+    $comment    = trim((string)($b["comment"] ?? ""));
 
-    if (empty($bookingId) || empty($providerId)) err("booking_id and provider_id required");
+    if (empty($bookingId)) err("booking_id required");
     if ($rating < 1 || $rating > 5) err("rating must be 1-5");
 
+    // Booking must belong to this customer and be completed; the provider
+    // comes from the booking, never from the client.
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
+    $stmt->execute([$bookingId, $user["uid"]]);
+    $bk = $stmt->fetch();
+    if (!$bk) err("Booking not found", 404);
+    if ($bk["status"] !== "completed") err("Booking not completed yet");
+    $providerId = $bk["provider_id"] ?? "";
+    if (empty($providerId)) err("Booking has no provider");
+    if (!empty($b["provider_id"]) && (string)$b["provider_id"] !== (string)$providerId) err("provider_id does not match booking");
+
+    // One review per booking
+    $dup = $db->prepare("SELECT id FROM reviews WHERE booking_id = ? LIMIT 1");
+    $dup->execute([$bookingId]);
+    if ($dup->fetch() || !empty($bk["rating"])) err("Already reviewed", 409);
+
+    $db->beginTransaction();
+    // Claim the booking's rating slot first (guards against concurrent submits)
+    $claim = $db->prepare("UPDATE bookings SET rating = ?, review = ? WHERE id = ? AND rating IS NULL");
+    $claim->execute([$rating, $comment, $bookingId]);
+    if ($claim->rowCount() === 0) { $db->rollBack(); err("Already reviewed", 409); }
+
     // Save review
-    $stmt = $db->prepare("
+    $db->prepare("
       INSERT INTO reviews (booking_id, customer_id, provider_id, rating, comment)
       VALUES (?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE rating=VALUES(rating), comment=VALUES(comment)
-    ");
-    $stmt->execute([$bookingId, $user["uid"], $providerId, $rating, $comment]);
-
-    // Mark booking as rated
-    $db->prepare("UPDATE bookings SET status = "reviewed" WHERE id = ?")
-       ->execute([$bookingId]);
+    ")->execute([$bookingId, $user["uid"], $providerId, $rating, $comment]);
+    $db->commit();
 
     // Recalculate provider average rating
-    $avg = $db->prepare("
-      SELECT AVG(rating) as avg_rating, COUNT(*) as total
-      FROM reviews WHERE provider_id = ?
-    ");
-    $avg->execute([$providerId]);
-    $row = $avg->fetch();
+    // (booking status is left as 'completed' — setting it to 'reviewed' made the
+    //  booking look "active" and blocked the customer from booking again)
+    $newAvg = recomputeProviderRating($db, $providerId);
 
-    $db->prepare("UPDATE providers SET rating = ?, review_count = ? WHERE id = ?")
-       ->execute([
-         round($row["avg_rating"], 1),
-         $row["total"],
-         $providerId
-       ]);
-
-    ok(["submitted" => true, "new_avg" => round($row["avg_rating"], 1)]);
+    ok(["submitted" => true, "new_avg" => $newAvg]);
   }
 
   case "provider": {

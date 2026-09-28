@@ -1092,7 +1092,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a href="legal-pages.html#privacy">Privacy Policy</a>
         <a href="legal-pages.html#terms">Terms & Conditions</a>
         <a href="legal-pages.html#refund">Refund Policy</a>
-        <a href="tel:+918898584971">📞 88985849710</a>
+        <a href="tel:+918985849710">📞 +91 89858 49710</a>
         <a href="mailto:support@hamaraservice.com">✉️ support@hamaraservice.com</a>
       </div>
     </div>
@@ -1119,88 +1119,6 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
       </div>
       <div class="addr-display" id="addrDisplay">📍 Click on the map or use GPS to set your location</div>
       <button class="map-confirm-btn" onclick="confirmLocation()">Confirm Location</button>
-    </div>
-  </div>
-</div>
-
-<!-- ─── AUTH MODAL ─── -->
-<div class="modal-overlay" id="authModal">
-  <div class="auth-modal-box">
-    <div class="auth-body">
-      <button onclick="closeAuthModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;">✕</button>
-
-      <div id="authLoginView">
-        <div class="auth-title">Welcome back 👋</div>
-        <div class="auth-sub">Sign in to track bookings and manage your account</div>
-
-        <!-- Google Sign-In -->
-        <button onclick="signInWithGoogle()" id="googleSignInBtn" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Continue with Google
-        </button>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-          <span style="font-size:12px;color:var(--muted);font-weight:600;">or</span>
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-        </div>
-
-        <!-- Email login -->
-        <div class="auth-err" id="loginErr"></div>
-        <div style="display:flex;flex-direction:column;gap:11px;">
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile Number or Email</label>
-            <input type="text" id="loginId" placeholder="Mobile number or email address" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Name (as registered)</label>
-            <input type="text" id="loginName" placeholder="Your full name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'" onkeydown="if(event.key==='Enter')doLogin()"/>
-          </div>
-          <button onclick="doLogin()" class="auth-submit">Log in →</button>
-        </div>
-        <div class="auth-alt">New here? <a onclick="closeAuthModal();window.location.href='login.html';" style="cursor:pointer;">Create free account</a></div>
-      </div>
-
-      <div id="authRegView" style="display:none;">
-        <div class="auth-title">Create account ✨</div>
-        <div class="auth-sub">Track bookings, get offers and manage your services</div>
-
-        <!-- Google Sign-Up -->
-        <button onclick="signInWithGoogle()" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Sign up with Google
-        </button>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-          <span style="font-size:12px;color:var(--muted);font-weight:600;">or sign up with mobile</span>
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div class="auth-2col">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Full Name</label>
-              <input type="text" id="regName" placeholder="Your name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile</label>
-              <input type="tel" id="regPhone" placeholder="10-digit" maxlength="10" inputmode="numeric" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-            </div>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email (optional)</label>
-            <input type="email" id="regEmail" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">City</label>
-            <input type="text" id="regCity" placeholder="e.g. Hyderabad" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-          </div>
-          <button onclick="doRegister()" class="auth-submit">Create Account →</button>
-        </div>
-        <div class="auth-alt">Have an account? <a onclick="switchAuthTab('login')">Log in</a></div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -1257,9 +1175,13 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     var fbAuth = firebase.auth();
     var fbDB   = firebase.database();
     // Google provider
-    var googleProvider = new firebase.auth.GoogleAuthProvider();
-    googleProvider.addScope('email');
-    googleProvider.addScope('profile');
+
+// Escape untrusted strings before interpolating them into innerHTML
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
   
 
 
@@ -1440,10 +1362,10 @@ function liveSearchFn(q) {
   }
   dd.innerHTML = results.map(function(s, i) {
     return '<div data-svc="'+encodeURIComponent(s.name)+'" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background=\'#fff1f0\'" onmouseout="this.style.background=\'\'">'+
-      '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
+      '<span style="font-size:22px;flex-shrink:0;">'+esc(s.emoji)+'</span>'+
       '<div style="flex:1;">'+
-        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
-        '<div style="font-size:12px;font-weight:600;color:#00956a;">₹'+s.price+'</div>'+
+        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+esc(s.name)+'</div>'+
+        '<div style="font-size:12px;font-weight:600;color:#00956a;">₹'+esc(s.price)+'</div>'+
       '</div>'+
       '<span style="font-size:13px;font-weight:700;color:#E8651A;flex-shrink:0;">View →</span>'+
     '</div>';
@@ -1459,8 +1381,7 @@ function pickService(name) {
   selectedServiceName = name;
   document.getElementById('heroSearchInput').value = name;
   document.getElementById('srchDrop').style.display = 'none';
-  var page = SVC_PAGE_MAP[name] || ('service-detail.html?service=' + encodeURIComponent(name));
-  window.location.href = page;
+  window.location.href = svcPageFor(name);
 }
 
 function pickFirstResult() {
@@ -1505,8 +1426,15 @@ function heroSearch(){
     return;
   }
   // Go to service detail page — no login required to browse details
-  var page = SVC_PAGE_MAP[svc] || ('service-detail.html?service=' + encodeURIComponent(svc));
-  window.location.href = page;
+  window.location.href = svcPageFor(svc);
+}
+// Dedicated svc-*.html page for a service name; unknown names → generic services.html detail page
+function svcPageFor(name){
+  if (SVC_PAGE_MAP[name]) return SVC_PAGE_MAP[name];
+  var n = String(name||'').toLowerCase().trim();
+  var hit = Object.keys(SVC_PAGE_MAP).find(function(k){ return k.toLowerCase() === n; })
+         || Object.keys(SVC_PAGE_MAP).find(function(k){ var kl=k.toLowerCase(); return n.length>=3 && (kl.indexOf(n)!==-1 || n.indexOf(kl)!==-1); });
+  return hit ? SVC_PAGE_MAP[hit] : ('services.html?service=' + encodeURIComponent(name||''));
 }
 var SVC_PAGE_MAP = {
   'House Maid': 'svc-house-maid.html',
@@ -1544,9 +1472,8 @@ var SVC_PAGE_MAP = {
 
 function openService(slug){
   var name = decodeURIComponent(slug);
-  // Known services → dedicated page; admin-added new services → generic detail page
-  var page = SVC_PAGE_MAP[name] || ('service-detail.html?service=' + encodeURIComponent(name));
-  window.location.href = page;
+  // Known services → dedicated page; admin-added new services → services listing
+  window.location.href = svcPageFor(name);
 }
 function selectService(name){
   selectedServiceName = name;
@@ -1654,151 +1581,23 @@ function confirmLocation(){
 }
 
 
-function openUserAuth(tab){
-  document.getElementById('authModal').classList.add('show');
-  switchAuthTab(tab||'login');
-}
-function closeAuthModal(){
-  document.getElementById('authModal').classList.remove('show');
-}
-function switchAuthTab(tab){
-  var isLogin=(tab==='login');
-  document.getElementById('authLoginView').style.display=isLogin?'block':'none';
-  document.getElementById('authRegView').style.display=isLogin?'none':'block';
-}
-
-// ── GOOGLE SIGN-IN ─────────────────────────────────────────────
-function signInWithGoogle(){
-  var btn = document.getElementById('googleSignInBtn');
-  if(btn){btn.textContent='Signing in…';btn.disabled=true;}
-  fbAuth.signInWithPopup(googleProvider)
-    .then(function(result){
-      var user = result.user;
-      var userData = {
-        id:          'HS-CU-'+user.uid.slice(0,8).toUpperCase(),
-        uid:         user.uid,
-        name:        user.displayName || 'Customer',
-        email:       user.email || '',
-        phone:       user.phoneNumber || '',
-        photo:       user.photoURL || '',
-        city:        '',
-        provider:    'google',
-        registeredAt: new Date().toISOString(),
-      };
-      // Save to Firebase Realtime DB only
-      fbDB.ref('customers/'+user.uid).set(userData);
-      sessionStorage.setItem('hs_current_customer', JSON.stringify(userData));
-      closeAuthModal();
-      updateUserWidget();
-      showToast('✅ Welcome, '+userData.name+'!');
-      var gAfter=sessionStorage.getItem('hs_after_login');
-      if(gAfter){ sessionStorage.removeItem('hs_after_login'); window.location.href=gAfter; }
-      else if(_pendingUrl){ var gUrl=_pendingUrl; _pendingUrl=null; window.location.href=gUrl; }
-      else { window.location.href='user-panel.html'; }
-    })
-    .catch(function(err){
-      console.error('Google sign-in error:', err);
-      if(btn){btn.textContent='Continue with Google';btn.disabled=false;}
-      if(err.code==='auth/popup-closed-by-user'){showToast('Sign-in cancelled');return;}
-      showToast('⚠️ Sign-in failed: '+err.message);
-    });
-}
-
-// ── MOBILE/EMAIL LOGIN ─────────────────────────────────────────
-function doLogin(){
-  var id   = document.getElementById('loginId').value.trim();
-  var name = document.getElementById('loginName').value.trim();
-  var err  = document.getElementById('loginErr');
-  if(!id){err.textContent='Enter your mobile or email';err.style.display='block';return;}
-  if(!name){err.textContent='Enter your registered name';err.style.display='block';return;}
-  err.style.display='none';
-
-  // Always check Firebase — no local cache fallback
-  fbDB.ref('customers').orderByChild('phone').equalTo(id).once('value', function(snap){
-    var found = null;
-    snap.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-    if(!found){
-      // Try by email
-      fbDB.ref('customers').orderByChild('email').equalTo(id).once('value', function(s2){
-        s2.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-        if(found){ loginSuccess(found); }
-        else {
-          err.innerHTML='Account not found. <a onclick="closeAuthModal();window.location.href=\'login.html\';" style="color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;">Create an account</a>';
-          err.style.display='block';
-        }
-      });
-    } else { loginSuccess(found); }
-  }).catch(function(){
-    err.textContent='⚠️ Could not reach server. Check your connection and try again.';
-    err.style.display='block';
-  });
-}
-
-function loginSuccess(user){
-  sessionStorage.setItem('hs_current_customer', JSON.stringify(user));
-  closeAuthModal();
-  updateUserWidget();
-  showToast('✅ Welcome back, '+user.name+'!');
-  var afterLogin = sessionStorage.getItem('hs_after_login');
-  if(afterLogin){ sessionStorage.removeItem('hs_after_login'); window.location.href=afterLogin; return; }
-  if(_pendingUrl){ var url=_pendingUrl; _pendingUrl=null; window.location.href=url; return; }
-  window.location.href='user-panel.html';
-}
-
-// ── REGISTER ───────────────────────────────────────────────────
-function doRegister(){
-  var name  = document.getElementById('regName').value.trim();
-  var phone = document.getElementById('regPhone').value.trim();
-  var email = document.getElementById('regEmail').value.trim();
-  var city  = document.getElementById('regCity').value.trim();
-  if(!name){showToast('⚠️ Enter your name');return;}
-  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return;}
-
-  var userData = {
-    id:          'HS-CU-'+Date.now().toString(36).toUpperCase(),
-    name:        name,
-    phone:       phone,
-    email:       email,
-    city:        city,
-    provider:    'manual',
-    registeredAt: new Date().toISOString(),
-  };
-
-  // Check if phone already exists in Firebase before registering
-  fbDB.ref('customers').orderByChild('phone').equalTo(phone).once('value', function(snap){
-    if(snap.exists()){
-      showToast('⚠️ Mobile already registered — log in');
-      switchAuthTab('login');
-      return;
-    }
-    // Save to Firebase only — no local cache
-    fbDB.ref('customers/'+userData.id).set(userData).then(function(){
-      sessionStorage.setItem('hs_current_customer', JSON.stringify(userData));
-      closeAuthModal();
-      updateUserWidget();
-      showToast('🎉 Welcome to HamaraService, '+name+'!');
-      var rAfter=sessionStorage.getItem('hs_after_login');
-      if(rAfter){ sessionStorage.removeItem('hs_after_login'); window.location.href=rAfter; }
-      else if(_pendingUrl){ var rUrl=_pendingUrl; _pendingUrl=null; window.location.href=rUrl; }
-      else { window.location.href='user-panel.html'; }
-    }).catch(function(e){
-      showToast('⚠️ Registration failed. Check connection and try again.');
-      console.warn('Firebase save failed:', e.message);
-    });
-  }).catch(function(){
-    showToast('⚠️ Could not reach server. Check your connection.');
-  });
-}
+// Sign-in / registration live on login.html (Firebase Auth). The old in-page
+// modal (passwordless RTDB lookup + unauthenticated RTDB registration) was removed.
 
 // ── AUTH STATE LISTENER ────────────────────────────────────────
+var _fbAuthReady = false;
 fbAuth.onAuthStateChanged(function(user){
+  _fbAuthReady = true;
   if(user){
+    var basic = {uid:user.uid, name:user.displayName||'', email:user.email||''};
+    sessionStorage.setItem('hs_current_customer', JSON.stringify(basic));
+    updateUserWidget();
     fbDB.ref('customers/'+user.uid).once('value', function(snap){
       if(snap.exists()){
         sessionStorage.setItem('hs_current_customer', JSON.stringify(snap.val()));
       }
       updateUserWidget();
-    });
+    }, function(){ /* permission denied etc. — keep basic profile */ });
   } else {
     sessionStorage.removeItem('hs_current_customer');
     updateUserWidget();
@@ -1895,9 +1694,8 @@ function _buildCatTabs() {
   var cats = ['All'];
   HS_CATALOG.forEach(function(s){ if(s.cat && cats.indexOf(s.cat) === -1) cats.push(s.cat); });
   wrap.innerHTML = cats.map(function(c){
-    var safeC = c.replace(/'/g, "\\'");
-    return '<button class="cat-tab' + (c === _activeCat ? ' active' : '') + '" onclick="setCat(\'' + safeC + '\')">'
-      + (c === 'All' ? '&#11088; All' : c) + '</button>';
+    return '<button class="cat-tab' + (c === _activeCat ? ' active' : '') + '" data-cat="' + esc(c) + '" onclick="setCat(this.dataset.cat)">'
+      + (c === 'All' ? '&#11088; All' : esc(c)) + '</button>';
   }).join('');
 }
 
@@ -1924,11 +1722,12 @@ function renderServicesGrid() {
   var toShow = (_showAllSvc || _activeCat !== 'All') ? filtered : filtered.slice(0, LIMIT);
   grid.innerHTML = toShow.map(function(s){
     var slug = encodeURIComponent(s.name);
-    return '<div class="svc-card" onclick="openService(\'' + slug + '\')">'  
-      + '<div class="svc-card-img">' + (s.image ? '<img src="'+s.image+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.parentNode.innerHTML=(s&&s.icon?s.icon:\'🔧\')">' : (s.icon||s.emoji||'🔧')) + '</div>'
+    var icon = esc(s.icon||s.emoji||'🔧');
+    return '<div class="svc-card" data-slug="' + esc(slug) + '" onclick="openService(this.dataset.slug)">'
+      + '<div class="svc-card-img" data-icon="' + icon + '">' + (s.image ? '<img src="'+esc(s.image)+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.parentNode.textContent=this.parentNode.dataset.icon">' : icon) + '</div>'
       + '<div class="svc-card-info">'
-        + '<div class="svc-name">' + s.name + '</div>'
-        + '<div class="svc-price-tag" id="ptag-'+s.id+'">' + (s.price > 0 ? 'from ₹'+s.price.toLocaleString('en-IN') : '…') + '</div>'
+        + '<div class="svc-name">' + esc(s.name) + '</div>'
+        + '<div class="svc-price-tag" id="ptag-'+esc(s.id)+'">' + (s.price > 0 ? 'from ₹'+Number(s.price).toLocaleString('en-IN') : '…') + '</div>'
       + '</div>'
       + '<button class="svc-book">View Details →</button>'
       + '</div>';

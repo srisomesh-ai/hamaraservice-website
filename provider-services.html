@@ -53,8 +53,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f6fa;color:#1a1a1a;padding-
 </div>
 <div class="wrap">
   <div class="tip">&#9432; Select every job type and size you can handle. Prices are set by admin.</div>
-  <div id="dbgBox" style="display:none;background:#1a1a1a;color:#0f0;font-size:11px;padding:12px;border-radius:10px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;max-height:300px;overflow-y:auto;"></div>
-  <button onclick="showDebug()" style="width:100%;padding:8px;background:#555;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;margin-bottom:12px;">&#128269; Debug: Show Firebase Price Data</button>
   <div id="svcList"></div>
 </div>
 <div class="footer"><button class="save-btn" onclick="saveServices()">&#10003; Save My Services</button></div>
@@ -608,21 +606,10 @@ function saveServices(){
   }catch(e){}
   fetch(FB_DB+'/providers/'+P.id+'/services.json',{method:'PUT',
     headers:{'Content-Type':'application/json'},body:JSON.stringify(services)})
-    .then(function(){toast('&#10003; Saved — '+services.length+' job types',2000);setTimeout(goBack,2000);})
-    .catch(function(){toast('&#10003; Saved locally',2000);setTimeout(goBack,2000);});
+    .then(function(){toast('\u2713 Saved — '+services.length+' job types',2000);setTimeout(goBack,2000);})
+    .catch(function(){toast('\u2713 Saved locally',2000);setTimeout(goBack,2000);});
 }
 
-function showDebug(){
-  var box=document.getElementById('dbgBox');
-  box.style.display='block';
-  box.textContent='Fetching hs_service_prices...';
-  fetch(FB_DB+'/hs_service_prices.json?_='+Date.now())
-    .then(function(r){return r.json();})
-    .then(function(d){
-      box.textContent='RAW hs_service_prices:\n'+JSON.stringify(d,null,2);
-    })
-    .catch(function(e){box.textContent='ERROR: '+e.message;});
-}
 function init(){
   try{P=JSON.parse(localStorage.getItem('hs_current_provider')||'null');}catch(e){}
   if(!P||!P.id){window.location.href='provider-portal.html';return;}

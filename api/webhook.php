@@ -4,10 +4,10 @@
 //  Razorpay Dashboard → Settings → Webhooks
 //  URL: https://hamaraservice.in/api/webhook.php
 //  Events: payment.captured, payment.failed, refund.created
-//  Set a Webhook Secret in Razorpay and paste it below
+//  Secret: RAZORPAY_WEBHOOK_SECRET in config (see config.example.php) —
+//  must equal the secret entered in the Razorpay webhook settings.
 // ============================================================
-define('RZP_WEBHOOK_SECRET', 'HamaraSvr@2026');
-define('RZP_KEY_SECRET',     '7XI9IQ3TT1OyNs5ALYeSxiuz');
+require_once __DIR__ . '/db.php';
 define('COMMISSION_PCT', 12);
 define('FB_URL', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app');
 
@@ -22,8 +22,14 @@ if (!$signature) {
     echo json_encode(['error' => 'Missing webhook signature']);
     exit;
 }
-$expectedSig = hash_hmac('sha256', $payload, RZP_WEBHOOK_SECRET);
-if (!hash_equals($expectedSig, $signature)) {
+if (RAZORPAY_WEBHOOK_SECRET === '') {
+    error_log('HamaraService: RAZORPAY_WEBHOOK_SECRET not configured');
+    http_response_code(500);
+    echo json_encode(['error' => 'Webhook not configured']);
+    exit;
+}
+$expectedSig = hash_hmac('sha256', $payload, RAZORPAY_WEBHOOK_SECRET);
+if (!hash_equals($expectedSig, (string)$signature)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid webhook signature']);
     exit;
@@ -40,9 +46,31 @@ switch ($eventType) {
         $orderId    = $payment['order_id'] ?? '';
         $amountPs   = intval($payment['amount'] ?? 0);
         $notes      = $payment['notes']    ?? [];
-        $bookingId  = $notes['booking_id'] ?? '';
-        $providerId = $notes['provider_id'] ?? '';
+        // Checkout usually doesn't copy order notes onto the payment — fall
+        // back to the order (created by create-order.php with bookingId notes)
+        if (empty($notes['booking_id']) && empty($notes['bookingId']) && $orderId) {
+            $ord = razorpayGet('orders/' . rawurlencode($orderId));
+            if ($ord && is_array($ord['notes'] ?? null)) $notes = $ord['notes'];
+        }
+        $bookingId  = (string)($notes['booking_id'] ?? $notes['bookingId'] ?? '');
+        $providerId = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($notes['provider_id'] ?? ''));
         $customerId = $notes['customer_id'] ?? '';
+
+        // MySQL booking: mark paid if the captured amount matches (idempotent)
+        if ($bookingId && $txnId) {
+            try {
+                $db = getDB();
+                $st = $db->prepare("SELECT * FROM bookings WHERE id = ?");
+                $st->execute([$bookingId]);
+                $bk = $st->fetch();
+                if ($bk && bookingPayable($bk) * 100 === $amountPs) {
+                    $db->prepare("UPDATE bookings SET payment_status = 'paid', payment_method = 'razorpay',
+                                    razorpay_payment_id = ?, razorpay_order_id = ?
+                                  WHERE id = ? AND payment_status != 'paid'")
+                       ->execute([$txnId, $orderId, $bookingId]);
+                }
+            } catch (Throwable $e) { error_log('webhook mysql: ' . $e->getMessage()); }
+        }
 
         if ($bookingId && $txnId) {
             // Avoid double credit — check if already settled
@@ -65,7 +93,7 @@ switch ($eventType) {
                 ]);
                 fb_patch('active_bookings/' . $bookingId, ['status'=>'paid','paidAt'=>$now,'txnId'=>$txnId]);
 
-                if ($providerId) {
+                if ($providerId !== '') {
                     $wallet = fb_get('provider_wallet/' . $providerId);
                     fb_put('provider_wallet/' . $providerId, [
                         'providerId'      => $providerId,

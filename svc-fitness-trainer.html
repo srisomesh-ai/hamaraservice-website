@@ -317,185 +317,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="toast" id="toast"></div>
 
 <script>
-if(!firebase.apps.length) firebase.initializeApp({
-  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-  authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
-  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
-});
-
-var selected  = {};   // svc -> { base, extra, sessions }
-var counts    = {};   // svc -> session count
-var SVCS = ['weightloss','muscle','yoga','zumba','rehab','senior','monthly'];
-
-function toggleSvc(el) {
-  var svc = el.dataset.svc;
-  var chk = document.getElementById('chk-' + svc);
-  var panel = document.getElementById('sub-' + svc);
-  if(el.classList.contains('active')) {
-    el.classList.remove('active');
-    delete selected[svc];
-    if(chk) chk.textContent = '\u2610';
-    if(panel) panel.style.display = 'none';
-  } else {
-    el.classList.add('active');
-    var base = parseInt(el.dataset.base) || 0;
-    counts[svc] = counts[svc] || 1;
-    selected[svc] = { base: base, extra: 0, sessions: counts[svc] };
-    if(chk) chk.textContent = '\u2611';
-    if(panel) panel.style.display = 'block';
-  }
-  updatePrice();
-}
-
-function selectInGroup(el, group) {
-  var container = el.parentElement;
-  container.querySelectorAll('.calc-chip').forEach(function(c){ c.classList.remove('active'); });
-  el.classList.add('active');
-  // Update extra for groups that have data-extra
-  var extra = parseInt(el.dataset.extra || 0);
-  var svc = groupToSvc(group);
-  if(svc && selected[svc] !== undefined && el.dataset.extra !== undefined) {
-    selected[svc].extra = extra;
-    updatePrice();
-  }
-}
-
-function groupToSvc(g) {
-  if(g.indexOf('wl') === 0)  return 'weightloss';
-  if(g.indexOf('mu') === 0)  return 'muscle';
-  if(g.indexOf('yo') === 0)  return 'yoga';
-  if(g.indexOf('zu') === 0)  return 'zumba';
-  if(g.indexOf('re') === 0)  return 'rehab';
-  if(g.indexOf('se') === 0)  return 'senior';
-  if(g.indexOf('mo') === 0)  return 'monthly';
-  return null;
-}
-
-function changeSessions(svc, delta) {
-  counts[svc] = Math.max(1, Math.min(30, (counts[svc]||1) + delta));
-  var el = document.getElementById('cnt-' + svc); if(el) el.textContent = counts[svc];
-  if(selected[svc]) { selected[svc].sessions = counts[svc]; updatePrice(); }
-}
-
-function updatePrice() {
-  var svcs = Object.keys(selected);
-  var isMonthly = svcs.indexOf('monthly') !== -1;
-  var total = svcs.reduce(function(s, k) {
-    var d = selected[k];
-    var sessions = k === 'monthly' ? 1 : (d.sessions || 1);
-    return s + (d.base + (d.extra||0)) * sessions;
-  }, 0);
-  var enabled = svcs.length > 0;
-  var fmt = total > 0 ? '\u20b9'+total.toLocaleString('en-IN') : '\u20b90';
-  var totalSessions = svcs.filter(function(k){ return k!=='monthly'; }).reduce(function(s,k){ return s+(selected[k].sessions||1); }, 0);
-  var note = enabled
-    ? (isMonthly ? 'Monthly package' : totalSessions+' session'+(totalSessions>1?'s':''))
-    : 'Select training type above';
-  ['stickyPrice','totalPrice'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=fmt; });
-  ['stickyNote','priceNote'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=note; });
-  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>estimated</sub>';
-  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>estimated</sub>';
-  ['stickyBookBtn','bookNowBtn','mobBookBtn'].forEach(function(bid){
-    var b=document.getElementById(bid); if(!b) return;
-    b.disabled=!enabled; b.style.opacity=enabled?'1':'0.4'; b.style.cursor=enabled?'pointer':'not-allowed';
-  });
-}
-
-function bookNow() {
-  if(Object.keys(selected).length === 0) {
-    showToast('\u26a0\ufe0f Please select a training type');
-    document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});
-    return;
-  }
-  sessionStorage.setItem('hs_service_options', JSON.stringify({ service:'Fitness Trainer', training: selected,
-    icon: '💪',
-    price: (document.getElementById('totalPrice')||{textContent:''}).textContent.replace(/[^0-9]/g,''),
-    summary: Object.keys(selected||{}).map(function(k){ return 'Fitness Trainer > '+k; })
-  }));
-  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
-  var user = JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
-  var url = 'user-booking.html?service=Fitness%20Trainer';
-  if(user){ window.location.href=url; }
-  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
-}
-
-function showToast(msg) {
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.style.display='block';
-  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; },3000);
-}
-
-firebase.auth().onAuthStateChanged(function(u){
-  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
-  else sessionStorage.removeItem('hs_current_customer');
-});
-
-// ── HS Firebase Price Sync (SVC022) ────────────────────────────────────────
-(function(){
-  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
-  function getToken(cb){
-    if(_tok){cb(_tok);return;}
-    var x=new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
-    x.onerror=function(){cb('');};
-    x.send(JSON.stringify({returnSecureToken:true}));
-  }
-  function applyPrices(d){
-    if(!d||d.error) return;
-    // Visit fee
-    var vp=0;
-    if(d.visit&&d.visit.visit!==undefined) vp=parseInt(d.visit.visit);
-    else if(d.base!==undefined) vp=parseInt(d.base);
-    if(vp>0&&typeof VISIT_PRICE!=='undefined'){ VISIT_PRICE=vp; }
-    // Individual chip prices
-    if(d.svc) document.querySelectorAll('.ksvc-chip[data-svc]').forEach(function(c){
-      var k=c.dataset.svc;if(d.svc[k]===undefined) return;
-      var p=parseInt(d.svc[k]);c.dataset.base=p;
-      if(typeof selected!=='undefined'&&selected[k]) selected[k]=p;
-      var pd=c.querySelector('.ksvc-price'); if(pd) pd.textContent='₹'+p.toLocaleString('en-IN');
-    });
-    if(d.base!==undefined){
-      document.querySelectorAll('.pill').forEach(function(pl){
-        if(pl.textContent.indexOf('from')>=0&&pl.textContent.indexOf('₹')>=0)
-          pl.textContent='from ₹'+parseInt(d.base).toLocaleString('en-IN');
-      });
-    }
-    if(typeof updatePrice==='function') updatePrice();
-  }  function load(){
-    getToken(function(tok){
-      var url=_DB+'/hs_service_prices/SVC026.json'+(tok?'?auth='+tok:'');
-      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
-      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
-      xhr.onerror=function(){};xhr.send();
-    });
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
-  else{load();}
-  setInterval(load,30000);
-  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
-})();
-</script>
-
-<script>
-/* HS-APP-MODE */
-(function(){
-  var inApp = location.search.indexOf('app=1')>-1 || sessionStorage.getItem('hs_in_app')==='1' || / wv\)/.test(navigator.userAgent);
-  if(!inApp) return;
-  sessionStorage.setItem('hs_in_app','1');
-  var h=document.querySelector('header'); if(h) h.style.display='none';
-  // simple in-app back bar instead
-  var bar=document.createElement('div');
-  bar.style.cssText='position:sticky;top:0;z-index:950;background:#0f4c5c;color:#fff;padding:12px 16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px';
-  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split('—')[0]||'Service')+'</span>';
-  document.body.insertBefore(bar, document.body.firstChild);
-})();
-</script>
-</body>
-</html>
 var VISIT_PRICE = 0;
 
 if(!firebase.apps.length) firebase.initializeApp({
@@ -506,70 +327,20 @@ if(!firebase.apps.length) firebase.initializeApp({
   messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
 });
 
-var selected  = {};   // svc -> { base, extra, sessions }
-var counts    = {};   // svc -> session count
-var SVCS = ['weightloss','muscle','yoga','zumba','rehab','senior','monthly'];
-
-function toggleSvc(el) {
-  var svc = el.dataset.svc;
-  var chk = document.getElementById('chk-' + svc);
-  var panel = document.getElementById('sub-' + svc);
-  if(el.classList.contains('active')) {
-    el.classList.remove('active');
-    delete selected[svc];
-    if(chk) chk.textContent = '\u2610';
-    if(panel) panel.style.display = 'none';
-  } else {
-    el.classList.add('active');
-    var base = parseInt(el.dataset.base) || 0;
-    counts[svc] = counts[svc] || 1;
-    selected[svc] = { base: base, extra: 0, sessions: counts[svc] };
-    if(chk) chk.textContent = '\u2611';
-    if(panel) panel.style.display = 'block';
-  }
-  updatePrice();
-}
-
-function selectInGroup(el, group) {
-  var container = el.parentElement;
-  container.querySelectorAll('.calc-chip').forEach(function(c){ c.classList.remove('active'); });
-  el.classList.add('active');
-  // Update extra for groups that have data-extra
-  var extra = parseInt(el.dataset.extra || 0);
-  var svc = groupToSvc(group);
-  if(svc && selected[svc] !== undefined && el.dataset.extra !== undefined) {
-    selected[svc].extra = extra;
-    updatePrice();
-  }
-}
-
-function groupToSvc(g) {
-  if(g.indexOf('wl') === 0)  return 'weightloss';
-  if(g.indexOf('mu') === 0)  return 'muscle';
-  if(g.indexOf('yo') === 0)  return 'yoga';
-  if(g.indexOf('zu') === 0)  return 'zumba';
-  if(g.indexOf('re') === 0)  return 'rehab';
-  if(g.indexOf('se') === 0)  return 'senior';
-  if(g.indexOf('mo') === 0)  return 'monthly';
-  return null;
-}
-
-function changeSessions(svc, delta) {
-  counts[svc] = Math.max(1, Math.min(30, (counts[svc]||1) + delta));
-  var el = document.getElementById('cnt-' + svc); if(el) el.textContent = counts[svc];
-  if(selected[svc]) { selected[svc].sessions = counts[svc]; updatePrice(); }
-}
-
 function updatePrice() {
-  var p = VISIT_PRICE || 599;
-  var fmt = '₹' + p.toLocaleString('en-IN');
+  var ready = VISIT_PRICE > 0;
+  var fmt = ready ? '₹' + VISIT_PRICE.toLocaleString('en-IN') : '…';
   ['stickyPrice','visitPriceDisplay'].forEach(function(id){
     var e = document.getElementById(id); if(e) e.textContent = fmt;
   });
+  var dp=document.getElementById('desktopPrice'); if(dp) dp.innerHTML=fmt+' <sub>per visit</sub>';
+  var mp=document.getElementById('mobPrice'); if(mp) mp.innerHTML=fmt+' <sub>per visit</sub>';
   var sn = document.getElementById('stickyNote');
-  if(sn) sn.textContent = 'Per trainer visit · At your home';
-  var btn = document.getElementById('stickyBookBtn');
-  if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+  if(sn) sn.textContent = ready ? 'Per trainer visit · At your home' : 'Loading price…';
+  ['stickyBookBtn','mobBookBtn'].forEach(function(bid){
+    var b=document.getElementById(bid); if(!b) return;
+    b.disabled=!ready; b.style.opacity=ready?'1':'0.4'; b.style.cursor=ready?'pointer':'not-allowed';
+  });
 }
 function bookNow() {
   if (!VISIT_PRICE) { showToast('⚠️ Price still loading, please wait'); return; }
@@ -595,7 +366,9 @@ firebase.auth().onAuthStateChanged(function(u){
   else sessionStorage.removeItem('hs_current_customer');
 });
 
-// ── HS Firebase Price Sync (SVC022) ────────────────────────────────────────
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',updatePrice);}else{updatePrice();}
+
+// ── HS Firebase Price Sync (SVC026) ────────────────────────────────────────
 (function(){
   var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
   function getToken(cb){
@@ -615,10 +388,41 @@ firebase.auth().onAuthStateChanged(function(u){
     else if(d.base!==undefined) p=parseInt(d.base);
     if(p>0){
       VISIT_PRICE=p;
-      if(typeof updatePrice==='function') updatePrice();
+      document.querySelectorAll('.pill').forEach(function(pl){
+        if(pl.textContent.indexOf('from')>=0&&pl.textContent.indexOf('₹')>=0)
+          pl.textContent='from ₹'+p.toLocaleString('en-IN');
+      });
+      updatePrice();
     }
-  }  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
+  }
+  function load(){
+    getToken(function(tok){
+      var url=_DB+'/hs_service_prices/SVC026.json'+(tok?'?auth='+tok:'');
+      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
+      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
+      xhr.onerror=function(){};xhr.send();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
   else{load();}
   setInterval(load,30000);
   window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
 })();
+</script>
+
+<script>
+/* HS-APP-MODE */
+(function(){
+  var inApp = location.search.indexOf('app=1')>-1 || sessionStorage.getItem('hs_in_app')==='1' || / wv\)/.test(navigator.userAgent);
+  if(!inApp) return;
+  sessionStorage.setItem('hs_in_app','1');
+  var h=document.querySelector('header'); if(h) h.style.display='none';
+  // simple in-app back bar instead
+  var bar=document.createElement('div');
+  bar.style.cssText='position:sticky;top:0;z-index:950;background:#0f4c5c;color:#fff;padding:12px 16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px';
+  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split(/\s*[—–]\s*/)[0]||'Service')+'</span>';
+  document.body.insertBefore(bar, document.body.firstChild);
+})();
+</script>
+</body>
+</html>

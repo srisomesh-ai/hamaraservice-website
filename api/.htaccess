@@ -1,0 +1,19 @@
+# Block secrets / non-endpoint files inside api/
+<FilesMatch "^(config\.php|.*\.example\.php|.*\.json|.*\.sql|.*\.log|\.ht.*)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Pass the Authorization header through to PHP (CGI/FastCGI setups drop it)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+Options -Indexes

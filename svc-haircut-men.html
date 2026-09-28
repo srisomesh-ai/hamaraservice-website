@@ -667,7 +667,8 @@ firebase.auth().onAuthStateChanged(function(u){
         var k=c.dataset.svc; if(!k||d.svc[k]===undefined) return;
         var p=parseInt(d.svc[k]); c.dataset.base=p;
         var pd=c.querySelector('.ksvc-price'); if(pd){ pd.childNodes[0].nodeValue='₹'+p.toLocaleString('en-IN'); }
-        if(typeof selected!=='undefined'&&selected[k]!==undefined) selected[k]=p;
+        if(typeof BASE!=='undefined') BASE[k]=p;
+        if(typeof selected!=='undefined'&&selected[k]&&typeof selected[k]==='object') selected[k].base=p;
       });
       // Update visit price if set
       if(d.svc.visit!==undefined&&typeof VISIT_PRICE!=='undefined') VISIT_PRICE=parseInt(d.svc.visit);
@@ -707,7 +708,7 @@ firebase.auth().onAuthStateChanged(function(u){
   // simple in-app back bar instead
   var bar=document.createElement('div');
   bar.style.cssText='position:sticky;top:0;z-index:950;background:#0f4c5c;color:#fff;padding:12px 16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px';
-  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split('—')[0]||'Service')+'</span>';
+  bar.innerHTML='<span style="cursor:pointer;font-size:20px" onclick="location.href=\'/app/customer.html\'">←</span><span>'+(document.title.split(/\s*[—–]\s*/)[0]||'Service')+'</span>';
   document.body.insertBefore(bar, document.body.firstChild);
 })();
 </script>

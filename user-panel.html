@@ -729,26 +729,6 @@ header{position:sticky;top:0;z-index:200;background:var(--teal);border-bottom:no
   </div>
 </div>
 
-<!-- ADD MONEY MODAL -->
-<div class="modal-overlay" id="addMoneyModal" onclick="closeAddMoneyBg(event)">
-  <div class="modal-box">
-    <div class="modal-title">Add Money to Wallet</div>
-    <div class="modal-sub">Choose amount or enter custom</div>
-    <div class="amount-chips">
-      <div class="amount-chip" onclick="setAmount(100,this)">₹100</div>
-      <div class="amount-chip" onclick="setAmount(250,this)">₹250</div>
-      <div class="amount-chip" onclick="setAmount(500,this)">₹500</div>
-      <div class="amount-chip" onclick="setAmount(1000,this)">₹1000</div>
-    </div>
-    <div class="field">
-      <label>Amount (₹)</label>
-      <input type="number" id="customAmount" placeholder="Enter amount" min="1" max="50000"/>
-    </div>
-    <button class="btn-primary" onclick="confirmAddMoney()">Proceed to Pay →</button>
-    <button class="btn-cancel" onclick="closeAddMoney()">Cancel</button>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <!-- Firebase -->
@@ -772,6 +752,17 @@ const FIREBASE_CONFIG = {
 if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 const fbAuth = firebase.auth();
 const fbDB   = firebase.database();
+
+// Escape untrusted strings before interpolating them into innerHTML
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+// Only allow http(s)/data:image URLs for avatar <img src>
+function safeImgUrl(u) {
+  u = String(u || '').trim();
+  return /^(https?:\/\/|data:image\/)/i.test(u) ? u : '';
+}
 // Force LOCAL persistence so session survives page navigation
 fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
 
@@ -974,6 +965,7 @@ async function loadUserData(fbUser) {
     }
 
     clearTimeout(_loadTimeout);
+    _fallbackRetries = 0;
     currentProfile = profile;
     showPanel();
     localStorage.setItem('hs_profile_' + fbUser.uid, JSON.stringify(profile));
@@ -1059,8 +1051,16 @@ function loadFallbackView(profile) {
   // Read bookings from UID-keyed cache only — never the shared 'hs_customer_bookings' key
   allBookings = [];
   renderBookings(); renderHistory(); updateStats();
-  if (currentUser) loadUserData(currentUser).catch(()=>{});
+  // Bounded retry: loadUserData → (error) → loadFallbackView → retry, max 3 times with backoff
+  if (currentUser && _fallbackRetries < 3) {
+    _fallbackRetries++;
+    const u = currentUser;
+    setTimeout(() => { if (currentUser === u) loadUserData(u).catch(()=>{}); }, 2000 * _fallbackRetries);
+  } else if (_fallbackRetries >= 3) {
+    showToast('⚠️ Could not reach server — tap refresh to try again');
+  }
 }
+var _fallbackRetries = 0;
 
 function mergeBks(fb, ls) {
   const m = {};
@@ -1072,17 +1072,20 @@ function mergeBks(fb, ls) {
 // ── RENDER PROFILE ─────────────────────────────
 function renderProfile(p) {
   if (!p) return;
-  const letter = (p.name || p.email || 'U').charAt(0).toUpperCase();
+  const letter = esc((p.name || p.email || 'U').charAt(0).toUpperCase());
+  const photo  = esc(safeImgUrl(p.photoURL));
 
   // Hero avatar
   const ha = document.getElementById('heroPanelAvatar');
-  ha.innerHTML = p.photoURL ? `<img src="${p.photoURL}" alt="" onerror="this.parentElement.textContent='${letter}'"/>` : letter;
+  ha.innerHTML = photo ? `<img src="${photo}" alt="" onerror="this.parentElement.textContent=this.parentElement.dataset.letter"/>` : letter;
+  ha.dataset.letter = (p.name || p.email || 'U').charAt(0).toUpperCase();
   document.getElementById('heroPanelName').textContent = p.name || p.email || 'User';
   document.getElementById('heroPanelId').textContent   = p.id || p.uid || '—';
 
   // Profile tab avatar
   const pa = document.getElementById('profileAvatarBig');
-  pa.innerHTML = p.photoURL ? `<img src="${p.photoURL}" alt="" onerror="this.parentElement.textContent='${letter}'"/>` : letter;
+  pa.innerHTML = photo ? `<img src="${photo}" alt="" onerror="this.parentElement.textContent=this.parentElement.dataset.letter"/>` : letter;
+  pa.dataset.letter = (p.name || p.email || 'U').charAt(0).toUpperCase();
   document.getElementById('profileDisplayName').textContent = p.name || '—';
   document.getElementById('profileDisplayId').textContent   = p.id || p.uid || '—';
 
@@ -1261,28 +1264,33 @@ function filterHistory(f, el) {
 function bkCard(b, isActive) {
   const stMap = {confirmed:'confirmed',pending:'pending',active:'active',searching:'pending',completed:'completed',cancelled:'cancelled',accepted:'confirmed',assigned:'confirmed',rejected:'cancelled'};
   const stCls = stMap[(b.status||'confirmed').toLowerCase()] || 'confirmed';
-  const emoji  = b.emoji || getSvcEmoji(b.service || b.serviceName || '');
-  const name   = b.service || b.serviceName || 'Service Booking';
-  const id     = b.id || '—';
-  const price  = b.price ? '₹'+b.price : '—';
-  const date   = b.date  ? fmtDate(b.date) : '—';
-  const time   = b.time  || b.bookTime || '—';
-  const prov   = b.providerName || b.assignedProvider || '—';
-  const addr   = (b.address || b.location || '—').slice(0,55);
-  const status = (b.status || 'Confirmed').replace(/_/g,' ');
+  const emoji  = esc(b.emoji || b.svc_icon || getSvcEmoji(b.service || b.serviceName || ''));
+  const name   = esc(b.service || b.serviceName || 'Service Booking');
+  const rawId  = b.id || '';
+  const id     = esc(rawId || '—');
+  const price  = b.price ? '₹'+esc(b.price) : (b.amountPaid ? '₹'+esc(b.amountPaid) : '—');
+  const date   = esc(b.date ? fmtDate(b.date) : (b.slot_date ? fmtDate(b.slot_date) : '—'));
+  const time   = esc(b.time || b.bookTime || b.slot_time || '—');
+  const prov   = esc(b.providerName || b.assignedProvider || '—');
+  const addrRaw= String(b.address || b.location || '—');
+  const addr   = esc(addrRaw.slice(0,55));
+  const status = esc((b.status || 'Confirmed').replace(/_/g,' '));
+  // Values for handlers go through data-* attributes (escaped), never inline JS strings
+  const dId    = esc(rawId);
+  const dSvc   = esc(b.service || '');
 
   console.log('Creating card for booking:', {id: id, status: b.status, isActive: isActive});
   
   let acts = '';
   if (b.status === 'payment_pending') {
-    acts = '<button class="bi-btn solid-green" onclick="handlePaymentFromCard(\'' + id + '\')">💳 Pay Now</button>';
-    acts += '<button class="bi-btn outline" onclick="rebookSvc(\'' + (b.service||'') + '\')">🔄 Rebook</button>';
+    acts = '<button class="bi-btn solid-green" data-bid="' + dId + '" onclick="handlePaymentFromCard(this.dataset.bid)">💳 Pay Now</button>';
+    acts += '<button class="bi-btn outline" data-svc="' + dSvc + '" onclick="rebookSvc(this.dataset.svc)">🔄 Rebook</button>';
   } else if (isActive) {
-    acts = '<button class="bi-btn outline" onclick="trackBk(\'' + id + '\')">📍 Track</button>';
+    acts = '<button class="bi-btn outline" data-bid="' + dId + '" onclick="trackBk(this.dataset.bid)">📍 Track</button>';
     acts += '<button class="bi-btn outline" onclick="showToast(\'📞 +91-1800-XXX-XXXX\')">Help</button>';
-    acts += '<button class="bi-btn solid-red" onclick="cancelBk(\'' + id + '\')">Cancel</button>';
+    acts += '<button class="bi-btn solid-red" data-bid="' + dId + '" onclick="cancelBk(this.dataset.bid)">Cancel</button>';
   } else {
-    acts = '<button class="bi-btn outline" onclick="rebookSvc(\'' + (b.service||'') + '\')">🔄 Rebook</button>';
+    acts = '<button class="bi-btn outline" data-svc="' + dSvc + '" onclick="rebookSvc(this.dataset.svc)">🔄 Rebook</button>';
   }
 
   return `<div class="booking-item">
@@ -1296,7 +1304,7 @@ function bkCard(b, isActive) {
         <div class="bi-meta-item"><span class="bi-meta-label">Date</span><span class="bi-meta-val">${date}</span></div>
         <div class="bi-meta-item"><span class="bi-meta-label">Time</span><span class="bi-meta-val">${time}</span></div>
         <div class="bi-meta-item"><span class="bi-meta-label">Provider</span><span class="bi-meta-val">${prov}</span></div>
-        <div class="bi-meta-item" style="grid-column:1/-1"><span class="bi-meta-label">Address</span><span class="bi-meta-val">${addr}${addr.length===55?'…':''}</span></div>
+        <div class="bi-meta-item" style="grid-column:1/-1"><span class="bi-meta-label">Address</span><span class="bi-meta-val">${addr}${addrRaw.length>55?'…':''}</span></div>
       </div>
     </div>
     <div class="bi-footer"><div class="bi-price">${price}</div><div class="bi-actions">${acts}</div></div>
@@ -1330,10 +1338,19 @@ function cancelBk(id) {
     }
   }
   if (!confirm('Cancel this booking?')) return;
-  allBookings = allBookings.map(b=>b.id===id?Object.assign({},b,{status:'cancelled'}):b);
-  fbDB.ref('bookings/'+id).update({status:'cancelled',cancelledAt:new Date().toISOString(),cancelledBy:'customer'});
-  fbDB.ref('active_bookings/'+id).update({status:'cancelled'});
-  renderBookings(); renderHistory(); showToast('❌ Booking cancelled');
+  if (!currentUser) { showToast('⚠️ Not signed in'); return; }
+  // Bookings live in MySQL — cancel through the authenticated API
+  currentUser.getIdToken().then(token =>
+    fetch('https://hamaraservice.com/api/bookings.php?action=cancel', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: id })
+    }).then(r => r.json())
+  ).then(res => {
+    if (!res || !res.success) { showToast('⚠️ ' + ((res && res.error) || 'Could not cancel booking')); return; }
+    allBookings = allBookings.map(b=>b.id===id?Object.assign({},b,{status:'cancelled'}):b);
+    renderBookings(); renderHistory(); showToast('❌ Booking cancelled');
+  }).catch(() => showToast('⚠️ Network error — booking not cancelled'));
 }
 function trackBk(id) {
   const bk = allBookings.find(b => b.id === id);
@@ -1374,48 +1391,33 @@ function startBookingListener(uid) {
     else if(st === 'completed')
       showToast('\u2705 Service completed! Thank you for using HamaraService.');
   });
-  // Also listen for job_otp updates — SCOPED to this customer only.
-  // Previously this listened on the whole 'job_otp' node, exposing every
-  // customer's OTP to every signed-in client. Filter server-side by uid.
-  // Note: requires .indexOn ["customerId"] on /job_otp in Firebase rules
-  // for performance, and customerId must be present on each OTP record
-  // (provider-dashboard now writes it).
-  fbDB.ref('job_otp').orderByChild('customerId').equalTo(uid).on('child_added', snap => {
-    const otpData = snap.val();
-    if (!otpData || !otpData.bookingId) return;
-    const bk = allBookings.find(b => b.id === otpData.bookingId);
-    // Show OTP for pending or otp_sent status (handles race condition where OTP data arrives before status update)
-    if (bk && currentUser && (bk.status === 'pending' || bk.status === 'otp_sent')) {
-      console.log('Firebase OTP added: showing OTP modal for booking:', bk.id, 'Status:', bk.status);
-      handleOtpSent(Object.assign({}, bk, {otp: otpData.otp, otpData: otpData}));
-    } else if (bk && currentUser && bk.status === 'payment_pending') {
-      console.log('Firebase OTP added but booking is payment_pending: showing payment dialog for booking:', bk.id);
-      // If already payment_pending, show payment dialog directly
-      handlePaymentRequest(bk);
-    } else {
-      console.log('Firebase OTP added but booking not in correct status:', bk?.id, 'Status:', bk?.status);
-    }
+  // job_otp updates — SCOPED to this customer only (never listen on the whole node,
+  // which would download every customer's OTP). Requires .indexOn ["customerId"]
+  // on /job_otp and customerId on each OTP record (provider-dashboard writes it).
+  const otpQuery = fbDB.ref('job_otp').orderByChild('customerId').equalTo(uid);
+  // child_added — fires when provider clicks Complete Job (and replays history on attach)
+  otpQuery.on('child_added', snap => {
+    const d = snap.val(); if (!d || !d.otp) return;
+    const bkId = d.bookingId || snap.key;
+    const bk = allBookings.find(b => b.id === bkId);
+    const st = (bk?.status || d.status || '').toLowerCase();
+    if (st === 'payment_pending' && bk) { handlePaymentRequest(bk); return; }
+    // Don't show OTP for already paid/completed bookings (child_added replays history)
+    if (['paid','completed','cancelled','rejected','verified'].includes(st)) return;
+    showOtpModal(bkId, d.otp, d);
   });
-  fbDB.ref('job_otp').orderByChild('customerId').equalTo(uid).on('child_changed', snap => {
-    const otpData = snap.val();
-    if (!otpData || !otpData.bookingId) return;
-    if (otpData.status === 'verified') {
-      const bkIdx2 = allBookings.findIndex(b => b.id === otpData.bookingId);
-      if (bkIdx2 >= 0) {
-        allBookings[bkIdx2] = Object.assign({}, allBookings[bkIdx2], {status:'payment_pending'});
-        renderBookings();
-        handlePaymentRequest(Object.assign({}, allBookings[bkIdx2], {status:'payment_pending'}));
-      } else {
-        // Booking not in memory — load from Firebase and show popup
-        fbDB.ref('bookings/' + otpData.bookingId).once('value').then(bkSnap => {
-          const bkData = bkSnap.exists() ? bkSnap.val() : {id:otpData.bookingId};
-          const filled = Object.assign({}, bkData, {status:'payment_pending'});
-          allBookings.unshift(filled);
-          renderBookings();
-          handlePaymentRequest(filled);
-        }).catch(()=>{});
-      }
-    }
+  // child_changed — fires when provider verifies OTP
+  otpQuery.on('child_changed', snap => {
+    const d = snap.val(); if (!d || d.status !== 'verified') return;
+    const bkId = d.bookingId || snap.key;
+    closeOtpModal();
+    const bkIdx = allBookings.findIndex(b => b.id === bkId);
+    if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, allBookings[bkIdx], {status:'payment_pending'});
+    const bk = bkIdx >= 0 ? allBookings[bkIdx]
+             : {id:bkId, status:'payment_pending', amount:d.amount||0, service:d.service||''};
+    if (bkIdx < 0) allBookings.unshift(bk);
+    renderBookings();
+    handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
   });
   // New bookings added
   fbDB.ref('bookings').orderByChild('customerId').equalTo(uid).on('child_added', snap => {
@@ -1428,75 +1430,20 @@ function startBookingListener(uid) {
     }
   });
 
-  // active_bookings/ child_added
-  fbDB.ref('active_bookings').on('child_added', snap => {
+  // active_bookings — scoped query (never the whole node)
+  const activeQuery = fbDB.ref('active_bookings').orderByChild('customerId').equalTo(uid);
+  activeQuery.on('child_added', snap => {
     const bk = snap.val(); if (!bk) return;
     const bkId = bk.id || snap.key;
-    if ((bk.customerId||bk.uid||'') !== uid) return;
     if (!allBookings.find(b=>b.id===bkId)) {
       allBookings.unshift(Object.assign({},bk,{id:bkId}));
       allBookings.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
       renderBookings(); renderHistory(); updateStats();
     }
   });
-
-  // job_otp/ child_added — fires when provider clicks Complete Job
-  fbDB.ref('job_otp').on('child_added', snap => {
-    const d = snap.val(); if (!d||!d.otp) return;
-    const bkId = d.bookingId || snap.key;
-    const isOurBooking = (d.customerId||d.uid||'') === uid
-                      || allBookings.some(b => b.id === bkId);
-    if (!isOurBooking) return;
-    // Don't show OTP for already paid/completed bookings (child_added replays history)
-    const bk = allBookings.find(b => b.id === bkId);
-    const st = (bk?.status || d.status || '').toLowerCase();
-    if (['paid','completed','cancelled','rejected','verified'].includes(st)) return;
-    showOtpModal(bkId, d.otp, d);
-  });
-
-  // job_otp/ child_changed — fires when provider verifies OTP
-  fbDB.ref('job_otp').on('child_changed', snap => {
-    const d = snap.val(); if (!d) return;
-    if (d.status !== 'verified') return;
-    const bkId = d.bookingId || snap.key;
-
-    function _doPaymentPopup() {
-      closeOtpModal();
-      const bkIdx = allBookings.findIndex(b => b.id === bkId);
-      if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, allBookings[bkIdx], {status:'payment_pending'});
-      const bk = bkIdx >= 0 ? allBookings[bkIdx]
-               : {id:bkId, status:'payment_pending', amount:d.amount||0, service:d.service||''};
-      renderBookings();
-      handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
-    }
-
-    // Check by customerId first (most reliable)
-    if ((d.customerId||d.uid||'') === uid) { _doPaymentPopup(); return; }
-
-    // Check by bookingId in allBookings
-    if (allBookings.some(b => b.id === bkId)) { _doPaymentPopup(); return; }
-
-    // allBookings might be empty — verify this booking belongs to us via Firebase
-    fbDB.ref('bookings/' + bkId).once('value').then(bkSnap => {
-      if (!bkSnap.exists()) return; // booking not found
-      const bkData = bkSnap.val();
-      // Check customerId on the booking itself
-      if ((bkData.customerId||bkData.uid||'') === uid || bkData.customerId === currentUser?.uid) {
-        // Add to allBookings and show popup
-        if (!allBookings.find(b => b.id === bkId)) allBookings.unshift(bkData);
-        _doPaymentPopup();
-      }
-    }).catch(()=>{});
-  });
-
-    // active_bookings/ child_changed
-  fbDB.ref('active_bookings').on('child_changed', snap => {
+  activeQuery.on('child_changed', snap => {
     const bk = snap.val(); if (!bk) return;
     const bkId = bk.id || snap.key;
-    // Match by customerId OR by booking being in this customer's list
-    const isOurs = (bk.customerId||bk.uid||'') === uid
-                || allBookings.some(b => b.id === bkId);
-    if (!isOurs) return;
     const idx = allBookings.findIndex(b=>b.id===bkId);
     if (idx>=0) allBookings[idx]=Object.assign({},allBookings[idx],bk,{id:bkId});
     else allBookings.unshift(Object.assign({},bk,{id:bkId}));
@@ -1579,31 +1526,8 @@ function handleOtpSent(bk) {
       return;
     }
     console.log('OTP data found, showing modal for booking:', bk.id);
-    showOtpModal(bk, otpData.otp);
+    showOtpModal(bk.id, otpData.otp, otpData);
   });
-}
-
-function showOtpModal(bk, otp) {
-  let modal = document.getElementById('otpDisplayModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'otpDisplayModal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `
-    <div style="background:white;border-radius:20px;padding:32px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="font-size:48px;margin-bottom:12px;">🔐</div>
-      <h2 style="font-size:20px;font-weight:800;color:#0f1117;margin-bottom:8px;">Job Completion Code</h2>
-      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;">Share this code with your service provider to confirm job completion.</p>
-      <div style="background:#f7f8fc;border:2px dashed #e5e7eb;border-radius:16px;padding:20px;margin-bottom:16px;">
-        <div style="font-size:48px;font-weight:900;letter-spacing:12px;color:#E8251A;font-family:monospace;">${otp}</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:8px;">${bk.service || 'Service'} · ${bk.id}</div>
-      </div>
-      <p style="font-size:13px;color:#6b7280;margin-bottom:20px;">Provider: <strong style="color:#0f1117;">${bk.providerName || '—'}</strong></p>
-      <button onclick="document.getElementById('otpDisplayModal').style.display='none';" style="width:100%;padding:14px;background:#E8251A;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Got it</button>
-    </div>`;
-  modal.style.display = 'flex';
 }
 
 // ── Customer payment ───────────────────────────────────────────────────────────
@@ -1635,7 +1559,7 @@ function handlePaymentRequest(bk) {
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box;';
     document.body.appendChild(modal);
   }
-  const amount = bk.amount || bk.priceVal || 0;
+  const amount = esc(bk.amount || bk.priceVal || 0);
   modal.innerHTML = `
     <div style="background:white;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
       <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
@@ -1646,10 +1570,10 @@ function handlePaymentRequest(bk) {
       <p style="font-size:14px;color:#6b7280;margin-bottom:20px;">Your service is complete. Pay securely to close the job.</p>
       <div style="background:#f7f8fc;border-radius:14px;padding:18px;margin-bottom:20px;text-align:left;">
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">
-          <span style="color:#6b7280;">Service</span><span style="font-weight:700;">${bk.service||'—'}</span>
+          <span style="color:#6b7280;">Service</span><span style="font-weight:700;">${esc(bk.service||'—')}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">
-          <span style="color:#6b7280;">Provider</span><span style="font-weight:700;">${bk.providerName||'—'}</span>
+          <span style="color:#6b7280;">Provider</span><span style="font-weight:700;">${esc(bk.providerName||'—')}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:10px 0;">
           <span style="font-size:15px;font-weight:800;">Total Amount</span>
@@ -1660,7 +1584,7 @@ function handlePaymentRequest(bk) {
         🔒 Pay ₹${amount} Securely
       </button>
       <p style="font-size:12px;color:#9ca3af;margin-bottom:8px;">Secured by Razorpay · UPI · Cards · Netbanking</p>
-      <p style="font-size:11px;color:#d1d5db;">Booking ID: ${bk.id}</p>
+      <p style="font-size:11px;color:#d1d5db;">Booking ID: ${esc(bk.id)}</p>
     </div>`;
   modal.style.display = 'flex';
 }
@@ -1681,9 +1605,10 @@ async function startRazorpayPayment() {
 
   try {
     // Step 1: Create order on your server
+    const idToken = currentUser ? await currentUser.getIdToken() : '';
     const res = await fetch('/api/create-order.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
       body: JSON.stringify({
         bookingId:  bk.id,
         amount:     bk.amount || bk.priceVal || 0,
@@ -1715,61 +1640,68 @@ async function startRazorpayPayment() {
         showToast('Payment cancelled. You can pay again from your bookings.');
       }},
       handler: async function(response) {
-        // Razorpay handler fires ONLY on successful payment
-        // Write paid status to Firebase immediately — don't wait for server verification
-        const paidAt = new Date().toISOString();
-        const payUpdate = {
+        // Razorpay handler fires on client-side success, but the payment is only
+        // marked paid after the server verifies the signature.
+        setBtn('Verifying payment…', true);
+        let verified = false, result = null;
+        try {
+          // Step 3a: server verification (verifies signature, records txn + RTDB status)
+          const vr = await fetch('/api/verify-payment.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+              booking_id:          bk.id,
+              amount:              bk.amount || bk.priceVal || 0,
+              provider_id:         bk.providerId || '',
+              customer_id:         currentUser ? currentUser.uid : '',
+            })
+          });
+          result = await vr.json();
+          verified = !!(result && result.success);
+        } catch(e) { console.warn('[Pay] Server verify failed:', e.message); }
+
+        if (!verified) {
+          setBtn('Verification pending', true);
+          showToast('⚠️ Payment received but not yet verified. Ref: ' + response.razorpay_payment_id + ' — contact support if it is not updated soon.');
+          return;
+        }
+
+        // Step 3b: record in MySQL (signature is re-verified server-side)
+        if (currentUser) {
+          try {
+            const token = await currentUser.getIdToken();
+            await fetch('https://hamaraservice.com/api/bookings.php?action=razorpay_confirm', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                booking_id:          bk.id,
+                razorpay_order_id:   response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature:  response.razorpay_signature,
+              })
+            });
+          } catch(e) { console.warn('[Pay] MySQL confirm failed:', e.message); }
+        }
+
+        // Update in-memory only after verification
+        const paidBk = Object.assign({}, bk, {
           status:          'paid',
-          paidAt:          paidAt,
+          paidAt:          new Date().toISOString(),
           paymentMethod:   'razorpay',
           txnId:           response.razorpay_payment_id,
           razorpayOrderId: response.razorpay_order_id,
-        };
-        // Update both Firebase paths immediately
-        fbDB.ref('bookings/' + bk.id).update(payUpdate)
-          .then(function(){ console.log('[Pay] Firebase bookings updated'); })
-          .catch(function(e){ console.warn('[Pay] bookings update failed:', e.message); });
-        fbDB.ref('active_bookings/' + bk.id).update(payUpdate)
-          .catch(function(e){ console.warn('[Pay] active_bookings update failed:', e.message); });
-
-        // Update in-memory immediately so UI reflects paid
-        const paidBk = Object.assign({}, bk, payUpdate);
+        });
         const bkIdx = allBookings.findIndex(b => b.id === bk.id);
         if (bkIdx >= 0) allBookings[bkIdx] = paidBk;
         renderBookings(); renderHistory();
 
-        // Close payment modal
         const modal = document.getElementById('paymentRequestModal');
         if (modal) modal.style.display = 'none';
-        showToast('✅ Payment of ₹' + (bk.amount||0) + ' successful!');
-
-        // Step 3: Also verify on server (for records/commission — non-blocking)
         setBtn('Paid ✓', true);
-        fetch('/api/verify-payment.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            razorpay_order_id:   response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature:  response.razorpay_signature,
-            booking_id:          bk.id,
-            amount:              bk.amount || bk.priceVal || 0,
-            provider_id:         bk.providerId || '',
-            customer_id:         currentUser ? currentUser.uid : '',
-          })
-        }).then(function(r){ return r.json(); })
-          .then(function(result) {
-            if (result && result.success) {
-              // Update Firebase with commission details from server
-              fbDB.ref('bookings/' + bk.id).update({
-                providerEarning: result.providerEarning || 0,
-                commissionAmt:   result.commissionAmt   || 0,
-                verified:        true,
-              }).catch(function(){});
-              console.log('[Pay] Server verification OK');
-            }
-          })
-          .catch(function(e){ console.warn('[Pay] Server verify failed (payment still recorded):', e.message); });
+        showToast('✅ Payment of ₹' + (bk.amount||0) + ' successful!');
 
         // Show review after 1.5s
         setTimeout(function(){ showReviewModal(paidBk); }, 1500);
@@ -1806,13 +1738,13 @@ function showReviewModal(bk) {
     <div style="background:white;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
       <div style="font-size:48px;margin-bottom:12px;">⭐</div>
       <h2 style="font-size:20px;font-weight:800;color:#0f1117;margin-bottom:6px;">Rate your experience</h2>
-      <p style="font-size:14px;color:#6b7280;margin-bottom:6px;">How was <strong>${bk.providerName||'the provider'}</strong>?</p>
-      <p style="font-size:13px;color:#9ca3af;margin-bottom:20px;">${bk.service||''}</p>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:6px;">How was <strong>${esc(bk.providerName||'the provider')}</strong>?</p>
+      <p style="font-size:13px;color:#9ca3af;margin-bottom:20px;">${esc(bk.service||'')}</p>
       <div id="reviewStars" style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;">
         ${[1,2,3,4,5].map(n => `<span data-star="${n}" onclick="setReviewStar(${n})" style="font-size:36px;cursor:pointer;transition:.2s;filter:grayscale(1);">★</span>`).join('')}
       </div>
       <textarea id="reviewText" placeholder="Tell us about your experience... (optional)" rows="3" style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;margin-bottom:16px;"></textarea>
-      <button id="submitReviewBtn" onclick="submitReview('${bk.id}','${bk.providerName||''}')" style="width:100%;padding:14px;background:#e5e7eb;color:#9ca3af;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;" disabled>Select a rating to submit</button>
+      <button id="submitReviewBtn" data-bid="${esc(bk.id)}" data-prov="${esc(bk.providerName||'')}" onclick="submitReview(this.dataset.bid,this.dataset.prov)" style="width:100%;padding:14px;background:#e5e7eb;color:#9ca3af;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;" disabled>Select a rating to submit</button>
       <button onclick="document.getElementById('reviewModal').style.display='none';" style="width:100%;padding:12px;background:transparent;border:none;color:#9ca3af;font-size:14px;cursor:pointer;margin-top:8px;">Skip for now</button>
     </div>`;
   modal.style.display = 'flex';
@@ -1911,12 +1843,12 @@ function openCustomerTrackView(bk) {
     <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:#1a1a2e;border-bottom:1px solid rgba(255,255,255,.08);">
       <button onclick="closeCustomerTrackView();" style="width:36px;height:36px;background:rgba(255,255,255,.1);border:none;color:white;border-radius:50%;font-size:18px;cursor:pointer;flex-shrink:0;">&#x2190;</button>
       <div style="flex:1;">
-        <div style="font-size:15px;font-weight:800;color:white;">${bk.service || 'Your Booking'}</div>
+        <div style="font-size:15px;font-weight:800;color:white;">${esc(bk.service || 'Your Booking')}</div>
         <div id="trackStatusTxt" style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">Locating provider…</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:11px;color:rgba(255,255,255,.4);">Amount</div>
-        <div style="font-size:14px;font-weight:800;color:#00ff88;">&#x20B9;${bk.amount || bk.priceVal || '—'}</div>
+        <div style="font-size:14px;font-weight:800;color:#00ff88;">&#x20B9;${esc(bk.amount || bk.priceVal || '—')}</div>
       </div>
     </div>
     <div id="custTrackMapEl" style="flex:1;min-height:200px;"></div>
@@ -1924,7 +1856,7 @@ function openCustomerTrackView(bk) {
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;">Provider</div>
-          <div style="font-size:14px;font-weight:700;color:white;">${bk.providerName || '—'}</div>
+          <div style="font-size:14px;font-weight:700;color:white;">${esc(bk.providerName || '—')}</div>
         </div>
         <div style="text-align:right;">
           <div id="trackEtaTxt" style="font-size:15px;font-weight:800;color:#00ff88;"></div>
@@ -1963,7 +1895,7 @@ function openCustomerTrackView(bk) {
           _trackProvMarker = L.marker([pLat, pLng], { icon: provIco }).addTo(_trackMap);
         } else { _trackProvMarker.setLatLng([pLat, pLng]); }
         const st = document.getElementById('trackStatusTxt');
-        if (st) st.textContent = '&#x1F697; Provider is on the way';
+        if (st) st.textContent = '\u{1F697} Provider is on the way';
         if (custLat && custLng) {
           const R=6371, dL=(custLat-pLat)*Math.PI/180, dN=(custLng-pLng)*Math.PI/180;
           const a=Math.sin(dL/2)**2+Math.cos(pLat*Math.PI/180)*Math.cos(custLat*Math.PI/180)*Math.sin(dN/2)**2;
@@ -1997,7 +1929,8 @@ function updateSidebarUser() {
   if (nm) nm.textContent = p.name || 'Customer';
   if (id) id.textContent = p.id   || '';
   if (av) {
-    if (p.photoURL) av.innerHTML = '<img src="'+p.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    const _ph = safeImgUrl(p.photoURL);
+    if (_ph) av.innerHTML = '<img src="'+esc(_ph)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
     else av.textContent = (p.name||'U')[0].toUpperCase();
   }
 }
@@ -2078,10 +2011,10 @@ function showOtpModal(bkId, otp, otpData) {
     <h2 style="font-size:19px;font-weight:800;color:#0f1117;margin-bottom:6px;">Job Completion Code</h2>
     <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">Read this code to your provider</p>
     <div style="background:#f0f9ff;border:2px dashed #1B6B7A;border-radius:16px;padding:22px;margin-bottom:14px;">
-      <div style="font-size:54px;font-weight:900;letter-spacing:14px;color:#1B6B7A;font-family:monospace;user-select:all;">${otp}</div>
-      <div style="font-size:11px;color:#6b7280;margin-top:6px;">${service} · ${bkId}</div>
+      <div style="font-size:54px;font-weight:900;letter-spacing:14px;color:#1B6B7A;font-family:monospace;user-select:all;">${esc(otp)}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:6px;">${esc(service)} · ${esc(bkId)}</div>
     </div>
-    <p style="font-size:12px;color:#6b7280;margin-bottom:16px;">Provider: <strong>${provider}</strong></p>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:16px;">Provider: <strong>${esc(provider)}</strong></p>
     <div style="font-size:11px;color:#1B6B7A;background:#e6f4f6;border-radius:9px;padding:9px;margin-bottom:12px;">⏳ Waiting for provider to enter this code…</div>
     <button onclick="closeOtpModal()" style="width:100%;padding:12px;background:white;border:1.5px solid #e5e7eb;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;color:#9ca3af;">Dismiss</button>
   </div>`;
@@ -2097,7 +2030,7 @@ function closeOtpModal() {
 // ── Cancel button with 2-hour timer ──────────────────────────────────────────
 var _cancelTimers = {};
 function buildCancelBtn(b) {
-  const id = b.id || '';
+  const id = esc(b.id || '');
   const st = (b.status||'').toLowerCase();
   if (!id || st==='otp_sent'||st==='payment_pending'||st==='completed'||st==='cancelled') return '';
   if (st==='searching'||st==='pending') {

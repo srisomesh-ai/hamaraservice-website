@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
+requireAdmin();
 
 try {
     $db = getDB();
@@ -27,5 +28,6 @@ try {
         'services_seeded' => (int)$svcCount,
     ]);
 } catch (Exception $e) {
-    err('Connection failed: ' . $e->getMessage());
+    error_log('test-db: ' . $e->getMessage());
+    err('Connection failed', 500);
 }

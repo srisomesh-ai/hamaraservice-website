@@ -249,10 +249,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
   <div class="lbox">
     <div class="lbox-logo">Hamara<span>Service</span></div>
     <div class="lbox-sub">Price Manager · Admin Only</div>
-    <label>Password</label>
-    <input type="password" id="pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <button class="lbox-btn" onclick="doLogin()">Login →</button>
-    <div class="lbox-err" id="lErr">❌ Wrong password</div>
+    <label>Admin Key</label>
+    <input type="password" id="pw" placeholder="Admin key" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="lbox-btn" id="loginBtn" onclick="doLogin()">Login →</button>
+    <div class="lbox-err" id="lErr">❌ Invalid admin key</div>
   </div>
 </div>
 
@@ -340,7 +340,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
 
 <script>
 
-var PASS='hamaraAdmin2024';
 var FB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
 var FBP='hs_service_prices';
 var _tok='',_fb={},_dirty={},_cat='All',_savedN=0;
@@ -913,23 +912,54 @@ function toggleTile(sid, taskKey) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-function doLogin(){
-  if(document.getElementById('pw').value===PASS){
-    document.getElementById('loginWrap').style.display='none';
-    document.getElementById('appWrap').style.display='block';
-    initApp();
-  }else{document.getElementById('lErr').style.display='block';}
+// The admin key is verified by the API (server-side ADMIN_KEY) and kept only in
+// sessionStorage for this tab. It is sent in the X-Admin-Key header.
+function getAdminKey(){
+  try { return sessionStorage.getItem('hs_admin_key') || ''; } catch(e) { return ''; }
 }
-function doLogout(){location.reload();}
+function _showApp(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+  initApp();
+}
+var _loginBusy=false;
+function doLogin(){
+  if(_loginBusy) return;
+  var key=(document.getElementById('pw').value||'').trim();
+  var errEl=document.getElementById('lErr');
+  errEl.style.display='none';
+  if(!key){ errEl.textContent='❌ Enter the admin key'; errEl.style.display='block'; return; }
+  _loginBusy=true;
+  fetch(MAPI + '/providers.php?action=list', { headers: { 'X-Admin-Key': key }, cache: 'no-store' })
+  .then(function(r){
+    _loginBusy=false;
+    if(r.status>=200 && r.status<300){
+      try { sessionStorage.setItem('hs_admin_key', key); sessionStorage.setItem('hs_admin_session','1'); } catch(e) {}
+      _showApp();
+    } else {
+      errEl.textContent = (r.status===401||r.status===403) ? '❌ Invalid admin key' : '❌ Login failed (HTTP '+r.status+')';
+      errEl.style.display='block';
+      document.getElementById('pw').value='';
+    }
+  })
+  .catch(function(){
+    _loginBusy=false;
+    errEl.textContent='❌ Could not reach the server';
+    errEl.style.display='block';
+  });
+}
+function doLogout(){
+  try { sessionStorage.removeItem('hs_admin_key'); sessionStorage.removeItem('hs_admin_session'); } catch(e) {}
+  location.reload();
+}
 
 // ── FIREBASE REST ─────────────────────────────────────────────────────────────
 // ── MySQL API helpers (replaces Firebase) ────────────────────────
 var MAPI = 'https://hamaraservice.com/api';
-var MKEY = 'hamaraAdmin2024';
 
 function apiGet(action, cb) {
-  fetch(MAPI + '/services.php?action=' + action + '&key=' + MKEY, {
-    headers: { 'X-Admin-Key': MKEY }
+  fetch(MAPI + '/services.php?action=' + action, {
+    headers: { 'X-Admin-Key': getAdminKey() }
   })
   .then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -947,9 +977,9 @@ function apiGet(action, cb) {
 }
 
 function apiSave(svcId, data, cb) {
-  fetch(MAPI + '/services.php?action=save_prices&key=' + MKEY, {
+  fetch(MAPI + '/services.php?action=save_prices', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
     body: JSON.stringify({ svc_id: svcId, data: data })
   })
   .then(function(r) { return r.json(); })
@@ -961,9 +991,9 @@ function apiSave(svcId, data, cb) {
 }
 
 function apiReset(svcId, cb) {
-  fetch(MAPI + '/services.php?action=reset_prices&key=' + MKEY, {
+  fetch(MAPI + '/services.php?action=reset_prices', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
     body: JSON.stringify({ svc_id: svcId })
   })
   .then(function(r) { return r.json(); })
@@ -1332,6 +1362,8 @@ onI=function(inp){
   updateStats();
   updateSbDots();
 };
+// Resume an admin session started in this tab (or opened from admin.html)
+if(getAdminKey()) _showApp();
 </script>
 </body>
 </html>
