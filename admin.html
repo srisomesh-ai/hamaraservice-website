@@ -244,9 +244,6 @@ html, body { overflow-x: auto; min-width: 1200px; }
 .table-wrap { overflow-x: auto; }
 table { min-width: 600px; }
 </style>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -311,11 +308,11 @@ table { min-width: 600px; }
     <div class="stats-grid">
       <div class="stat-card red"><div class="stat-icon">&#128119;</div><div class="stat-num" id="ds-providers">0</div><div class="stat-label">Total Providers</div><div class="stat-sub" id="ds-active-prov">0 approved</div></div>
       <div class="stat-card yellow"><div class="stat-icon">&#8987;</div><div class="stat-num" id="ds-pending">0</div><div class="stat-label">Pending Approvals</div><div class="stat-sub down">Needs review</div></div>
-      <div class="stat-card green"><div class="stat-icon">&#128176;</div><div class="stat-num" id="ds-revenue">&#8377;0</div><div class="stat-label">Platform Commission</div><div class="stat-sub">Total earned</div></div>
+      <div class="stat-card green"><div class="stat-icon">&#128176;</div><div class="stat-num" id="ds-revenue">&#8377;0</div><div class="stat-label">Platform Commission</div><div class="stat-sub" id="ds-revenue-sub">Total earned</div></div>
       <div class="stat-card blue"><div class="stat-icon">&#128203;</div><div class="stat-num" id="ds-orders">0</div><div class="stat-label">Total Orders</div><div class="stat-sub" id="ds-completed-lbl">0 completed</div></div>
-      <div class="stat-card purple"><div class="stat-icon">&#128100;</div><div class="stat-num" id="ds-customers">0</div><div class="stat-label">Registered Customers</div><div class="stat-sub">Accounts</div></div>
+      <div class="stat-card purple"><div class="stat-icon">&#128100;</div><div class="stat-num" id="ds-customers">0</div><div class="stat-label">Registered Customers</div><div class="stat-sub" id="ds-customers-sub">Accounts</div></div>
       <div class="stat-card pink"><div class="stat-icon">&#128184;</div><div class="stat-num" id="ds-payouts">&#8377;0</div><div class="stat-label">Provider Payouts</div><div class="stat-sub">Total withdrawn</div></div>
-      <div class="stat-card teal"><div class="stat-icon">&#9888;</div><div class="stat-num" id="ds-penalties">0</div><div class="stat-label">Penalties Issued</div><div class="stat-sub down">Deducted</div></div>
+      <div class="stat-card teal"><div class="stat-icon">&#9888;</div><div class="stat-num" id="ds-penalties">0</div><div class="stat-label">Penalties Issued</div><div class="stat-sub down" id="ds-penalties-sub">Deducted</div></div>
       <div class="stat-card green"><div class="stat-icon">&#128295;</div><div class="stat-num" id="ds-services">0</div><div class="stat-label">Active Services</div><div class="stat-sub">In catalog</div></div>
     </div>
     <div class="sec-header">
@@ -363,10 +360,10 @@ table { min-width: 600px; }
     <div class="table-wrap">
       <div class="table-header">
         <div class="th-title">Provider Approval Queue</div>
-        <button class="abtn approve" onclick="syncAllFromFirebase()" style="margin-left:8px;padding:6px 14px;">🔄 Refresh</button>
+        <button class="abtn approve" onclick="syncAllData()" style="margin-left:8px;padding:6px 14px;">🔄 Refresh</button>
         <div class="filters">
           <button class="fbtn on" id="af-pending">Pending</button>
-          <button class="fbtn" id="af-review">Under Review</button>
+          <button class="fbtn" id="af-suspended">Suspended</button>
           <button class="fbtn" id="af-all">All</button>
         </div>
       </div>
@@ -544,7 +541,6 @@ table { min-width: 600px; }
         <button class="fbtn" id="of-completed">Completed</button>
         <button class="fbtn" id="of-pending">Pending</button>
         <button class="fbtn" id="of-cancelled">Cancelled</button>
-        <button class="fbtn" style="background:#E8651A;color:white;" onclick="deleteAllOrders()">🗑 Delete All</button>
       </div>
     </div>
     <div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Provider</th><th>Service</th><th>Date</th><th>Amount</th><th>Commission</th><th>Status</th><th>Action</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
@@ -556,7 +552,6 @@ table { min-width: 600px; }
       <div class="sec-title">Registered Customers</div>
       <div class="sec-actions">
         <input type="text" class="srch" id="custSearch" placeholder="Search..."/>
-        <button class="fbtn" style="background:#E8651A;color:white;" onclick="deleteAllCustomers()">🗑 Delete All</button>
       </div>
     </div>
     <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Email</th><th>City</th><th>Bookings</th><th>Joined</th><th>Action</th></tr></thead><tbody id="custBody"></tbody></table></div>
@@ -568,7 +563,7 @@ table { min-width: 600px; }
       <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div class="card-title" style="margin:0;">HS Service Prices</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px;">Manage all service prices — synced directly to Firebase</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px;">Manage all service prices — saved to the HamaraService server</div>
         </div>
         <a href="hs-prices.html" target="_blank" style="padding:8px 16px;background:var(--teal);color:white;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none;">🔗 Open Full Editor</a>
       </div>
@@ -593,104 +588,14 @@ table { min-width: 600px; }
     </div>
     <div class="card">
       <div class="card-title">Data Management</div>
-      <div class="info-box info-yellow">These actions affect all data. Use with caution.</div>
+      <div class="info-box info-yellow">Downloads the data currently loaded in this panel.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn outline" id="exportBtn">Export All Data (JSON)</button>
-        <button class="btn danger" id="resetApprovalsBtn">Reset All Approvals to Pending</button>
       </div>
     </div>
-    <div class="card" style="border:2px solid #e53935;">
-      <div class="card-title" style="color:#e53935;">⚠️ Danger Zone — Pre-Launch Reset</div>
-      <div class="info-box info-yellow" style="margin-bottom:14px;">Use this before going live to clear all test data. This will delete all providers (freeing their emails for re-registration), all orders, all customer profiles, penalties, and payouts. Admin credentials and service catalog will be preserved.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn danger" onclick="deleteAllOrders()">🗑 Delete All Orders</button>
-        <button class="btn danger" onclick="deleteAllCustomers()">🗑 Delete All Customers</button>
-        <button class="btn danger" style="background:#7c3aed;" onclick="resetPanel()">🔴 Full Panel Reset (Clear Everything)</button>
-      </div>
-    </div>
-    <!-- DATA MANAGEMENT -->
-    <div class="card" style="margin-top:20px;border-color:#ef4444;">
-      <div class="card-title" style="color:#ef4444;">⚠️ Data Management</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Permanently delete data from Firebase. This cannot be undone. Services and prices are preserved.</p>
-      <div style="display:grid;gap:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">All Bookings & Orders</div>
-            <div style="font-size:11px;color:var(--muted);">Clears bookings/ and active_bookings/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('bookings')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">All Customers</div>
-            <div style="font-size:11px;color:var(--muted);">Clears customers/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('customers')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">All Providers</div>
-            <div style="font-size:11px;color:var(--muted);">Clears providers/ from Firebase (cannot be recovered)</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('providers')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">OTP Records</div>
-            <div style="font-size:11px;color:var(--muted);">Clears job_otp/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('job_otp')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Payments & Withdrawals</div>
-            <div style="font-size:11px;color:var(--muted);">Clears payouts/ and payout_requests/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('payouts')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Ratings & Reviews</div>
-            <div style="font-size:11px;color:var(--muted);">Clears reviews/ and provider_reviews/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('reviews')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Balance Sheet</div>
-            <div style="font-size:11px;color:var(--muted);">Clears hs_balance_sheet/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('balance_sheet')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Service Catalog</div>
-            <div style="font-size:11px;color:var(--muted);">Clears hs_catalog/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('catalog')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Service Prices</div>
-            <div style="font-size:11px;color:var(--muted);">Clears hs_service_prices/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('service_prices')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Tracking Data</div>
-            <div style="font-size:11px;color:var(--muted);">Clears tracking/ from Firebase</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('tracking')" style="white-space:nowrap;">🗑️ Erase</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff3eb;border-radius:10px;border:1px solid #fed7aa;">
-          <div>
-            <div style="font-weight:700;font-size:13px;color:#c2410c;">⚡ Erase Everything</div>
-            <div style="font-size:11px;color:var(--muted);">Clears ALL data — bookings, payments, reviews, catalog, providers, customers</div>
-          </div>
-          <button class="abtn cancel" onclick="eraseData('all')" style="background:#ef4444;color:white;white-space:nowrap;">🗑️ Erase All</button>
-        </div>
-      </div>
+    <div class="card">
+      <div class="card-title">Deleting Records</div>
+      <div class="info-box info-blue">Bulk "erase" tools have been removed. Delete individual bookings from <strong>All Orders</strong>, customers from <strong>Customers</strong> and providers from <strong>All Providers</strong> — each delete goes through the admin API.</div>
     </div>
   </div>
 
@@ -717,6 +622,34 @@ table { min-width: 600px; }
 </div>
 
 <!-- ADD/EDIT SERVICE MODAL -->
+<!-- ISSUE PENALTY MODAL -->
+<div class="modal-overlay" id="penaltyModal">
+  <div class="modal-box">
+    <div class="modal-title">Issue Penalty</div>
+    <div class="modal-sub">The amount is deducted from the provider's wallet balance immediately.</div>
+    <div class="fgrid">
+      <div class="ffield" style="grid-column:1/-1"><label>Provider</label><select id="pen_provider"></select></div>
+      <div class="ffield"><label>Amount (₹)</label><input id="pen_amount" type="number" min="1" placeholder="e.g. 200"/></div>
+      <div class="ffield"><label>Booking ID (optional)</label><input id="pen_booking" placeholder="e.g. BK123"/></div>
+      <div class="ffield" style="grid-column:1/-1"><label>Reason</label>
+        <select id="pen_reason">
+          <option>No-show without cancellation</option>
+          <option>Cancellation within 30 min</option>
+          <option>Customer complaint (verified)</option>
+          <option>Fake ID or document</option>
+          <option>3 consecutive cancellations</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="ffield" style="grid-column:1/-1"><label>Notes (optional)</label><textarea id="pen_notes" maxlength="300" placeholder="Details for the record"></textarea></div>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn sec" id="penClose">Cancel</button>
+      <button class="mbtn primary" id="penSubmitBtn">Issue Penalty</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="svcModal">
   <div class="modal-box">
     <div class="modal-title" id="svcModalTitle">Add New Service</div>
@@ -732,9 +665,7 @@ table { min-width: 600px; }
           <option>Care Services</option><option>Other</option>
         </select>
       </div>
-      <div class="ffield"><label>Min Price (₹)</label><input id="svc_min" type="number" min="0" placeholder="0"/></div>
-      <div class="ffield"><label>Max Price (₹)</label><input id="svc_max" type="number" min="0" placeholder="9999"/></div>
-      <div class="ffield"><label>Default Price (₹)</label><input id="svc_default" type="number" min="0" placeholder="499"/></div>
+      <div class="ffield"><label>Base Price (₹)</label><input id="svc_default" type="number" min="0" placeholder="499"/></div>
       <div class="ffield"><label>Commission %</label><input id="svc_comm" type="number" min="0" max="50" value="15"/></div>
       <div class="ffield"><label>Status</label>
         <select id="svc_status"><option value="active">Active</option><option value="inactive">Inactive</option></select>
@@ -1273,229 +1204,10 @@ function adminLogout(){
   try { localStorage.removeItem('hs_admin_session'); } catch(e) {}
   location.reload();
 }
-// ── syncAllOrders: load ALL bookings from Firebase both paths ──────────────
-function syncAllOrders(cb) {
-  var all = [];
-  var done = 0;
-  function finish() {
-    done++;
-    if (done < 2) return;
-    var seen = new Set();
-    all = all.filter(function(b) {
-      if (!b.id || seen.has(b.id)) return false;
-      seen.add(b.id); return true;
-    });
-    all.sort(function(a,b) { return new Date(b.createdAt||b.date||0) - new Date(a.createdAt||a.date||0); });
-    lsSet('hs_all_bookings', all);
-    // Hand back the merged Firebase + MySQL view (getAllOrders merges both caches)
-    if (cb) cb(getAllOrders());
-  }
-  fbRestGet('bookings', function(err, data) {
-    if (!err && data && !data.error)
-      toArr(data).filter(function(b){return b&&b.id;}).forEach(function(b){all.push(b);});
-    finish();
-  });
-  fbRestGet('active_bookings', function(err, data) {
-    if (!err && data && !data.error)
-      toArr(data).filter(function(b){return b&&b.id;}).forEach(function(b){
-        var ei = all.findIndex(function(x){return x.id===b.id;});
-        if (ei===-1) all.push(b); else all[ei]=Object.assign({},all[ei],b);
-      });
-    finish();
-  });
-}
-// ── Firebase REST helpers ────────────────────────────────────────────────────
-var FB_URL = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  FIREBASE LIVE DATA LAYER — replaces REST-based sync        ║
+// ║  DATA LAYER — MySQL API only (Firebase RTDB is locked)       ║
+// ║  localStorage keys below are just render caches of API data. ║
 // ╚══════════════════════════════════════════════════════════════╝
-
-// Init Firebase SDK
-if (!firebase.apps.length) {
-  firebase.initializeApp({
-    apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-    authDomain:        "hamaraservice-s009.firebaseapp.com",
-    databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:         "hamaraservice-s009",
-    storageBucket:     "hamaraservice-s009.firebasestorage.app",
-    messagingSenderId: "1064274729048",
-    appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
-  });
-}
-var _fbSDK  = firebase.database();
-var _hsPricesCache=null;
-var _hsPricesLoading=false;
-function getHSPrices(cb){
-  if(_hsPricesCache){cb(_hsPricesCache);return;}
-  _fbSDK.ref('hs_service_prices').once('value').then(function(snap){
-    _hsPricesCache=snap.exists()?snap.val():{};
-    try{localStorage.removeItem('hs_catalog');}catch(e){}
-    cb(_hsPricesCache);
-  }).catch(function(){ if(!_hsPricesCache) _hsPricesCache={}; cb(_hsPricesCache); });
-}
-function getCommissionRate(svcId,svcName,cb){
-  getHSPrices(function(prices){
-    if(prices[svcId]&&prices[svcId].commission!=null){cb(prices[svcId].commission);return;}
-    var e=Object.keys(prices).map(function(k){return prices[k];}).find(function(p){return p.name&&p.name.toLowerCase()===(svcName||'').toLowerCase();});
-    cb(e&&e.commission!=null?e.commission:15);
-  });
-}
-function calcPayout(booking,cb){
-  var price=booking.priceVal||booking.amount||0;
-  getCommissionRate(booking.svcId||'',booking.service||'',function(pct){
-    cb({price:price,commPct:pct,commAmt:Math.round(price*pct/100),provEarns:price-Math.round(price*pct/100)});
-  });
-}
-
-
-// Rules are public read — no auth needed
-var _adminReady = true;
-
-// Authenticated REST read (uses Firebase SDK token)
-function fbRestRead(path, cb) {
-  _fbSDK.ref(path).once('value')
-    .then(function(snap){ cb(snap.exists()?snap.val():null); })
-    .catch(function(e){ console.warn('[Admin] read err:',path,e.message); cb(null); });
-}
-
-// Authenticated REST patch (update)
-function fbRestPatch(path, data, cb) {
-  _fbSDK.ref(path).update(data)
-    .then(function(){ if(cb)cb(null); })
-    .catch(function(e){ if(cb)cb(e); });
-}
-// Authenticated REST delete
-function fbRestDelete(path, cb) {
-  _fbSDK.ref(path).remove()
-    .then(function(){ if(cb)cb(null); })
-    .catch(function(e){ if(cb)cb(e); });
-}
-// ── Replace syncAllFromFirebase with SDK-based live reads ─────────────────────
-function syncAllFromFirebase(cb) {
-  // Now reads from MySQL API instead of Firebase
-  showToast('🔄 Loading from MySQL...');
-  var done = 0; var total = 3;
-  function check() {
-    done++;
-    if (done >= total) {
-      showToast('✅ Data loaded from MySQL');
-      if (cb) cb();
-    }
-  }
-
-  // Providers
-  adminFetch(HS_API+'/providers.php?action=list').then(function(r){
-    if (r.status === 401 && getAdminKey()) { showToast('⚠️ Admin session expired — please log in again'); setTimeout(adminLogout, 1500); }
-    return r.json();
-  }).then(function(res) {
-    if (res.success && res.data) {
-      var activeProvs = res.data.filter(function(p){ return p.status !== 'deleted'; });
-      localStorage.setItem('hs_providers', JSON.stringify(activeProvs));
-      showToast('📋 Providers: ' + activeProvs.length);
-    }
-    check();
-  }).catch(function(e){ console.error('Providers load error:', e); check(); });
-
-  // Bookings
-  adminFetch(HS_API+'/bookings.php?action=admin_list&limit=200').then(function(r){ return r.json(); }).then(function(res) {
-    if (res.success && res.data) {
-      // Normalise field names for admin panel
-      var bks = res.data.map(function(b) {
-        return Object.assign({}, b, {
-          providerId:   b.provider_id   || b.providerId,
-          customerId:   b.customer_id   || b.customerId,
-          customer:     b.customer_name || b.customer,
-          providerName: b.provider_name || b.providerName,
-          service:      b.svc_name      || b.service,
-          createdAt:    b.created_at    || b.createdAt,
-          completedAt:  b.completed_at  || b.completedAt,
-          amountPaid:   b.confirmed_price || b.amount || b.amountPaid,
-          paymentStatus: b.payment_status || b.paymentStatus,
-        });
-      });
-      localStorage.setItem('hs_all_orders', JSON.stringify(bks));
-      showToast('📦 Bookings: ' + bks.length);
-    }
-    check();
-  }).catch(function(e){ console.error('Bookings load error:', e); check(); });
-
-  // Payouts
-  adminFetch(HS_API+'/payouts.php?action=pending').then(function(r){ return r.json(); }).then(function(res) {
-    if (res.success && res.data) {
-      var pays = res.data.map(function(p) {
-        return Object.assign({}, p, {
-          providerId: p.provider_id || p.providerId,
-          upi: p.upi_id || p.upi,
-          bank: p.bank_name || p.bank,
-          account: p.account_no || p.account,
-          accountType: p.account_type || p.accountType,
-          requestedAt: p.requested_at || p.requestedAt,
-        });
-      });
-      localStorage.setItem('hs_payouts', JSON.stringify(pays));
-    }
-    check();
-  }).catch(function(e){ console.error('Payouts load error:', e); check(); });
-}
-
-// ── Real-time listeners — auto-refresh UI when Firebase data changes ──────────
-var _liveListenersStarted = false;
-function startLiveListeners() {
-  if (typeof syncCustomersFromFirebase==='function') syncCustomersFromFirebase(function(){ if(document.getElementById('custBody')) loadCustomers(null); });
-  if (_liveListenersStarted) return;
-  _liveListenersStarted = true;
-
-  // Providers: MySQL (providers.php?action=list) is the source of truth and is
-  // refreshed by the 30 s auto-refresh. The old RTDB 'providers' listener
-  // overwrote that list with stale Firebase records, so it was removed.
-
-  // Customers — live
-  _fbSDK.ref('customers').on('value', function(snap) {
-    if (!snap.exists()) return;
-    var custs = [];
-    snap.forEach(function(c) { var v=c.val(); if(v&&(v.id||v.uid)) custs.push(v); });
-    // MERGE with existing (MySQL-registered app customers must never be dropped)
-    try{
-      var _ex = JSON.parse(localStorage.getItem('hs_customers')||'[]');
-      var _ids = {}; custs.forEach(function(c){ _ids[c.id||c.uid]=1; });
-      _ex.forEach(function(c){ if(c && (c.id||c.uid) && !_ids[c.id||c.uid]) custs.push(c); });
-    }catch(e){}
-    localStorage.setItem('hs_customers', JSON.stringify(custs));
-    if (document.getElementById('custBody')) loadCustomers(null);
-    console.log('[Admin] Live: customers updated', custs.length);
-  });
-
-  // Active bookings — live
-  _fbSDK.ref('active_bookings').on('value', function(snap) {
-    if (!snap.exists()) return;
-    var bks = [];
-    snap.forEach(function(c) { var v=c.val(); if(v&&v.id) bks.push(v); });
-    // Merge with existing orders cache
-    try {
-      var existing = JSON.parse(localStorage.getItem('hs_all_orders') || '[]');
-      var seen = new Set(bks.map(function(b){return b.id;}));
-      existing = existing.filter(function(b){ return !seen.has(b.id); });
-      localStorage.setItem('hs_all_orders', JSON.stringify(bks.concat(existing)));
-    } catch(e) {}
-    if (document.getElementById('ordersBody')) loadOrders(null, null);
-    if (document.getElementById('ds-providers')) loadDashboard();
-  });
-
-  // Payouts live — fires instantly when provider submits withdrawal
-  _fbSDK.ref('payouts').on('value', function(snap) {
-    var pays = [];
-    if (snap.exists()) snap.forEach(function(c){ var v=c.val(); if(v&&v.id) pays.push(v); });
-    localStorage.setItem('hs_payouts', JSON.stringify(pays));
-    if (document.getElementById('payoutsBody')) _renderPayments();
-    if (document.getElementById('providersBody')) loadProviders(null, null);
-    if (document.getElementById('ds-providers')) loadDashboard();
-  });
-}
-
-
-
-// ── Firebase init & authenticated fbRestRead ─────────────────────────────────
 
 // ── localStorage helpers ─────────────────────────────────────────────────────
 function lsGet(key, def) {
@@ -1508,299 +1220,279 @@ function toArr(obj) {
   if (!obj || typeof obj !== 'object') return [];
   return Array.isArray(obj) ? obj : Object.values(obj);
 }
+// Drop stale caches written by the old Firebase data layer
+['hs_all_bookings','hs_catalog'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
 
-function fbRestGet(path, cb) {
-  var x = new XMLHttpRequest();
-  x.open('GET', FB_URL+'/'+path+'.json', true);
-  x.timeout = 8000;
-  x.onload = function(){ try{ cb(null, JSON.parse(x.responseText)); }catch(e){ cb(e, null); } };
-  x.onerror = x.ontimeout = function(){ cb(new Error('network'), null); };
-  x.send();
-}
-function fbRestSet(path, data, cb) {
-  var x = new XMLHttpRequest();
-  x.open('PUT', FB_URL+'/'+path+'.json', true);
-  x.setRequestHeader('Content-Type','application/json');
-  x.timeout = 8000;
-  x.onload = function(){ if(cb) cb(null); };
-  x.onerror = x.ontimeout = function(){ if(cb) cb(new Error('network')); };
-  x.send(JSON.stringify(data));
-}
-// fbRestPatch: replaced by Firebase SDK version below
-// fbRestDelete: replaced by Firebase SDK version below
-
-
-
-
-// ── Delete helpers ──────────────────────────────────────────────────────────
-function deleteProviderFull(id) {
-  // Remove from local cache immediately
-  saveProviders(getProviders().filter(function(p) { return p.id !== id; }));
-  localStorage.removeItem('hs_bk_' + id);
-  // Delete in MySQL — soft delete (status = deleted)
-  adminFetch(HS_API+'/providers.php?action=delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();})
-  .then(function(res){
-    if(res.success) {
-      showToast('✅ Provider deleted');
-      // Reload fresh list from MySQL — won't come back
-      syncAllFromFirebase(function(){ refreshAll(); });
-    } else {
-      showToast('⚠️ ' + (res.error||'Delete failed'));
-    }
-  }).catch(function(){ showToast('⚠️ Network error'); });
-  refreshAll();
-}
-
-function deleteOrder(providerId, orderId) {
-  if (!confirm('Delete this order permanently?')) return;
-
-  showToast('⏳ Deleting...');
-
-  // Delete from Firebase — both paths
-  var done = 0;
-  function check() {
-    done++;
-    if (done < 2) return;
-    // Remove from localStorage caches
-    ['hs_bk_' + providerId, 'hs_all_bookings', 'hs_all_orders'].forEach(function(key) {
-      try {
-        var arr = JSON.parse(localStorage.getItem(key) || '[]');
-        if (Array.isArray(arr)) {
-          localStorage.setItem(key, JSON.stringify(arr.filter(function(b){ return b.id !== orderId; })));
-        } else if (arr && typeof arr === 'object') {
-          delete arr[orderId];
-          localStorage.setItem(key, JSON.stringify(arr));
-        }
-      } catch(e) {}
-    });
-    showToast('✅ Order deleted');
-    loadOrders(null, null);
-    loadDashboard();
-  }
-
-  // Delete from bookings/orderId
-  _fbSDK.ref('bookings/' + orderId).remove()
-    .then(function(){ check(); })
-    .catch(function(e){ console.warn('bookings delete:', e.message); check(); });
-
-  // Delete from active_bookings/orderId
-  _fbSDK.ref('active_bookings/' + orderId).remove()
-    .then(function(){ check(); })
-    .catch(function(e){ console.warn('active_bookings delete:', e.message); check(); });
-}
-
-function deleteAllOrdersForProvider(providerId) {
-  localStorage.setItem('hs_bk_' + providerId, '[]');
-}
-
-function deleteAllOrders() {
-  if (!confirm('Delete ALL orders across ALL providers? This cannot be undone.')) return;
-  getProviders().forEach(function(p) { localStorage.removeItem('hs_bk_' + p.id); });
-  fbRestDelete('bookings');
-  fbRestDelete('active_bookings');
-  refreshAll();
-  showToast('All orders deleted');
-}
-
-function deleteCustomer(custId) {
-  if (!confirm('Delete this customer? They will be immediately signed out and blocked from accessing the platform.')) return;
-  // Step 1: Write deleted tombstone — blocks re-login even if auth session lingers
-  // Find the Firebase UID for this customer (id field may differ from uid)
-  var custs = getCustomers();
-  var cust  = custs.find(function(c){ return c.id === custId; });
-  var fbUid = cust ? (cust.uid || cust.id) : custId;
-
-  // Step 2: Write 'deleted' flag — user-panel checks this and signs out
-  fbRestPatch('customers/' + fbUid, {deleted: true, deletedAt: new Date().toISOString(), deletedBy: 'admin'}, function() {
-    // Step 3: Delete the profile after flag is set
-    setTimeout(function() {
-      fbRestDelete('customers/' + fbUid);
-    }, 500);
-  });
-
-  // Step 3: Remove from local cache
-  saveCustomers(custs.filter(function(c){ return c.id !== custId; }));
-  refreshAll();
-  showToast('✅ Customer deleted and blocked');
-}
-
-function deleteAllCustomers() {
-  if (!confirm('Delete ALL customer profiles? They will all be signed out immediately.')) return;
-  if (!confirm('Second confirmation: This cannot be undone. Proceed?')) return;
-  saveCustomers([]);
-  fbRestDelete('customers');
-  refreshAll();
-  showToast('✅ All customers deleted');
-}
-
-function resetPanel() {
-  if (!confirm('⚠️ FULL PANEL RESET\n\nThis will delete:\n• All providers (and free their emails)\n• All orders & bookings\n• All customer profiles\n• Penalties & payouts\n\nAdmin credentials and service catalog will be kept.\n\nAre you absolutely sure?')) return;
-  if (!confirm('Second confirmation required.\nPress OK to proceed with full reset.')) return;
-  // Clear providers + bookings from localStorage
-  getProviders().forEach(function(p) { localStorage.removeItem('hs_bk_' + p.id); });
-  localStorage.setItem('hs_providers', '[]');
-  localStorage.setItem('hs_customers', '[]');
-  localStorage.setItem('hs_penalties', '[]');
-  localStorage.setItem('hs_payouts', '[]');
-  // Wipe everything from Firebase
-  fbRestDelete('providers');
-  fbRestDelete('customers');
-  fbRestDelete('bookings');
-  fbRestDelete('active_bookings');
-  fbRestDelete('penalties');
-  fbRestDelete('job_otp');
-  fbRestDelete('payment_done');
-  refreshAll();
-  showToast('✅ Panel fully reset — all test data cleared!');
-}
-
-// Fetch all providers from Firebase and merge into localStorage
-function syncProvidersFromFirebase(cb) {
-  fbRestRead('providers', function(data) {
-    if (!data || typeof data !== 'object') {
-      if (cb) cb(getProviders());
-      return;
-    }
-    var fbProviders = Object.values(data).filter(function(p) { return p && p.id; });
-    var local = getProviders();
-    var merged = {};
-    // Start with localStorage
-    local.forEach(function(p) { if (p.id) merged[p.id] = p; });
-    // Add/update from Firebase
-    fbProviders.forEach(function(p) {
-      if (!merged[p.id]) {
-        merged[p.id] = p;
-      } else {
-        // Take Firebase status (admin may have updated it)
-        if (p.status) merged[p.id].status = p.status;
-        if (p.approvedAt) merged[p.id].approvedAt = p.approvedAt;
-      }
-    });
-    var result = Object.values(merged);
-    localStorage.setItem('hs_providers', JSON.stringify(result));
-    if (cb) cb(result);
-  });
-}
-// ====== DATA HELPERS (Firebase-first, localStorage as cache) ======
-function getCatalog(){
-  try{var s=localStorage.getItem("hs_catalog");if(s)return JSON.parse(s);}catch(e){}
-  if(_hsPricesCache&&Object.keys(_hsPricesCache).length){
-    var cat=Object.keys(_hsPricesCache).map(function(id){
-      var p=_hsPricesCache[id];
-      return{id:id,name:p.name||id,icon:"🔧",cat:"Services",userPrice:p.base||0,defaultPrice:p.base||0,commission:p.commission!=null?p.commission:15,enabled:true};
-    });
-    try{localStorage.setItem("hs_catalog",JSON.stringify(cat));}catch(e){}
-    return cat;
-  }
-  return[];
-}
-function saveCatalog(c){
-  localStorage.setItem("hs_catalog",JSON.stringify(c));
-  c.forEach(function(s){
-    if(s.id&&s.commission!=null)
-      _fbSDK.ref('hs_service_prices/'+s.id+'/commission').set(s.commission)
-        .catch(function(e){console.warn('comm:',e.message);});
-  });
-}
-function getProviders(){
-  // Sync from localStorage cache (refreshed by syncAll below)
-  try{return JSON.parse(localStorage.getItem("hs_providers")||"[]");}catch(e){return[];}
-}
-function saveProviders(p){
-  // Local cache only — status changes go to MySQL via approve/suspend/delete APIs.
-  // (Providers are no longer mirrored into Firebase RTDB.)
-  localStorage.setItem("hs_providers",JSON.stringify(p));
-}
-function getCustomers(){
-  try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}
-}
-function syncCustomersFromFirebase(cb){
-  var url=HS_API+'/customers.php?action=list';
-  adminFetch(url,{cache:'no-store'}).then(function(r){
-    if(!r.ok) throw new Error('HTTP '+r.status);
+// JSON helpers for admin API calls. Resolve to the parsed body; a 401 while
+// logged in means the key was rotated/expired → log out.
+function adminGetJSON(path) {
+  return adminFetch(HS_API + path, { cache: 'no-store' }).then(function(r){
+    if (r.status === 401 && getAdminKey()) { showToast('⚠️ Admin session expired — please log in again'); setTimeout(adminLogout, 1500); }
     return r.json();
-  }).then(function(res){
-    var mysql = (res && res.success && Array.isArray(res.data)) ? res.data : (Array.isArray(res)?res:[]);
-    var ex = getCustomers();
-    var byKey = {};
-    mysql.forEach(function(c){ var k=c.id||c.uid||c.email||c.phone; if(k) byKey[k]=c; });
-    ex.forEach(function(c){ var k=c.id||c.uid||c.email||c.phone; if(k && !byKey[k]) byKey[k]=c; });
-    var merged = Object.keys(byKey).map(function(k){ return byKey[k]; });
-    localStorage.setItem('hs_customers', JSON.stringify(merged));
-    if (document.getElementById('custBody')) loadCustomers(null);
-    console.log('[Admin] customers: MySQL='+mysql.length+' merged='+merged.length);
-    if (cb) cb(merged);
+  });
+}
+function adminPostJSON(path, body) {
+  return adminFetch(HS_API + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  }).then(function(r){
+    if (r.status === 401 && getAdminKey()) { showToast('⚠️ Admin session expired — please log in again'); setTimeout(adminLogout, 1500); }
+    return r.json();
+  });
+}
+
+// ── Normalisers (MySQL snake_case → fields the render code uses) ────────────
+function normBooking(b) {
+  var amt = Number(b.confirmed_price || b.final_price || b.amount || b.quoted_price || 0) || 0;
+  return Object.assign({}, b, {
+    providerId:    b.provider_id   || b.providerId   || '',
+    customerId:    b.customer_id   || b.customerId   || '',
+    customer:      b.customer_name || b.customer     || '',
+    phone:         b.customer_phone || b.phone       || '',
+    providerName:  b.provider_name || b.providerName || '',
+    service:       b.svc_name      || b.service      || '',
+    svcId:         b.svc_id        || b.svcId        || '',
+    createdAt:     b.created_at    || b.createdAt    || '',
+    completedAt:   b.completed_at  || b.completedAt  || '',
+    date:          b.slot_date     || (b.created_at ? String(b.created_at).slice(0,10) : '') || b.date || '',
+    time:          b.slot_time     || b.time         || '',
+    amount:        amt,
+    amountPaid:    amt,
+    commissionPct: Number(b.commission_pct) || 0,
+    commissionAmt: Number(b.commission_amt) || 0,
+    providerEarns: Number(b.provider_earns) || 0,
+    paymentStatus: b.payment_status || b.paymentStatus || ''
+  });
+}
+function normPayout(p) {
+  return Object.assign({}, p, {
+    providerId:   p.provider_id   || p.providerId   || '',
+    providerName: p.provider_name || p.providerName || '',
+    upi:          p.upi_id        || p.upi          || '',
+    bank:         p.bank_name     || p.bank         || '',
+    account:      p.account_no    || p.account      || p.upi_id || '',
+    accountType:  p.account_type  || p.accountType  || '',
+    requestedAt:  p.requested_at  || p.requestedAt  || '',
+    processedAt:  p.processed_at  || p.processedAt  || '',
+    status:       String(p.status || 'pending').toLowerCase()
+  });
+}
+function normPenalty(p) {
+  return Object.assign({}, p, {
+    providerId:   p.provider_id   || p.providerId   || '',
+    providerName: p.provider_name || p.providerName || '',
+    bookingId:    p.booking_id    || p.bookingId    || '',
+    date:         p.created_at    || p.date         || '',
+    status:       String(p.status || 'applied').toLowerCase()
+  });
+}
+
+// ── Service catalog + per-service commission (services.php) ─────────────────
+// _hsPricesCache = { SVCxxx: {name, icon, cat, base, is_active, description, price_data:{...}, commission} }
+var _hsPricesCache=null;
+var _hsPricesLoading=false;
+function getHSPrices(cb, force){
+  if(_hsPricesCache && !force){ if(cb) cb(_hsPricesCache); return; }
+  var all = fetch(HS_API+'/services.php?action=all',{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){ return null; });
+  var pd  = adminGetJSON('/services.php?action=get_all_prices').catch(function(){ return null; });
+  Promise.all([all, pd]).then(function(res){
+    var svcs   = (res[0] && res[0].success && Array.isArray(res[0].data)) ? res[0].data : [];
+    var prices = (res[1] && res[1].success && res[1].data && typeof res[1].data === 'object') ? res[1].data : {};
+    var cache = {};
+    svcs.forEach(function(s){
+      if(!s || !s.id) return;
+      cache[s.id] = { name:s.name||s.id, icon:s.icon||'🔧', cat:s.category||'Services', base:Number(s.base_price)||0,
+                      is_active: s.is_active==null ? 1 : Number(s.is_active), description:s.description||'' };
+    });
+    Object.keys(prices).forEach(function(id){
+      var d = prices[id] || {};
+      if(!cache[id]) cache[id] = { name:d.name||id, icon:'🔧', cat:'Services', base:Number(d.base)||0, is_active:1, description:'' };
+      cache[id].price_data = d;
+      if(d.commission!=null && d.commission!=='') cache[id].commission = Number(d.commission);
+      if(!cache[id].base && d.base) cache[id].base = Number(d.base)||0;
+    });
+    // Keep the previous cache if both calls failed (network blip)
+    if(Object.keys(cache).length || !_hsPricesCache) _hsPricesCache = cache;
+    if(cb) cb(_hsPricesCache);
+  });
+}
+function getCommissionRate(svcId,svcName,cb){
+  getHSPrices(function(){ cb(getCommRateSync(svcId, svcName)); });
+}
+function calcPayout(booking,cb){
+  var price=booking.priceVal||booking.amount||0;
+  getCommissionRate(booking.svcId||'',booking.service||'',function(pct){
+    cb({price:price,commPct:pct,commAmt:Math.round(price*pct/100),provEarns:price-Math.round(price*pct/100)});
+  });
+}
+function getCatalog(){
+  if(!_hsPricesCache) return [];
+  return Object.keys(_hsPricesCache).sort().map(function(id){
+    var p=_hsPricesCache[id];
+    return {id:id,name:p.name||id,icon:p.icon||'🔧',cat:p.cat||'Services',userPrice:p.base||0,defaultPrice:p.base||0,
+            commission:p.commission!=null?p.commission:15,description:p.description||'',
+            status:p.is_active===0?'inactive':'active',enabled:p.is_active!==0};
+  });
+}
+// Save one service's commission % into its price_data (services.php save_prices
+// replaces the whole price_data JSON, so the existing groups are sent back too).
+function saveServiceCommission(svcId, pct){
+  var entry = (_hsPricesCache||{})[svcId] || {};
+  var data = JSON.parse(JSON.stringify(entry.price_data || {}));
+  if(!data.name && entry.name) data.name = entry.name;
+  data.commission = pct;
+  return adminPostJSON('/services.php?action=save_prices', { svc_id: svcId, data: data }).then(function(res){
+    if(!res || !res.success) throw new Error((res && res.error) || 'Save failed');
+    if(_hsPricesCache && _hsPricesCache[svcId]){ _hsPricesCache[svcId].price_data = data; _hsPricesCache[svcId].commission = pct; }
+    return res;
+  });
+}
+
+// ── Load everything from MySQL ──────────────────────────────────────────────
+var _syncBusy = false, _syncQueue = [];
+function syncAllData(cb) {
+  if (typeof cb !== 'function') cb = function(){ refreshAll(); };
+  _syncQueue.push(cb);
+  if (_syncBusy) return;
+  _syncBusy = true;
+  var jobs = [
+    adminGetJSON('/providers.php?action=list').then(function(res){
+      if (res && res.success && Array.isArray(res.data)) {
+        lsSet('hs_providers', res.data.filter(function(p){ return p.status !== 'deleted'; }));
+      }
+    }).catch(function(e){ console.error('Providers load error:', e); }),
+    syncBookings(),
+    syncCustomers(),
+    syncPayouts(),
+    syncPenalties(),
+    loadSummary()
+  ];
+  Promise.all(jobs).then(function(){
+    _syncBusy = false;
+    var q = _syncQueue; _syncQueue = [];
+    q.forEach(function(f){ try { f(); } catch(e) { console.error(e); } });
+  });
+}
+
+function syncBookings() {
+  return adminGetJSON('/bookings.php?action=admin_list&limit=1000').then(function(res){
+    if (res && res.success && Array.isArray(res.data)) lsSet('hs_all_orders', res.data.map(normBooking));
+  }).catch(function(e){ console.error('Bookings load error:', e); });
+}
+// Orders page: refresh bookings from MySQL then hand back the list
+function syncAllOrders(cb) {
+  syncBookings().then(function(){ if (cb) cb(getAllOrders()); });
+}
+
+function syncCustomers(cb){
+  return adminGetJSON('/customers.php?action=list').then(function(res){
+    if(!res || !res.success || !Array.isArray(res.data)) throw new Error((res && res.error) || 'Bad response');
+    var list = res.data.filter(function(c){ return c && c.status !== 'deleted'; });
+    lsSet('hs_customers', list);
+    if (cb) cb(list);
   }).catch(function(e){
     console.error('[Admin] customer fetch failed:', e.message);
     if (document.getElementById('custBody') && !getCustomers().length){
-      document.getElementById('custBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:#c0392b;padding:20px">⚠️ Could not load customers from server ('+e.message+'). Tap the Customers tab again to retry.</td></tr>';
+      document.getElementById('custBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:#c0392b;padding:20px">⚠️ Could not load customers from server ('+esc(e.message)+'). Tap the Customers tab again to retry.</td></tr>';
     }
     if (cb) cb(getCustomers());
   });
 }
 
-function saveCustomers(c){
-  localStorage.setItem("hs_customers",JSON.stringify(c));
-  var obj=c.reduce(function(m,cu){if(cu.id)m[cu.id]=cu;return m;},{});
-  fbRestPatch('customers',obj);
-}
-function getPenalties(){try{return JSON.parse(localStorage.getItem("hs_penalties")||"[]");}catch(e){return[];}}
-function savePenalties(p){
-  localStorage.setItem("hs_penalties",JSON.stringify(p));
-  var obj=p.reduce(function(m,x,i){m['pen_'+i]=x;return m;},{});
-  fbRestPatch('penalties',obj);
-}
-function getPayouts(){try{return JSON.parse(localStorage.getItem("hs_payouts")||"[]");}catch(e){return[];}}
-function savePayouts(p){
-  localStorage.setItem("hs_payouts",JSON.stringify(p));
+// Payouts: pending queue from payouts.php; processed history from the
+// balance-sheet report (payouts.php has no admin "all" list).
+function syncPayouts(){
+  var pend = adminGetJSON('/payouts.php?action=pending').then(function(res){
+    return (res && res.success && Array.isArray(res.data)) ? res.data : null;
+  }).catch(function(){ return null; });
+  var hist = adminGetJSON('/reports.php?action=balance_sheet').then(function(res){
+    return (res && res.success && res.data && Array.isArray(res.data.payouts)) ? res.data.payouts : null;
+  }).catch(function(){ return null; });
+  return Promise.all([pend, hist]).then(function(r){
+    if (r[0] === null && r[1] === null) return; // keep last good cache
+    var byId = {}, list = [];
+    (r[1] || []).concat(r[0] || []).forEach(function(p){
+      if (!p || p.id == null) return;
+      var n = normPayout(p);
+      if (byId[n.id] === undefined) { byId[n.id] = list.length; list.push(n); }
+      else list[byId[n.id]] = Object.assign({}, list[byId[n.id]], n);
+    });
+    lsSet('hs_payouts', list);
+  });
 }
 
-// Load all admin data from Firebase into localStorage (called on login)
-// syncAllFromFirebase: defined above (Firebase SDK version)
-// Coerce any amount-ish field to a number (MySQL returns strings; Firebase may omit)
-function _orderAmount(o){
-  return Number(o.amount || o.amountPaid || o.confirmed_price || o.priceVal || o.price || 0) || 0;
+function syncPenalties(){
+  return adminGetJSON('/penalties.php?action=list').then(function(res){
+    if (res && res.success && Array.isArray(res.data)) lsSet('hs_penalties', res.data.map(normPenalty));
+  }).catch(function(e){ console.error('Penalties load error:', e); });
 }
+
+// Dashboard counts from reports.php?action=summary
+var _summary = null;
+function loadSummary(){
+  return adminGetJSON('/reports.php?action=summary').then(function(res){
+    if (res && res.success && res.data) _summary = res.data;
+  }).catch(function(e){ console.warn('Summary load error:', e); });
+}
+
+// ── Delete helpers (one record at a time, via admin API) ────────────────────
+function deleteProviderFull(id) {
+  adminPostJSON('/providers.php?action=delete', {id:id}).then(function(res){
+    if(res.success) {
+      saveProviders(getProviders().filter(function(p) { return p.id !== id; }));
+      showToast('✅ Provider deleted');
+    } else {
+      showToast('⚠️ ' + (res.error||'Delete failed'));
+    }
+    syncAllData(function(){ refreshAll(); });
+  }).catch(function(){ showToast('⚠️ Network error'); });
+}
+
+function deleteOrder(providerId, orderId) {
+  if (!confirm('Delete booking ' + orderId + ' permanently?')) return;
+  showToast('⏳ Deleting...');
+  adminPostJSON('/bookings.php?action=admin_delete', { booking_id: orderId }).then(function(res){
+    if (!res.success) { showToast('⚠️ ' + (res.error || 'Delete failed')); return; }
+    lsSet('hs_all_orders', lsGet('hs_all_orders', []).filter(function(b){ return b.id !== orderId; }));
+    showToast('✅ Order deleted');
+    loadOrders(null, null);
+    loadDashboard();
+  }).catch(function(){ showToast('⚠️ Network error'); });
+}
+
+function deleteCustomer(custId) {
+  if (!confirm('Delete this customer? Their account will be disabled and personal details removed.')) return;
+  adminPostJSON('/customers.php?action=admin_delete', { id: custId }).then(function(res){
+    if (!res.success) { showToast('⚠️ ' + (res.error || 'Delete failed')); return; }
+    lsSet('hs_customers', getCustomers().filter(function(c){ return c.id !== custId; }));
+    loadCustomers(null);
+    loadDashboard();
+    showToast('✅ Customer deleted');
+  }).catch(function(){ showToast('⚠️ Network error'); });
+}
+
+// ── Cache getters ────────────────────────────────────────────────────────────
+function getProviders(){
+  try{return JSON.parse(localStorage.getItem("hs_providers")||"[]");}catch(e){return[];}
+}
+function saveProviders(p){
+  // Local render cache only — status changes go to MySQL via approve/suspend/delete APIs.
+  localStorage.setItem("hs_providers",JSON.stringify(p));
+}
+function getCustomers(){
+  try{return JSON.parse(localStorage.getItem("hs_customers")||"[]");}catch(e){return[];}
+}
+function getPenalties(){try{return JSON.parse(localStorage.getItem("hs_penalties")||"[]");}catch(e){return[];}}
+function getPayouts(){try{return JSON.parse(localStorage.getItem("hs_payouts")||"[]");}catch(e){return[];}}
+
 function getAllOrders(){
-  // Merge Firebase-synced cache (hs_all_bookings) with MySQL sync (hs_all_orders)
-  var merged = {}, list = [];
-  [lsGet('hs_all_orders', []), lsGet('hs_all_bookings', [])].forEach(function(arr){
-    if (!Array.isArray(arr)) arr = toArr(arr);
-    arr.forEach(function(b){
-      if (!b || !b.id) return;
-      if (merged[b.id]) { merged[b.id] = Object.assign({}, b, merged[b.id]); }  // MySQL wins
-      else { merged[b.id] = b; list.push(b.id); }
-    });
-  });
-  var cached = list.map(function(id){
-    var o = merged[id];
-    return Object.assign({}, o, { amount: _orderAmount(o) });
-  });
-  if (cached.length > 0) {
-    return cached.sort(function(a,b){ return new Date(b.createdAt||b.created_at||b.date||0)-new Date(a.createdAt||a.created_at||a.date||0); });
-  }
-  // Fallback: collect from provider-keyed caches (old format)
-  var providers = getProviders();
-  var catalog   = getCatalog();
-  var all = [], seen = {};
-  providers.forEach(function(p) {
-    var bk = lsGet('hs_bk_' + p.id, []);
-    bk.forEach(function(b) {
-      if (!b.id || seen[b.id]) return;
-      seen[b.id] = true;
-      var svc    = catalog.find(function(s){ return s.name === b.service; });
-      var commPct = svc ? svc.commission : 15;
-      var commAmt = Math.round((b.amount||b.priceVal||0) * (commPct/100));
-      all.push(Object.assign({}, b, {
-        providerName: b.providerName || p.name,
-        providerId:   b.providerId   || p.id,
-        amount:       b.amount || b.priceVal || 0,
-        commissionAmt: commAmt, commissionPct: commPct
-      }));
-    });
-  });
-  return all.sort(function(a,b){ return new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0); });
-}function cap(s){if(!s)return"";return s.charAt(0).toUpperCase()+s.slice(1);}
+  var list = lsGet('hs_all_orders', []);
+  if (!Array.isArray(list)) list = toArr(list);
+  return list.filter(function(b){ return b && b.id; })
+    .sort(function(a,b){ return new Date(b.createdAt||b.created_at||0)-new Date(a.createdAt||a.created_at||0); });
+}
+function cap(s){if(!s)return"";return s.charAt(0).toUpperCase()+s.slice(1);}
 function fmt(n){return (Number(n)||0).toLocaleString("en-IN");}
 function showToast(msg){
   // Try both possible toast element IDs
@@ -1905,7 +1597,9 @@ function showPage(name){
     getHSPrices(function(){ loadPayments(); }); // ensure commission rates loaded first
   }
   if(name==='orders') loadOrders(null,null);
-  if(name==='customers'){ loadCustomers(null); if(typeof syncCustomersFromFirebase==='function') syncCustomersFromFirebase(function(){ loadCustomers(null); }); }
+  if(name==='customers'){ loadCustomers(null); syncCustomers(function(){ loadCustomers(null); }); }
+  if(name==='penalties'){ loadPenalties(); syncPenalties().then(loadPenalties); }
+  if(name==='commission'){ getHSPrices(function(){ loadCommission(); }, true); }
   if(name==='analytics') loadAnalytics();
 }
 
@@ -1931,10 +1625,11 @@ document.getElementById("viewAllOrdersBtn").addEventListener("click",function(){
 // ====== INIT ======
 function initAdmin(){
   document.getElementById("topbarDate").textContent=new Date().toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
-  getCatalog();
-  showToast("⏳ Loading data from Firebase...");
-  // Sync ALL data from Firebase (providers, customers, bookings)
-  syncAllFromFirebase(function() {
+  showToast("⏳ Loading data...");
+  // Load services/commission first so commission columns render correctly
+  getHSPrices(function(){ loadCommission(); loadDashboard(); });
+  // Sync ALL data from the MySQL API (providers, customers, bookings, payouts, penalties)
+  syncAllData(function() {
     loadDashboard();
     loadApprovals("pending");
     loadProviders(null,null);
@@ -1945,14 +1640,13 @@ function initAdmin(){
     loadPenalties();
     loadCustomers(null);
     loadAnalytics();
-    showToast("✅ Data loaded from Firebase");
-    startLiveListeners();
+    showToast("✅ Data loaded");
   });
 }
 
 // ====== DASHBOARD ======
 function loadDashboard(){
-  // Ensure hs_service_prices loaded for catalog
+  // Ensure the service catalog (services.php) is loaded
   // Load prices once (null = never fetched). An empty result is cached as {}
   // so this does not re-trigger loadDashboard forever.
   if(_hsPricesCache===null && !_hsPricesLoading){
@@ -1971,6 +1665,7 @@ function loadDashboard(){
   var totalGMV=completed.reduce(function(s,o){return s+(Number(o.amount)||0);},0);
   var totalComm=completed.reduce(function(s,o){return s+(o.commissionAmt>0?o.commissionAmt:Math.round((o.amount||0)*getCommRateSync(o.svcId||"",o.service||"")/100));},0);
   var allPays=getPayouts();var totalPayouts=allPays.filter(function(p){return p.status==='approved';}).reduce(function(s,p){return s+(Number(p.amount)||0);},0);
+  var appliedPen=penalties.filter(function(p){return p.status!=='waived';});
 
   document.getElementById("ds-providers").textContent=providers.length;
   document.getElementById("ds-active-prov").textContent=approved.length+" approved";
@@ -1980,16 +1675,32 @@ function loadDashboard(){
   document.getElementById("ds-completed-lbl").textContent=completed.length+" completed";
   document.getElementById("ds-customers").textContent=customers.length;
   document.getElementById("ds-payouts").textContent="Rs "+fmt(totalPayouts);
-  document.getElementById("ds-penalties").textContent=penalties.length;
+  document.getElementById("ds-penalties").textContent=appliedPen.length;
+  document.getElementById("ds-penalties-sub").textContent="Rs "+fmt(appliedPen.reduce(function(s,p){return s+(Number(p.amount)||0);},0))+" deducted";
+  document.getElementById("ds-revenue-sub").textContent="Total earned";
+  document.getElementById("ds-customers-sub").textContent="Accounts";
+  // Server-side counts (reports.php?action=summary) override the cache-based numbers
+  if(_summary){
+    var S=_summary;
+    if(S.providers_total!=null) document.getElementById("ds-providers").textContent=S.providers_total;
+    if(S.providers_pending!=null){ document.getElementById("ds-pending").textContent=S.providers_pending; document.getElementById("approvalBadge").textContent=S.providers_pending; }
+    if(S.customers!=null) document.getElementById("ds-customers").textContent=S.customers;
+    if(S.commission_month!=null){
+      document.getElementById("ds-revenue").textContent="Rs "+fmt(S.commission_month);
+      document.getElementById("ds-revenue-sub").textContent="This month"+(S.gmv_month!=null?" · GMV Rs "+fmt(S.gmv_month):"");
+    }
+    if(S.bookings_active!=null||S.bookings_today!=null)
+      document.getElementById("ds-completed-lbl").textContent=completed.length+" completed · "+(Number(S.bookings_active)||0)+" active · "+(Number(S.bookings_today)||0)+" today";
+  }
   document.getElementById("ds-services").textContent=catalog.filter(function(s){return s.enabled!==false&&s.status!=="inactive";}).length;
-  document.getElementById("approvalBadge").textContent=pending.length;
+  if(!_summary||_summary.providers_pending==null) document.getElementById("approvalBadge").textContent=pending.length;
 
   var dpb=document.getElementById("dashPendingBody");
   if(pending.length===0){
     dpb.innerHTML="<tr><td colspan=\"6\" style=\"text-align:center;color:var(--muted);padding:20px\">No pending approvals</td></tr>";
   } else {
     dpb.innerHTML=pending.slice(0,5).map(function(p){
-      return "<tr><td><strong>"+esc(p.name)+"</strong></td><td>"+esc(p.phone)+"</td><td>"+(Array.isArray(p.services)?p.services:[]).map(function(s){return esc(s.icon||s.svc_icon||"");}).join(" ")+"</td><td style=\"font-size:12px\">"+esc(p.address||"--")+"</td><td style=\"font-size:12px\">"+(p.registeredAt?new Date(p.registeredAt).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn approve\" onclick=\"quickApprove('"+jsq(p.id)+"')\" >Approve</button> <button class=\"abtn reject\" onclick=\"quickReject('"+jsq(p.id)+"')\"  >Reject</button></td></tr>";
+      return "<tr><td><strong>"+esc(p.name)+"</strong></td><td>"+esc(p.phone)+"</td><td>"+(Array.isArray(p.services)?p.services:[]).map(function(s){return esc(s.icon||s.svc_icon||"");}).join(" ")+"</td><td style=\"font-size:12px\">"+esc(p.address||"--")+"</td><td style=\"font-size:12px\">"+((p.registeredAt||p.registered_at)?new Date(String(p.registeredAt||p.registered_at).replace(" ","T")).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn approve\" onclick=\"quickApprove('"+jsq(p.id)+"')\" >Approve</button> <button class=\"abtn reject\" onclick=\"quickReject('"+jsq(p.id)+"')\"  >Reject</button></td></tr>";
     }).join("");
   }
 
@@ -2050,81 +1761,56 @@ function loadApprovals(filter){
   if(filter)currentApprovalFilter=filter;
   var providers=getProviders();
   if(currentApprovalFilter==="pending") providers=providers.filter(function(p){return !p.status||p.status==="pending";});
-  else if(currentApprovalFilter==="review") providers=providers.filter(function(p){return p.status==="review";});
+  else if(currentApprovalFilter==="suspended") providers=providers.filter(function(p){return p.status==="suspended";});
   document.getElementById("approvalsBody").innerHTML=providers.map(function(p){
     var status=p.status||"pending";
     var actions="";
-    if(status==="pending"||status==="review"){
-      actions="<button class=\"abtn approve\" onclick=\"quickApprove('"+jsq(p.id)+"')\" >Approve</button> <button class=\"abtn reject\" onclick=\"quickReject('"+jsq(p.id)+"')\" >Reject</button> <button class=\"abtn suspend\" onclick=\"markReview('"+jsq(p.id)+"')\" >Review</button>";
+    if(status==="pending"){
+      actions="<button class=\"abtn approve\" onclick=\"quickApprove('"+jsq(p.id)+"')\" >Approve</button> <button class=\"abtn reject\" onclick=\"quickReject('"+jsq(p.id)+"')\" >Reject</button>";
     } else if(status==="approved"){
       actions="<button class=\"abtn suspend\" onclick=\"suspendProvider('"+jsq(p.id)+"')\" >Suspend</button>";
     } else {
-      actions="<button class=\"abtn approve\" onclick=\"quickApprove('"+jsq(p.id)+"')\" >Restore</button>";
+      actions="<button class=\"abtn approve\" onclick=\"quickApprove('"+jsq(p.id)+"')\" >Re-approve</button> <button class=\"abtn view\" onclick=\"restoreProvider('"+jsq(p.id)+"')\" >Back to Pending</button>";
     }
-    return "<tr><td><strong style=\"font-size:12px;color:var(--purple)\">"+esc(p.id)+"</strong></td><td><strong>"+esc(p.name)+"</strong><br/><small style=\"color:var(--muted)\">"+esc(p.gender||"")+" "+esc(p.experience||"")+"</small></td><td>"+esc(p.phone)+"</td><td>"+(Array.isArray(p.services)?p.services:[]).map(function(s){return "<span title=\""+esc(s.name||s.svc_name)+"\">"+esc(s.icon||s.svc_icon||"")+"</span>";}).join(" ")+"</td><td style=\"font-size:12px\">"+esc(p.address||"--")+"</td><td style=\"font-size:12px\">"+esc(p.idType||p.id_type||"--")+": "+esc(p.idNum||p.id_number||"--")+"</td><td style=\"font-size:12px\">"+(p.registeredAt?new Date(p.registeredAt).toLocaleDateString("en-IN"):"--")+"</td><td><span class=\"badge "+esc(status)+"\">"+esc(cap(status))+"</span></td><td><button class=\"abtn view\" onclick=\"viewProvider('"+jsq(p.id)+"')\" >View</button> "+actions+"</td></tr>";
+    return "<tr><td><strong style=\"font-size:12px;color:var(--purple)\">"+esc(p.id)+"</strong></td><td><strong>"+esc(p.name)+"</strong><br/><small style=\"color:var(--muted)\">"+esc(p.gender||"")+" "+esc(p.experience||"")+"</small></td><td>"+esc(p.phone)+"</td><td>"+(Array.isArray(p.services)?p.services:[]).map(function(s){return "<span title=\""+esc(s.name||s.svc_name)+"\">"+esc(s.icon||s.svc_icon||"")+"</span>";}).join(" ")+"</td><td style=\"font-size:12px\">"+esc(p.address||"--")+"</td><td style=\"font-size:12px\">"+esc(p.idType||p.id_type||"--")+": "+esc(p.idNum||p.id_number||"--")+"</td><td style=\"font-size:12px\">"+((p.registeredAt||p.registered_at)?new Date(String(p.registeredAt||p.registered_at).replace(" ","T")).toLocaleDateString("en-IN"):"--")+"</td><td><span class=\"badge "+esc(status)+"\">"+esc(cap(status))+"</span></td><td><button class=\"abtn view\" onclick=\"viewProvider('"+jsq(p.id)+"')\" >View</button> "+actions+"</td></tr>";
   }).join("")||"<tr><td colspan=\"9\" style=\"text-align:center;color:var(--muted);padding:24px\">No providers in this queue</td></tr>";
 }
 
 document.getElementById("af-pending").addEventListener("click",function(){
   document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("pending");});
-document.getElementById("af-review").addEventListener("click",function(){
-  document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("review");});
+document.getElementById("af-suspended").addEventListener("click",function(){
+  document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("suspended");});
 document.getElementById("af-all").addEventListener("click",function(){
   document.querySelectorAll("#page-approvals .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadApprovals("all");});
 
+function _providerAction(action, id, okMsg){
+  return adminPostJSON('/providers.php?action='+action, {id:id}).then(function(res){
+    showToast(res.success ? okMsg : '⚠️ '+(res.error||'Failed'));
+    // Reload from MySQL after the write has landed
+    syncAllData(function(){ refreshAll(); });
+    return res;
+  }).catch(function(){ showToast('⚠️ Network error'); return {success:false}; });
+}
 function quickApprove(id){
-  var all=getProviders();
-  var idx=all.findIndex(function(p){return p.id===id;});
-  if(idx>-1){
-    all[idx].status="approved";
-    all[idx].suspended=false;
-    all[idx].approvedAt=new Date().toISOString();
-    saveProviders(all);
-    // Write to MySQL API — provider status updated
-    adminFetch(HS_API+'/providers.php?action=approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();}).then(function(res){showToast(res.success?'✅ Approved!':'⚠️ '+(res.error||'Failed'));}).catch(function(){showToast('⚠️ Network error')});
-  }
-  // Reload from MySQL after approve
-  syncAllFromFirebase(function(){ refreshAll(); });
-  // Send approval email to provider
-  var allForEmail = getProviders();
-  var pForEmail = allForEmail.find(function(p){ return p.id===id; });
-  if (pForEmail && typeof emailProviderApproved === 'function') {
-    emailProviderApproved(pForEmail.name||'', pForEmail.email||'', pForEmail.id||'');
-  }
-  refreshAll(); showToast("Provider "+id+" approved! Email sent.");
+  _providerAction('approve', id, '✅ Provider approved').then(function(res){
+    if(!res.success) return;
+    // Send approval email to provider
+    var pForEmail = getProviders().find(function(p){ return p.id===id; });
+    if (pForEmail && typeof emailProviderApproved === 'function') {
+      emailProviderApproved(pForEmail.name||'', pForEmail.email||'', pForEmail.id||'');
+    }
+  });
 }
 function quickReject(id){
   if (!confirm('Delete this provider permanently?')) return;
-  // Remove from local cache
-  saveProviders(getProviders().filter(function(p){ return p.id !== id; }));
-  localStorage.removeItem('hs_bk_' + id);
-  // Delete in MySQL
-  adminFetch(HS_API+'/providers.php?action=delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();})
-  .then(function(res){
-    showToast(res.success ? '✅ Provider deleted' : '⚠️ ' + (res.error||'Delete failed'));
-    // Reload fresh from MySQL after delete
-    syncAllFromFirebase(function(){
-      refreshAll();
-    });
-  }).catch(function(){
-    showToast('⚠️ Network error');
-    refreshAll();
-  });
+  _providerAction('delete', id, '✅ Provider deleted');
 }
 function suspendProvider(id){
-  var all=getProviders();
-  var idx=all.findIndex(function(p){return p.id===id;});
-  if(idx>-1){ all[idx].status='suspended'; all[idx].available=false; saveProviders(all); }
-  adminFetch(HS_API+'/providers.php?action=suspend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})}).then(function(r){return r.json();}).then(function(res){
-    showToast(res.success ? '✅ Provider suspended' : '⚠️ '+(res.error||'Failed'));
-  }).catch(function(){ showToast('⚠️ Network error'); });
-  // Reload from MySQL after suspend
-  syncAllFromFirebase(function(){ refreshAll(); });
+  _providerAction('suspend', id, '✅ Provider suspended');
 }
-function markReview(id){
-  var all=getProviders();var idx=all.findIndex(function(p){return p.id===id;});
-  if(idx>-1){all[idx].status="review";saveProviders(all);}
-  refreshAll();showToast("Marked for review");
+// Move a suspended provider back to the pending queue (providers.php restore)
+function restoreProvider(id){
+  _providerAction('restore', id, '✅ Provider moved back to pending');
 }
 
 // ====== ALL PROVIDERS ======
@@ -2135,11 +1821,12 @@ function loadProviders(filter,query){
   if(provFilterState&&provFilterState!=="all") providers=providers.filter(function(p){return (p.status||"pending")===provFilterState;});
   if(query) providers=providers.filter(function(p){return (p.name+p.phone+p.id).toLowerCase().includes(query);});
   var catalog=getCatalog();
+  var allOrd=getAllOrders();
   document.getElementById("providersBody").innerHTML=providers.map(function(p){
-    var bk=[];try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
+    var bk=allOrd.filter(function(b){return b.providerId===p.id;});
     var done=bk.filter(function(b){return b.status==="completed";});
     var earned=done.reduce(function(s,b){return s+(Number(b.amount)||0);},0);
-    var commAmt=done.reduce(function(s,b){var sv=catalog.find(function(c){return c.name===b.service;});var cp=sv?sv.commission:15;return s+Math.round((Number(b.amount)||0)*(cp/100));},0);
+    var commAmt=done.reduce(function(s,b){return s+(b.commissionAmt>0?b.commissionAmt:Math.round((Number(b.amount)||0)*getCommRateSync(b.svcId||"",b.service||"")/100));},0);
     var status=p.status||"pending";
     // Build services icons — handle both array and map formats
     var svcIcons = '';
@@ -2181,9 +1868,9 @@ function viewProvider(id){
   });
 }
 function _renderProviderModal(p, id){
-  document.getElementById("pmTitle").textContent=p.name;
-  document.getElementById("pmSub").textContent=p.id+" - Registered "+new Date(p.registeredAt||Date.now()).toLocaleDateString("en-IN");
-  var bk=[];try{bk=JSON.parse(localStorage.getItem("hs_bk_"+p.id)||"[]");}catch(e){}
+  document.getElementById("pmTitle").textContent=p.name||id;
+  document.getElementById("pmSub").textContent=p.id+" - Registered "+new Date(String(p.registeredAt||p.registered_at||"").replace(" ","T")||Date.now()).toLocaleDateString("en-IN");
+  var bk=getAllOrders().filter(function(b){return b.providerId===(p.id||id);});
   var done=bk.filter(function(b){return b.status==="completed";});
   var locHtml = esc(p.address || '--');
   if (p.lat && p.lat !== 0 && p.lng && p.lng !== 0) {
@@ -2254,9 +1941,9 @@ function getCommRateSync(svcId, svcName) {
 }
 function loadPayments(filter){
   if(filter)payFilterState=filter;
-  // Always re-sync from Firebase first to get latest orders
-  syncAllFromFirebase(function() { _renderPayments(); });
-  _renderPayments(); // also render immediately with cached data
+  _renderPayments(); // render immediately with cached data
+  // then refresh payouts + bookings from MySQL
+  Promise.all([syncPayouts(), syncBookings()]).then(function(){ _renderPayments(); });
 }
 function _renderPayments(){
   var orders=getAllOrders();
@@ -2289,9 +1976,9 @@ function _renderPayments(){
     var actions=p.status==="pending"
       ? "<button class=\"abtn approve\" onclick=\"approvePayout('"+jsq(p.id)+"')\" >Approve &amp; Pay</button> <button class=\"abtn reject\" onclick=\"rejectPayout('"+jsq(p.id)+"')\" >Reject</button>"
       : p.status==="approved"
-      ? "<span style=\"color:var(--green);font-size:12px;font-weight:800\">Paid on "+( p.processedAt?new Date(p.processedAt).toLocaleDateString("en-IN"):"")+"</span>"
-      : "<span style=\"color:var(--red);font-size:12px;font-weight:800\">Rejected</span>";
-    return "<tr><td><strong style=\"font-size:12px\">"+esc(p.id)+"</strong></td><td><strong>"+esc(p.providerName||"")+"</strong><br/><small style=\"color:var(--muted)\">"+esc(p.providerId||"")+"</small></td><td style=\"font-size:15px;font-weight:900;color:var(--green)\">Rs "+fmt(p.amount)+"</td><td><span class=\"badge review\">"+esc(p.accountType||"UPI")+"</span></td><td style=\"font-size:12px;font-family:monospace\">"+esc(p.account||p.upi||"--")+"</td><td style=\"font-size:12px\">"+new Date(p.requestedAt||Date.now()).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+(p.status==="approved"?"approved":p.status==="rejected"?"rejected":"pending")+"\">"+(p.status==="approved"?"Paid":p.status==="rejected"?"Rejected":"Pending")+"</span></td><td>"+actions+"</td></tr>";
+      ? "<span style=\"color:var(--green);font-size:12px;font-weight:800\">Paid on "+( p.processedAt?new Date(String(p.processedAt).replace(" ","T")).toLocaleDateString("en-IN"):"")+"</span>"
+      : "<span style=\"color:var(--red);font-size:12px;font-weight:800\">"+(p.status==="cancelled"?"Cancelled by provider":"Rejected")+"</span>";
+    return "<tr><td><strong style=\"font-size:12px\">"+esc(p.id)+"</strong></td><td><strong>"+esc(p.providerName||"")+"</strong><br/><small style=\"color:var(--muted)\">"+esc(p.providerId||"")+"</small></td><td style=\"font-size:15px;font-weight:900;color:var(--green)\">Rs "+fmt(p.amount)+"</td><td><span class=\"badge review\">"+esc(p.accountType||"UPI")+"</span></td><td style=\"font-size:12px;font-family:monospace\">"+esc(p.account||p.upi||"--")+"</td><td style=\"font-size:12px\">"+new Date(String(p.requestedAt||"").replace(" ","T")||Date.now()).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+(p.status==="approved"?"approved":(p.status==="rejected"||p.status==="cancelled")?"rejected":"pending")+"\">"+(p.status==="approved"?"Paid":p.status==="rejected"?"Rejected":p.status==="cancelled"?"Cancelled":"Pending")+"</span></td><td>"+actions+"</td></tr>";
   }).join("")||"<tr><td colspan=\"8\" style=\"text-align:center;color:var(--muted);padding:24px\">No withdrawal requests yet</td></tr>";
   document.getElementById("ledgerBody").innerHTML=completed.slice(0,30).map(function(o){
     return "<tr><td><strong>"+esc(o.id)+"</strong></td><td>"+esc(o.providerName||o.provider||'--')+"</td><td>"+esc(o.service||'--')+"</td><td><strong>\u20b9"+(o.amount||0)+"</strong></td><td style=\"color:var(--red);font-weight:800\">"+(o.commissionPct||15)+"%</td><td style=\"color:var(--red);font-weight:900\">\u20b9"+(o.commissionAmt||0)+"</td><td style=\"color:var(--green);font-weight:900\">\u20b9"+(o.providerEarns||(o.amount-o.commissionAmt)||0)+"</td><td>"+esc(o.date||o.createdAt||'--')+"</td></tr>";
@@ -2301,68 +1988,82 @@ document.getElementById("payf-pending").addEventListener("click",function(){docu
 document.getElementById("payf-approved")&&document.getElementById("payf-approved").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");payFilterState="approved";loadPayments("approved");});
 document.getElementById("payf-all").addEventListener("click",function(){document.querySelectorAll("#page-payments .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");payFilterState="all";loadPayments("all");});
 function approvePayout(id){
-  var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});
-  if(idx>-1){
-    p[idx].status="approved";p[idx].processedAt=new Date().toISOString();savePayouts(p);
-    var req=p[idx];
-    // Approve in MySQL — provider balance updated automatically
-    adminFetch(HS_API+'/payouts.php?action=approve', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({id: req.id})
-    }).catch(function(){});
-    var providers=getProviders();var pidx=providers.findIndex(function(pr){return pr.id===req.providerId;});
-    if(pidx>-1){providers[pidx].withdrawnEarned=(Number(providers[pidx].withdrawnEarned)||0)+(Number(req.amount)||0);saveProviders(providers);}
+  var req=getPayouts().find(function(x){return String(x.id)===String(id);});
+  if(!req) return;
+  if(!confirm("Approve payout of Rs "+fmt(req.amount)+" to "+(req.providerName||req.providerId)+"?\n\nTransfer to: "+(req.upi||req.bank||req.account||'--')+" ("+(req.accountType||'')+")")) return;
+  adminPostJSON('/payouts.php?action=approve', {id: req.id}).then(function(res){
+    if(!res.success){ showToast('⚠️ '+(res.error||'Approve failed')); loadPayments(); return; }
+    var d=res.data||{};
+    showToast("✅ Rs "+fmt(d.amount||req.amount)+" approved! Transfer to: "+(d.upi||d.bank||req.upi||req.bank||req.account||'')+" ("+(req.accountType||'')+")");
     loadPayments();
-    showToast("Rs "+req.amount+" approved! Transfer to: "+(req.upi||req.bank||req.account||'')+" ("+(req.accountType||'')+")");
-  }
+  }).catch(function(){ showToast('⚠️ Network error'); });
 }
 function rejectPayout(id){
-  var reason=prompt("Reason for rejection (optional):")||"";
-  var p=getPayouts();var idx=p.findIndex(function(x){return x.id===id;});
-  if(idx>-1){
-    p[idx].status="rejected";p[idx].rejectedAt=new Date().toISOString();p[idx].note=reason;savePayouts(p);
-    var req=p[idx];
-    // Reject in MySQL — provider balance refunded automatically
-    adminFetch(HS_API+'/payouts.php?action=reject', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({id: req.id, note: reason})
-    }).catch(function(){});
-  }
-  loadPayments();showToast("Payout rejected. Provider wallet balance restored.");
+  var req=getPayouts().find(function(x){return String(x.id)===String(id);});
+  if(!req) return;
+  var reason=prompt("Reason for rejection (optional):");
+  if(reason===null) return; // cancelled
+  adminPostJSON('/payouts.php?action=reject', {id: req.id, note: reason}).then(function(res){
+    if(!res.success){ showToast('⚠️ '+(res.error||'Reject failed')); loadPayments(); return; }
+    showToast("Payout rejected. Provider wallet balance restored.");
+    loadPayments();
+  }).catch(function(){ showToast('⚠️ Network error'); });
 }
 
-// ====== PENALTIES ======
+// ====== PENALTIES (penalties.php) ======
 function loadPenalties(){
-  document.getElementById("penaltiesBody").innerHTML=getPenalties().map(function(p){
-    var actions=p.status!=="deducted"?"<button class=\"abtn approve\" onclick=\"deductPenalty('"+jsq(p.id)+"')\" >Deduct</button> <button class=\"abtn del\" onclick=\"cancelPenalty('"+jsq(p.id)+"')\" >Cancel</button>":"Done";
-    return "<tr><td><strong>"+esc(p.id)+"</strong></td><td>"+esc(p.providerName)+"<br/><small style=\"color:var(--muted)\">"+esc(p.providerId)+"</small></td><td style=\"font-size:12px\">"+esc(p.reason)+"</td><td style=\"color:var(--red);font-weight:800\">Rs "+(Number(p.amount)||0)+"</td><td style=\"font-size:12px\">"+new Date(p.date).toLocaleDateString("en-IN")+"</td><td><span class=\"badge "+esc(p.status||"pending")+"\">"+esc(cap(p.status||"pending"))+"</span></td><td>"+actions+"</td></tr>";
+  var list=getPenalties().slice().sort(function(a,b){return new Date(String(b.date||0).replace(' ','T'))-new Date(String(a.date||0).replace(' ','T'));});
+  document.getElementById("penaltiesBody").innerHTML=list.map(function(p){
+    var st=p.status||"applied";
+    var actions=st==="applied"?"<button class=\"abtn del\" onclick=\"waivePenalty('"+jsq(p.id)+"')\" >Waive</button>":"<span style=\"color:var(--muted);font-size:12px\">--</span>";
+    var badge=st==="applied"?"rejected":st==="waived"?"approved":"pending";
+    var d=p.date?new Date(String(p.date).replace(' ','T')):null;
+    return "<tr><td><strong>"+esc(p.id)+"</strong>"+(p.bookingId?"<br/><small style=\"color:var(--muted)\">"+esc(p.bookingId)+"</small>":"")+"</td><td>"+esc(p.providerName||"--")+"<br/><small style=\"color:var(--muted)\">"+esc(p.providerId)+"</small></td><td style=\"font-size:12px\">"+esc(p.reason||"--")+"</td><td style=\"color:var(--red);font-weight:800\">Rs "+fmt(p.amount)+"</td><td style=\"font-size:12px\">"+(d&&!isNaN(d.getTime())?d.toLocaleDateString("en-IN"):"--")+"</td><td><span class=\"badge "+badge+"\">"+esc(cap(st))+"</span></td><td>"+actions+"</td></tr>";
   }).join("")||"<tr><td colspan=\"7\" style=\"text-align:center;color:var(--muted);padding:24px\">No penalties issued</td></tr>";
 }
 document.getElementById("issuePenaltyBtn").addEventListener("click",function(){
-  var providers=getProviders().filter(function(p){return p.status==="approved";});
-  document.getElementById("pen_provider").innerHTML=providers.map(function(p){return "<option value=\""+esc(p.id)+"\">"+esc(p.name)+" ("+esc(p.id)+")</option>";}).join("")||"<option>No approved providers</option>";
+  var providers=getProviders().filter(function(p){return p.status==="approved"||p.status==="suspended";});
+  document.getElementById("pen_provider").innerHTML=providers.map(function(p){return "<option value=\""+esc(p.id)+"\">"+esc(p.name)+" ("+esc(p.id)+")</option>";}).join("")||"<option value=\"\">No approved providers</option>";
+  document.getElementById("pen_amount").value="";
+  document.getElementById("pen_booking").value="";
+  document.getElementById("pen_notes").value="";
   document.getElementById("penaltyModal").classList.add("show");
 });
-if(document.getElementById("penClose")) document.getElementById("penClose").addEventListener("click",function(){closeModal("penaltyModal");});
-if(document.getElementById("penSubmitBtn")) document.getElementById("penSubmitBtn").addEventListener("click",function(){
-  var sel=document.getElementById("pen_provider");
-  var providers=getProviders();
-  var p=providers.find(function(pr){return pr.id===sel.value;});
+document.getElementById("penClose").addEventListener("click",function(){closeModal("penaltyModal");});
+var _penBusy=false;
+document.getElementById("penSubmitBtn").addEventListener("click",function(){
+  if(_penBusy) return;
+  var pid=document.getElementById("pen_provider").value;
+  var p=getProviders().find(function(pr){return pr.id===pid;});
   if(!p){showToast("Select a provider");return;}
-  var amt=parseInt(document.getElementById("pen_amount").value);
+  var amt=parseInt(document.getElementById("pen_amount").value,10);
   if(!amt||amt<=0){showToast("Enter valid amount");return;}
-  var penalty={id:"PEN-"+Math.random().toString(36).substr(2,6).toUpperCase(),providerId:p.id,providerName:p.name,amount:amt,reason:document.getElementById("pen_reason").value,notes:document.getElementById("pen_notes").value,date:new Date().toISOString(),status:"pending"};
-  var penalties=getPenalties();penalties.push(penalty);savePenalties(penalties);
-  closeModal("penaltyModal");loadPenalties();
-  document.getElementById("ds-penalties").textContent=getPenalties().length;
-  showToast("Penalty issued to "+p.name);
+  var reason=document.getElementById("pen_reason").value;
+  var notes=document.getElementById("pen_notes").value.trim();
+  if(notes) reason+=" — "+notes;
+  var body={provider_id:p.id,amount:amt,reason:reason};
+  var bid=document.getElementById("pen_booking").value.trim();
+  if(bid) body.booking_id=bid;
+  _penBusy=true;
+  var btn=this; btn.disabled=true;
+  adminPostJSON('/penalties.php?action=create', body).then(function(res){
+    _penBusy=false; btn.disabled=false;
+    if(!res.success){ showToast('⚠️ '+(res.error||'Could not issue penalty')); return; }
+    closeModal("penaltyModal");
+    showToast("Penalty of Rs "+fmt(amt)+" issued to "+p.name);
+    syncPenalties().then(function(){ loadPenalties(); loadDashboard(); });
+  }).catch(function(){ _penBusy=false; btn.disabled=false; showToast('⚠️ Network error'); });
 });
-function deductPenalty(id){var p=getPenalties();var idx=p.findIndex(function(x){return x.id===id;});if(idx>-1){p[idx].status="deducted";savePenalties(p);}loadPenalties();showToast("Penalty deducted from next payout");}
-function cancelPenalty(id){savePenalties(getPenalties().filter(function(p){return p.id!==id;}));loadPenalties();showToast("Penalty cancelled");}
+function waivePenalty(id){
+  if(!confirm("Waive penalty "+id+"? The amount will be refunded to the provider's wallet.")) return;
+  adminPostJSON('/penalties.php?action=waive', {id:id}).then(function(res){
+    if(!res.success){ showToast('⚠️ '+(res.error||'Could not waive penalty')); return; }
+    showToast("Penalty waived");
+    syncPenalties().then(function(){ loadPenalties(); loadDashboard(); });
+  }).catch(function(){ showToast('⚠️ Network error'); });
+}
 
-// ====== SERVICE CATALOG ======
+// ====== SERVICE CATALOG (services.php) ======
 var editingSvcId=null;
 function loadCatalog(){
   var body=document.getElementById("catalogBody");
@@ -2371,75 +2072,122 @@ function loadCatalog(){
   var catalog=getCatalog();
   var orders=getAllOrders().filter(function(o){return o.status==="completed";});
   body.innerHTML=catalog.map(function(s){
-    var cnt=orders.filter(function(o){return o.service===s.name;}).length;
-    return "<tr><td style=\"font-size:26px\">"+s.icon+"</td><td><strong>"+s.name+"</strong><br/><small style=\"color:var(--muted)\">"+s.description+"</small></td><td><span class=\"badge approved\">"+s.cat+"</span></td><td>Rs "+s.minPrice+"</td><td>Rs "+s.maxPrice+"</td><td style=\"color:var(--purple);font-weight:800\">"+s.commission+"%</td><td><span class=\"badge "+(s.status==="active"?"approved":"inactive")+"\">"+cap(s.status)+"</span></td><td>"+cnt+"</td><td><button class=\"abtn edit\" onclick=\"editService('"+jsq(s.id)+"')\" >Edit</button> <button class=\"abtn "+(s.status==="active"?"suspend":"approve")+"\" onclick=\"toggleService('"+jsq(s.id)+"')\" >"+(s.status==="active"?"Disable":"Enable")+"</button> <button class=\"abtn del\" onclick=\"deleteService('"+jsq(s.id)+"')\" >Del</button></td></tr>";
+    var cnt=orders.filter(function(o){return o.svcId===s.id||o.service===s.name;}).length;
+    return "<tr><td style=\"font-size:26px\">"+esc(s.icon)+"</td><td><strong>"+esc(s.name)+"</strong><br/><small style=\"color:var(--muted)\">"+esc(s.description)+"</small></td><td><span class=\"badge approved\">"+esc(s.cat)+"</span></td><td>Rs "+fmt(s.defaultPrice)+"</td><td>--</td><td style=\"color:var(--purple);font-weight:800\">"+esc(s.commission)+"%</td><td><span class=\"badge "+(s.status==="active"?"approved":"inactive")+"\">"+esc(cap(s.status))+"</span></td><td>"+cnt+"</td><td><button class=\"abtn edit\" onclick=\"editService('"+jsq(s.id)+"')\" >Edit</button> <button class=\"abtn "+(s.status==="active"?"suspend":"approve")+"\" onclick=\"toggleService('"+jsq(s.id)+"')\" >"+(s.status==="active"?"Disable":"Enable")+"</button> <button class=\"abtn del\" onclick=\"deleteService('"+jsq(s.id)+"')\" >Del</button></td></tr>";
   }).join("");
 }
-if(document.getElementById("addServiceBtn")) document.getElementById("addServiceBtn").addEventListener("click",function(){
-  editingSvcId=null;
-  document.getElementById("svcModalTitle").textContent="Add New Service";
-  ["svc_icon","svc_name","svc_min","svc_max","svc_default","svc_desc"].forEach(function(id){document.getElementById(id).value="";});
-  document.getElementById("svc_comm").value="15";document.getElementById("svc_status").value="active";
-  document.getElementById("svcModal").classList.add("show");
-});
 function editService(id){
-  var s=getCatalog().find(function(x){return x.id===id;});if(!s)return;
+  var s=getCatalog().find(function(x){return x.id===id;});
+  if(!s && typeof PRICING_CONFIG!=='undefined'){
+    var pc=PRICING_CONFIG.find(function(x){return x.id===id;});
+    if(pc) s={id:pc.id,icon:pc.icon,name:pc.name,cat:pc.cat,defaultPrice:pc.base,commission:15,description:'',status:'active'};
+  }
+  if(!s)return;
   editingSvcId=id;
   document.getElementById("svcModalTitle").textContent="Edit Service";
-  document.getElementById("svc_icon").value=s.icon;document.getElementById("svc_name").value=s.name;
-  document.getElementById("svc_min").value=s.minPrice;document.getElementById("svc_max").value=s.maxPrice;
-  document.getElementById("svc_default").value=s.defaultPrice;document.getElementById("svc_comm").value=s.commission;
-  document.getElementById("svc_desc").value=s.description||"";document.getElementById("svc_status").value=s.status;
+  document.getElementById("svc_icon").value=s.icon||"";document.getElementById("svc_name").value=s.name||"";
+  document.getElementById("svc_default").value=s.defaultPrice||"";document.getElementById("svc_comm").value=s.commission!=null?s.commission:15;
+  document.getElementById("svc_desc").value=s.description||"";document.getElementById("svc_status").value=s.status||"active";
   document.getElementById("svc_cat").value=s.cat;
   document.getElementById("svcModal").classList.add("show");
 }
-if(document.getElementById("svcClose")) document.getElementById("svcClose").addEventListener("click",function(){closeModal("svcModal");});
+function _svcUpdate(fields){
+  return adminPostJSON('/services.php?action=update', fields).then(function(res){
+    if(!res.success) throw new Error(res.error||'Update failed');
+    return res;
+  });
+}
+var _svcBusy=false;
 document.getElementById("svcSaveBtn").addEventListener("click",function(){
+  if(_svcBusy) return;
   var name=document.getElementById("svc_name").value.trim();
   if(!name){showToast("Enter service name");return;}
-  var catalog=getCatalog();
-  var obj={id:editingSvcId||(Date.now().toString(36).toUpperCase()),icon:document.getElementById("svc_icon").value||"🛠️",name:name,cat:document.getElementById("svc_cat").value,minPrice:parseInt(document.getElementById("svc_min").value)||0,maxPrice:parseInt(document.getElementById("svc_max").value)||9999,defaultPrice:parseInt(document.getElementById("svc_default").value)||499,commission:parseInt(document.getElementById("svc_comm").value)||15,description:document.getElementById("svc_desc").value,status:document.getElementById("svc_status").value};
-  if(editingSvcId){var idx=catalog.findIndex(function(x){return x.id===editingSvcId;});if(idx>-1)catalog[idx]=obj;}else{catalog.push(obj);}
-  saveCatalog(catalog);closeModal("svcModal");loadCatalog();loadCommission();
-  showToast(editingSvcId?"Service updated!":"Service added!");
+  var isNew=!editingSvcId;
+  var id=editingSvcId||("SVC"+Date.now().toString(36).toUpperCase());
+  var comm=parseInt(document.getElementById("svc_comm").value,10);
+  if(isNaN(comm)||comm<0||comm>50){showToast("Commission must be 0–50%");return;}
+  var fields={id:id,name:name,icon:document.getElementById("svc_icon").value||"🛠️",category:document.getElementById("svc_cat").value,
+    base_price:parseInt(document.getElementById("svc_default").value,10)||0,description:document.getElementById("svc_desc").value,
+    is_active:document.getElementById("svc_status").value==="active"?1:0};
+  var cur=(_hsPricesCache||{})[id];
+  if(isNew && _hsPricesCache) _hsPricesCache[id]={name:name,icon:fields.icon,cat:fields.category,base:fields.base_price,is_active:fields.is_active,description:fields.description,price_data:{}};
+  var curComm=cur&&cur.commission!=null?Number(cur.commission):null;
+  _svcBusy=true;
+  // save_prices creates the services row when it does not exist yet, so a new
+  // service is created by saving its commission first, then updating its details.
+  var chain = (isNew||curComm!==comm) ? saveServiceCommission(id, comm) : Promise.resolve();
+  chain.then(function(){ return _svcUpdate(fields); }).then(function(){
+    _svcBusy=false;
+    closeModal("svcModal");
+    showToast(isNew?"Service added!":"Service updated!");
+    getHSPrices(function(){ loadCatalog(); loadCommission(); loadDashboard(); }, true);
+  }).catch(function(e){ _svcBusy=false; showToast('⚠️ '+e.message); });
 });
-function toggleService(id){var c=getCatalog();var idx=c.findIndex(function(x){return x.id===id;});if(idx>-1){c[idx].status=c[idx].status==="active"?"inactive":"active";saveCatalog(c);}loadCatalog();showToast("Service status updated");}
-function deleteService(id){if(!confirm("Delete this service?"))return;saveCatalog(getCatalog().filter(function(x){return x.id!==id;}));loadCatalog();loadCommission();showToast("Service deleted");}
+function toggleService(id){
+  var s=getCatalog().find(function(x){return x.id===id;}); if(!s) return;
+  _svcUpdate({id:id,is_active:s.status==="active"?0:1}).then(function(){
+    showToast("Service status updated");
+    getHSPrices(function(){ loadCatalog(); loadCommission(); }, true);
+  }).catch(function(e){ showToast('⚠️ '+e.message); });
+}
+// Services are disabled (is_active = 0), never hard-deleted — bookings reference them.
+function deleteService(id){
+  if(!confirm("Disable this service? It will be hidden from customers."))return;
+  _svcUpdate({id:id,is_active:0}).then(function(){
+    showToast("Service disabled");
+    getHSPrices(function(){ loadCatalog(); loadCommission(); }, true);
+  }).catch(function(e){ showToast('⚠️ '+e.message); });
+}
 
 // ====== COMMISSION ======
 function loadCommission(){
   var catalog=getCatalog();
   document.getElementById("commissionRows").innerHTML=catalog.map(function(s){
-    return "<div class=\"comm-row\"><div class=\"comm-svc\"><span style=\"font-size:22px\">"+s.icon+"</span>"+s.name+"<span class=\"badge approved\" style=\"margin-left:6px\">"+s.cat+"</span></div><div class=\"comm-inputs\"><div><div class=\"comm-label\">Comm %</div><input class=\"comm-input\" type=\"number\" id=\"comm_"+s.id+"\" value=\""+s.commission+"\" min=\"0\" max=\"50\"/></div><div><div class=\"comm-label\">Min Rs</div><input class=\"comm-input\" type=\"number\" id=\"min_"+s.id+"\" value=\""+s.minPrice+"\" min=\"0\"/></div><div><div class=\"comm-label\">Max Rs</div><input class=\"comm-input\" type=\"number\" id=\"max_"+s.id+"\" value=\""+s.maxPrice+"\" min=\"0\"/></div></div></div>";
-  }).join("");
+    return "<div class=\"comm-row\"><div class=\"comm-svc\"><span style=\"font-size:22px\">"+esc(s.icon)+"</span>"+esc(s.name)+"<span class=\"badge approved\" style=\"margin-left:6px\">"+esc(s.cat)+"</span>"+(s.status!=="active"?"<span class=\"badge inactive\" style=\"margin-left:6px\">Inactive</span>":"")+"</div><div class=\"comm-inputs\"><div><div class=\"comm-label\">Comm %</div><input class=\"comm-input\" type=\"number\" id=\"comm_"+esc(s.id)+"\" value=\""+esc(s.commission)+"\" min=\"0\" max=\"50\"/></div></div></div>";
+  }).join("")||"<div style=\"color:var(--muted);text-align:center;padding:20px\">Loading services…</div>";
 }
+var _commBusy=false;
 document.getElementById("saveCommBtn").addEventListener("click",function(){
-  var catalog=getCatalog();
-  catalog.forEach(function(s){
-    var ci=document.getElementById("comm_"+s.id);var mi=document.getElementById("min_"+s.id);var ma=document.getElementById("max_"+s.id);
-    if(ci)s.commission=parseInt(ci.value)||s.commission;
-    if(mi)s.minPrice=parseInt(mi.value)||s.minPrice;
-    if(ma)s.maxPrice=parseInt(ma.value)||s.maxPrice;
+  if(_commBusy) return;
+  var changes=[];
+  getCatalog().forEach(function(s){
+    var ci=document.getElementById("comm_"+s.id); if(!ci) return;
+    var v=parseInt(ci.value,10);
+    if(isNaN(v)||v<0||v>50) return;
+    if(v!==Number(s.commission)) changes.push({id:s.id,pct:v});
   });
-  saveCatalog(catalog);
   var gc={globalComm:parseInt(document.getElementById("globalComm").value)||15,minBooking:parseInt(document.getElementById("minBooking").value)||200,platformFee:parseInt(document.getElementById("platformFee").value)||20,tierBronze:parseInt(document.getElementById("tier_bronze").value)||0,tierSilver:parseInt(document.getElementById("tier_silver").value)||2,tierGold:parseInt(document.getElementById("tier_gold").value)||5};
   localStorage.setItem("hs_commission_config",JSON.stringify(gc));
-  loadCatalog();showToast("All commission rates saved!");
+  if(!changes.length){ showToast("No commission changes to save"); return; }
+  _commBusy=true;
+  var failed=[];
+  // One save at a time — each call rewrites that service's price_data
+  changes.reduce(function(p,c){
+    return p.then(function(){ return saveServiceCommission(c.id,c.pct).catch(function(){ failed.push(c.id); }); });
+  }, Promise.resolve()).then(function(){
+    _commBusy=false;
+    showToast(failed.length?("⚠️ Saved "+(changes.length-failed.length)+"/"+changes.length+" — failed: "+failed.join(", ")):("✅ "+changes.length+" commission rate(s) saved"));
+    getHSPrices(function(){ loadCommission(); loadCatalog(); }, true);
+  });
 });
 
-// ====== ALL ORDERS ======
-var orderFilterState="all";
+// ====== ALL ORDERS (bookings.php admin_list) ======
+var orderFilterState="all", orderQueryState="";
+function _renderOrders(){
+  var orders=getAllOrders();
+  if(orderFilterState==="pending") orders=orders.filter(function(o){return o.status!=="completed"&&o.status!=="cancelled";});
+  else if(orderFilterState&&orderFilterState!=="all") orders=orders.filter(function(o){return o.status===orderFilterState;});
+  var q=orderQueryState;
+  if(q) orders=orders.filter(function(o){return (o.id+(o.customer||"")+(o.providerName||"")+(o.service||"")+(o.phone||"")).toLowerCase().includes(q);});
+  document.getElementById("ordersBody").innerHTML=orders.map(function(o){
+    return "<tr><td><strong style=\"font-size:12px\">"+esc(o.id)+"</strong></td><td>"+esc(o.customer||"Guest")+"<br/><small style=\"color:var(--muted)\">"+esc(o.phone||"")+"</small></td><td>"+esc(o.providerName||o.provider||"--")+"<br/><small style=\"color:var(--muted)\">"+esc(o.providerId||"")+"</small></td><td>"+esc(o.service)+"</td><td style=\"font-size:12px\">"+esc(o.date||o.createdAt||"")+" "+esc(o.time||"")+"</td><td><strong>Rs "+(Number(o.amount)||0)+"</strong></td><td style=\"color:var(--purple);font-weight:800\">₹"+(o.commissionAmt>0?o.commissionAmt:Math.round((o.amount||0)*getCommRateSync(o.svcId||"",o.service||"")/100))+"</td><td><span class=\"badge "+esc((o.status||"pending").toLowerCase().replace(/_/g,"-"))+"\">"+esc(cap(String(o.status||"").replace(/_/g," ")))+"</span></td><td><button class=\"abtn del\" onclick=\"deleteOrder('"+jsq(o.providerId)+"','"+jsq(o.id)+"')\">Del</button></td></tr>";
+  }).join("")||"<tr><td colspan=\"9\" style=\"text-align:center;color:var(--muted);padding:24px\">No orders found</td></tr>";
+}
 function loadOrders(filter,query){
   if(filter!==null&&filter!==undefined)orderFilterState=filter;
-  var body=document.getElementById('ordersBody');
-  if(body) body.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:#718096;">⏳ Syncing from Firebase…</td></tr>';
-  syncAllOrders(function(orders){
-  if(orderFilterState&&orderFilterState!=="all") orders=orders.filter(function(o){return o.status===orderFilterState;});
-  if(query) orders=orders.filter(function(o){return (o.id+(o.customer||"")+(o.providerName||"")+(o.service||"")).toLowerCase().includes(query);});
-  document.getElementById("ordersBody").innerHTML=orders.map(function(o){
-    return "<tr><td><strong style=\"font-size:12px\">"+esc(o.id)+"</strong></td><td>"+esc(o.customer||"Guest")+"<br/><small style=\"color:var(--muted)\">"+esc(o.phone||"")+"</small></td><td>"+esc(o.providerName||o.provider||"--")+"<br/><small style=\"color:var(--muted)\">"+esc(o.providerId||"")+"</small></td><td>"+esc(o.service)+"</td><td style=\"font-size:12px\">"+esc(o.date||o.createdAt||"")+" "+esc(o.time||"")+"</td><td><strong>Rs "+(Number(o.amount)||0)+"</strong></td><td style=\"color:var(--purple);font-weight:800\">\u20b9"+(o.commissionAmt>0?o.commissionAmt:Math.round((o.amount||0)*getCommRateSync(o.svcId||"",o.service||"")/100))+"</td><td><span class=\"badge "+esc((o.status||"pending").toLowerCase().replace(/_/g,"-"))+"\">"+esc(cap(o.status))+"</span></td><td><button class=\"abtn del\" onclick=\"deleteOrder('"+jsq(o.providerId)+"','"+jsq(o.id)+"')\">Del</button></td></tr>";
-  }).join("")||"<tr><td colspan=\"9\" style=\"text-align:center;color:var(--muted);padding:24px\">No orders found</td></tr>";
-  });
+  if(query!==null&&query!==undefined){ orderQueryState=query; _renderOrders(); return; } // search: cache only
+  _renderOrders();
+  syncAllOrders(function(){ _renderOrders(); });
 }
 document.getElementById("of-all").addEventListener("click",function(){document.querySelectorAll("#page-orders .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadOrders("all",null);});
 document.getElementById("of-completed").addEventListener("click",function(){document.querySelectorAll("#page-orders .fbtn").forEach(function(b){b.classList.remove("on");});this.classList.add("on");loadOrders("completed",null);});
@@ -2450,11 +2198,13 @@ document.getElementById("orderSearch").addEventListener("input",function(){loadO
 // ====== CUSTOMERS ======
 function loadCustomers(query){
   var customers=getCustomers();
-  if(query) customers=customers.filter(function(c){return (c.name+c.phone+(c.id||"")).toLowerCase().includes(query);});
+  if(query) customers=customers.filter(function(c){return ((c.name||"")+(c.phone||"")+(c.email||"")+(c.id||"")).toLowerCase().includes(query);});
   var orders=getAllOrders();
   document.getElementById("custBody").innerHTML=customers.map(function(c){
-    var bk=orders.filter(function(o){return o.customer===c.name||o.phone===c.phone;});
-    return "<tr><td><strong style=\"font-size:12px;color:var(--blue)\">"+esc(c.id||"--")+"</strong></td><td><strong>"+esc(c.name)+"</strong></td><td>"+esc(c.phone)+"</td><td style=\"font-size:12px\">"+esc(c.email||"--")+"</td><td>"+esc(c.city||"--")+"</td><td><strong>"+bk.length+"</strong></td><td style=\"font-size:12px\">"+((c.registeredAt||c.created_at)?new Date(c.registeredAt||c.created_at).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn del\" onclick=\"deleteCustomer('"+jsq(c.id)+"')\" >Del</button></td></tr>";
+    var bk=orders.filter(function(o){return (o.customerId&&String(o.customerId)===String(c.id))||(c.phone&&o.phone===c.phone);});
+    var rc=Number(c.rating_count||c.ratingCount||0), rt=Number(c.rating||0);
+    var ratingHtml=rc>0?"<br/><small style=\"color:var(--yellow);font-weight:800\">★ "+esc(rt.toFixed(1))+" <span style=\"color:var(--muted);font-weight:600\">("+esc(rc)+")</span></small>":"";
+    return "<tr><td><strong style=\"font-size:12px;color:var(--blue)\">"+esc(c.id||"--")+"</strong></td><td><strong>"+esc(c.name)+"</strong>"+ratingHtml+"</td><td>"+esc(c.phone)+"</td><td style=\"font-size:12px\">"+esc(c.email||"--")+"</td><td>"+esc(c.city||"--")+"</td><td><strong>"+bk.length+"</strong></td><td style=\"font-size:12px\">"+((c.registeredAt||c.created_at)?new Date(String(c.registeredAt||c.created_at).replace(" ","T")).toLocaleDateString("en-IN"):"--")+"</td><td><button class=\"abtn del\" onclick=\"deleteCustomer('"+jsq(c.id)+"')\" >Del</button></td></tr>";
   }).join("")||"<tr><td colspan=\"8\" style=\"text-align:center;color:var(--muted);padding:24px\">No registered customers yet</td></tr>";
 }
 document.getElementById("custSearch").addEventListener("input",function(){loadCustomers(this.value.toLowerCase());});
@@ -2467,11 +2217,6 @@ document.getElementById("exportBtn").addEventListener("click",function(){
   var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="hamaraservice_"+Date.now()+".json";a.click();
   showToast("Data exported!");
 });
-document.getElementById("resetApprovalsBtn").addEventListener("click",function(){
-  if(!confirm("Reset all provider approvals to pending?"))return;
-  saveProviders(getProviders().map(function(p){return Object.assign({},p,{status:"pending"});}));
-  refreshAll();showToast("All approvals reset to pending");
-});
 
 // ====== MODALS ======
 document.querySelectorAll(".modal-overlay").forEach(function(m){
@@ -2479,30 +2224,30 @@ document.querySelectorAll(".modal-overlay").forEach(function(m){
 });
 
 // ====== REFRESH ALL ======
-// Re-renders all pages from current localStorage cache (no extra Firebase round-trip).
-// Use this after any write operation that already updated localStorage + Firebase.
+// Re-renders all pages from the current API caches (orders/payments pages also
+// re-fetch their own lists). Use after any write that has already hit the API.
 function refreshAll(){
   loadDashboard();
   loadApprovals();      // uses currentApprovalFilter
   loadProviders(null,null); // preserves provFilterState
-  loadOrders(null,null);    // preserves orderFilterState
-  loadPayments();       // uses payFilterState
+  _renderOrders();          // preserves order filter/search
+  _renderPayments();    // uses payFilterState
   loadPenalties();
   loadAnalytics();
   loadCatalog();
   loadCustomers(null);
 }
 
-// Auto-refresh: sync fresh data from Firebase then re-render.
+// Auto-refresh: sync fresh data from the MySQL API then re-render.
 // Runs every 30 s but only fetches — it does NOT reset any filter state.
 var _autoRefreshTimer = setInterval(function(){
   if (!getAdminKey()) return; // not logged in
-  syncAllFromFirebase(function(){
+  syncAllData(function(){
     loadDashboard();
     loadApprovals();      // preserves currentApprovalFilter
     loadProviders(null,null); // preserves provFilterState
-    loadOrders(null,null);    // preserves orderFilterState
-    loadPayments();
+    _renderOrders();          // preserves order filter/search
+    _renderPayments();
     loadPenalties();
     loadAnalytics();
     loadCustomers(null);
@@ -2676,103 +2421,6 @@ function sendProviderApprovalEmail(provider) {
   }).catch(function(e){ console.warn('Approval email failed:', e.message); });
 }
 
-// ── eraseData: permanently delete from Firebase ───────────────────────────
-function eraseData(what) {
-  var labels = {
-    'bookings'      : 'ALL bookings, payments, ratings & balance sheet',
-    'customers'     : 'ALL customers',
-    'providers'     : 'ALL providers',
-    'job_otp'       : 'ALL OTP records',
-    'payouts'       : 'ALL payments & withdrawal requests',
-    'reviews'       : 'ALL ratings & reviews',
-    'balance_sheet' : 'Balance sheet entries',
-    'catalog'       : 'Service catalog',
-    'service_prices': 'Service prices',
-    'tracking'      : 'GPS tracking data',
-    'all'           : 'EVERYTHING — complete reset'
-  };
-  var label = labels[what] || what;
-  if (!confirm('\u26a0\ufe0f PERMANENTLY DELETE ' + label.toUpperCase() + '?\n\nThis CANNOT be undone.')) return;
-  var conf = prompt('Type DELETE to confirm:');
-  if (conf !== 'DELETE') { showToast('Cancelled — nothing deleted'); return; }
-
-  showToast('\u23f3 Erasing ' + label + '\u2026');
-
-  var provsList = getProviders();
-
-  // Clear relevant localStorage
-  var lsKeys = [];
-  if (what==='bookings' || what==='all') {
-    lsKeys = lsKeys.concat(['hs_all_bookings','hs_all_orders','hs_payouts','hs_penalties','hs_wd_notified']);
-    provsList.forEach(function(p){ if(p.id) lsKeys.push('hs_bk_'+p.id); });
-  }
-  if (what==='payouts')       lsKeys = lsKeys.concat(['hs_payouts','hs_wd_notified']);
-  if (what==='catalog')       lsKeys.push('hs_catalog');
-  if (what==='service_prices')lsKeys.push('hs_service_prices');
-  if (what==='customers' || what==='all') lsKeys.push('hs_customers');
-  if (what==='providers' || what==='all') lsKeys.push('hs_providers');
-  if (what==='all') {
-    lsKeys = lsKeys.concat(['hs_all_bookings','hs_all_orders','hs_providers','hs_customers',
-      'hs_payouts','hs_penalties','hs_wd_notified','hs_catalog','hs_commission_config']);
-    provsList.forEach(function(p){ if(p.id) lsKeys.push('hs_bk_'+p.id); });
-  }
-  lsKeys.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
-
-  // Build Firebase delete paths
-  var paths = [];
-  if (what==='bookings' || what==='all') {
-    paths.push('bookings','active_bookings','job_otp',
-                'payouts','payout_requests','reviews','tracking','hs_balance_sheet');
-    provsList.forEach(function(p){
-      if (!p.id) return;
-      paths.push('providers/'+p.id+'/withdrawals');
-      paths.push('provider_reviews/'+p.id);
-    });
-    provsList.forEach(function(p){
-      if (!p.id) return;
-      setTimeout(function(){
-        adminFetch(HS_API+'/providers.php?action=reset_withdrawn',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({id:p.id})
-        }).catch(function(){});
-      }, 600);
-    });
-  }
-  if (what==='payouts')        paths.push('payouts','payout_requests');
-  if (what==='reviews')        { paths.push('reviews'); provsList.forEach(function(p){ if(p.id) paths.push('provider_reviews/'+p.id); }); }
-  if (what==='balance_sheet')  paths.push('hs_balance_sheet');
-  if (what==='catalog')        paths.push('hs_catalog');
-  if (what==='service_prices') paths.push('hs_service_prices');
-  if (what==='tracking')       paths.push('tracking');
-  if (what==='customers')      paths.push('customers');
-  if (what==='providers')      paths.push('providers');
-  if (what==='job_otp')        paths.push('job_otp');
-
-  var total = paths.length, done = 0;
-
-  function onAllDone() {
-    if (what==='all' || what==='bookings' || what==='payouts') {
-      // Reset ping removed — no Firebase needed
-    }
-    showToast('\u2705 Erased: ' + label);
-    setTimeout(function(){
-      syncAllFromFirebase(function(){ refreshAll(); loadDashboard(); });
-    }, 800);
-  }
-
-  if (total === 0) { onAllDone(); return; }
-
-  paths.forEach(function(path) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('DELETE', FB_URL+'/'+path+'.json', true);
-    xhr.timeout = 10000;
-    xhr.onload = xhr.onerror = xhr.ontimeout = function() {
-      done++;
-      if (done === total) onAllDone();
-    };
-    xhr.send();
-  });
-}
 </script>
 
 </body>

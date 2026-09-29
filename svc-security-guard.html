@@ -455,7 +455,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 if(!firebase.apps.length) firebase.initializeApp({
   apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
   messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
 });
@@ -563,17 +562,20 @@ firebase.auth().onAuthStateChanged(function(u) {
   else sessionStorage.removeItem('hs_current_customer');
 });
 
-// ── HS Firebase Price Sync (SVC034) ────────────────────────────────────────
+// ── HS Price Sync via services.php (SVC034) ────────────────────────────────────────
 (function(){
-  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
-  function getToken(cb){
-    if(_tok){cb(_tok);return;}
+  function hsLoadPrices(id,cb){
+    /* Prices come from MySQL via services.php (Firebase RTDB no longer used) */
     var x=new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
-    x.onerror=function(){cb('');};
-    x.send(JSON.stringify({returnSecureToken:true}));
+    x.open('GET','https://hamaraservice.com/api/services.php?action=prices&id='+encodeURIComponent(id)+'&_='+Date.now(),true);
+    x.timeout=6000;
+    x.onload=function(){try{
+      var r=JSON.parse(x.responseText),d=r&&r.success?r.data:null;
+      if(!d||typeof d!=='object'||Array.isArray(d)||!Object.keys(d).length)return;
+      if(d.base&&typeof d.base==='object')d.base=d.base.base;
+      cb(d);
+    }catch(e){}};
+    x.onerror=function(){};x.send();
   }
   function applyPrices(d){
     if(!d||d.error) return;
@@ -592,14 +594,7 @@ firebase.auth().onAuthStateChanged(function(u) {
     }
     if(typeof updatePrice==='function') updatePrice();
   }
-  function load(){
-    getToken(function(tok){
-      var url=_DB+'/hs_service_prices/SVC034.json'+(tok?'?auth='+tok:'');
-      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
-      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
-      xhr.onerror=function(){};xhr.send();
-    });
-  }
+  function load(){ hsLoadPrices('SVC034', applyPrices); }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
   else{load();}
   setInterval(load,30000);

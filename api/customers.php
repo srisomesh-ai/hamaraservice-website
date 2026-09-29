@@ -7,6 +7,8 @@
 //   POST ?action=fcm       — save FCM token
 //   GET  ?action=get&id=X  — get customer profile
 //   GET  ?action=bookings&id=X — get customer booking history
+//   GET  ?action=list          — admin: all customers (with rating fields)
+//   POST ?action=admin_delete  — admin: soft delete {id} (status 'deleted', PII blanked)
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
@@ -59,7 +61,7 @@ switch ($action) {
     $stmt = $db->prepare("SELECT * FROM customers WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $c = $stmt->fetch();
-    if (!$c) err('NOT_REGISTERED', 404);
+    if (!$c || ($c['status'] ?? '') === 'deleted') err('NOT_REGISTERED', 404);
     // bcrypt; a legacy plain-text value is accepted once and re-hashed.
     // Accounts with no password (Firebase/Google sign-in) cannot web-login.
     $stored = (string)($c['password_hash'] ?? '');
@@ -87,6 +89,9 @@ switch ($action) {
   case 'register': {
     $user = requireCustomer();  // verifies Firebase token
     $b    = getBody();
+    $st = $db->prepare("SELECT status FROM customers WHERE id = ?");
+    $st->execute([$user['uid']]);
+    if ($st->fetchColumn() === 'deleted') err('Account deleted. Contact support.', 403);
 
     // Upsert — insert if new, update if exists
     $stmt = $db->prepare("
@@ -141,6 +146,9 @@ switch ($action) {
   case 'update': {
     $user = requireCustomer();
     $b    = getBody();
+    $st = $db->prepare("SELECT status FROM customers WHERE id = ?");
+    $st->execute([$user['uid']]);
+    if ($st->fetchColumn() === 'deleted') err('Account deleted. Contact support.', 403);
 
     $fields = [];
     $params = [':id' => $user['uid']];
@@ -203,7 +211,7 @@ switch ($action) {
     // Customer can only get their own profile
     if ($id !== $user['uid']) err('Forbidden', 403);
 
-    $stmt = $db->prepare("SELECT id, name, phone, email, gender, address, city, lat, lng, auth_method, created_at FROM customers WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, name, phone, email, gender, address, city, lat, lng, auth_method, rating, rating_count, status, created_at FROM customers WHERE id = ?");
     $stmt->execute([$id]);
     $customer = $stmt->fetch();
     if (!$customer) err('Customer not found', 404);
@@ -219,7 +227,8 @@ switch ($action) {
     $stmt = $db->prepare("
       SELECT id, svc_id, svc_name, svc_icon, provider_name,
              status, confirmed_price, amount, payment_status,
-             slot_date, slot_time, address, city, created_at
+             slot_date, slot_time, address, city, created_at,
+             cancel_reason, cancelled_by, rating, lat, lng, provider_id
       FROM bookings
       WHERE customer_id = ?
       ORDER BY created_at DESC
@@ -241,12 +250,43 @@ switch ($action) {
   case 'list': {
     requireAdmin();
     $stmt = $db->query("
-      SELECT id, name, phone, email, city, auth_method, created_at
+      SELECT id, name, phone, email, city, auth_method, rating, rating_count, status, created_at
       FROM customers
       ORDER BY created_at DESC
       LIMIT 500
     ");
-    ok($stmt->fetchAll());
+    ok(array_map(function ($r) {
+      $r['rating'] = (float)$r['rating']; $r['rating_count'] = (int)$r['rating_count'];
+      return $r;
+    }, $stmt->fetchAll()));
+  }
+
+  // ── ADMIN: SOFT DELETE ──────────────────────────────────
+  // Keeps the row (bookings/reports reference it) but blanks personal data,
+  // blocks login/booking, and cancels bookings that have not started.
+  case 'admin_delete': {
+    requireAdmin();
+    $b  = getBody();
+    $id = (string)($b['id'] ?? '');
+    if ($id === '') err('id required');
+    $chk = $db->prepare("SELECT id FROM customers WHERE id = ?");
+    $chk->execute([$id]);
+    if (!$chk->fetch()) err('Customer not found', 404);
+
+    $db->beginTransaction();
+    $db->prepare("
+      UPDATE customers SET
+        status = 'deleted', name = 'Deleted user', phone = NULL, email = NULL, gender = NULL,
+        address = NULL, lat = NULL, lng = NULL, fcm_token = NULL, password_hash = ''
+      WHERE id = ?
+    ")->execute([$id]);
+    $db->prepare("
+      UPDATE bookings SET status = 'cancelled', cancel_reason = 'account_deleted', cancelled_by = 'admin'
+      WHERE customer_id = ? AND status IN ('searching','price_quoted','negotiating','negotiation_final','confirmed')
+    ")->execute([$id]);
+    $db->prepare("UPDATE bookings SET customer_phone = NULL WHERE customer_id = ?")->execute([$id]);
+    $db->commit();
+    ok(['deleted' => true, 'id' => $id]);
   }
 
   default:

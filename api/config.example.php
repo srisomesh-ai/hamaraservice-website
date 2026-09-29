@@ -45,3 +45,11 @@ define('RAZORPAY_WEBHOOK_SECRET', 'your_razorpay_webhook_secret');
 // ── Firebase Cloud Messaging service account ──────────
 // Absolute path to the service-account JSON, OUTSIDE the web root.
 define('SERVICE_ACCOUNT_PATH', '/home/youruser/hs-private/firebase-service-account.json');
+
+// ── Push notifications (Cloud Run "notifybooking") ────
+// Shared secret sent by the PHP server as header "X-HS-Notify-Key" on every
+// call to the notify service. The Cloud Run function must reject requests
+// without it. Apps/pages never call the notify service directly.
+define('NOTIFY_KEY', 'replace-with-a-long-random-notify-key');
+// Optional override of the notify service URL (default shown)
+// define('NOTIFY_URL', 'https://notifybooking-mlchyp6tra-as.a.run.app');

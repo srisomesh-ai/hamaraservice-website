@@ -16,7 +16,6 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   
 
 <style>
@@ -1165,7 +1164,6 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     var FIREBASE_CONFIG = {
       apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
       authDomain:        "hamaraservice-s009.firebaseapp.com",
-      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId:         "hamaraservice-s009",
       storageBucket:     "hamaraservice-s009.firebasestorage.app",
       messagingSenderId: "1064274729048",
@@ -1173,7 +1171,6 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     };
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     var fbAuth = firebase.auth();
-    var fbDB   = firebase.database();
     // Google provider
 
 // Escape untrusted strings before interpolating them into innerHTML
@@ -1252,45 +1249,39 @@ function loadAndRenderCatalog() {
     renderServicesGrid();
   }
 
-  // Step 2a: Fetch hs_service_prices from Firebase (set by hs-prices.html)
+  // Step 2a: Fetch admin prices + provider ranges from services.php (MySQL, set by hs-prices.html)
   // This overrides catalog.json base prices with admin-set prices
   var xhrP = new XMLHttpRequest();
-  xhrP.open('GET', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_=' + Date.now(), true);
+  xhrP.open('GET', 'https://hamaraservice.com/api/services.php?action=price_ranges&_=' + Date.now(), true);
   xhrP.timeout = 8000;
   xhrP.onload = function() {
     try {
-      var priceData = JSON.parse(xhrP.responseText);
-      if (priceData && typeof priceData === 'object') {
-        // Apply base prices to HS_CATALOG
-        Object.keys(priceData).forEach(function(svcId) {
-          var p = priceData[svcId];
-          if (!p) return;
+      var res = JSON.parse(xhrP.responseText);
+      var ranges = res && res.success ? res.data : null;
+      if (ranges && typeof ranges === 'object') {
+        Object.keys(ranges).forEach(function(svcId) {
+          var r = ranges[svcId];
+          if (!r) return;
           var svc = HS_CATALOG.find(function(s){ return s.id === svcId; });
           if (!svc) return;
+          var p = r.admin_prices || {};
+          var np = null;
           // Try base price first (cleaning/multi-option services)
-          if (p.base != null) {
-            svc.price = parseInt(p.base) || svc.price;
-          }
-          // Visit-only services: read visit.price (SVC007-SVC018 etc.)
-          else if (p.visit && p.visit.price != null) {
-            svc.price = parseInt(p.visit.price) || svc.price;
-          }
-          // Mechanic: car.visit or bike.visit
-          else if (p.car && p.car.visit != null) {
-            svc.price = parseInt(p.car.visit) || svc.price;
-          }
+          if (p.base != null && typeof p.base !== 'object') np = parseInt(p.base);
+          // Visit-only services: visit.visit / visit.price
+          else if (p.visit && p.visit.visit != null) np = parseInt(p.visit.visit);
+          else if (p.visit && p.visit.price != null) np = parseInt(p.visit.price);
+          // Mechanic: car.visit
+          else if (p.car && p.car.visit != null) np = parseInt(p.car.visit);
           // Appliance: appliance.visit
-          else if (p.appliance && p.appliance.visit != null) {
-            svc.price = parseInt(p.appliance.visit) || svc.price;
-          }
+          else if (p.appliance && p.appliance.visit != null) np = parseInt(p.appliance.visit);
           // AC/Electrician/Plumber etc: svc.visit
-          else if (p.svc && p.svc.visit != null) {
-            svc.price = parseInt(p.svc.visit) || svc.price;
-          }
+          else if (p.svc && p.svc.visit != null) np = parseInt(p.svc.visit);
           // Massage: base.price
-          else if (p.base && p.base.price != null) {
-            svc.price = parseInt(p.base.price) || svc.price;
-          }
+          else if (p.base && p.base.price != null) np = parseInt(p.base.price);
+          // No admin price: lowest price charged by an approved provider
+          if (!np && r.min > 0) np = parseInt(r.min);
+          if (np > 0) svc.price = np;
         });
         // Rebuild ALL_SERVICES so search bar shows updated prices too
         _buildAllServices(HS_CATALOG);
@@ -1592,12 +1583,19 @@ fbAuth.onAuthStateChanged(function(user){
     var basic = {uid:user.uid, name:user.displayName||'', email:user.email||''};
     sessionStorage.setItem('hs_current_customer', JSON.stringify(basic));
     updateUserWidget();
-    fbDB.ref('customers/'+user.uid).once('value', function(snap){
-      if(snap.exists()){
-        sessionStorage.setItem('hs_current_customer', JSON.stringify(snap.val()));
+    // Full profile from MySQL (customers.php get) — keep basic profile on any error
+    user.getIdToken().then(function(tok){
+      return fetch('https://hamaraservice.com/api/customers.php?action=get', {headers:{'Authorization':'Bearer '+tok}});
+    }).then(function(r){ return r.json(); }).then(function(res){
+      if(res && res.success && res.data){
+        var c = res.data;
+        sessionStorage.setItem('hs_current_customer', JSON.stringify({
+          uid:user.uid, id:c.id, name:c.name||basic.name, email:c.email||basic.email,
+          phone:c.phone||'', address:c.address||'', city:c.city||''
+        }));
       }
       updateUserWidget();
-    }, function(){ /* permission denied etc. — keep basic profile */ });
+    }).catch(function(){ updateUserWidget(); });
   } else {
     sessionStorage.removeItem('hs_current_customer');
     updateUserWidget();

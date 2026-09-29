@@ -433,7 +433,6 @@ header{position:sticky;top:0;z-index:300;background:var(--white);border-bottom:1
 var FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:        "hamaraservice-s009.firebaseapp.com",
-  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "hamaraservice-s009",
   storageBucket:     "hamaraservice-s009.firebasestorage.app",
   messagingSenderId: "1064274729048",
@@ -708,7 +707,13 @@ function bookingsApi(action, opts) {
       init.headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(opts.body);
     }
-    return fetch(url, init).then(function(r) { return r.json(); });
+    return fetch(url, init).then(function(r) {
+      // Surface the server's error text even on non-2xx / non-JSON responses
+      return r.text().then(function(t) {
+        try { return JSON.parse(t); }
+        catch (e) { return { success: false, error: 'Server error (HTTP ' + r.status + ')' }; }
+      });
+    });
   });
 }
 
@@ -1025,10 +1030,10 @@ function startRadar() {
       closeRadarOverlay();
       showToast('❌ ' + ((res && res.error) || 'Could not create booking'));
     }
-  }).catch(function() {
+  }).catch(function(e) {
     if (!radarActive) return;
     closeRadarOverlay();
-    showToast('❌ Network error — could not create booking');
+    showToast('❌ ' + ((e && e.message && e.message !== 'Failed to fetch') ? e.message : 'Network error — could not create booking'));
   });
 }
 
@@ -1084,17 +1089,23 @@ function runRange(idx) {
 
     var bkDate  = document.getElementById('bookDate').value;
     var bkTime  = document.getElementById('bookHour').value + ':' + document.getElementById('bookMinute').value;
-    // Booking already exists in MySQL (status 'searching') — it stays open for providers
-    var pending = {
+    var ended = {
       id:       bookingId,
       service:  selSvc.n,
       date:     bkDate,
       time:     bkTime,
-      status:   'pending'
+      status:   'cancelled'
     };
+    // Close the search on the server so the customer can book again right away
+    // ("Try again" would otherwise hit the one-active-search limit).
+    if (bookingId) {
+      var endId = bookingId;
+      window._hsEndSearch = bookingsApi('cancel', { body: { booking_id: endId, reason: 'no_provider' } }).catch(function() {});
+      bookingId = null;
+    }
 
     // Show sorry screen inside the radar overlay
-    showSorryScreen(pending);
+    showSorryScreen(ended);
     return;
   }
 
@@ -1163,9 +1174,11 @@ function runRange(idx) {
       var req = (res && res.success && res.data) ? res.data : null;
       if (!radarActive || polledId !== bookingId) return;
 
-      if (req && req.status === 'cancelled') {
+      if (req && (req.status === 'cancelled' || req.status === 'expired')) {
+        var expired = req.status === 'expired' || req.cancel_reason === 'expired';
         closeRadarOverlay();
-        showToast('Booking was cancelled');
+        bookingId = null;
+        showToast(expired ? '⌛ Search expired — no provider accepted in time. Please try again.' : 'Booking was cancelled');
         return;
       }
       if (req && (req.provider_id || ['price_quoted','accepted','confirmed'].indexOf(req.status) !== -1)) {
@@ -1217,14 +1230,14 @@ function showSorryScreen(bk) {
     '<div style="font-size:14px;color:rgba(255,255,255,.6);line-height:1.8;margin-bottom:28px;max-width:320px;">' +
     'We searched up to 20&nbsp;km and found no available providers for ' +
     '<strong style="color:white;">' + (bk ? esc(bk.service) : '') + '</strong> right now.<br/><br/>' +
-    'Your booking is saved as <strong style="color:#ffa500;">Pending</strong>. ' +
-    'You will be notified when a provider becomes available.' +
+    'This search has been closed and you have not been charged. ' +
+    'Please try again in a little while.' +
     '</div>' +
 
     '<div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);' +
     'border-radius:16px;padding:20px 24px;margin-bottom:28px;width:100%;max-width:360px;text-align:left;">' +
     '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;' +
-    'letter-spacing:1.2px;margin-bottom:10px;">&#x23F3; Pending Booking</div>' +
+    'letter-spacing:1.2px;margin-bottom:10px;">&#x23F3; Search Ended</div>' +
     '<div style="font-size:17px;font-weight:800;color:white;margin-bottom:5px;">' + (bk ? esc(bk.service) : '') + '</div>' +
     '<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:14px;">' +
     (bk ? esc(bk.date) : '') + (bk && bk.time ? ' at ' + esc(bk.time) : '') + '</div>' +
@@ -1232,7 +1245,7 @@ function showSorryScreen(bk) {
     'border:1px solid rgba(255,165,0,.4);color:#ffb020;font-size:13px;font-weight:700;' +
     'padding:7px 16px;border-radius:100px;">' +
     '<span style="width:8px;height:8px;border-radius:50%;background:#ffb020;display:inline-block;"></span>' +
-    'Pending &#x2014; Awaiting Provider</div>' +
+    'No provider available</div>' +
     '</div>' +
 
     '<button onclick="window.location.href=\'index.html\';" ' +
@@ -1240,7 +1253,7 @@ function showSorryScreen(bk) {
     'border-radius:14px;font-family:DM Sans,sans-serif;font-size:16px;font-weight:700;cursor:pointer;' +
     'margin-bottom:12px;">&#x2190; Back to Home</button>' +
 
-    '<button onclick="location.reload();" ' +
+    '<button onclick="this.disabled=true;(window._hsEndSearch||Promise.resolve()).then(function(){location.reload();});" ' +
     'style="width:100%;max-width:360px;padding:15px;background:rgba(255,255,255,.1);' +
     'color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.25);border-radius:14px;' +
     'font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Try Again</button>' +
@@ -1393,7 +1406,8 @@ function confirmBooking() {
 
 function openTracking() {
   document.getElementById('provOverlay').classList.remove('show');
-  if (bookingId) window.location.href = 'provider-dashboard.html?track=' + bookingId;
+  // Live tracking / OTPs / payment are shown in the customer panel
+  window.location.href = 'user-panel.html';
 }
 
 // ── Watch pending bookings — notify when provider accepts ────────────────────

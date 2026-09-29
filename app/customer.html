@@ -440,7 +440,42 @@ function api(ep,action,body,method){
   var opt={method:method||(body?'POST':'GET'),headers:{'Content-Type':'application/json'}};
   if(TOKEN)opt.headers['Authorization']='Bearer '+TOKEN;
   if(body)opt.body=JSON.stringify(body);
-  return fetch(url,opt).then(function(r){return r.json();});
+  return fetch(url,opt).then(function(r){
+    // Surface the server's error text even for non-JSON / HTTP error responses
+    return r.text().then(function(t){
+      try{return JSON.parse(t);}catch(e){return {success:false,error:'Server error (HTTP '+r.status+')'};}
+    });
+  });
+}
+// Ask for a cancellation reason (stored by bookings.php cancel). null = user backed out.
+function askCancelReason(){
+  var r=prompt('Why are you cancelling? (e.g. Changed my plans, Booked by mistake, Provider taking too long)','Changed my plans');
+  if(r===null)return null;
+  r=String(r).trim().slice(0,250);
+  return r||'Changed my plans';
+}
+// Provider distance / live-location line from bookings.php get (provider_lat/lng, provider_loc_at)
+function providerLocHtml(b){
+  var la=parseFloat(b.provider_lat),ln=parseFloat(b.provider_lng);
+  if(!la||!ln)return '';
+  var live=!!b.provider_loc_at;
+  var dist=(b.distance_km!=null)?(esc(b.distance_km)+' km away'):'';
+  return '<div class="card" style="font-size:13px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:22px">'+(live?'🛵':'📍')+'</span>'
+    +'<div style="flex:1"><b>'+(live?'Provider is on the way':'Provider base location')+'</b>'
+    +(dist?'<div style="color:var(--muted)">'+dist+(live?'':' (live location not shared yet)')+'</div>':'')+'</div>'
+    +'<a href="https://www.openstreetmap.org/?mlat='+encodeURIComponent(la)+'&mlon='+encodeURIComponent(ln)+'#map=15/'+encodeURIComponent(la)+'/'+encodeURIComponent(ln)+'" target="_blank" rel="noopener" style="font-weight:800;color:var(--teal);text-decoration:none">Map ›</a></div>';
+}
+// Payment block (status active/completed, payment_status != 'paid'): online or cash
+function payBlockHtml(b,amt){
+  if(b.payment_status==='paid')return '<div class="card" style="text-align:center;border:2px solid var(--green)"><div style="font-size:15px;font-weight:800;color:var(--green)">✅ Payment Done · ₹'+esc(amt)+'</div></div>';
+  if(b.payment_status==='cash_pending')return '<div class="card" style="text-align:center;border:2px solid var(--amber)"><div style="font-size:15px;font-weight:800">💵 Cash payment</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Awaiting provider confirmation</div></div>';
+  if(!(amt>0))return '';
+  return '<div class="card" style="border:2px solid var(--amber)"><div style="font-weight:800;font-size:15px;margin-bottom:4px">💰 Payment Pending</div>'
+    +'<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Pay ₹'+esc(amt)+' to '+esc(b.provider_name||'your provider')+'</div>'
+    +'<button class="btn green" onclick="payNow('+(parseInt(amt,10)||0)+')">💳 Pay ₹'+esc(amt)+' Securely</button>'
+    +'<div style="height:8px"></div><button class="btn ghost" onclick="markPaid()">💵 I paid in cash</button>'
+    +'<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">UPI · Cards · Netbanking · Wallets</div></div>';
 }
 
 // ── AUTH ──
@@ -946,10 +981,12 @@ function detectChange(b){
     if(st==='price_quoted')popNotify('🎉','Provider Found!',(b.provider_name||'A provider')+' quoted ₹'+(b.quoted_price||0),'var(--amber)');
     else if(st==='active')popNotify('🧰','Service Started','Your provider has started the work','var(--teal)');
     else if(st==='completed')popNotify('✅','Service Completed','Please complete the payment','var(--green)');
-    else if(st==='cancelled')popNotify('❌','Booking Cancelled','This booking was cancelled','var(--red)');
+    else if(st==='cancelled'&&b.cancel_reason==='expired')popNotify('⌛','Search Expired','No provider accepted in time. Please try again.','var(--red)');
+    else if(st==='cancelled')popNotify('❌','Booking Cancelled',b.cancelled_by==='provider'?'The provider cancelled this booking':'This booking was cancelled','var(--red)');
+    else if(st==='searching'&&_lastStatus!=='searching')popNotify('🔄','Finding Another Provider','The provider could not take this job — searching again','var(--amber)');
   }
   if(_lastPayStatus!==null && b.payment_status!==_lastPayStatus && b.payment_status==='paid'){
-    popNotify('💰','Payment Confirmed','Payment marked as done','var(--green)');
+    popNotify('💰','Payment Confirmed','Payment received — thank you!','var(--green)');
   }
   if(b.review_requested && !_lastReviewReq){
     popNotify('⭐','Review Requested',(b.provider_name||'Your provider')+' is asking for a review','var(--amber)');
@@ -990,7 +1027,7 @@ function renderTimeline(st){
 var _lastRenderKey='';
 function renderBookingState(b){
   var st=b.status;
-  var key=st+'|'+(b.otp||'')+'|'+(b.start_otp||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.review_requested||0)+'|'+(b.rating||'');
+  var key=st+'|'+(b.otp||'')+'|'+(b.start_otp||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.review_requested||0)+'|'+(b.rating||'')+'|'+(b.provider_lat||'')+','+(b.provider_lng||'')+'|'+(b.distance_km||'');
   if(key===_lastRenderKey)return;
   _lastRenderKey=key;
   renderTimeline(st);
@@ -1012,9 +1049,9 @@ function renderBookingState(b){
       +'<div style="font-size:15px;font-weight:800;margin-bottom:12px">🎉 Provider Found!</div>'
       +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
       +avatar
-      +'<div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:900">'+(b.provider_name||'Provider')+'</div>'
+      +'<div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:900">'+esc(b.provider_name||'Provider')+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">'+distPill+ratePill+'</div></div></div>'
-      +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+b.provider_phone+'</div>':'')
+      +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+esc(b.provider_phone)+'</div>':'')
       +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">This is the provider\'s final price. Confirm to book, or decline to find another.</div>'
@@ -1033,9 +1070,10 @@ function renderBookingState(b){
     var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+b.provider_photo+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
     a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">✅</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Booking Confirmed</div><div style="font-size:13px;color:var(--muted)">Provider is on the way</div></div>'
       +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+' · ₹'+price+'</div></div></div>'
-      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')+'</div>'
+      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+esc(b.provider_phone)+'">📞 Call Provider</a></div>':'')+'</div>'
       +startOtpBlock
-      +'<div class="card" style="font-size:13px;color:var(--muted)">📍 '+(b.address||'')+'</div>'
+      +providerLocHtml(b)
+      +'<div class="card" style="font-size:13px;color:var(--muted)">📍 '+esc(b.address||'')+'</div>'
       +'<button class="btn ghost" style="border-color:var(--red);color:var(--red);margin-top:8px" onclick="cancelBooking()">Cancel Booking</button>';
   } else if(st==='active'){
     $('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
@@ -1047,23 +1085,17 @@ function renderBookingState(b){
     var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+b.provider_photo+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
     a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">🧰</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Work In Progress</div><div style="font-size:13px;color:var(--muted)">Your provider is working on the job</div></div>'
       +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+'</div></div><div style="font-size:19px;font-weight:900;color:var(--teal)">₹'+price+'</div></div>'
-      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+b.provider_phone+'">📞 Call Provider</a></div>':'')+'</div>'
-      +compBlock;
+      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+esc(b.provider_phone)+'">📞 Call Provider</a></div>':'')+'</div>'
+      +compBlock
+      +payBlockHtml(b,price);
   } else if(st==='completed'){
-    clearInterval(pollTimer);
+    // keep polling until the payment is confirmed (cash needs the provider's confirmation)
+    if(b.payment_status==='paid')clearInterval(pollTimer);
     $('radarActive').classList.remove('hide');$('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
     var amt=b.confirmed_price||b.final_price||b.quoted_price||0;
     var paid=(b.payment_status==='paid');
     // Payment section
-    var payBlock;
-    if(!paid){
-      payBlock='<div class="card" style="border:2px solid var(--amber)"><div style="font-weight:800;font-size:15px;margin-bottom:4px">💰 Payment Pending</div>'
-        +'<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Pay ₹'+amt+' to '+(b.provider_name||'your provider')+'</div>'
-        +'<button class="btn green" onclick="payNow('+amt+')">💳 Pay ₹'+amt+' Securely</button>'
-        +'<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">UPI · Cards · Netbanking · Wallets</div></div>';
-    } else {
-      payBlock='<div class="card" style="text-align:center;border:2px solid var(--green)"><div style="font-size:15px;font-weight:800;color:var(--green)">✅ Payment Done · ₹'+amt+'</div></div>';
-    }
+    var payBlock=payBlockHtml(b,amt);
     // Review section — only after payment is done
     var rateBlock='';
     if(!paid){
@@ -1075,16 +1107,16 @@ function renderBookingState(b){
         +'<div id="stars" style="font-size:34px;letter-spacing:6px;cursor:pointer">'
         +[1,2,3,4,5].map(function(i){return '<span data-s="'+i+'" onclick="setStar('+i+')" style="opacity:.35">⭐</span>';}).join('')
         +'</div><textarea class="inp" id="reviewTxt" rows="2" placeholder="Write a short review (optional)" style="margin-top:10px"></textarea>'
-        +'<button class="btn" style="margin-top:6px" onclick="submitReview(\''+b.id+'\')">Submit Review</button></div>';
+        +'<button class="btn" style="margin-top:6px" data-bid="'+esc(b.id)+'" onclick="submitReview(this.dataset.bid)">Submit Review</button></div>';
     } else {
-      rateBlock='<div class="card" style="text-align:center;font-size:14px">⭐ You rated this '+b.rating+'/5 — thank you!</div>';
+      rateBlock='<div class="card" style="text-align:center;font-size:14px">⭐ You rated this '+esc(b.rating)+'/5 — thank you!</div>';
     }
-    $('radarActive').innerHTML='<div class="card" style="text-align:center"><div style="font-size:42px">🎉</div><div style="font-size:17px;font-weight:800;margin:6px 0">Service Completed!</div><div style="font-size:14px;color:var(--muted)">'+(b.provider_name||'')+' · ₹'+amt+'</div></div>'
+    $('radarActive').innerHTML='<div class="card" style="text-align:center"><div style="font-size:42px">🎉</div><div style="font-size:17px;font-weight:800;margin:6px 0">Service Completed!</div><div style="font-size:14px;color:var(--muted)">'+esc(b.provider_name||'')+' · ₹'+esc(amt)+'</div></div>'
       +payBlock+rateBlock
       +'<div style="height:8px"></div><button class="btn ghost" onclick="goHomeFresh()">← Back to Home</button>';
   } else if(st==='cancelled'){
     clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
-    toast('Booking cancelled');show('pgHome');
+    toast(b.cancel_reason==='expired'?'Search expired — no provider accepted in time':'Booking cancelled');show('pgHome');
   }
 }
 function confirmBooking(p){
@@ -1113,8 +1145,8 @@ function payNow(amt){
     // create order on server
     fetch('https://hamaraservice.com/api/create-order.php',{
       method:'POST',headers:Object.assign({'Content-Type':'application/json'},TOKEN?{'Authorization':'Bearer '+TOKEN}:{}),
-      body:JSON.stringify({bookingId:activeBookingId,amount:amt,service:b.svc_name||'Home Service',customerId:ME.id||'',providerId:b.provider_id||''})
-    }).then(function(r){return r.json();}).then(function(order){
+      body:JSON.stringify({bookingId:activeBookingId})
+    }).then(function(r){return r.text().then(function(t){try{return JSON.parse(t);}catch(e){return {error:'Server error (HTTP '+r.status+')'};}});}).then(function(order){
       if(!order.order_id){var em=order.error||'error';if(order.details&&order.details.error&&order.details.error.description)em=order.details.error.description;toast('Could not start payment: '+em);console.error('[RZP] order error',order);return;}
       var rzp=new Razorpay({
         key:order.key_id,
@@ -1150,9 +1182,14 @@ function payNow(amt){
 }
 
 function markPaid(){
-  if(!confirm('Confirm you have paid the provider?'))return;
+  if(!confirm('Confirm you have paid the provider in cash?'))return;
   api('bookings.php','mark_paid',{booking_id:activeBookingId}).then(function(res){
-    if(res.success){toast('✅ Payment marked as done');_lastRenderKey='';checkBooking();}
+    if(res.success){
+      var ps=(res.data&&res.data.payment_status)||'cash_pending';
+      toast(ps==='paid'?'✅ Payment confirmed':'💵 Noted — awaiting provider confirmation');
+      _lastRenderKey='';checkBooking();
+      if(ps!=='paid'){clearInterval(pollTimer);pollTimer=setInterval(checkBooking,4000);}
+    }
     else toast(res.error||'Failed');
   }).catch(function(){toast('Network error');});
 }
@@ -1184,11 +1221,13 @@ function searchAnother(){
   });
 }
 function cancelBooking(){
-  if(!confirm('Cancel this booking?'))return;
-  api('bookings.php','cancel',{booking_id:activeBookingId}).then(function(res){
+  var reason=askCancelReason();
+  if(reason===null)return;
+  api('bookings.php','cancel',{booking_id:activeBookingId,reason:reason}).then(function(res){
+    if(!res.success){toast(res.error||'Could not cancel booking');return;}
     clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
     toast('Cancelled');show('pgHome');
-  });
+  }).catch(function(){toast('Network error — booking not cancelled');});
 }
 
 // ── BOOKINGS LIST ──
@@ -1292,20 +1331,24 @@ function openBkDetail(id){
     sh.innerHTML='<div class="sheet" onclick="event.stopPropagation()">'
       +'<div style="display:flex;align-items:center;margin-bottom:12px">'
       +'<span style="font-size:26px;margin-right:10px">'+(b.svc_icon||'🔧')+'</span>'
-      +'<div style="flex:1"><b style="font-size:16px">'+b.svc_name+'</b><div style="font-size:11px;color:var(--muted)">'+b.id+'</div></div>'
+      +'<div style="flex:1"><b style="font-size:16px">'+esc(b.svc_name)+'</b><div style="font-size:11px;color:var(--muted)">'+esc(b.id)+'</div></div>'
       +'<span style="font-size:22px;cursor:pointer;padding:4px" onclick="closeBkSheet()">✕</span></div>'
-      +'<div class="dt-row"><span>Status</span><span class="badge '+b.status+'">'+b.status.replace(/_/g,' ')+'</span></div>'
-      +(b.notes?'<div class="dt-row"><span>Tasks</span><span style="text-align:right;max-width:60%">'+b.notes+'</span></div>':'')
-      +'<div class="dt-row"><span>Address</span><span style="text-align:right;max-width:60%">'+(b.address||'')+'</span></div>'
-      +(b.slot_time?'<div class="dt-row"><span>Time</span><span>'+b.slot_time+'</span></div>':'')
-      +(b.provider_name?'<div class="dt-row"><span>Provider</span><span>'+b.provider_name+(b.provider_phone?' · <a href="tel:'+b.provider_phone+'">📞</a>':'')+'</span></div>':'')
+      +'<div class="dt-row"><span>Status</span><span class="badge '+esc(b.status)+'">'+esc(b.status==='cancelled'&&b.cancel_reason==='expired'?'expired':b.status.replace(/_/g,' '))+'</span></div>'
+      +(b.status==='cancelled'&&b.cancel_reason&&b.cancel_reason!=='expired'?'<div class="dt-row"><span>Reason</span><span style="text-align:right;max-width:60%">'+esc(b.cancel_reason)+'</span></div>':'')
+      +(b.payment_status==='cash_pending'?'<div class="dt-row"><span>Payment</span><span>💵 Cash — awaiting provider confirmation</span></div>':'')
+      +(b.notes?'<div class="dt-row"><span>Tasks</span><span style="text-align:right;max-width:60%">'+esc(b.notes)+'</span></div>':'')
+      +'<div class="dt-row"><span>Address</span><span style="text-align:right;max-width:60%">'+esc(b.address||'')+'</span></div>'
+      +(b.slot_time?'<div class="dt-row"><span>Time</span><span>'+esc(b.slot_time)+'</span></div>':'')
+      +(b.provider_name?'<div class="dt-row"><span>Provider</span><span>'+esc(b.provider_name)+(b.provider_phone?' · <a href="tel:'+esc(b.provider_phone)+'">📞</a>':'')+'</span></div>':'')
       +((b.confirmed_price>0||b.quoted_price>0)?'<div class="dt-row"><span>Price</span><b style="color:var(--teal);font-size:16px">₹'+(b.confirmed_price||b.final_price||b.quoted_price)+'</b></div>':'')
-      +(b.otp&&['confirmed','price_confirmed'].indexOf(b.status)>=0?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Share OTP when provider arrives</div><div class="otp-big">'+b.otp+'</div>':'')
+      +(b.otp&&['confirmed','price_confirmed'].indexOf(b.status)>=0?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Share OTP when provider arrives</div><div class="otp-big">'+esc(b.otp)+'</div>':'')
+      +(b.completion_otp&&b.status==='active'?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Completion OTP — share only when satisfied</div><div class="otp-big">'+esc(b.completion_otp)+'</div>':'')
       +'<div class="dt-row"><span>Booked on</span><span>'+((b.created_at||'').substring(0,16))+'</span></div>'
       +'<div style="height:12px"></div>'
-      +(canTrack?'<button class="btn teal" onclick="closeBkSheet();resumeFromList(\''+b.id+'\')">📡 Track Live</button><div style="height:8px"></div>':'')
-      +(canCancel?'<button class="btn red-ghost2" onclick="cancelFromDetail(\''+b.id+'\')">Cancel Booking</button>':'')
-      +(b.status==='completed'?'<button class="btn" onclick="closeBkSheet();openSvc(\''+b.svc_id+'\')">🔁 Book Again</button>':'')
+      +(canTrack?'<button class="btn teal" data-bid="'+esc(b.id)+'" onclick="closeBkSheet();resumeFromList(this.dataset.bid)">📡 Track Live</button><div style="height:8px"></div>':'')
+      +(b.status==='completed'&&b.payment_status!=='paid'?'<button class="btn green" data-bid="'+esc(b.id)+'" onclick="closeBkSheet();resumeFromList(this.dataset.bid)">💳 Pay / Payment status</button><div style="height:8px"></div>':'')
+      +(canCancel?'<button class="btn red-ghost2" data-bid="'+esc(b.id)+'" onclick="cancelFromDetail(this.dataset.bid)">Cancel Booking</button>':'')
+      +(b.status==='completed'?'<button class="btn" data-sid="'+esc(b.svc_id)+'" onclick="closeBkSheet();openSvc(this.dataset.sid)">🔁 Book Again</button>':'')
       +'<div style="height:14px"></div></div>';
     sh.onclick=closeBkSheet;
   }).catch(function(){toast('Network error');});
@@ -1321,15 +1364,17 @@ function setStar(n){
 }
 function submitReview(id){
   if(!_star){toast('Tap the stars to rate');return;}
-  api('bookings.php','review',{booking_id:id,rating:_star,review:$('reviewTxt').value.trim()}).then(function(res){
+  api('reviews.php','submit',{booking_id:id,rating:_star,comment:$('reviewTxt').value.trim()}).then(function(res){
     if(res.success){toast('⭐ Thanks for your review!');_lastRenderKey='';checkBooking();}
     else toast(res.error||'Failed');
   }).catch(function(){toast('Network error');});
 }
 function closeBkSheet(){var s=$('bkSheet');s.className='hide';s.innerHTML='';}
 function cancelFromDetail(id){
-  if(!confirm('Cancel this booking?'))return;
-  api('bookings.php','cancel',{booking_id:id}).then(function(){
+  var reason=askCancelReason();
+  if(reason===null)return;
+  api('bookings.php','cancel',{booking_id:id,reason:reason}).then(function(res){
+    if(!res.success){toast(res.error||'Could not cancel booking');return;}
     closeBkSheet();toast('Cancelled');showBookings();
     if(activeBookingId===id){clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';}
   });

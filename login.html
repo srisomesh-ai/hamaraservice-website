@@ -635,20 +635,17 @@ button,a{touch-action:manipulation;}
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 // ── Firebase ──────────────────────────────────────────────────────────────────
 if (!firebase.apps.length) firebase.initializeApp({
   apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:        "hamaraservice-s009.firebaseapp.com",
-  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "hamaraservice-s009",
   storageBucket:     "hamaraservice-s009.firebasestorage.app",
   messagingSenderId: "1064274729048",
   appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
 });
 const fbAuth = firebase.auth();
-const fbDB   = firebase.database();
 const gProvider = new firebase.auth.GoogleAuthProvider();
 // Force LOCAL persistence so session survives page navigation
 fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
@@ -730,14 +727,15 @@ function doGoogle() {
   _inProgress = true;
   fbAuth.signInWithPopup(gProvider).then(function(res) {
     var u = res.user;
-    if (res.additionalUserInfo && res.additionalUserInfo.isNewUser) {
-      var id = 'HS-CU-'+Date.now().toString(36).toUpperCase().slice(-6);
-      return fbDB.ref('customers/'+u.uid).set({
-        uid:u.uid, id:id, name:u.displayName||'', email:u.email||'',
-        phone:'', city:'', photoURL:u.photoURL||'',
-        provider:'google.com', registeredAt:new Date().toISOString()
+    // Upsert the customer in MySQL (customers.php register is idempotent; blank
+    // fields never overwrite existing data). Login proceeds even if this fails.
+    return u.getIdToken().then(function(token) {
+      return fetch('https://hamaraservice.com/api/customers.php?action=register', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: u.displayName || '', email: u.email || '', auth_method: 'google' })
       });
-    }
+    }).catch(function() {});
   }).then(function() {
     goAfterLogin();
   }).catch(function(e) {

@@ -92,6 +92,7 @@ tr:last-child td{border-bottom:none;}
 .type-withdrawal_request{background:var(--yellow-light);color:#92400e;}
 .type-withdrawal_approved{background:var(--blue-light);color:var(--blue);}
 .type-withdrawal_rejected{background:var(--red-light);color:var(--brand);}
+.type-withdrawal_cancelled{background:var(--bg);color:var(--muted);}
 .amount-cr{color:var(--green-dark);font-weight:800;}
 .amount-dr{color:var(--brand);font-weight:800;}
 .balance-pos{color:var(--green-dark);font-weight:800;}
@@ -165,6 +166,7 @@ tr:last-child td{border-bottom:none;}
       <div class="topbar-title">📒 Balance Sheet</div>
       <div class="topbar-right">
         <span class="sync-chip" id="syncChip">⏳ Syncing...</span>
+        <button class="btn ghost" onclick="loadBalanceSheet()">↻ Refresh</button>
         <button class="btn teal" onclick="exportCSV()">⬇ Export CSV</button>
       </div>
     </div>
@@ -176,7 +178,9 @@ tr:last-child td{border-bottom:none;}
         <div class="stat-card purple"><div class="stat-icon">🏢</div><div class="stat-num" id="s-comm">₹0</div><div class="stat-label">Platform Commission</div><div class="stat-sub">HamaraService earnings</div></div>
         <div class="stat-card blue"><div class="stat-icon">👷</div><div class="stat-num" id="s-net">₹0</div><div class="stat-label">Provider Earnings</div><div class="stat-sub">Net credited to wallets</div></div>
         <div class="stat-card orange"><div class="stat-icon">📤</div><div class="stat-num" id="s-wd">₹0</div><div class="stat-label">Total Withdrawn</div><div class="stat-sub">Approved payouts</div></div>
-        <div class="stat-card red"><div class="stat-icon">💼</div><div class="stat-num" id="s-bal">₹0</div><div class="stat-label">Outstanding Balance</div><div class="stat-sub">Remaining in wallets</div></div>
+        <div class="stat-card orange"><div class="stat-icon">⏳</div><div class="stat-num" id="s-pend">₹0</div><div class="stat-label">Pending Payouts</div><div class="stat-sub">Awaiting approval</div></div>
+        <div class="stat-card red"><div class="stat-icon">⚖️</div><div class="stat-num" id="s-pen">₹0</div><div class="stat-label">Penalties</div><div class="stat-sub">Deducted from providers</div></div>
+        <div class="stat-card red"><div class="stat-icon">💼</div><div class="stat-num" id="s-bal">₹0</div><div class="stat-label">Outstanding Balance</div><div class="stat-sub">Earnings − payouts − penalties</div></div>
       </div>
 
       <!-- Ledger Table -->
@@ -202,15 +206,16 @@ tr:last-child td{border-bottom:none;}
               <option value="withdrawal_request">Withdrawal Requests</option>
               <option value="withdrawal_approved">Approved</option>
               <option value="withdrawal_rejected">Rejected</option>
+              <option value="withdrawal_cancelled">Cancelled</option>
             </select>
           </div>
           <div class="filter-group">
             <span class="filter-label">From</span>
-            <input type="date" class="f" id="filterFrom" onchange="renderTable()"/>
+            <input type="date" class="f" id="filterFrom" onchange="loadBalanceSheet()"/>
           </div>
           <div class="filter-group">
             <span class="filter-label">To</span>
-            <input type="date" class="f" id="filterTo" onchange="renderTable()"/>
+            <input type="date" class="f" id="filterTo" onchange="loadBalanceSheet()"/>
           </div>
           <button class="btn ghost" onclick="clearFilters()">✕ Clear</button>
         </div>
@@ -218,7 +223,7 @@ tr:last-child td{border-bottom:none;}
         <!-- Table -->
         <div class="table-wrap">
           <div class="loading-wrap" id="loadingState">
-            <div class="spinner"></div> Loading balance sheet from Firebase...
+            <div class="spinner"></div> Loading balance sheet…
           </div>
           <table id="bsTable" style="display:none">
             <thead>
@@ -231,7 +236,7 @@ tr:last-child td{border-bottom:none;}
                 <th>Commission</th>
                 <th>Net Earning</th>
                 <th>Withdrawal</th>
-                <th>Wallet Balance</th>
+                <th>Payment</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -248,28 +253,22 @@ tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-var FB_CFG = {
-  apiKey:"AIzaSyBrVmvGGNUBvdHRbFJsGsRnSGRftnJJ3oA",
-  authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"hamaraservice-s009",
-  storageBucket:"hamaraservice-s009.appspot.com",
-  messagingSenderId:"1064274729048",
-  appId:"1:1064274729048:web:86643c95419e9dc881d22d"
-};
-if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
-var db = firebase.database();
-
-var _all = [];
+// Balance sheet — data comes from reports.php?action=balance_sheet (MySQL).
+// No Firebase: RTDB is locked.
+var _all = [];      // unified ledger entries (payments + payouts)
+var _totals = null; // server totals for the selected date range
 
 // ── Admin gate (same flow as admin.html) ─────────────────────────────────────
 var HS_API = 'https://hamaraservice.com/api';
 function getAdminKey(){
   try { return sessionStorage.getItem('hs_admin_key') || ''; } catch(e) { return ''; }
+}
+function adminFetch(url, opts){
+  opts = opts || {};
+  var h = Object.assign({}, opts.headers || {});
+  h['X-Admin-Key'] = getAdminKey();
+  return fetch(url, Object.assign({}, opts, { headers: h, cache: 'no-store' }));
 }
 function esc(v){
   return String(v==null?'':v).replace(/[&<>"']/g,function(c){
@@ -281,6 +280,14 @@ function bsUnlock(){
   document.getElementById('bsGate').style.display = 'none';
   document.getElementById('bsApp').classList.remove('locked');
   if (!_bsStarted) { _bsStarted = true; startBalanceSheet(); }
+}
+function bsLock(msg){
+  try { sessionStorage.removeItem('hs_admin_key'); sessionStorage.removeItem('hs_admin_session'); } catch(e) {}
+  _bsStarted = false;
+  document.getElementById('bsApp').classList.add('locked');
+  document.getElementById('bsGate').style.display = 'flex';
+  var err = document.getElementById('gateErr');
+  if (msg) { err.textContent = msg; err.style.display = 'block'; }
 }
 function bsLogin(){
   var key = (document.getElementById('gateKey').value || '').trim();
@@ -308,35 +315,105 @@ function bsLogin(){
   });
 }
 
-function fmt(n){ return Number(n||0).toLocaleString('en-IN'); }
+function num(n){ var v = Number(n); return isFinite(v) ? v : 0; }
+function fmt(n){ return num(n).toLocaleString('en-IN'); }
 function fmtDt(iso){
   if (!iso) return '—';
-  var d = new Date(iso);
-  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
-    +' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  var d = new Date(String(iso).replace(' ', 'T'));
+  if (isNaN(d.getTime())) return String(iso);
+  var dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(iso));
+  var out = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  if (!dateOnly) out += ' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  return out;
 }
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+function cap(s){ s = String(s||''); return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
 
-// Live listener — started only after the admin gate is passed
-function startBalanceSheet(){
-db.ref('hs_balance_sheet').on('value', function(snap) {
-  _all = [];
-  if (snap.exists()) snap.forEach(function(c){ var v=c.val(); if(v&&v.id) _all.push(v); });
-  _all.sort(function(a,b){ return new Date(a.createdAt||0)-new Date(b.createdAt||0); });
-  updateProviderFilter();
-  updateSummary();
-  renderTable();
-  document.getElementById('loadingState').style.display = 'none';
-  var now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  document.getElementById('syncTime').textContent = 'Live · '+now;
-  document.getElementById('syncChip').textContent = '✅ Synced '+now;
-  document.getElementById('syncChip').style.background = 'var(--green-light)';
-  document.getElementById('syncChip').style.color = 'var(--green-dark)';
-}, function(e){
-  document.getElementById('loadingState').innerHTML =
-    '<span style="color:var(--brand)">⚠ Firebase error: '+esc(e.message)+'</span>';
-});
+function setSync(ok, text){
+  var chip = document.getElementById('syncChip');
+  chip.textContent = text;
+  chip.style.background = ok ? 'var(--green-light)' : 'var(--red-light)';
+  chip.style.color = ok ? 'var(--green-dark)' : 'var(--brand)';
 }
+
+// Map a payouts[] row from the API to a ledger entry
+function payoutEntry(p){
+  var st = String(p.status || 'pending').toLowerCase();
+  var type = st === 'approved' ? 'withdrawal_approved'
+           : st === 'rejected' ? 'withdrawal_rejected'
+           : st === 'cancelled' ? 'withdrawal_cancelled'
+           : 'withdrawal_request';
+  return {
+    type: type,
+    createdAt: p.processed_at || p.requested_at || p.date || p.created_at || '',
+    providerId: p.provider_id || p.providerId || '',
+    providerName: p.provider_name || p.providerName || '',
+    ref: (p.id != null ? 'Payout #' + p.id : 'Payout') + (p.account_type ? ' · ' + String(p.account_type).toUpperCase() : ''),
+    amount: num(p.amount),
+    payment: p.upi_id || p.bank_name || '',
+    status: st
+  };
+}
+// Map a rows[] (booking) entry from the API to a ledger entry
+function paymentEntry(r){
+  return {
+    type: 'payment',
+    createdAt: r.date || r.completed_at || r.created_at || '',
+    providerId: r.provider_id || '',
+    providerName: r.provider_name || '',
+    customerName: r.customer_name || '',
+    ref: (r.service || '—') + (r.booking_id ? ' · ' + r.booking_id : ''),
+    bookingId: r.booking_id || '',
+    grossAmount: num(r.amount),
+    commission: num(r.commission),
+    netEarning: num(r.provider_earns),
+    payment: [r.payment_method, r.payment_status].filter(Boolean).join(' · '),
+    status: r.payment_status || 'completed'
+  };
+}
+
+var _loadSeq = 0;
+function loadBalanceSheet(){
+  var from = document.getElementById('filterFrom').value;
+  var to   = document.getElementById('filterTo').value;
+  var qs = '';
+  if (from) qs += '&from=' + encodeURIComponent(from);
+  if (to)   qs += '&to='   + encodeURIComponent(to);
+  var seq = ++_loadSeq;
+  document.getElementById('loadingState').style.display = 'flex';
+  document.getElementById('loadingState').innerHTML = '<div class="spinner"></div> Loading balance sheet…';
+  setSync(true, '⏳ Syncing...');
+  adminFetch(HS_API + '/reports.php?action=balance_sheet' + qs)
+  .then(function(r){
+    if (r.status === 401 || r.status === 403) { bsLock('Admin session expired — enter the key again.'); throw new Error('auth'); }
+    return r.json();
+  })
+  .then(function(res){
+    if (seq !== _loadSeq) return; // a newer request is in flight
+    if (!res || !res.success) throw new Error((res && res.error) || 'API error');
+    var d = res.data || {};
+    _totals = d.totals || null;
+    _all = [];
+    (Array.isArray(d.rows) ? d.rows : []).forEach(function(r){ _all.push(paymentEntry(r)); });
+    (Array.isArray(d.payouts) ? d.payouts : []).forEach(function(p){ _all.push(payoutEntry(p)); });
+    _all.sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
+    updateProviderFilter();
+    renderTable();
+    document.getElementById('loadingState').style.display = 'none';
+    var now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('syncTime').textContent = 'MySQL · '+now;
+    setSync(true, '✅ Synced '+now);
+  })
+  .catch(function(e){
+    if (seq !== _loadSeq || e.message === 'auth') return;
+    document.getElementById('loadingState').style.display = 'flex';
+    document.getElementById('loadingState').innerHTML =
+      '<span style="color:var(--brand)">⚠ Could not load balance sheet: '+esc(e.message)+'</span>';
+    setSync(false, '⚠ Sync failed');
+  });
+}
+
+// Started only after the admin gate is passed
+function startBalanceSheet(){ loadBalanceSheet(); }
 
 function updateProviderFilter(){
   var sel = document.getElementById('filterProvider'), cur = sel.value;
@@ -350,54 +427,67 @@ function updateProviderFilter(){
   });
 }
 
+// Date range is applied server-side; provider/type are filtered here.
 function getFiltered(){
   var pf=document.getElementById('filterProvider').value;
   var tf=document.getElementById('filterType').value;
-  var df=document.getElementById('filterFrom').value;
-  var dt=document.getElementById('filterTo').value;
   return _all.filter(function(e){
-    if(pf && e.providerId!==pf) return false;
+    if(pf && String(e.providerId)!==pf) return false;
     if(tf && e.type!==tf) return false;
-    if(df && (e.createdAt||'') < df) return false;
-    if(dt && (e.createdAt||'') > dt+'T23:59:59') return false;
     return true;
   });
 }
 
 function updateSummary(){
-  var entries=getFiltered(), gmv=0, comm=0, net=0, wd=0;
-  entries.forEach(function(e){
-    if(e.type==='payment'){ gmv+=Number(e.grossAmount)||0; comm+=Number(e.commission)||0; net+=Number(e.netEarning)||0; }
-    if(e.type==='withdrawal_approved') wd+=Number(e.amount)||0;
-  });
+  var pf=document.getElementById('filterProvider').value;
+  var tf=document.getElementById('filterType').value;
+  var gmv, comm, net, wd, pend, pen;
+  if (_totals && !pf && !tf) {
+    // Whole date range — use the server's totals
+    gmv  = num(_totals.gmv);
+    comm = num(_totals.commission);
+    net  = num(_totals.provider_earnings);
+    wd   = num(_totals.paid_out);
+    pend = num(_totals.pending_payouts);
+    pen  = num(_totals.penalties);
+  } else {
+    // Provider/type filter active — total the visible entries
+    gmv = comm = net = wd = pend = 0; pen = null;
+    getFiltered().forEach(function(e){
+      if(e.type==='payment'){ gmv+=e.grossAmount; comm+=e.commission; net+=e.netEarning; }
+      if(e.type==='withdrawal_approved') wd+=e.amount;
+      if(e.type==='withdrawal_request') pend+=e.amount;
+    });
+  }
   document.getElementById('s-gmv').textContent  = '₹'+fmt(gmv);
   document.getElementById('s-comm').textContent = '₹'+fmt(comm);
   document.getElementById('s-net').textContent  = '₹'+fmt(net);
   document.getElementById('s-wd').textContent   = '₹'+fmt(wd);
-  document.getElementById('s-bal').textContent  = '₹'+fmt(Math.max(net-wd,0));
+  document.getElementById('s-pend').textContent = '₹'+fmt(pend);
+  document.getElementById('s-pen').textContent  = pen==null ? '—' : '₹'+fmt(pen);
+  var bal = net - wd - pend - (pen||0);
+  var balEl = document.getElementById('s-bal');
+  balEl.textContent = (bal<0?'-₹':'₹')+fmt(Math.abs(bal));
+}
+
+var TYPE_LABELS = {
+  payment:'💰 Payment',
+  withdrawal_request:'⏳ Withdraw Req',
+  withdrawal_approved:'✅ WD Approved',
+  withdrawal_rejected:'❌ WD Rejected',
+  withdrawal_cancelled:'↩ WD Cancelled'
+};
+function statusBadge(st){
+  st = String(st||'pending').toLowerCase();
+  if (st==='paid' || st==='completed' || st==='approved') return 'completed';
+  if (st==='rejected' || st==='cancelled' || st==='failed') return 'rejected';
+  return 'pending';
 }
 
 function renderTable(){
   updateSummary();
   var entries = getFiltered();
   document.getElementById('entryCount').textContent = entries.length + ' entries';
-
-  // Compute running wallet balance per provider
-  var runBal = {};
-  _all.forEach(function(e){
-    var pid=e.providerId; if(!pid) return;
-    if(!runBal[pid]) runBal[pid]=0;
-    if(e.type==='payment') runBal[pid]+=(Number(e.netEarning)||0);
-    if(e.type==='withdrawal_approved') runBal[pid]-=(Number(e.amount)||0);
-    e._runBal = runBal[pid];
-  });
-
-  var TYPE_LABELS = {
-    payment:'💰 Payment',
-    withdrawal_request:'⏳ Withdraw Req',
-    withdrawal_approved:'✅ WD Approved',
-    withdrawal_rejected:'❌ WD Rejected'
-  };
 
   if (!entries.length) {
     document.getElementById('bsTable').style.display='none';
@@ -409,21 +499,19 @@ function renderTable(){
 
   document.getElementById('bsBody').innerHTML = entries.map(function(e){
     var isPay = e.type==='payment';
-    var balCls = (e._runBal||0)>=0 ? 'balance-pos' : 'balance-neg';
     return '<tr>'
-      +'<td class="mono">'+fmtDt(e.createdAt)+'</td>'
+      +'<td class="mono">'+esc(fmtDt(e.createdAt))+'</td>'
       +'<td><span class="type-chip type-'+esc(e.type)+'">'+esc(TYPE_LABELS[e.type]||e.type)+'</span></td>'
       +'<td><strong>'+esc(e.providerName||'—')+'</strong><br/>'
         +'<span style="font-size:11px;color:var(--muted)">'+esc(e.providerId||'')+'</span></td>'
-      +'<td style="font-size:12px;color:var(--muted)">'+esc(e.service||e.bookingId||e.refId||'—')+'</td>'
+      +'<td style="font-size:12px;color:var(--muted)">'+esc(e.ref||'—')
+        +(e.customerName?'<br/><span style="font-size:11px">👤 '+esc(e.customerName)+'</span>':'')+'</td>'
       +'<td class="amount-cr">'+(isPay?'₹'+fmt(e.grossAmount):'—')+'</td>'
       +'<td style="color:var(--purple);font-weight:700">'+(isPay?'₹'+fmt(e.commission):'—')+'</td>'
       +'<td class="amount-cr">'+(isPay?'₹'+fmt(e.netEarning):'—')+'</td>'
       +'<td class="amount-dr">'+(!isPay?'₹'+fmt(e.amount):'—')+'</td>'
-      +'<td class="'+balCls+'">₹'+fmt(e._runBal||0)+'</td>'
-      +'<td><span class="badge '+esc(e.status||'pending')+'">'
-        +esc(cap(e.status==='withdrawal_approved'?'approved':e.status==='withdrawal_rejected'?'rejected':e.status||''))
-        +'</span></td>'
+      +'<td style="font-size:12px">'+esc(e.payment||'—')+'</td>'
+      +'<td><span class="badge '+statusBadge(e.status)+'">'+esc(cap(String(e.status||'').replace(/_/g,' ')))+'</span></td>'
       +'</tr>';
   }).join('');
 }
@@ -432,34 +520,45 @@ function clearFilters(){
   ['filterProvider','filterType','filterFrom','filterTo'].forEach(function(id){
     document.getElementById(id).value='';
   });
-  renderTable();
+  loadBalanceSheet();
 }
 
+// CSV cell: keep 0 as "0" (only null/undefined become empty) and neutralise
+// spreadsheet formula injection in text cells.
+function csvCell(c){
+  if (c === null || c === undefined) return '""';
+  var s = String(c);
+  if (typeof c === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g,'""') + '"';
+}
 function exportCSV(){
   var entries = getFiltered();
-  var rows = [['Date','Type','Provider','ProviderID','Service/Ref','GrossAmount','Commission','NetEarning','WithdrawAmount','WalletBalance','Status']];
+  var rows = [['Date','Type','Provider','ProviderID','Customer','Service/Ref','BookingID','GrossAmount','Commission','NetEarning','WithdrawAmount','Payment','Status']];
   entries.forEach(function(e){
+    var isPay = e.type==='payment';
     rows.push([
-      fmtDt(e.createdAt), e.type, e.providerName||'', e.providerId||'',
-      e.service||e.bookingId||e.refId||'',
-      e.type==='payment'?e.grossAmount:'',
-      e.type==='payment'?e.commission:'',
-      e.type==='payment'?e.netEarning:'',
-      e.type!=='payment'?e.amount:'',
-      e._runBal||0, e.status||''
+      e.createdAt||'', e.type, e.providerName||'', e.providerId||'',
+      e.customerName||'', e.ref||'', e.bookingId||'',
+      isPay?e.grossAmount:null,
+      isPay?e.commission:null,
+      isPay?e.netEarning:null,
+      !isPay?e.amount:null,
+      e.payment||'', e.status||''
     ]);
   });
-  var csv = rows.map(function(r){
-    return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');
-  }).join('\n');
+  var csv = rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+  var from = document.getElementById('filterFrom').value, to = document.getElementById('filterTo').value;
+  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='balance-sheet-'+new Date().toISOString().split('T')[0]+'.csv';
-  a.click();
+  a.href=URL.createObjectURL(blob);
+  a.download='balance-sheet'+(from||to ? '-'+(from||'start')+'_to_'+(to||'today') : '-'+new Date().toISOString().split('T')[0])+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
 }
 
 // Resume an admin session from this tab (e.g. opened from admin.html)
 if (getAdminKey()) bsUnlock();
 </script>
+
 </body>
 </html>

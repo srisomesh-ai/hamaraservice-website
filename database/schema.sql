@@ -18,7 +18,11 @@ CREATE TABLE IF NOT EXISTS customers (
   lat           DECIMAL(10,7),
   lng           DECIMAL(10,7),
   fcm_token     TEXT,
-  auth_method   VARCHAR(20)  DEFAULT 'email',    -- email / google
+  auth_method   VARCHAR(20)  DEFAULT 'email',    -- email / google / web
+  password_hash VARCHAR(255) NOT NULL DEFAULT '', -- bcrypt (web app login)
+  rating        DECIMAL(3,1) NOT NULL DEFAULT 0,  -- avg rating given by providers
+  rating_count  INT          NOT NULL DEFAULT 0,
+  status        VARCHAR(20)  NOT NULL DEFAULT 'active', -- active / deleted
   created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
@@ -51,7 +55,11 @@ CREATE TABLE IF NOT EXISTS providers (
   total_bookings      INT    DEFAULT 0,
   completed_bookings  INT    DEFAULT 0,
   total_earned        INT    DEFAULT 0,
-  pending_earned      INT    DEFAULT 0,
+  pending_earned      INT    DEFAULT 0,        -- may go negative (penalties)
+  upi_id        VARCHAR(100),
+  areas         TEXT,
+  photo         VARCHAR(255),
+  schedule      TEXT,                           -- JSON {mon:{on,from,to},...,sun}
   fcm_token     TEXT,
   registered_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -73,6 +81,7 @@ CREATE TABLE IF NOT EXISTS provider_services (
   enabled     TINYINT(1)   DEFAULT 1,
   min_price   INT          DEFAULT 0,
   max_price   INT          DEFAULT 0,
+  option_prices JSON        NULL,
   FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
   UNIQUE KEY unique_provider_svc (provider_id, svc_id),
   INDEX idx_svc_id (svc_id),
@@ -142,6 +151,24 @@ CREATE TABLE IF NOT EXISTS bookings (
   -- OTP
   otp               VARCHAR(10),
   otp_verified      TINYINT(1)   DEFAULT 0,
+  start_otp         VARCHAR(8),
+  completion_otp    VARCHAR(8),
+  otp_attempts      INT          NOT NULL DEFAULT 0,  -- wrong tries on the current OTP
+  started_at        DATETIME,
+  min_duration_min  INT          DEFAULT 5,
+  -- Reviews (customer → provider, provider → customer)
+  rating            INT,
+  review            TEXT,
+  review_requested  TINYINT      DEFAULT 0,
+  customer_rating   TINYINT,
+  customer_review   TEXT,
+  -- Cancellation
+  cancel_reason     VARCHAR(255),
+  cancelled_by      VARCHAR(20),               -- customer / provider / admin / system
+  -- Live provider location (action=track)
+  provider_lat      DECIMAL(10,7),
+  provider_lng      DECIMAL(10,7),
+  provider_loc_at   DATETIME,
   -- Timestamps
   created_at        DATETIME     DEFAULT CURRENT_TIMESTAMP,
   accepted_at       DATETIME,
@@ -180,7 +207,7 @@ CREATE TABLE IF NOT EXISTS payouts (
   bank_name    VARCHAR(100),
   account_no   VARCHAR(30),
   ifsc         VARCHAR(15),
-  status       ENUM('pending','approved','rejected') DEFAULT 'pending',
+  status       ENUM('pending','approved','rejected','cancelled') DEFAULT 'pending',
   note         TEXT,
   requested_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
   processed_at DATETIME,
@@ -203,7 +230,22 @@ CREATE TABLE IF NOT EXISTS notifications (
   INDEX idx_event     (event)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ── 10. SEED: 34 SERVICES ───────────────────────────────────
+-- ── 10. PENALTIES (deducted from providers.pending_earned) ───
+CREATE TABLE IF NOT EXISTS penalties (
+  id           INT          AUTO_INCREMENT PRIMARY KEY,
+  provider_id  VARCHAR(30)  NOT NULL,
+  booking_id   VARCHAR(30)  NULL,
+  amount       INT          NOT NULL,
+  reason       VARCHAR(255) NOT NULL DEFAULT '',
+  status       VARCHAR(20)  NOT NULL DEFAULT 'applied',  -- applied / waived
+  created_at   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  waived_at    DATETIME     NULL,
+  INDEX idx_provider (provider_id),
+  INDEX idx_booking  (booking_id),
+  INDEX idx_status   (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── 11. SEED: 34 SERVICES ───────────────────────────────────
 INSERT IGNORE INTO services (id, name, icon, category, sort_order) VALUES
 ('SVC001','House Maid','🧹','Home Cleaning',1),
 ('SVC002','Deep Cleaning','🧽','Home Cleaning',2),

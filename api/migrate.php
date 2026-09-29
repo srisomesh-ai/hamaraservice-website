@@ -4,6 +4,13 @@
 // Run once (admin key in X-Admin-Key header — see below)
 // Reads providers and customers from Firebase REST API
 // and inserts them into MySQL
+//
+// ⚠ ONE-OFF ADMIN TOOL. It reads the Firebase Realtime Database over REST
+// WITHOUT authentication. Once the RTDB security rules are locked (deny all
+// except public read of hs_service_prices — MySQL is now the only data store)
+// every read here returns 401 "Permission denied", fbGet() returns null and
+// the migration silently imports nothing. Run it BEFORE locking the rules,
+// or temporarily re-open read access for the providers/customers paths.
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 setCorsHeaders();

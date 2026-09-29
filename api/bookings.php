@@ -14,8 +14,16 @@
 //   GET  ?action=get&id=X        — get booking details
 //   GET  ?action=active&id=X     — get active booking for customer/provider
 //   GET  ?action=history&id=X&role=customer/provider — booking history
-//   POST ?action=cancel          — cancel booking
+//   POST ?action=cancel          — cancel booking {booking_id, reason?}
+//   POST ?action=release         — assigned provider backs out before work starts
+//   POST ?action=track           — assigned provider live location {booking_id, lat, lng}
+//   POST ?action=rate_customer   — assigned provider rates the customer (completed, once)
 //   GET  ?action=admin_list      — admin: all bookings
+//   POST ?action=admin_delete    — admin: delete a booking {booking_id}
+//
+// Stale searches ('searching' older than 30 min) are auto-cancelled
+// (cancel_reason 'expired') lazily in create/get/active/open.
+// Wrong OTPs: 5 tries per OTP, then 429 + a fresh OTP for the customer.
 //
 // Auth: customer = web JWT or Firebase ID token; provider = provider JWT;
 //       admin = X-Admin-Key header (or ?key=).
@@ -26,22 +34,9 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 
-// ── Helper: send FCM via Cloud Function ───────────────
+// ── Helper: push via the shared notifier (db.php → Cloud Run + X-HS-Notify-Key) ──
 function sendPush($fcmToken, $title, $body, $data = []) {
-    if (empty($fcmToken)) return;
-    $payload = json_encode([
-        'event'    => $data['event'] ?? 'notification',
-        'fcmToken' => $fcmToken,
-        'data'     => array_merge(['title'=>$title,'body'=>$body], $data),
-    ]);
-    $ctx = stream_context_create(['http'=>[
-        'method'  => 'POST',
-        'header'  => "Content-Type: application/json
-",
-        'content' => $payload,
-        'timeout' => 5,
-    ]]);
-    @file_get_contents('https://notifybooking-mlchyp6tra-as.a.run.app', false, $ctx);
+    hsSendPush($fcmToken, $title, $body, $data);
 }
 
 // ── Helper: get FCM token ─────────────────────────────
@@ -70,6 +65,52 @@ function loadBooking($db, $id) {
     return $bk;
 }
 
+// ── Helper: commission % for a service ────────────────
+// Admin sets it per service in services.price_data.commission (hs-prices);
+// clamped to 0–50, default 15. Applied on create and again on accept.
+function serviceCommissionPct($db, $svcId) {
+    try {
+        $q = $db->prepare("SELECT price_data FROM services WHERE id = ?");
+        $q->execute([(string)$svcId]);
+        $pd = json_decode((string)($q->fetchColumn() ?: ''), true);
+        if (is_array($pd) && isset($pd['commission']) && is_numeric($pd['commission'])) {
+            return max(0, min(50, (int)$pd['commission']));
+        }
+    } catch (Throwable $e) { error_log('commission lookup: ' . $e->getMessage()); }
+    return 15;
+}
+
+// ── Helper: auto-cancel searches older than 30 minutes ──
+// A booking put back into 'searching' (release / search_another / decline)
+// gets a fresh window: updated_at is bumped by that reset.
+define('HS_SEARCH_TTL_MIN', 30);
+function expireStaleSearches($db) {
+    $t = "(NOW() - INTERVAL " . HS_SEARCH_TTL_MIN . " MINUTE)";
+    $db->exec("UPDATE bookings SET status = 'cancelled', cancel_reason = 'expired', cancelled_by = 'system'
+               WHERE status = 'searching' AND created_at < $t AND COALESCE(updated_at, created_at) < $t");
+}
+
+// ── Helper: count a wrong OTP; on the 5th, rotate the OTP and 429 ──
+// $col = 'otp' (start OTP) or 'completion_otp'.
+define('HS_OTP_MAX_ATTEMPTS', 5);
+function registerWrongOtp($db, $bk, $col, $wrongMsg) {
+    $db->prepare("UPDATE bookings SET otp_attempts = otp_attempts + 1 WHERE id = ?")->execute([$bk['id']]);
+    $q = $db->prepare("SELECT otp_attempts FROM bookings WHERE id = ?");
+    $q->execute([$bk['id']]);
+    if ((int)$q->fetchColumn() < HS_OTP_MAX_ATTEMPTS) err($wrongMsg);
+    $new = makeOtp();
+    if ($col === 'completion_otp') {
+        $db->prepare("UPDATE bookings SET completion_otp = ?, otp_attempts = 0 WHERE id = ?")->execute([$new, $bk['id']]);
+    } else {
+        $db->prepare("UPDATE bookings SET otp = ?, start_otp = IF(start_otp IS NULL, NULL, ?), otp_attempts = 0 WHERE id = ?")
+           ->execute([$new, $new, $bk['id']]);
+    }
+    $fcm = getFcm($db, 'customers', $bk['customer_id']);
+    sendPush($fcm, "New OTP 🔑", "Too many wrong OTP attempts. A new OTP was generated — check the app.",
+      ['event' => $col === 'completion_otp' ? 'completion_otp_ready' : 'otp_regenerated', 'bookingId' => $bk['id']]);
+    err('Too many wrong OTP attempts. A new OTP has been sent to the customer.', 429);
+}
+
 // ── Helper: is $auth the booking's customer / assigned provider ──
 function isOwnerCustomer($auth, $bk) {
     return $auth && $auth['role'] === 'customer' && (string)$bk['customer_id'] === (string)$auth['uid'];
@@ -85,9 +126,12 @@ function isAssignedProvider($auth, $bk) {
 function redactBookingFor($bk, $auth) {
     if (!$bk) return $bk;
     if ($auth['role'] === 'admin' || isOwnerCustomer($auth, $bk)) return $bk;
-    unset($bk['otp'], $bk['start_otp'], $bk['completion_otp'], $bk['customer_fcm_token']);
+    unset($bk['otp'], $bk['start_otp'], $bk['completion_otp'], $bk['customer_fcm_token'], $bk['otp_attempts']);
     if (!isAssignedProvider($auth, $bk)) {
-        unset($bk['customer_phone'], $bk['provider_upi'], $bk['razorpay_order_id'], $bk['razorpay_payment_id']);
+        unset($bk['customer_phone'], $bk['provider_upi'], $bk['razorpay_order_id'], $bk['razorpay_payment_id'],
+              $bk['provider_lat'], $bk['provider_lng'], $bk['provider_loc_at'],
+              $bk['provider_home_lat'], $bk['provider_home_lng'],
+              $bk['customer_rating'], $bk['customer_review']);
     }
     return $bk;
 }
@@ -119,6 +163,11 @@ switch ($action) {
   case 'create': {
     $user = requireCustomer();
     $b    = getBody();
+    expireStaleSearches($db);
+
+    $cs = $db->prepare("SELECT status FROM customers WHERE id = ?");
+    $cs->execute([$user['uid']]);
+    if ($cs->fetchColumn() === 'deleted') err('Account deleted. Contact support.', 403);
 
     $required = ['svc_id','svc_name','address','city'];
     foreach ($required as $f) {
@@ -146,13 +195,15 @@ switch ($action) {
         (id, customer_id, customer_name, customer_phone,
          svc_id, svc_name, svc_icon,
          address, city, lat, lng,
-         slot_date, slot_time, notes, status)
+         slot_date, slot_time, notes, commission_pct, status)
       VALUES
         (:id, :cid, :cname, :cphone,
          :svc_id, :svc_name, :svc_icon,
          :address, :city, :lat, :lng,
-         :date, :time, :notes, 'searching')
+         :date, :time, :notes, :comm, 'searching')
     ");
+    // Per-service commission set by admin (services.price_data.commission), default 15%
+    $commPctNew = serviceCommissionPct($db, $b['svc_id']);
     $stmt->execute([
       ':id'       => $id,
       ':cid'      => $user['uid'],
@@ -168,6 +219,7 @@ switch ($action) {
       ':date'     => $b['slot_date'] ?? null,
       ':time'     => $b['slot_time'] ?? '',
       ':notes'    => $b['notes'] ?? '',
+      ':comm'     => $commPctNew,
     ]);
 
     // ── Notify nearby available providers (push so they see it even when app closed) ──
@@ -244,11 +296,12 @@ switch ($action) {
         status              = 'price_quoted',
         quoted_price        = ?,
         negotiation_status  = 'quoted',
+        commission_pct      = ?,
         accepted_at         = CURRENT_TIMESTAMP
       WHERE id = ?
         AND (status = 'searching' OR (status = 'active' AND (provider_id IS NULL OR provider_id = '')))
     ");
-    $upd->execute([$prov['id'], $pName, $price, $id]);
+    $upd->execute([$prov['id'], $pName, $price, serviceCommissionPct($db, $bk['svc_id']), $id]);
     if ($upd->rowCount() === 0) err('Booking not available');
 
     // Notify customer
@@ -459,7 +512,11 @@ switch ($action) {
         start_otp          = NULL,
         completion_otp     = NULL,
         negotiation_status = NULL,
-        accepted_at        = NULL
+        accepted_at        = NULL,
+        otp_attempts       = 0,
+        provider_lat       = NULL,
+        provider_lng       = NULL,
+        provider_loc_at    = NULL
       WHERE id = ?
     ")->execute([$id]);
 
@@ -480,10 +537,11 @@ switch ($action) {
     if (!$bk) err('Booking not found');
     if ($bk['status'] === 'active' && (int)$bk['otp_verified'] === 1) ok(['verified'=>true,'amount'=>(int)$bk['confirmed_price']]);
     if ($bk['status'] !== 'confirmed') err('Booking is not confirmed');
-    if (empty($bk['otp']) || !hash_equals((string)$bk['otp'], (string)$otp)) err('Invalid OTP');
+    if (empty($bk['otp']) || !hash_equals((string)$bk['otp'], (string)$otp)) registerWrongOtp($db, $bk, 'otp', 'Invalid OTP');
 
     $db->prepare("
       UPDATE bookings SET
+        otp_attempts = 0,
         otp_verified = 1,
         status       = 'active',
         started_at   = CURRENT_TIMESTAMP
@@ -528,7 +586,7 @@ switch ($action) {
       if (empty($bk['completion_otp'])) err('COMPLETION_OTP_REQUIRED');
       $cotp = trim((string)($b['completion_otp'] ?? ''));
       if ($cotp === '') err('COMPLETION_OTP_REQUIRED');
-      if (!hash_equals((string)$bk['completion_otp'], $cotp)) err('Invalid completion OTP');
+      if (!hash_equals((string)$bk['completion_otp'], $cotp)) registerWrongOtp($db, $bk, 'completion_otp', 'Invalid completion OTP');
     }
 
     $amount = bookingPayable($bk);
@@ -593,22 +651,30 @@ switch ($action) {
     $auth = requireAuth();
     $id = $_GET['id'] ?? '';
     if (empty($id)) err('id required');
+    expireStaleSearches($db);
 
+    // provider_lat/lng/provider_loc_at: the TRACKED location (action=track),
+    // NULL until the provider starts tracking. The provider's profile (home)
+    // coordinates are provider_home_lat/lng; distance_km prefers the tracked one.
     $stmt = $db->prepare("
       SELECT b.*,
              p.upi_id AS provider_upi, p.rating AS provider_rating,
              p.photo AS provider_photo, p.review_count AS provider_reviews,
-             p.lat AS provider_lat, p.lng AS provider_lng,
+             p.phone AS provider_phone,
+             p.lat AS provider_home_lat, p.lng AS provider_home_lng,
+             c.rating AS customer_avg_rating, c.rating_count AS customer_rating_count,
              CASE
-               WHEN p.lat IS NOT NULL AND p.lat != 0 AND b.lat IS NOT NULL AND b.lat != 0
+               WHEN COALESCE(b.provider_lat, p.lat) IS NOT NULL AND COALESCE(b.provider_lat, p.lat) != 0
+                    AND b.lat IS NOT NULL AND b.lat != 0
                THEN ROUND(6371 * ACOS(
-                    LEAST(1, COS(RADIANS(b.lat)) * COS(RADIANS(p.lat)) *
-                    COS(RADIANS(p.lng) - RADIANS(b.lng)) +
-                    SIN(RADIANS(b.lat)) * SIN(RADIANS(p.lat)))), 1)
+                    LEAST(1, COS(RADIANS(b.lat)) * COS(RADIANS(COALESCE(b.provider_lat, p.lat))) *
+                    COS(RADIANS(COALESCE(b.provider_lng, p.lng)) - RADIANS(b.lng)) +
+                    SIN(RADIANS(b.lat)) * SIN(RADIANS(COALESCE(b.provider_lat, p.lat))))), 1)
                ELSE NULL
              END AS distance_km
       FROM bookings b
       LEFT JOIN providers p ON p.id = b.provider_id
+      LEFT JOIN customers c ON c.id = b.customer_id
       WHERE b.id = ?
     ");
     $stmt->execute([$id]);
@@ -616,6 +682,11 @@ switch ($action) {
     if (!$bk) err('Booking not found', 404);
 
     if ($auth['role'] === 'customer' && !isOwnerCustomer($auth, $bk)) err('Booking not found', 404);
+    // Provider phone: owning customer once the job is confirmed (and admin) only
+    if ($auth['role'] !== 'admin'
+        && !(isOwnerCustomer($auth, $bk) && in_array($bk['status'], ['confirmed','active','completed'], true))) {
+      unset($bk['provider_phone']);
+    }
     if ($auth['role'] === 'provider' && !isAssignedProvider($auth, $bk)
         && !in_array($bk['status'], $OPEN_STATUSES, true)) {
       ok([
@@ -645,6 +716,7 @@ switch ($action) {
       if ((string)$id !== (string)$self) err('Forbidden', 403);
     }
 
+    expireStaleSearches($db);
     $col  = $role === 'provider' ? 'provider_id' : 'customer_id';
     // include recently-completed-but-unpaid so provider still sees payment status
     $stmt = $db->prepare("
@@ -680,7 +752,8 @@ switch ($action) {
       SELECT id, svc_id, svc_name, svc_icon,
              " . ($role==='provider' ? 'customer_name' : 'provider_name') . " as other_party,
              status, confirmed_price, amount, provider_earns,
-             payment_status, slot_date, created_at, completed_at
+             payment_status, slot_date, created_at, completed_at,
+             cancel_reason, cancelled_by, customer_rating
       FROM bookings
       WHERE $col = ?
       ORDER BY created_at DESC
@@ -705,8 +778,13 @@ switch ($action) {
     if ($bk['status'] === 'cancelled') ok(['cancelled'=>true]);
     if ($bk['status'] === 'completed') err('Completed bookings cannot be cancelled');
 
-    $db->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status NOT IN ('completed','cancelled')")
-       ->execute([$id]);
+    $reason = trim(str_replace(["\r", "\n", "\0"], ' ', (string)($b['reason'] ?? '')));
+    $reason = function_exists('mb_substr') ? mb_substr($reason, 0, 255) : substr($reason, 0, 255);
+    $by = $isCust ? 'customer' : ($isProv ? 'provider' : 'admin');
+
+    $db->prepare("UPDATE bookings SET status = 'cancelled', cancel_reason = ?, cancelled_by = ?
+                  WHERE id = ? AND status NOT IN ('completed','cancelled')")
+       ->execute([$reason !== '' ? $reason : null, $by, $id]);
 
     // Notify the other party
     if (!$isProv && !empty($bk['provider_id'])) {
@@ -720,7 +798,135 @@ switch ($action) {
         ['event'=>'booking_cancelled','bookingId'=>$id]);
     }
 
-    ok(['cancelled'=>true]);
+    ok(['cancelled'=>true, 'cancelled_by'=>$by]);
+  }
+
+  // ── RELEASE (provider backs out before work starts) ──
+  // Booking goes back to 'searching' for other providers; the customer is told.
+  case 'release': {
+    $prov = requireProvider();
+    $b  = getBody();
+    $id = $b['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND provider_id = ?");
+    $stmt->execute([$id, $prov['id']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    $releasable = ['price_quoted','negotiating','negotiation_final','confirmed'];
+    if (!in_array($bk['status'], $releasable, true)) err('Booking cannot be released in status: ' . $bk['status']);
+
+    $upd = $db->prepare("
+      UPDATE bookings SET
+        status             = 'searching',
+        provider_id        = NULL,
+        provider_name      = NULL,
+        quoted_price       = 0,
+        counter_price      = 0,
+        final_price        = 0,
+        confirmed_price    = 0,
+        amount             = 0,
+        otp                = NULL,
+        start_otp          = NULL,
+        completion_otp     = NULL,
+        otp_attempts       = 0,
+        otp_verified       = 0,
+        negotiation_status = NULL,
+        accepted_at        = NULL,
+        provider_lat       = NULL,
+        provider_lng       = NULL,
+        provider_loc_at    = NULL
+      WHERE id = ? AND provider_id = ? AND status IN ('price_quoted','negotiating','negotiation_final','confirmed')
+    ");
+    $upd->execute([$id, $prov['id']]);
+    if ($upd->rowCount() === 0) err('Booking cannot be released');
+
+    $fcm = getFcm($db, 'customers', $bk['customer_id']);
+    sendPush($fcm, "Provider Unavailable",
+      "Your provider could not take this job. We're finding you another provider.",
+      ['event'=>'provider_declined','bookingId'=>$id]);
+
+    ok(['status'=>'searching']);
+  }
+
+  // ── LIVE LOCATION (assigned provider) ─────────────────
+  case 'track': {
+    $prov = requireProvider();
+    $b  = getBody();
+    $id = $b['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    if (!isset($b['lat'], $b['lng']) || !is_numeric($b['lat']) || !is_numeric($b['lng'])) err('lat and lng required');
+    $lat = (float)$b['lat']; $lng = (float)$b['lng'];
+    if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) err('Invalid coordinates');
+
+    $stmt = $db->prepare("SELECT status FROM bookings WHERE id = ? AND provider_id = ?");
+    $stmt->execute([$id, $prov['id']]);
+    $st = $stmt->fetchColumn();
+    if ($st === false) err('Booking not found');
+    if (!in_array($st, ['confirmed','active'], true)) err('Tracking is only allowed for confirmed or active bookings');
+
+    $db->prepare("UPDATE bookings SET provider_lat = ?, provider_lng = ?, provider_loc_at = CURRENT_TIMESTAMP
+                  WHERE id = ? AND provider_id = ?")->execute([$lat, $lng, $id, $prov['id']]);
+    ok(['tracked'=>true, 'provider_lat'=>$lat, 'provider_lng'=>$lng]);
+  }
+
+  // ── PROVIDER RATES CUSTOMER (completed booking, once) ─
+  case 'rate_customer': {
+    $prov = requireProvider();
+    $b  = getBody();
+    $id = $b['booking_id'] ?? '';
+    $rating = (int)($b['rating'] ?? 0);
+    $comment = trim((string)($b['comment'] ?? ''));
+    if (empty($id)) err('booking_id required');
+    if ($rating < 1 || $rating > 5) err('rating 1-5 required');
+    if (strlen($comment) > 2000) $comment = substr($comment, 0, 2000);
+
+    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND provider_id = ?");
+    $stmt->execute([$id, $prov['id']]);
+    $bk = $stmt->fetch();
+    if (!$bk) err('Booking not found');
+    if ($bk['status'] !== 'completed') err('Booking not completed yet');
+    if ($bk['customer_rating'] !== null) err('Already rated');
+
+    $db->beginTransaction();
+    $upd = $db->prepare("UPDATE bookings SET customer_rating = ?, customer_review = ?
+                         WHERE id = ? AND customer_rating IS NULL");
+    $upd->execute([$rating, $comment, $id]);
+    if ($upd->rowCount() === 0) { $db->rollBack(); err('Already rated'); }
+    $q = $db->prepare("SELECT AVG(customer_rating) AS a, COUNT(*) AS c FROM bookings
+                       WHERE customer_id = ? AND customer_rating IS NOT NULL");
+    $q->execute([$bk['customer_id']]);
+    $r = $q->fetch();
+    $avg = round((float)($r['a'] ?? 0), 1);
+    $db->prepare("UPDATE customers SET rating = ?, rating_count = ? WHERE id = ?")
+       ->execute([$avg, (int)($r['c'] ?? 0), $bk['customer_id']]);
+    $db->commit();
+
+    ok(['customer_rating'=>$rating, 'customer_avg_rating'=>$avg]);
+  }
+
+  // ── ADMIN: DELETE BOOKING ─────────────────────────────
+  case 'admin_delete': {
+    requireAdmin();
+    $b  = getBody();
+    $id = $b['booking_id'] ?? '';
+    if (empty($id)) err('booking_id required');
+    $bk = loadBooking($db, $id);
+
+    $db->beginTransaction();
+    $db->prepare("DELETE FROM reviews WHERE booking_id = ?")->execute([$id]);
+    $db->prepare("DELETE FROM bookings WHERE id = ?")->execute([$id]);
+    $db->commit();
+    if (!empty($bk['provider_id'])) recomputeProviderRating($db, $bk['provider_id']);
+    if ($bk['customer_rating'] !== null) {
+      $q = $db->prepare("SELECT AVG(customer_rating) AS a, COUNT(*) AS c FROM bookings
+                         WHERE customer_id = ? AND customer_rating IS NOT NULL");
+      $q->execute([$bk['customer_id']]);
+      $r = $q->fetch();
+      $db->prepare("UPDATE customers SET rating = ?, rating_count = ? WHERE id = ?")
+         ->execute([round((float)($r['a'] ?? 0), 1), (int)($r['c'] ?? 0), $bk['customer_id']]);
+    }
+    ok(['deleted'=>true, 'booking_id'=>$id]);
   }
 
   // ── OPEN BOOKINGS (provider polling) ─────────────────
@@ -728,6 +934,7 @@ switch ($action) {
     $prov  = requireProvider();
     $city  = $_GET['city'] ?? '';
     $limit = max(1, min(100, (int)($_GET['limit'] ?? 20)));
+    expireStaleSearches($db);
 
     $sql    = "SELECT * FROM bookings WHERE status = 'searching'";
     $params = [];
@@ -808,7 +1015,8 @@ switch ($action) {
       err('Booking can no longer be re-assigned');
     $db->prepare("UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
                     quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
-                    otp = NULL, start_otp = NULL, completion_otp = NULL, negotiation_status = NULL
+                    otp = NULL, start_otp = NULL, completion_otp = NULL, negotiation_status = NULL,
+                    otp_attempts = 0, provider_lat = NULL, provider_lng = NULL, provider_loc_at = NULL
                   WHERE id = ?")->execute([$id]);
     if (!empty($bk['provider_id'])) {
       $fcm = getFcm($db, 'providers', $bk['provider_id']);

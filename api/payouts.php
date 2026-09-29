@@ -8,6 +8,7 @@
 //   POST ?action=approve     — admin approves payout
 //   POST ?action=reject      — admin rejects payout
 //   GET  ?action=pending     — admin: all pending payouts
+//   POST ?action=cancel      — provider cancels own pending request {payout_id}
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
@@ -146,22 +147,8 @@ switch ($action) {
 
     if ($fcm) {
       $amount = $payout['amount'];
-      $ctx = stream_context_create(['http'=>[
-        'method'  => 'POST',
-        'header'  => "Content-Type: application/json
-",
-        'content' => json_encode([
-          'event'    => 'payout_approved',
-          'fcmToken' => $fcm,
-          'data'     => [
-            'title'  => 'Payout Approved ✅',
-            'body'   => "₹$amount has been transferred to your account.",
-            'amount' => "$amount",
-          ],
-        ]),
-        'timeout' => 5,
-      ]]);
-      @file_get_contents('https://notifybooking-mlchyp6tra-as.a.run.app', false, $ctx);
+      hsSendPush($fcm, 'Payout Approved ✅', "₹$amount has been transferred to your account.",
+        ['event' => 'payout_approved', 'amount' => "$amount"]);
     }
 
     ok(['approved' => true, 'amount' => $payout['amount'],
@@ -199,6 +186,36 @@ switch ($action) {
     $db->commit();
 
     ok(['rejected' => true]);
+  }
+
+  // ── PROVIDER: CANCEL OWN PENDING REQUEST ────────────
+  // Status flip + refund of the held amount in one transaction; the status
+  // guard makes a double-cancel (or cancel racing approve) unable to refund twice.
+  case 'cancel': {
+    $prov = requireProvider();
+    $b  = getBody();
+    $id = (int)($b['payout_id'] ?? 0);
+    if ($id <= 0) err('payout_id required');
+
+    $db->beginTransaction();
+    $stmt = $db->prepare("SELECT * FROM payouts WHERE id = ? AND provider_id = ? FOR UPDATE");
+    $stmt->execute([$id, $prov['id']]);
+    $payout = $stmt->fetch();
+    if (!$payout) { $db->rollBack(); err('Payout not found', 404); }
+    if ($payout['status'] !== 'pending') { $db->rollBack(); err('Only pending payouts can be cancelled'); }
+
+    $u = $db->prepare("UPDATE payouts SET status = 'cancelled', processed_at = CURRENT_TIMESTAMP
+                       WHERE id = ? AND status = 'pending'");
+    $u->execute([$id]);
+    if ($u->rowCount() === 0) { $db->rollBack(); err('Only pending payouts can be cancelled'); }
+    $db->prepare("UPDATE providers SET pending_earned = pending_earned + ? WHERE id = ?")
+       ->execute([(int)$payout['amount'], $prov['id']]);
+    $db->commit();
+
+    $bal = $db->prepare("SELECT pending_earned FROM providers WHERE id = ?");
+    $bal->execute([$prov['id']]);
+    ok(['cancelled' => true, 'id' => $id, 'amount' => (int)$payout['amount'],
+        'pending_earned' => (int)$bal->fetchColumn()]);
   }
 
   // ── ADMIN: PENDING LIST ───────────────────────────────

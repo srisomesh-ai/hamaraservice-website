@@ -378,7 +378,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 if(typeof firebase!=='undefined'&&!firebase.apps.length) firebase.initializeApp({
   apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
   messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
 });
@@ -465,25 +464,22 @@ if(typeof firebase!=='undefined') firebase.auth().onAuthStateChanged(function(u)
 });
 
 
-// ── HS Firebase Price Sync ────────────────────────────────────────────────────
+// ── HS Price Sync (services.php) ────────────────────────────────────────────────────
 (function(){
-  var DB_URL  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-  var FB_API  = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
   var SVC_ID  = 'SVC021';
-  var FB_PATH = 'hs_service_prices/' + SVC_ID;
-  var _tok    = '';
 
-  // Step 1: get anonymous auth token (same as hs-prices.html)
-  function getToken(cb){
-    if(_tok){ cb(_tok); return; }
-    var x = new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+FB_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload = function(){
-      try{ var d=JSON.parse(x.responseText); _tok=d.idToken||''; cb(_tok); }catch(e){ cb(''); }
-    };
-    x.onerror = function(){ cb(''); };
-    x.send(JSON.stringify({returnSecureToken:true}));
+    function hsLoadPrices(id,cb){
+    /* Prices come from MySQL via services.php (Firebase RTDB no longer used) */
+    var x=new XMLHttpRequest();
+    x.open('GET','https://hamaraservice.com/api/services.php?action=prices&id='+encodeURIComponent(id)+'&_='+Date.now(),true);
+    x.timeout=6000;
+    x.onload=function(){try{
+      var r=JSON.parse(x.responseText),d=r&&r.success?r.data:null;
+      if(!d||typeof d!=='object'||Array.isArray(d)||!Object.keys(d).length)return;
+      if(d.base&&typeof d.base==='object')d.base=d.base.base;
+      cb(d);
+    }catch(e){}};
+    x.onerror=function(){};x.send();
   }
 
   function applyPrices(prices){
@@ -507,37 +503,22 @@ if(typeof firebase!=='undefined') firebase.auth().onAuthStateChanged(function(u)
     if(typeof updatePrice === 'function') updatePrice();
   }
 
-  // Step 2: fetch prices with auth token
-  function loadFromFirebase(){
-    getToken(function(tok){
-      var url = DB_URL + '/' + FB_PATH + '.json' + (tok ? '?auth='+tok : '');
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
-      xhr.timeout = 6000;
-      xhr.onload = function(){
-        try{
-          var data = JSON.parse(xhr.responseText);
-          if(data && !data.error) applyPrices(data);
-        }catch(e){}
-      };
-      xhr.onerror = function(){};
-      xhr.send();
-    });
-  }
+  // Fetch prices from services.php
+  function loadPrices(){ hsLoadPrices('SVC021', applyPrices); }
 
   // Run on DOM ready
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', loadFromFirebase);
+    document.addEventListener('DOMContentLoaded', loadPrices);
   } else {
-    loadFromFirebase();
+    loadPrices();
   }
 
   // Re-fetch every 30s
-  setInterval(loadFromFirebase, 30000);
+  setInterval(loadPrices, 30000);
 
   // Instant update when admin saves (same browser)
   window.addEventListener('storage', function(e){
-    if(e.key === 'hs_pricing_ts') loadFromFirebase();
+    if(e.key === 'hs_pricing_ts') loadPrices();
   });
 })();
 

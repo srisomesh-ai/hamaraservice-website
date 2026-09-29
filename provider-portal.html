@@ -13,7 +13,6 @@
 <script src="js/email-triggers.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 :root{--brand:#E8651A;--brand2:#c9510f;--brand-light:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-light:#e6f4f6;--red:#E8651A;--red-dark:#c9510f;--red-light:#fff3eb;--orange:#E8651A;--green:#2ecc71;--green-light:#e8f8f0;--yellow:#f59e0b;--yellow-light:#fffbeb;--blue:#1A73E8;--blue-light:#e8f0fd;--bg:#f0f7f9;--white:#fff;--text:#1a1a2e;--muted:#718096;--border:#e2e8f0;--radius:16px;--shadow:0 4px 24px rgba(27,107,122,0.12);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -496,7 +495,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 var FIREBASE_CONFIG = {
       apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
       authDomain:        "hamaraservice-s009.firebaseapp.com",
-      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId:         "hamaraservice-s009",
       storageBucket:     "hamaraservice-s009.firebasestorage.app",
       messagingSenderId: "1064274729048",
@@ -749,7 +747,7 @@ function validateStep(n){
     if(!document.getElementById('r_exp').value){showToast('⚠️ Select your experience');return false;}
     if(!document.getElementById('r_idtype').value){showToast('⚠️ Select ID proof type');return false;}
     if(!document.getElementById('r_idnum').value.trim()){showToast('⚠️ Enter ID number');return false;}
-    // Email uniqueness is enforced during Firebase write
+    // Email uniqueness is enforced server-side on register
     return true;
   }
   if(n===2){if(getSelectedServices().length===0){showToast('⚠️ Select at least one service');return false;}return true;}
@@ -759,7 +757,7 @@ function validateStep(n){
 
 var _portalActiveCat = 'All';
 
-// ── Firebase price cache ─────────────────────────────────────────────────────
+// ── Admin price cache (services.php) ─────────────────────────────────────────────────────
 var _fbPrices = {}; // { SVC001: { sweep:{1bhk:149,...}, ... }, ... }
 
 // Sub-category config matching hs-prices.html SVC config
@@ -917,7 +915,7 @@ var SVC_SUBCATS = {
   ]},
 };
 
-// Get live price from Firebase cache
+// Get live price from the admin price cache
 function _getSubPrice(svcId, subKey) {
   var parts = subKey.split('.');
   var grp = parts[0], key = parts[1];
@@ -947,12 +945,12 @@ function buildSvcGrid(){
   var grid = document.getElementById('svcGrid');
   if (!grid) return;
 
-  // Add Firebase banner
+  // Live-prices banner (services.php)
   if (!document.getElementById('fbPriceBanner')) {
     var banner = document.createElement('div');
     banner.id = 'fbPriceBanner';
     banner.className = 'svc-firebase-banner';
-    banner.innerHTML = '⏳ Loading live prices from Firebase…';
+    banner.innerHTML = '⏳ Loading live prices…';
     grid.parentNode.insertBefore(banner, grid);
   }
 
@@ -965,7 +963,7 @@ function buildSvcGrid(){
     grid.parentNode.insertBefore(tabsWrap, grid);
   }
 
-  // Load Firebase prices then render
+  // Load admin prices (services.php) then render
   _loadFirebasePrices(function(){
     var banner2 = document.getElementById('fbPriceBanner');
     if (banner2) banner2.innerHTML = '✅ Live prices loaded — set your rate for each sub-service below';
@@ -1278,12 +1276,12 @@ function providerGoogleSignIn(){
     });
 }
 
-// Firebase sync after login (non-blocking)
+// Refresh cached provider from MySQL after login (non-blocking)
 function syncProviderFromFirebase(){
   var prov = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
   if(prov && prov.id){
     var jwt = localStorage.getItem('hs_provider_jwt') || '';
-    fetch('https://hamaraservice.com/api/providers.php?action=get&id='+prov.id)
+    fetch('https://hamaraservice.com/api/providers.php?action=get&id='+encodeURIComponent(prov.id), jwt ? {headers:{'Authorization':'Bearer '+jwt}} : {})
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.success && res.data){
@@ -1905,7 +1903,7 @@ function buildServices(){ return [
 
 // ── Service selection state ───────────────────────────────────────────────────
 var _portalSel = {};        // { "SVC001_sweep_1bhk": true, ... }
-var _portalFBPx = {};       // Firebase prices { SVC001: { sweep: { 1bhk: 149 } } }
+var _portalFBPx = {};       // admin prices { SVC001: { sweep: { 1bhk: 149 } } }
 var _portalCurCat = 'All';
 var _portalPxLoaded = false; // separate flag — not on the prices object
 var _openGroups = {};         // { SVC001: true } — groups the user expanded
@@ -2093,7 +2091,7 @@ function buildPortalSvcGrid() {
     if (lst) lst.classList.add('open');
   });
 
-  // Fetch live prices from Firebase (once only)
+  // Fetch live prices from services.php (once only)
   if (!_portalPxLoaded) {
     _portalPxLoaded = true;
     fetch('https://hamaraservice.com/api/services.php?action=price_ranges')

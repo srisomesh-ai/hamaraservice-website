@@ -34,6 +34,8 @@ foreach ([
     'RAZORPAY_KEY_SECRET'     => '',
     'RAZORPAY_WEBHOOK_SECRET' => '',
     'SERVICE_ACCOUNT_PATH'    => '',
+    'NOTIFY_URL'              => 'https://notifybooking-mlchyp6tra-as.a.run.app',
+    'NOTIFY_KEY'              => '',
 ] as $__k => $__d) { hsDefineFromEnv($__k, $__d); }
 unset($__k, $__d);
 
@@ -72,6 +74,7 @@ function getDB() {
         error_log('HamaraService DB connect failed: ' . $e->getMessage());
         hsFail('Database connection failed');
     }
+    hsEnsureSchema($pdo);
     return $pdo;
 }
 
@@ -97,11 +100,57 @@ function runMigrationsOnce($db, $key, array $sqls) {
     if ($complete) @file_put_contents($flag, date('c'));
 }
 
+// ── Shared schema upgrades (all endpoints) ────────────────
+// Bump the key ('schema_vN') whenever statements are added so every server
+// re-runs the list once. Mirrored in database/schema.sql and api/setup.php.
+function hsEnsureSchema($db) {
+    runMigrationsOnce($db, 'schema_v2', [
+        // bookings: cancellation, OTP brute-force guard, live tracking, provider→customer rating
+        "ALTER TABLE bookings ADD COLUMN cancel_reason VARCHAR(255) NULL",
+        "ALTER TABLE bookings ADD COLUMN cancelled_by VARCHAR(20) NULL",
+        "ALTER TABLE bookings ADD COLUMN otp_attempts INT NOT NULL DEFAULT 0",
+        "ALTER TABLE bookings ADD COLUMN provider_lat DECIMAL(10,7) NULL",
+        "ALTER TABLE bookings ADD COLUMN provider_lng DECIMAL(10,7) NULL",
+        "ALTER TABLE bookings ADD COLUMN provider_loc_at DATETIME NULL",
+        "ALTER TABLE bookings ADD COLUMN customer_rating TINYINT NULL",
+        "ALTER TABLE bookings ADD COLUMN customer_review TEXT NULL",
+        // providers: weekly availability schedule (JSON text)
+        "ALTER TABLE providers ADD COLUMN schedule TEXT NULL",
+        // customers: rating given by providers + account status
+        "ALTER TABLE customers ADD COLUMN rating DECIMAL(3,1) NOT NULL DEFAULT 0",
+        "ALTER TABLE customers ADD COLUMN rating_count INT NOT NULL DEFAULT 0",
+        "ALTER TABLE customers ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'",
+        // payouts: 'cancelled' status (provider withdraws a pending request).
+        // Only widen an ENUM column; a VARCHAR column already accepts it.
+        function ($db) {
+            $t = $db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'payouts' AND COLUMN_NAME = 'status'")->fetchColumn();
+            if ($t === false) throw new RuntimeException('payouts table missing');
+            if (stripos($t, 'enum(') === 0 && stripos($t, "'cancelled'") === false) {
+                $db->exec("ALTER TABLE payouts MODIFY status " . substr($t, 0, -1) . ",'cancelled') DEFAULT 'pending'");
+            }
+        },
+        "CREATE TABLE IF NOT EXISTS penalties (
+            id          INT          AUTO_INCREMENT PRIMARY KEY,
+            provider_id VARCHAR(30)  NOT NULL,
+            booking_id  VARCHAR(30)  NULL,
+            amount      INT          NOT NULL,
+            reason      VARCHAR(255) NOT NULL DEFAULT '',
+            status      VARCHAR(20)  NOT NULL DEFAULT 'applied',
+            created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+            waived_at   DATETIME     NULL,
+            INDEX idx_provider (provider_id),
+            INDEX idx_booking  (booking_id),
+            INDEX idx_status   (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    ]);
+}
+
 // ── CORS ──────────────────────────────────────────────────
 function setCorsHeaders() {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Admin-Key, X-Requested-With');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Admin-Key, X-HS-Notify-Key, X-Requested-With');
     header('Access-Control-Max-Age: 86400');
     header('Content-Type: application/json; charset=utf-8');
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
@@ -176,6 +225,47 @@ function hsHttpGet($url, $timeout = 5, $userpwd = null) {
         if ($p !== false) $headers[strtolower(trim(substr($line, 0, $p)))] = trim(substr($line, $p + 1));
     }
     return [$code, $body, $headers];
+}
+
+// ── Push notifications (server → Cloud Run notifybooking) ──
+// The ONLY place that calls the notify service; every request carries
+// X-HS-Notify-Key: NOTIFY_KEY. Never blocks the caller on failure.
+function hsSendPush($fcmToken, $title, $body, $data = []) {
+    if (empty($fcmToken) || NOTIFY_URL === '') return false;
+    if (NOTIFY_KEY === '') error_log('HamaraService: NOTIFY_KEY not configured — push may be rejected');
+    $payload = json_encode([
+        'event'    => $data['event'] ?? 'notification',
+        'fcmToken' => (string)$fcmToken,
+        'data'     => array_map('strval', array_filter(
+                         array_merge(['title' => $title, 'body' => $body], (array)$data), 'is_scalar')),
+    ]);
+    $headers = ['Content-Type: application/json', 'X-HS-Notify-Key: ' . NOTIFY_KEY];
+    if (function_exists('curl_init')) {
+        $ch = curl_init(NOTIFY_URL);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 5,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_POSTFIELDS     => $payload,
+        ]);
+        $r = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($r === false || $code >= 400) error_log('HamaraService push failed: HTTP ' . $code);
+        return $r !== false && $code < 400;
+    }
+    $ctx = stream_context_create(['http' => [
+        'method' => 'POST', 'header' => implode("\r\n", $headers) . "\r\n",
+        'content' => $payload, 'timeout' => 5, 'ignore_errors' => true,
+    ]]);
+    return @file_get_contents(NOTIFY_URL, false, $ctx) !== false;
+}
+// Is this request authenticated with the notify key (server-to-server)?
+function isNotifyKeyRequest() {
+    $k = $_SERVER['HTTP_X_HS_NOTIFY_KEY'] ?? '';
+    return NOTIFY_KEY !== '' && $k !== '' && hash_equals((string)NOTIFY_KEY, (string)$k);
 }
 
 // ── Firebase ID token verification (customer app) ────────

@@ -5,8 +5,8 @@
 // Service account JSON path comes from config: SERVICE_ACCOUNT_PATH
 // (keep the file OUTSIDE the web root — see api/config.example.php).
 //
-// Direct HTTP use requires the admin key (X-Admin-Key) or a valid
-// provider / customer token (Authorization: Bearer ...).
+// Direct HTTP use is server-to-server only: admin key (X-Admin-Key) or
+// notify key (X-HS-Notify-Key: NOTIFY_KEY). Apps/pages must not call it.
 // When included by another script (notify_booking.php) only the
 // functions below are defined; the request handler does not run.
 
@@ -117,7 +117,7 @@ function sendFCM($token, $title, $body, $data, $serviceAccount) {
 // ── Main: only when this file is the requested script ────────
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
     setCorsHeaders();
-    if (!isAdminRequest() && !resolveAuth()) err('Unauthorized', 401);
+    if (!isAdminRequest(false) && !isNotifyKeyRequest()) err('Unauthorized', 401);
 
     $input = getBody();
     if (!$input) $input = $_POST;

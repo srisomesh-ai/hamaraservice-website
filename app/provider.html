@@ -294,6 +294,15 @@ window.HS_FCM = (function(){
       <div class="chip-row" id="profAreaChips" style="flex-wrap:wrap;margin-top:6px"></div>
       <button class="btn" style="margin-top:10px" onclick="saveAreas()">Save Areas</button>
     </div>
+    <div class="sec-title">📅 Weekly Availability</div>
+    <div class="card">
+      <div class="chip-row" id="schDays" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1"><label>From</label><input class="inp" id="schFrom" type="time" value="09:00"></div>
+        <div style="flex:1"><label>To</label><input class="inp" id="schTo" type="time" value="18:00"></div>
+      </div>
+      <button class="btn teal" onclick="saveSchedule()">Save Availability</button>
+    </div>
     <div class="sec-title">Account</div>
     <div class="card">
       <div style="font-size:13.5px;margin-bottom:6px"><b>📞</b> <span id="profPhone"></span></div>
@@ -572,6 +581,7 @@ function pollJobs(){
   api('bookings.php','active',null,'&id='+encodeURIComponent(ME.id)+'&role=provider').then(function(res){
     if(res.success&&res.data&&res.data.id){pDetect(res.data);activeJob=res.data;renderActiveJob();}
     else{activeJob=null;renderActiveJob();}
+    trackSync();
   }).catch(function(){});
   if(!available)return;
   if(activeJob)return;
@@ -661,9 +671,12 @@ function startJobTimer(b){
   }
   tick();_jobTimerInt=setInterval(tick,1000);
 }
+var _complReq={};
 function requestCompletion(){
-  api('bookings.php','request_completion_otp',{booking_id:activeJob.id}).then(function(res){
-    if(res.success){toast('🔑 Ask customer for the completion OTP now');pollJobs();}
+  if(!activeJob)return;
+  var bid=activeJob.id;
+  api('bookings.php','request_completion_otp',{booking_id:bid}).then(function(res){
+    if(res.success){_complReq[bid]=true;renderActiveJob();toast('🔑 Ask customer for the completion OTP now');pollJobs();}
     else if((res.error||'').indexOf('TOO_EARLY')===0){toast('Please wait '+res.error.split(':')[1]+' more min');}
     else toast(res.error||'Failed');
   }).catch(function(){toast('Network error');});
@@ -693,6 +706,7 @@ function showCompletedSheet(){
     +'<div style="text-align:center;font-size:18px;font-weight:900;margin:6px 0">Job Completed!</div>'
     +'<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px">The customer has been asked to pay. You will see payment status update on your dashboard.</div>'
     +'<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px">Once the customer pays, you can ask for a review from your dashboard.</div>'
+    +(id?rateCustomerHtml({id:id},'cs'):'')+'<div style="height:12px"></div>'
     +'<button class="btn ghost" onclick="this.closest(\'div[style*=fixed]\').remove()">Done</button>'
     +'</div>';
   document.body.appendChild(ov);
@@ -749,66 +763,227 @@ function renderActiveJob(){
     +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+esc(b.address)+'</div>'
     +navBtn(b)
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.final_price||b.quoted_price||0)+'</div>';
+  var cashPending=(b.payment_status==='cash_pending');
+  var cashBtn=cashPending
+    ?'<div style="background:#fff8e6;border-radius:10px;padding:10px;font-size:13px;margin:10px 0">💵 Customer says they paid <b>₹'+(parseInt(b.confirmed_price||b.final_price||b.quoted_price,10)||0)+'</b> in cash.</div>'
+      +'<button class="btn green" onclick="confirmCash()">💵 Confirm cash received</button>'
+    :'';
+  var declineBtn='<div style="height:8px"></div><button class="btn red-ghost" onclick="releaseJob()">↩️ Decline job</button>';
   if(st==='completed'){
     var paid=(b.payment_status==='paid');
     h+='<div style="background:'+(paid?'#e8f7ee':'#fff8e6')+';border-radius:10px;padding:12px;text-align:center">'
       +'<div style="font-size:32px">'+(paid?'💰':'⏳')+'</div>'
       +'<div style="font-weight:900;font-size:15px;margin:4px 0">'+(paid?'Payment Received':'Payment Pending')+'</div>'
-      +'<div style="font-size:13px;color:var(--muted)">₹'+(b.confirmed_price||b.quoted_price||0)+(paid?' paid by customer':' — waiting for customer to pay')+'</div></div>';
+      +'<div style="font-size:13px;color:var(--muted)">₹'+(parseInt(b.confirmed_price||b.quoted_price,10)||0)+(paid?' paid by customer':(cashPending?' — customer paid cash, please confirm':' — waiting for customer to pay'))+'</div></div>';
+    h+=cashBtn;
+    h+=rateCustomerHtml(b,'cr');
     if(paid){
       h+='<div style="height:10px"></div><button class="btn" onclick="requestReview2(\''+b.id+'\')">⭐ Ask Customer for Review</button>';
     } else {
       h+='<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px">You can request a review once the customer completes payment.</div>';
     }
-    h+='</div>';el.innerHTML=h;
+    h+='</div>';setJobHtml(el,h);
       return;
   }
   if(st==='price_quoted'){
-    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Waiting for customer to confirm your price ₹'+(b.quoted_price||0)+'</div>';
+    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Waiting for customer to confirm your price ₹'+(parseInt(b.quoted_price,10)||0)+'</div>';
+    h+=declineBtn;
+  } else if(st==='negotiating'){
+    var cp=parseInt(b.counter_price,10)||0;
+    h+='<div style="background:#fde8d0;border-radius:10px;padding:10px;font-size:13.5px;margin-bottom:10px">💬 '+(cp>0?('Customer countered with <b>₹'+cp+'</b> (your quote ₹'+(parseInt(b.quoted_price,10)||0)+')'):'Customer wants to negotiate the price')+'</div>'
+      +(cp>0?'<button class="btn green" onclick="acceptCounter()">✓ Accept ₹'+cp+'</button><div style="height:8px"></div>':'')
+      +'<button class="btn teal" onclick="finalOffer()">💰 Send final price</button>';
+    h+=declineBtn;
+  } else if(st==='negotiation_final'){
+    h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Final price ₹'+(parseInt(b.final_price,10)||0)+' sent — waiting for the customer</div>';
+    h+=declineBtn;
   } else if(st==='confirmed'||st==='price_confirmed'){
-    if(b.start_otp||b.otp){
-      h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">✅ Customer confirmed. Ask them for the <b>Start OTP</b> to begin.</div>'
-        +'<label>Start OTP (from customer)</label><input class="inp" id="jobOtp" type="number" placeholder="4-digit OTP">'
-        +'<button class="btn teal" onclick="verifyOtp()">🔑 Verify & Start Job</button>';
-    } else {
-      h+='<div style="background:#fff8e6;border-radius:10px;padding:10px;font-size:13px">✅ Job confirmed! Head to the customer. When you arrive, ask them to <b>generate the Start OTP</b> in their app.</div>';
-    }
+    h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">✅ Job confirmed! Head to the customer. When you arrive, ask them for the <b>Start OTP</b> shown in their app.</div>'
+      +'<label>Start OTP (from customer)</label><input class="inp" id="jobOtp" type="number" inputmode="numeric" placeholder="4-digit OTP">'
+      +'<button class="btn teal" onclick="verifyOtp()">🔑 Verify & Start Job</button>';
+    h+=cashBtn;
+    h+=declineBtn;
   } else if(st==='active'){
-    if(b.completion_otp){
+    h+=cashBtn;
+    if(b.completion_otp||_complReq[b.id]){
       h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">Ask the customer for the <b>Completion OTP</b> and enter it.</div>'
-        +'<label>Completion OTP (from customer)</label><input class="inp" id="doneOtp" type="number" placeholder="4-digit OTP">'
-        +'<button class="btn green" onclick="completeJob()">✅ Verify & Complete Job</button>';
+        +'<label>Completion OTP (from customer)</label><input class="inp" id="doneOtp" type="number" inputmode="numeric" placeholder="4-digit OTP">'
+        +'<button class="btn green" onclick="completeJob()">✅ Verify & Complete Job</button>'
+        +'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;cursor:pointer" onclick="requestCompletion()">Customer did not get the code? <b>Send again</b></div>';
     } else {
       h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">🧰 Job in progress. Tap Complete when the work is finished.</div>'
         +'<button class="btn green" onclick="requestCompletion()">✅ Complete Job</button>';
     }
   }
   h+='</div>';
-  el.innerHTML=h;
+  setJobHtml(el,h);
 }
-function acceptCounter(){api('bookings.php','accept_counter',{booking_id:activeJob.id}).then(function(res){if(res.success)toast('Accepted ✓');pollJobs();});}
+// Re-render the job card, keeping whatever the provider is typing (poll runs every 4 s)
+function setJobHtml(el,h){
+  var keep={};
+  ['jobOtp','doneOtp','crNote'].forEach(function(id){if($(id))keep[id]=$(id).value;});
+  var focused=document.activeElement&&document.activeElement.id;
+  el.innerHTML=h;
+  Object.keys(keep).forEach(function(id){if(keep[id]&&$(id))$(id).value=keep[id];});
+  if(focused&&keep.hasOwnProperty(focused)&&$(focused))$(focused).focus();
+}
+function acceptCounter(){if(!activeJob)return;api('bookings.php','accept_counter',{booking_id:activeJob.id}).then(function(res){toast(res.success?'Accepted ✓':(res.error||'Failed'));pollJobs();}).catch(function(){toast('Network error');});}
 function finalOffer(){var v=prompt('Your final price (₹):');if(!v)return;
   api('bookings.php','final_offer',{booking_id:activeJob.id,final_price:parseInt(v,10)}).then(function(res){if(res.success)toast('Final offer sent');pollJobs();});}
+function otpErrMsg(res,fallback){
+  var e=(res&&res.error)||fallback;
+  // HTTP 429 — 5 wrong tries: server regenerated the OTP and sent it to the customer
+  if(/too many/i.test(e)){popNotify('⛔','Too many wrong attempts',esc(e),'#c0392b');return true;}
+  toast(e);return false;
+}
 function verifyOtp(){
+  if(!activeJob)return;
   var o=$('jobOtp').value.trim();
   if(o.length<4){toast('Enter 4-digit OTP');return;}
   api('bookings.php','verify_otp',{booking_id:activeJob.id,otp:o}).then(function(res){
     if(res.success){toast('✅ OTP verified — job started');}
-    else toast(res.error||'Wrong OTP');
+    else{if(otpErrMsg(res,'Wrong OTP')&&$('jobOtp'))$('jobOtp').value='';}
     pollJobs();
-  });
+  }).catch(function(){toast('Network error');});
 }
 function completeJob(){
+  if(!activeJob)return;
   var o=($('doneOtp')&&$('doneOtp').value.trim())||'';
   if(o.length<4){toast('Ask customer for the 4-digit completion OTP');return;}
-  api('bookings.php','complete',{booking_id:activeJob.id,completion_otp:o}).then(function(res){
-    if(res.success){_lastCompletedId=activeJob.id;toast('🎉 Job completed!');showCompletedSheet();activeJob=null;refreshProfile();}
+  var bid=activeJob.id;
+  api('bookings.php','complete',{booking_id:bid,completion_otp:o}).then(function(res){
+    if(res.success){_lastCompletedId=bid;toast('🎉 Job completed!');showCompletedSheet();activeJob=null;trackSync();refreshProfile();}
     else if(res.error==='COMPLETION_OTP_REQUIRED')toast('Completion OTP required');
-    else toast(res.error||'Wrong OTP');
+    else{if(otpErrMsg(res,'Wrong OTP')&&$('doneOtp'))$('doneOtp').value='';}
     pollJobs();
-  });
+  }).catch(function(){toast('Network error');});
 }
 
+// ── DECLINE BEFORE START (bookings.php release → back to searching) ──
+function releaseJob(){
+  if(!activeJob)return;
+  if(!confirm('Decline this job? The customer will be matched with another provider.'))return;
+  api('bookings.php','release',{booking_id:activeJob.id}).then(function(res){
+    if(res.success){toast('↩️ Job declined');activeJob=null;_pLastStatus=null;renderActiveJob();trackSync();}
+    else toast(res.error||'Could not decline');
+    pollJobs();
+  }).catch(function(){toast('Network error');});
+}
+
+// ── CASH: customer said they paid cash → provider confirms (mark_paid) ──
+function confirmCash(){
+  if(!activeJob)return;
+  var amt=parseInt(activeJob.confirmed_price||activeJob.final_price||activeJob.quoted_price,10)||0;
+  if(!confirm('Confirm you received ₹'+amt+' in cash?'))return;
+  api('bookings.php','mark_paid',{booking_id:activeJob.id}).then(function(res){
+    if(res.success){toast('💵 Cash payment confirmed');refreshProfile();}
+    else toast(res.error||'Could not confirm payment');
+    pollJobs();
+  }).catch(function(){toast('Network error');});
+}
+
+// ── PROVIDER RATES THE CUSTOMER (bookings.php rate_customer) ──
+// pfx keeps element ids unique between the job card ('cr') and the
+// completion sheet ('cs').
+var _ratedCust={},_custStars={};
+function rateCustomerHtml(b,pfx){
+  pfx=pfx||'cr';
+  if(b.customer_rating||_ratedCust[b.id])return '<div style="font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px">✓ You rated this customer</div>';
+  var n=_custStars[pfx]||0,stars='';
+  for(var i=1;i<=5;i++)stars+='<span data-n="'+i+'" onclick="pickCustStar(\''+pfx+'\','+i+')" style="font-size:30px;cursor:pointer;opacity:'+(i<=n?'1':'.3')+'">⭐</span>';
+  return '<div id="'+pfx+'Box" style="margin-top:12px;border-top:1px solid #e3ecef;padding-top:12px;text-align:left">'
+    +'<div style="font-weight:800;font-size:14px;margin-bottom:6px">Rate this customer</div>'
+    +'<div id="'+pfx+'Stars" style="display:flex;gap:4px;justify-content:center;margin-bottom:8px">'+stars+'</div>'
+    +'<input class="inp" id="'+pfx+'Note" maxlength="300" placeholder="Comment (optional)">'
+    +'<button class="btn ghost" data-bid="'+esc(b.id)+'" onclick="submitCustRating(\''+pfx+'\',this.dataset.bid)">Submit rating</button></div>';
+}
+function pickCustStar(pfx,n){
+  _custStars[pfx]=n;
+  var w=$(pfx+'Stars');if(!w)return;
+  [].forEach.call(w.children,function(c){c.style.opacity=(parseInt(c.dataset.n,10)<=n)?'1':'.3';});
+}
+function submitCustRating(pfx,bid){
+  var n=_custStars[pfx]||0;
+  if(!bid)return;
+  if(!n){toast('Tap a star to rate');return;}
+  var note=($(pfx+'Note')&&$(pfx+'Note').value.trim())||'';
+  api('bookings.php','rate_customer',{booking_id:bid,rating:n,comment:note}).then(function(res){
+    if(res.success||/already/i.test(res.error||'')){
+      _ratedCust[bid]=true;_custStars={};toast(res.success?'⭐ Customer rated — thanks!':'Already rated');
+      var box=$(pfx+'Box');if(box)box.outerHTML='<div style="font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px">✓ You rated this customer</div>';
+      if(activeJob&&activeJob.id===bid)renderActiveJob();
+    }
+    else toast(res.error||'Could not save rating');
+  }).catch(function(){toast('Network error');});
+}
+
+// ── LIVE LOCATION (bookings.php track) while a job is confirmed / active ──
+// Posts every ~15 s while the app is visible; stops on completion, cancel,
+// release or when the app goes to the background.
+var _trk={id:null,watch:null,timer:null,lat:null,lng:null};
+function trackSync(){
+  var b=activeJob;
+  var want=b&&(b.status==='confirmed'||b.status==='active')&&!document.hidden&&navigator.geolocation;
+  if(!want){trackStop();return;}
+  if(_trk.id===b.id&&_trk.watch!==null)return;
+  trackStop();
+  _trk.id=b.id;
+  _trk.watch=navigator.geolocation.watchPosition(function(pos){
+    var first=_trk.lat===null;
+    _trk.lat=pos.coords.latitude;_trk.lng=pos.coords.longitude;
+    if(first)trackSend();
+  },function(err){if(err&&err.code===1)trackStop();},{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
+  _trk.timer=setInterval(trackSend,15000);
+}
+function trackSend(){
+  if(!_trk.id||_trk.lat===null)return;
+  api('bookings.php','track',{booking_id:_trk.id,lat:_trk.lat,lng:_trk.lng}).then(function(res){
+    if(res&&!res.success&&/status|not found|forbidden/i.test(res.error||''))trackStop();
+  }).catch(function(){});
+}
+function trackStop(){
+  if(_trk.watch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(_trk.watch);
+  if(_trk.timer)clearInterval(_trk.timer);
+  _trk={id:null,watch:null,timer:null,lat:null,lng:null};
+}
+document.addEventListener('visibilitychange',function(){if(document.hidden)trackStop();else trackSync();});
+window.addEventListener('pagehide',trackStop);
+
+// ── WEEKLY AVAILABILITY (providers.php get → schedule; save action=schedule) ──
+var SCHED_DAYS=[['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
+var _sched={};
+function loadSchedule(){
+  var sc=ME.schedule;
+  if(typeof sc==='string'){try{sc=JSON.parse(sc);}catch(e){sc=null;}}
+  if(!sc||typeof sc!=='object'||Array.isArray(sc))sc=null;
+  var from='09:00',to='18:00';
+  _sched={};
+  SCHED_DAYS.forEach(function(d){
+    var v=sc&&sc[d[0]];
+    _sched[d[0]]=sc?!!(v&&v.on):(d[0]!=='sun');
+    if(v&&v.on){if(v.from)from=v.from;if(v.to)to=v.to;}
+  });
+  if($('schFrom'))$('schFrom').value=from;
+  if($('schTo'))$('schTo').value=to;
+  renderSchedule();
+}
+function renderSchedule(){
+  var el=$('schDays');if(!el)return;
+  el.innerHTML=SCHED_DAYS.map(function(d){
+    return '<div class="chip'+(_sched[d[0]]?' on':'')+'" onclick="togSchDay(\''+d[0]+'\')">'+d[1]+'</div>';
+  }).join('');
+}
+function togSchDay(k){_sched[k]=!_sched[k];renderSchedule();}
+function saveSchedule(){
+  var from=$('schFrom').value||'09:00',to=$('schTo').value||'18:00';
+  if(from>=to){toast('End time must be after start time');return;}
+  var schedule={};
+  SCHED_DAYS.forEach(function(d){schedule[d[0]]={on:!!_sched[d[0]],from:from,to:to};});
+  api('providers.php','schedule',{schedule:schedule}).then(function(res){
+    if(res.success){ME.schedule=schedule;localStorage.setItem('hs_prov_me',JSON.stringify(ME));toast('📅 Availability saved');}
+    else toast(res.error||'Could not save availability');
+  }).catch(function(){toast('Network error');});
+}
 
 
 // ── PHOTO UPLOAD ──
@@ -861,6 +1036,11 @@ function openProf(){
   try{areaSel=JSON.parse(ME.areas||'[]')||[];}catch(e){}
   initAreaSearch('profAreaSearch','profAreaSug');
   renderAreaChips();
+  loadSchedule();
+  // pull the latest schedule from the server
+  api('providers.php','get',null,'&id='+encodeURIComponent(ME.id)).then(function(res){
+    if(res.success&&res.data&&res.data.schedule!==undefined){ME.schedule=res.data.schedule;localStorage.setItem('hs_prov_me',JSON.stringify(ME));loadSchedule();}
+  }).catch(function(){});
 }
 function saveUpi(){
   var u=$('profUpi').value.trim();

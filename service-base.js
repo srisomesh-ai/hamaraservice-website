@@ -232,79 +232,60 @@ function applyAdminData(catalog) {
 
 document.title = C.name + ' – Hamara Service';
 
-// Step 2a: Fetch hs_service_prices from Firebase (set by hs-prices.html admin tool)
+// Step 2a: Fetch admin reference prices from services.php (MySQL, set by hs-prices.html)
 // This is the PRIMARY price source — overrides everything else
 (function fetchHSPrices() {
-  var FB_PRICES = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices';
-  var API_KEY   = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
+  var API = 'https://hamaraservice.com/api/services.php';
 
   function applyPrice(data) {
-    if (!data || data === 'null') return false;
+    if (!data || typeof data !== 'object') return false;
+    var base = (data.base && typeof data.base === 'object') ? data.base.base : data.base;
     // Prefer the admin visit fee (visit.visit), fall back to base
     var newPrice = (data.visit && data.visit.visit != null) ? parseInt(data.visit.visit)
-                 : (data.base != null ? parseInt(data.base) : null);
+                 : (base != null ? parseInt(base) : null);
     if (newPrice && newPrice > 0) { C.price = newPrice; updatePriceDisplays(); return true; }
     return false;
   }
 
-  function fetchPrices(token) {
-    var auth  = token ? '?auth=' + token : '';
-    var idUrl = FB_PRICES + '/' + C.id + '.json' + auth + (token ? '&' : '?') + '_=' + Date.now();
-    var allUrl= FB_PRICES + '.json' + auth + (token ? '&' : '?') + '_=' + Date.now();
-
-    // Step 1: try by ID
-    if (C.id) {
-      var x1 = new XMLHttpRequest();
-      x1.open('GET', idUrl, true); x1.timeout = 6000;
-      x1.onload = function() {
-        try {
-          var d = JSON.parse(x1.responseText);
-          if (d && d !== 'null' && applyPrice(d)) return;
-        } catch(e) {}
-        fetchByName(allUrl); // fallback to name scan
-      };
-      x1.onerror = x1.ontimeout = function() { fetchByName(allUrl); };
-      x1.send();
-    } else {
-      fetchByName(allUrl);
-    }
-  }
-
-  function fetchByName(url) {
-    var x2 = new XMLHttpRequest();
-    x2.open('GET', url, true); x2.timeout = 8000;
-    x2.onload = function() {
-      try {
-        var all = JSON.parse(x2.responseText);
-        if (!all || typeof all !== 'object') return;
-        var cname = (C.name || '').toLowerCase().trim();
-        var keys = Object.keys(all);
-        for (var i = 0; i < keys.length; i++) {
-          var e = all[keys[i]]; if (!e) continue;
-          var ename = (e.name || e.service || '').toLowerCase().trim();
-          if ((ename && ename === cname) || keys[i] === C.id) {
-            if (applyPrice(e)) return;
-          }
-        }
-      } catch(e2) {}
+  function getJSON(url, timeout, cb) {
+    var x = new XMLHttpRequest();
+    x.open('GET', url + (url.indexOf('?') > -1 ? '&' : '?') + '_=' + Date.now(), true);
+    x.timeout = timeout;
+    x.onload = function() {
+      try { var r = JSON.parse(x.responseText); cb(r && r.success ? r.data : null); }
+      catch(e) { cb(null); }
     };
-    x2.send();
+    x.onerror = x.ontimeout = function() { cb(null); };
+    x.send();
   }
 
-  // Get anonymous auth token first, then fetch
-  var xa = new XMLHttpRequest();
-  xa.open('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=' + API_KEY, true);
-  xa.setRequestHeader('Content-Type', 'application/json');
-  xa.timeout = 5000;
-  xa.onload = function() {
-    try { var d = JSON.parse(xa.responseText); fetchPrices(d.idToken || ''); }
-    catch(e) { fetchPrices(''); }
-  };
-  xa.onerror = xa.ontimeout = function() { fetchPrices(''); };
-  xa.send(JSON.stringify({returnSecureToken: true}));
+  // Fallback: scan all services' admin prices (price_ranges) by id or name
+  function fetchByName() {
+    getJSON(API + '?action=price_ranges', 8000, function(all) {
+      if (!all || typeof all !== 'object') return;
+      var cname = (C.name || '').toLowerCase().trim();
+      var keys = Object.keys(all);
+      for (var i = 0; i < keys.length; i++) {
+        var e = all[keys[i]] && all[keys[i]].admin_prices; if (!e) continue;
+        var ename = (e.name || e.service || '').toLowerCase().trim();
+        if ((ename && ename === cname) || keys[i] === C.id) {
+          if (applyPrice(e)) return;
+        }
+      }
+    });
+  }
+
+  if (C.id) {
+    getJSON(API + '?action=prices&id=' + encodeURIComponent(C.id), 6000, function(d) {
+      if (d && !Array.isArray(d) && applyPrice(d)) return;
+      fetchByName();
+    });
+  } else {
+    fetchByName();
+  }
 })();
 // Step 2b: Fetch catalog.json for service status and metadata
-(function fetchFromFirebase() {
+(function fetchCatalog() {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', CATALOG_URL + '?_=' + Date.now(), true);
   xhr.timeout = 6000;
@@ -318,7 +299,7 @@ document.title = C.name + ' – Hamara Service';
       var svc = data.find(function(s) { return s.name === C.name; });
       if (!svc) return;
       if (svc.status === 'inactive') { applyAdminData(data); return; }
-      // Only update price from catalog if hs_service_prices didn't override it
+      // Only update price from catalog if admin prices (services.php) didn't override it
       if (svc.userPrice && svc.userPrice !== C.price && !_hsPriceLoaded) {
         C.price = svc.userPrice;
         updatePriceDisplays();

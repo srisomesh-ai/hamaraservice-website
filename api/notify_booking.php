@@ -2,12 +2,13 @@
 // HamaraService — Booking Event Notifier
 // Called by Firebase Realtime Database via cron or triggered from app
 // Place at: hamaraservice.com/api/notify_booking.php
-// Requires the admin key (X-Admin-Key) or a valid provider/customer token
-// (Authorization: Bearer ...).
+// Server-to-server only: requires the admin key (X-Admin-Key) or the notify
+// key (X-HS-Notify-Key: NOTIFY_KEY). Apps/pages must not call it — the PHP
+// API sends every push itself (hsSendPush in db.php).
 
 require_once __DIR__ . '/send_notification.php';   // functions only
 setCorsHeaders();
-if (!resolveAuth()) err('Unauthorized', 401);
+if (!isAdminRequest(false) && !isNotifyKeyRequest()) err('Unauthorized', 401);
 
 // ── Notification templates ────────────────────────────────────
 function getNotification($event, $data) {

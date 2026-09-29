@@ -25,6 +25,10 @@ $tables = [
   lng           DECIMAL(10,7),
   fcm_token     TEXT,
   auth_method   VARCHAR(20)  DEFAULT 'email',
+  password_hash VARCHAR(255) NOT NULL DEFAULT '',
+  rating        DECIMAL(3,1) NOT NULL DEFAULT 0,
+  rating_count  INT          NOT NULL DEFAULT 0,
+  status        VARCHAR(20)  NOT NULL DEFAULT 'active',
   created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
@@ -58,6 +62,10 @@ $tables = [
   completed_bookings  INT          DEFAULT 0,
   total_earned        INT          DEFAULT 0,
   pending_earned      INT          DEFAULT 0,
+  upi_id              VARCHAR(100),
+  areas               TEXT,
+  photo               VARCHAR(255),
+  schedule            TEXT,
   fcm_token           TEXT,
   registered_at       DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at          DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -78,6 +86,7 @@ $tables = [
   enabled     TINYINT(1)   DEFAULT 1,
   min_price   INT          DEFAULT 0,
   max_price   INT          DEFAULT 0,
+  option_prices JSON        NULL,
   UNIQUE KEY unique_provider_svc (provider_id, svc_id),
   INDEX idx_svc_id   (svc_id),
   INDEX idx_provider (provider_id)
@@ -142,6 +151,21 @@ $tables = [
   provider_earns      INT          DEFAULT 0,
   otp                 VARCHAR(10),
   otp_verified        TINYINT(1)   DEFAULT 0,
+  start_otp           VARCHAR(8),
+  completion_otp      VARCHAR(8),
+  otp_attempts        INT          NOT NULL DEFAULT 0,
+  started_at          DATETIME,
+  min_duration_min    INT          DEFAULT 5,
+  rating              INT,
+  review              TEXT,
+  review_requested    TINYINT      DEFAULT 0,
+  customer_rating     TINYINT,
+  customer_review     TEXT,
+  cancel_reason       VARCHAR(255),
+  cancelled_by        VARCHAR(20),
+  provider_lat        DECIMAL(10,7),
+  provider_lng        DECIMAL(10,7),
+  provider_loc_at     DATETIME,
   created_at          DATETIME     DEFAULT CURRENT_TIMESTAMP,
   accepted_at         DATETIME,
   completed_at        DATETIME,
@@ -185,6 +209,21 @@ $tables = [
   INDEX idx_status   (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
+// 10. PENALTIES
+"CREATE TABLE IF NOT EXISTS penalties (
+  id           INT          AUTO_INCREMENT PRIMARY KEY,
+  provider_id  VARCHAR(30)  NOT NULL,
+  booking_id   VARCHAR(30)  NULL,
+  amount       INT          NOT NULL,
+  reason       VARCHAR(255) NOT NULL DEFAULT '',
+  status       VARCHAR(20)  NOT NULL DEFAULT 'applied',
+  created_at   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  waived_at    DATETIME     NULL,
+  INDEX idx_provider (provider_id),
+  INDEX idx_booking  (booking_id),
+  INDEX idx_status   (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
 // 9. NOTIFICATIONS LOG
 "CREATE TABLE IF NOT EXISTS notifications (
   id             INT          AUTO_INCREMENT PRIMARY KEY,
@@ -211,6 +250,10 @@ foreach ($tables as $sql) {
         $results[] = '❌ ' . ($m[1] ?? 'unknown') . ': ' . $e->getMessage();
     }
 }
+
+// Upgrade tables created by an older setup (idempotent; same list db.php runs)
+hsEnsureSchema($db);
+$results[] = '🔧 Schema upgrades applied (schema_v2)';
 
 // Seed 34 services
 $services = [

@@ -719,7 +719,7 @@ header{position:sticky;top:0;z-index:200;background:var(--teal);border-bottom:no
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
           Sign Out
         </button>
-        <button class="dz-btn" onclick="showToast('📧 Request sent to support@hamaraservice.in')">
+        <button class="dz-btn" onclick="window.location.href='mailto:info@hamaraservice.com?subject='+encodeURIComponent('Account deletion request')+'&body='+encodeURIComponent('Please delete my HamaraService account. Member ID: '+((currentProfile&&currentProfile.id)||''))">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>
           Request Account Deletion
         </button>
@@ -734,7 +734,6 @@ header{position:sticky;top:0;z-index:200;background:var(--teal);border-bottom:no
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 // ╔══════════════════════════════════════════════╗
 // ║  PASTE YOUR FIREBASE CONFIG HERE             ║
@@ -742,7 +741,6 @@ header{position:sticky;top:0;z-index:200;background:var(--teal);border-bottom:no
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:        "hamaraservice-s009.firebaseapp.com",
-  databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "hamaraservice-s009",
   storageBucket:     "hamaraservice-s009.firebasestorage.app",
   messagingSenderId: "1064274729048",
@@ -751,7 +749,6 @@ const FIREBASE_CONFIG = {
 
 if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 const fbAuth = firebase.auth();
-const fbDB   = firebase.database();
 
 // Escape untrusted strings before interpolating them into innerHTML
 function esc(v) {
@@ -775,7 +772,8 @@ let currentUser    = null;
 let currentProfile = null;
 let allBookings    = [];
 
-const ACTIVE_ST  = ['confirmed','pending','active','searching','accepted','assigned','otp_sent','payment_pending'];
+// MySQL booking lifecycle (bookings.php); 'pending'/'accepted'/'assigned' kept for legacy rows
+const ACTIVE_ST  = ['searching','price_quoted','negotiating','negotiation_final','confirmed','active','pending','accepted','assigned'];
 const HISTORY_ST = ['completed','cancelled','rejected'];
 
 // ── AUTH STATE ─────────────────────────────────
@@ -794,7 +792,7 @@ fbAuth.onAuthStateChanged(async fbUser => {
     }
     sessionStorage.removeItem('hs_after_login');
     await loadUserData(fbUser);
-    startBookingListener(fbUser.uid);
+    startLivePoller();
     const urlTab = new URLSearchParams(window.location.search).get('tab');
     if (urlTab && ['bookings','history','profile'].includes(urlTab)) {
       const btn = document.querySelector(`.tab-btn[data-tab="${urlTab}"]`);
@@ -807,6 +805,8 @@ fbAuth.onAuthStateChanged(async fbUser => {
       if (!_authReady && !currentUser) {
         currentProfile = null;
         allBookings = [];
+        _liveBk = null;
+        stopLivePoller();
         showGate();
       }
     }, 3000);
@@ -881,16 +881,15 @@ async function doRegister() {
   try {
     const cred = await fbAuth.createUserWithEmailAndPassword(email, pwd);
     await cred.user.updateProfile({ displayName: name });
-    const profile = {
-      uid: cred.user.uid,
-      id:  'HS-CU-' + Date.now().toString(36).toUpperCase(),
-      name, phone, city, email,
-      photoURL: '',
-      provider: 'email',
-      registeredAt: new Date().toISOString(),
-      wallet: 0
-    };
-    await fbDB.ref('customers/' + cred.user.uid).set(profile);
+    // Create the customer in MySQL (customers.php register, Firebase token auth)
+    const token = await cred.user.getIdToken();
+    const rRes  = await fetch('https://hamaraservice.com/api/customers.php?action=register', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, city, email, auth_method: 'email' })
+    });
+    const rData = await rRes.json().catch(() => ({}));
+    if (!rData.success) showToast('⚠️ Account created, but profile not saved: ' + (rData.error || 'server error') + '. Update it in the Profile tab.');
   } catch(e) {
     const m = { 'auth/email-already-in-use':'Email already registered. Please sign in.', 'auth/invalid-email':'Invalid email.', 'auth/weak-password':'Password too weak.' };
     showAuthErr(m[e.code] || 'Registration failed: ' + (e.message || ''));
@@ -910,9 +909,12 @@ async function doLogout() {
   if (!confirm('Sign out of your account?')) return;
   // Clear ALL local cache BEFORE sign-out so next user sees nothing
   clearLocalUserCache(currentUser ? currentUser.uid : null);
+  stopLivePoller();
+  closeCustomerTrackView();
   try { await fbAuth.signOut(); } catch(e) {}
   currentUser = currentProfile = null;
   allBookings = [];
+  _liveBk = null;
   showGate();
   showToast('\uD83D\uDC4B Signed out successfully');
 }
@@ -989,17 +991,7 @@ async function loadUserData(fbUser) {
       const bkData = await bkRes.json();
       if (bkData.success && Array.isArray(bkData.data)) {
         fbBks = bkData.data.map(function(b) {
-          return Object.assign({}, b, {
-            id:          b.id,
-            service:     b.svc_name || b.service,
-            status:      b.status,
-            customerId:  b.customer_id || fbUser.uid,
-            providerId:  b.provider_id,
-            providerName:b.provider_name,
-            amountPaid:  b.confirmed_price || b.amount || 0,
-            createdAt:   b.created_at,
-            completedAt: b.completed_at,
-          });
+          return Object.assign(normBk(b), { customerId: b.customer_id || fbUser.uid });
         });
       }
     } catch(e) { console.error('Bookings load error:', e); }
@@ -1008,19 +1000,10 @@ async function loadUserData(fbUser) {
     allBookings = fbBks.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
     renderBookings(); renderHistory();
     
-    // Check for payment_pending bookings and OTP data on page load
-    checkForPendingPayments();
-    
-    // Clear any stale payment or OTP modals from previous sessions
+    // Clear any stale payment or OTP modals from previous sessions,
+    // then refresh the live booking (OTP / payment / tracking) right away
     clearStaleModals();
-
-    // Wallet — load async, don't block main render
-    fbDB.ref('transactions/' + fbUser.uid).once('value').then(txSnap => {
-      transactions = [];
-      if (txSnap.exists()) txSnap.forEach(c => transactions.push(c.val()));
-      transactions.sort((a,b) => (b.ts||0)-(a.ts||0));
-      updateStats();
-    }).catch(()=>{});
+    pollLive();
   } catch(e) {
     clearTimeout(_loadTimeout);
     console.warn('loadUserData error:', e.message);
@@ -1107,12 +1090,14 @@ async function saveProfile() {
     address: document.getElementById('pAddress').value.trim(),
   };
   if (!up.name) { showToast('⚠️ Name is required'); return; }
-  currentProfile = {...currentProfile, ...up};
-  const uid = currentUser ? currentUser.uid : currentProfile.uid;
-  if (uid) {
-    await fbDB.ref('customers/' + uid).update(up);
-    if (currentUser) await currentUser.updateProfile({ displayName: up.name }).catch(()=>{});
-  }
+  if (!currentUser) { showToast('⚠️ Not signed in'); return; }
+  // Save to MySQL (customers.php update, Firebase token auth)
+  try {
+    const res = await apiCall('customers.php', 'update', up);
+    if (!res || !res.success) { showToast('⚠️ ' + ((res && res.error) || 'Could not save profile')); return; }
+    currentProfile = Object.assign({}, currentProfile, up, res.data || {});
+  } catch(e) { showToast('⚠️ Network error — profile not saved'); return; }
+  await currentUser.updateProfile({ displayName: up.name }).catch(()=>{});
   // Cache under UID-keyed key — never the shared 'hs_current_customer' key
   const _saveUid = currentUser ? currentUser.uid : (currentProfile ? currentProfile.uid : null);
   if (_saveUid) { try { localStorage.setItem('hs_profile_' + _saveUid, JSON.stringify(currentProfile)); } catch(e){} }
@@ -1223,33 +1208,81 @@ function handleAvatarChange(input) {
   reader.readAsDataURL(file);
 }
 
+// ── API (MySQL) — authenticated with the Firebase ID token ────────────────────
+const API_BASE = 'https://hamaraservice.com/api/';
+const SUPPORT_PHONE = '+91 8985849710';
+// Returns the parsed JSON ({success,data} / {success:false,error}); never throws on HTTP errors
+async function apiCall(file, action, body, query) {
+  if (!currentUser) throw new Error('Not signed in');
+  const token = await currentUser.getIdToken();
+  const init = { method: body ? 'POST' : 'GET', headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+  const url = API_BASE + file + (action ? '?action=' + encodeURIComponent(action) + (query || '') : '');
+  const r = await fetch(url, init);
+  const t = await r.text();
+  try { return JSON.parse(t); }
+  catch (e) { return { success: false, error: 'Server error (HTTP ' + r.status + ')' }; }
+}
+
+// ── Booking helpers ─────────────────────────────
+function stOf(b)          { return String((b && b.status) || '').toLowerCase(); }
+function payableAmt(b)    { return parseInt((b && (b.confirmed_price || b.amount || b.amountPaid)) || 0, 10) || 0; }
+function isPaid(b)        { return String((b && b.payment_status) || '').toLowerCase() === 'paid'; }
+function isCashPending(b) { return String((b && b.payment_status) || '').toLowerCase() === 'cash_pending'; }
+// Contract: customer pays when status is active/completed and payment_status != 'paid'
+function isPayable(b)     { const s = stOf(b); return (s === 'active' || s === 'completed') && !isPaid(b) && payableAmt(b) > 0; }
+function isActiveBk(b)    { return ACTIVE_ST.includes(stOf(b)); }
+function isCancellable(b) { return ['searching','pending','price_quoted','negotiating','negotiation_final','confirmed','accepted','assigned'].includes(stOf(b)); }
+function isReviewed(b)    { return !!(b && (b.rating || b.reviewed || _reviewedIds.has(b.id))); }
+function normBk(b) {
+  return Object.assign({}, b, {
+    service:      b.svc_name || b.service,
+    providerName: b.provider_name || b.providerName,
+    providerId:   b.provider_id || b.providerId,
+    amountPaid:   parseInt(b.confirmed_price || b.amount || 0, 10) || 0,
+    createdAt:    b.created_at || b.createdAt,
+    completedAt:  b.completed_at || b.completedAt,
+  });
+}
+function upsertBooking(bk) {
+  const i = allBookings.findIndex(b => b.id === bk.id);
+  if (i >= 0) allBookings[i] = Object.assign({}, allBookings[i], bk); else allBookings.unshift(bk);
+}
+// Bookings reviewed from this browser (customers.php list does not carry the rating)
+const _reviewedIds = new Set((function(){ try { return JSON.parse(localStorage.getItem('hs_reviewed_bks') || '[]'); } catch(e) { return []; } })());
+function markReviewed(id) {
+  _reviewedIds.add(id);
+  try { localStorage.setItem('hs_reviewed_bks', JSON.stringify(Array.from(_reviewedIds).slice(-200))); } catch(e) {}
+}
+
 // ── BOOKINGS RENDER ────────────────────────────
 function renderBookings() {
   const el = document.getElementById('activeBookingsList');
-  const active = allBookings.filter(b => ACTIVE_ST.includes((b.status||'confirmed').toLowerCase()));
+  const live = _liveBk;
+  const active = allBookings.filter(b => isActiveBk(b) && !(live && b.id === live.id));
+  const count = active.length + (live ? 1 : 0);
   const badge = document.getElementById('activeBookingBadge');
-  badge.textContent  = active.length;
-  badge.style.display = active.length ? 'inline' : 'none';
+  badge.textContent  = count;
+  badge.style.display = count ? 'inline' : 'none';
   updateStats();
-  if (!active.length) {
+  if (!count) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No active bookings</div><div class="empty-sub">Book a service and it'll appear here.</div><a class="btn-book-now" href="user-booking.html">🔍 Book a Service</a></div>`;
     return;
   }
-  console.log('Active bookings to render:', active.map(b => ({id: b.id, status: b.status})));
-  el.innerHTML = active.map(b => bkCard(b, true)).join('');
+  el.innerHTML = (live ? liveCardHtml(live) : '') + active.map(b => bkCard(b, true)).join('');
 }
 
 function renderHistory(filter='all') {
   const el = document.getElementById('historyList');
   const normSt = s => {
-    const m = {completed:'completed',cancelled:'cancelled',rejected:'cancelled',
-               payment_cancelled:'cancelled',provider_cancelled:'cancelled'};
+    const m = {completed:'completed',cancelled:'cancelled',rejected:'cancelled',reviewed:'completed',
+               payment_cancelled:'cancelled',provider_cancelled:'cancelled',expired:'cancelled'};
     return m[(s||'').toLowerCase()] || (s||'').toLowerCase();
   };
-  let list = allBookings.filter(b => !ACTIVE_ST.includes((b.status||'confirmed').toLowerCase()));
+  let list = allBookings.filter(b => !isActiveBk(b) && !(_liveBk && b.id === _liveBk.id));
   if (filter !== 'all') list = list.filter(b => normSt(b.status) === filter);
   if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🕑</div><div class="empty-title">No history ${filter!=='all'?'for "'+filter+'"':''}</div><div class="empty-sub">Completed &amp; cancelled bookings appear here.</div></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🕑</div><div class="empty-title">No history ${filter!=='all'?'for "'+esc(filter)+'"':''}</div><div class="empty-sub">Completed &amp; cancelled bookings appear here.</div></div>`;
     return;
   }
   el.innerHTML = list.map(b => bkCard(b, false)).join('');
@@ -1261,37 +1294,58 @@ function filterHistory(f, el) {
   renderHistory(f);
 }
 
+const ST_LABEL = {
+  searching:'Searching', price_quoted:'Price quoted', negotiating:'Negotiating', negotiation_final:'Final offer',
+  confirmed:'Confirmed', active:'In progress', completed:'Completed', cancelled:'Cancelled'
+};
+function statusText(b) {
+  const s = stOf(b);
+  if (s === 'cancelled' && b.cancel_reason === 'expired') return 'Expired';
+  if (s === 'cancelled' && b.cancel_reason === 'no_provider') return 'No provider found';
+  return ST_LABEL[s] || (b.status || 'Confirmed').replace(/_/g,' ');
+}
+
 function bkCard(b, isActive) {
-  const stMap = {confirmed:'confirmed',pending:'pending',active:'active',searching:'pending',completed:'completed',cancelled:'cancelled',accepted:'confirmed',assigned:'confirmed',rejected:'cancelled'};
-  const stCls = stMap[(b.status||'confirmed').toLowerCase()] || 'confirmed';
+  const stMap = {confirmed:'confirmed',pending:'pending',active:'active',searching:'pending',price_quoted:'pending',
+                 negotiating:'pending',negotiation_final:'pending',completed:'completed',reviewed:'completed',
+                 cancelled:'cancelled',accepted:'confirmed',assigned:'confirmed',rejected:'cancelled'};
+  const st     = stOf(b);
+  const stCls  = stMap[st] || 'confirmed';
   const emoji  = esc(b.emoji || b.svc_icon || getSvcEmoji(b.service || b.serviceName || ''));
   const name   = esc(b.service || b.serviceName || 'Service Booking');
   const rawId  = b.id || '';
   const id     = esc(rawId || '—');
-  const price  = b.price ? '₹'+esc(b.price) : (b.amountPaid ? '₹'+esc(b.amountPaid) : '—');
+  const amt    = payableAmt(b);
+  const price  = b.price ? '₹'+esc(b.price) : (amt ? '₹'+esc(amt) : '—');
   const date   = esc(b.date ? fmtDate(b.date) : (b.slot_date ? fmtDate(b.slot_date) : '—'));
   const time   = esc(b.time || b.bookTime || b.slot_time || '—');
   const prov   = esc(b.providerName || b.assignedProvider || '—');
   const addrRaw= String(b.address || b.location || '—');
   const addr   = esc(addrRaw.slice(0,55));
-  const status = esc((b.status || 'Confirmed').replace(/_/g,' '));
+  const status = esc(statusText(b));
   // Values for handlers go through data-* attributes (escaped), never inline JS strings
   const dId    = esc(rawId);
   const dSvc   = esc(b.service || '');
 
-  console.log('Creating card for booking:', {id: id, status: b.status, isActive: isActive});
-  
   let acts = '';
-  if (b.status === 'payment_pending') {
-    acts = '<button class="bi-btn solid-green" data-bid="' + dId + '" onclick="handlePaymentFromCard(this.dataset.bid)">💳 Pay Now</button>';
-    acts += '<button class="bi-btn outline" data-svc="' + dSvc + '" onclick="rebookSvc(this.dataset.svc)">🔄 Rebook</button>';
-  } else if (isActive) {
-    acts = '<button class="bi-btn outline" data-bid="' + dId + '" onclick="trackBk(this.dataset.bid)">📍 Track</button>';
-    acts += '<button class="bi-btn outline" onclick="showToast(\'📞 +91-1800-XXX-XXXX\')">Help</button>';
-    acts += '<button class="bi-btn solid-red" data-bid="' + dId + '" onclick="cancelBk(this.dataset.bid)">Cancel</button>';
-  } else {
-    acts = '<button class="bi-btn outline" data-svc="' + dSvc + '" onclick="rebookSvc(this.dataset.svc)">🔄 Rebook</button>';
+  if (isPayable(b) && !isCashPending(b)) {
+    acts += '<button class="bi-btn solid-green" data-bid="' + dId + '" onclick="handlePaymentFromCard(this.dataset.bid)">💳 Pay Now</button>';
   }
+  if (isActive) {
+    if ((st === 'confirmed' || st === 'active') && b.providerId)
+      acts += '<button class="bi-btn outline" data-bid="' + dId + '" onclick="trackBk(this.dataset.bid)">📍 Track</button>';
+    acts += '<a class="bi-btn outline" href="tel:' + SUPPORT_PHONE.replace(/\s/g,'') + '" style="text-decoration:none">Help</a>';
+    acts += buildCancelBtn(b);
+  } else {
+    if (st === 'completed' && b.providerId && !isReviewed(b))
+      acts += '<button class="bi-btn outline" data-bid="' + dId + '" onclick="reviewFromCard(this.dataset.bid)">⭐ Rate</button>';
+    acts += '<button class="bi-btn outline" data-svc="' + dSvc + '" onclick="rebookSvc(this.dataset.svc)">🔄 Rebook</button>';
+  }
+  let note = '';
+  if (isCashPending(b)) note = '<div style="font-size:12px;color:#b45309;background:#fffbeb;border-radius:9px;padding:8px 10px;margin-top:8px;">💵 Cash payment — awaiting provider confirmation</div>';
+  else if (isPaid(b) && (st === 'completed' || st === 'active')) note = '<div style="font-size:12px;color:#00956a;margin-top:8px;font-weight:700;">💚 Paid</div>';
+  if (st === 'cancelled' && b.cancel_reason && b.cancel_reason !== 'expired' && b.cancel_reason !== 'no_provider')
+    note += '<div style="font-size:12px;color:#718096;margin-top:8px;">Reason: ' + esc(b.cancel_reason) + '</div>';
 
   return `<div class="booking-item">
     <div class="bi-head">
@@ -1306,8 +1360,88 @@ function bkCard(b, isActive) {
         <div class="bi-meta-item"><span class="bi-meta-label">Provider</span><span class="bi-meta-val">${prov}</span></div>
         <div class="bi-meta-item" style="grid-column:1/-1"><span class="bi-meta-label">Address</span><span class="bi-meta-val">${addr}${addrRaw.length>55?'…':''}</span></div>
       </div>
+      ${note}
     </div>
     <div class="bi-footer"><div class="bi-price">${price}</div><div class="bi-actions">${acts}</div></div>
+  </div>`;
+}
+
+// ── Live booking card (the one returned by bookings.php?action=active) ────────
+function otpBoxHtml(label, otp, hint) {
+  return '<div style="background:#f0f9ff;border:2px dashed #1B6B7A;border-radius:14px;padding:14px;margin-top:10px;text-align:center;">' +
+    '<div style="font-size:11px;font-weight:800;color:#1B6B7A;text-transform:uppercase;letter-spacing:.6px;">' + esc(label) + '</div>' +
+    '<div style="font-size:38px;font-weight:900;letter-spacing:10px;color:#1B6B7A;font-family:monospace;user-select:all;margin-top:4px;">' + esc(otp) + '</div>' +
+    '<div style="font-size:12px;color:#6b7280;margin-top:4px;">' + esc(hint) + '</div></div>';
+}
+function liveCardHtml(bk) {
+  const s    = stOf(bk);
+  const bid  = esc(bk.id);
+  const prov = esc(bk.providerName || 'Your provider');
+  const amt  = payableAmt(bk);
+  let title = '', body = '', btns = '';
+  switch (s) {
+    case 'searching':
+      title = '🔍 Looking for a professional…';
+      body  = 'We are alerting providers near you. This page updates automatically.';
+      break;
+    case 'price_quoted':
+    case 'negotiation_final': {
+      const offer = parseInt(s === 'negotiation_final' ? (bk.final_price || bk.quoted_price) : bk.quoted_price, 10) || 0;
+      title = s === 'negotiation_final' ? '💰 Final price offer' : '💬 Price offer received';
+      body  = prov + ' offered <strong>₹' + esc(offer) + '</strong> for this job.';
+      if (offer > 0) btns += '<button class="bi-btn solid-green" data-bid="' + bid + '" data-price="' + esc(offer) + '" onclick="acceptOffer(this.dataset.bid,this.dataset.price)">✅ Accept ₹' + esc(offer) + '</button>';
+      btns += '<button class="bi-btn outline" data-bid="' + bid + '" onclick="declineOffer(this.dataset.bid)">🔄 Find another</button>';
+      break;
+    }
+    case 'negotiating':
+      title = '💬 Negotiating';
+      body  = 'Waiting for ' + prov + ' to respond to your counter offer.';
+      break;
+    case 'confirmed': {
+      const otp = bk.otp || bk.start_otp;
+      title = '✅ Confirmed — ' + prov + ' is on the way';
+      body  = 'Price: <strong>₹' + esc(amt) + '</strong>' +
+              (otp ? otpBoxHtml('Start code', otp, 'Share this code with your provider when they arrive to start the job.')
+                   : '<div style="margin-top:8px;color:#718096;">Your start code will appear here.</div>');
+      if (bk.providerId) btns += '<button class="bi-btn outline" data-bid="' + bid + '" onclick="trackBk(this.dataset.bid)">📍 Track</button>';
+      break;
+    }
+    case 'active':
+      title = '🛠️ Work in progress';
+      body  = bk.completion_otp
+        ? otpBoxHtml('Completion code', bk.completion_otp, 'Share this code only when you are satisfied with the work.')
+        : '<div style="color:#718096;">When ' + prov + ' finishes, a completion code will appear here.</div>';
+      if (bk.providerId) btns += '<button class="bi-btn outline" data-bid="' + bid + '" onclick="trackBk(this.dataset.bid)">📍 Track</button>';
+      break;
+    case 'completed':
+      title = '✅ Service completed';
+      body  = 'Amount: <strong>₹' + esc(amt) + '</strong>';
+      break;
+    default:
+      title = esc(statusText(bk));
+  }
+  // Payment (active / completed and not yet paid)
+  if (s === 'active' || s === 'completed') {
+    if (isPaid(bk)) body += '<div style="margin-top:10px;font-weight:700;color:#00956a;">💚 Paid — thank you!</div>';
+    else if (isCashPending(bk)) body += '<div style="margin-top:10px;font-size:13px;color:#b45309;background:#fffbeb;border-radius:9px;padding:9px 11px;">💵 Cash payment — awaiting provider confirmation</div>';
+    else if (amt > 0) btns = '<button class="bi-btn solid-green" data-bid="' + bid + '" onclick="handlePaymentFromCard(this.dataset.bid)">💳 Pay ₹' + esc(amt) + '</button>' + btns;
+  }
+  if (s === 'completed' && isPaid(bk) && bk.providerId && !isReviewed(bk))
+    btns += '<button class="bi-btn outline" data-bid="' + bid + '" onclick="reviewFromCard(this.dataset.bid)">⭐ Rate</button>';
+  btns += '<a class="bi-btn outline" href="tel:' + SUPPORT_PHONE.replace(/\s/g,'') + '" style="text-decoration:none">Help</a>';
+  btns += buildCancelBtn(bk);
+
+  return `<div class="booking-item" style="border:2px solid #1B6B7A;">
+    <div class="bi-head">
+      <div class="bi-emoji">${esc(bk.svc_icon || getSvcEmoji(bk.service || ''))}</div>
+      <div class="bi-info"><div class="bi-service">${esc(bk.service || 'Your booking')}</div><div class="bi-id">ID: ${bid} · <span style="color:#00956a;">● Live</span></div></div>
+      <div class="bi-badge active"><span class="bi-dot"></span>${esc(statusText(bk))}</div>
+    </div>
+    <div class="bi-body">
+      <div style="font-weight:800;font-size:15px;margin-bottom:6px;">${title}</div>
+      <div style="font-size:13px;line-height:1.6;">${body}</div>
+    </div>
+    <div class="bi-footer"><div class="bi-price">${amt ? '₹' + esc(amt) : ''}</div><div class="bi-actions">${btns}</div></div>
   </div>`;
 }
 
@@ -1323,12 +1457,37 @@ function fmtDate(d) {
   catch(e){return d;}
 }
 
+function findBk(id) {
+  if (_liveBk && _liveBk.id === id) return _liveBk;
+  return allBookings.find(b => b.id === id);
+}
+
+// ── Price offer ────────────────────────────────
+async function acceptOffer(id, price) {
+  try {
+    const res = await apiCall('bookings.php', 'confirm_price', { booking_id: id, confirmed_price: parseInt(price, 10) });
+    if (!res || !res.success) { showToast('⚠️ ' + ((res && res.error) || 'Could not confirm the price')); return; }
+    showToast('✅ Booking confirmed!');
+    pollLive();
+  } catch(e) { showToast('⚠️ Network error — please try again'); }
+}
+async function declineOffer(id) {
+  if (!confirm('Decline this offer and look for another professional?')) return;
+  try {
+    const res = await apiCall('bookings.php', 'decline', { booking_id: id });
+    if (!res || !res.success) { showToast('⚠️ ' + ((res && res.error) || 'Could not decline the offer')); return; }
+    showToast('🔄 Searching for another professional…');
+    pollLive();
+  } catch(e) { showToast('⚠️ Network error — please try again'); }
+}
+
+// ── Cancel (with reason) ───────────────────────
+const CANCEL_REASONS = ['Changed my plans','Booked by mistake','Found another service provider','Provider is taking too long','Price is too high','Other'];
 function cancelBk(id) {
-  const bk = allBookings.find(b=>b.id===id); if (!bk) return;
-  const st = (bk.status||'').toLowerCase();
-  if (st==='otp_sent'||st==='payment_pending') {
-    showToast('⛔ Job in progress — contact support: 8985849710'); return;
-  }
+  const bk = findBk(id); if (!bk) return;
+  const st = stOf(bk);
+  if (st === 'active') { showToast('⛔ Job in progress — contact support: ' + SUPPORT_PHONE); return; }
+  if (!isCancellable(bk)) { showToast('This booking can no longer be cancelled'); return; }
   if (st==='accepted'||st==='confirmed') {
     const ref = bk.acceptedAt||bk.createdAt;
     const unlockAt = ref ? new Date(ref).getTime()+2*60*60*1000 : 0;
@@ -1337,23 +1496,54 @@ function cancelBk(id) {
       showToast('⏳ Wait '+rem+' more min — provider may still be on the way'); return;
     }
   }
-  if (!confirm('Cancel this booking?')) return;
-  if (!currentUser) { showToast('⚠️ Not signed in'); return; }
-  // Bookings live in MySQL — cancel through the authenticated API
-  currentUser.getIdToken().then(token =>
-    fetch('https://hamaraservice.com/api/bookings.php?action=cancel', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ booking_id: id })
-    }).then(r => r.json())
-  ).then(res => {
-    if (!res || !res.success) { showToast('⚠️ ' + ((res && res.error) || 'Could not cancel booking')); return; }
-    allBookings = allBookings.map(b=>b.id===id?Object.assign({},b,{status:'cancelled'}):b);
+  openCancelModal(bk);
+}
+function openCancelModal(bk) {
+  closeCancelModal();
+  const modal = document.createElement('div');
+  modal.id = 'cancelReasonModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;box-sizing:border-box;';
+  modal.innerHTML = `<div style="background:white;border-radius:20px;padding:24px 20px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <h2 style="font-size:18px;font-weight:800;color:#0f1117;margin-bottom:4px;">Cancel booking?</h2>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">${esc(bk.service || '')} · ${esc(bk.id)}</p>
+      <div style="font-size:12px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Reason</div>
+      <div id="cancelReasons" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+        ${CANCEL_REASONS.map((r,i) => `<label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;"><input type="radio" name="cancelReason" value="${esc(r)}"${i===0?' checked':''}/> ${esc(r)}</label>`).join('')}
+      </div>
+      <textarea id="cancelOther" rows="2" maxlength="200" placeholder="Tell us more (optional)" style="width:100%;padding:10px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;resize:none;box-sizing:border-box;margin-bottom:14px;"></textarea>
+      <button id="cancelSubmitBtn" data-bid="${esc(bk.id)}" onclick="submitCancel(this.dataset.bid)" style="width:100%;padding:13px;background:#E8251A;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel booking</button>
+      <button onclick="closeCancelModal()" style="width:100%;padding:11px;background:transparent;border:none;color:#6b7280;font-size:14px;cursor:pointer;margin-top:6px;">Keep booking</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function closeCancelModal() { const m = document.getElementById('cancelReasonModal'); if (m) m.remove(); }
+async function submitCancel(id) {
+  const sel   = document.querySelector('#cancelReasons input[name="cancelReason"]:checked');
+  const extra = (document.getElementById('cancelOther') || {value:''}).value.trim();
+  let reason  = sel ? sel.value : 'Other';
+  if (extra) reason = (reason === 'Other' ? '' : reason + ': ') + extra;
+  const btn = document.getElementById('cancelSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Cancelling…'; }
+  try {
+    const res = await apiCall('bookings.php', 'cancel', { booking_id: id, reason: reason.slice(0, 250) });
+    if (!res || !res.success) {
+      showToast('⚠️ ' + ((res && res.error) || 'Could not cancel booking'));
+      if (btn) { btn.disabled = false; btn.textContent = 'Cancel booking'; }
+      return;
+    }
+    closeCancelModal();
+    const upd = { status: 'cancelled', cancel_reason: reason, cancelled_by: 'customer' };
+    allBookings = allBookings.map(b => b.id === id ? Object.assign({}, b, upd) : b);
+    if (_liveBk && _liveBk.id === id) { upsertBooking(Object.assign({}, _liveBk, upd)); _liveBk = null; }
     renderBookings(); renderHistory(); showToast('❌ Booking cancelled');
-  }).catch(() => showToast('⚠️ Network error — booking not cancelled'));
+    pollLive();
+  } catch(e) {
+    showToast('⚠️ Network error — booking not cancelled');
+    if (btn) { btn.disabled = false; btn.textContent = 'Cancel booking'; }
+  }
 }
 function trackBk(id) {
-  const bk = allBookings.find(b => b.id === id);
+  const bk = findBk(id);
   if (!bk) { showToast('Booking not found'); return; }
   openCustomerTrackView(bk);
 }
@@ -1361,196 +1551,123 @@ function rebookSvc(svc)  { window.location.href='user-booking.html'+(svc?'?servi
 
 // ── STATS ──────────────────────────────────────
 function updateStats() {
-  const active = allBookings.filter(b => ACTIVE_ST.includes((b.status||'confirmed').toLowerCase()));
+  const active = allBookings.filter(b => isActiveBk(b) && !(_liveBk && b.id === _liveBk.id)).length + (_liveBk ? 1 : 0);
   document.getElementById('statTotal').textContent  = allBookings.length;
-  document.getElementById('statActive').textContent = active.length;
-
+  document.getElementById('statActive').textContent = active;
 }
 
+// ── LIVE BOOKING POLLER (replaces the old Firebase RTDB listeners) ───────────
+// Polls bookings.php?action=active every 5s while a booking is live, every 30s otherwise.
+let _liveBk = null, _livePollTimer = null, _livePolling = false;
+const _liveSeen = {};
 
-// ── REAL-TIME BOOKING LISTENER ─────────────────
-function startBookingListener(uid) {
-  // Listen for changes to THIS user's bookings on Firebase
-  fbDB.ref('bookings').orderByChild('customerId').equalTo(uid).on('child_changed', snap => {
-    const up = snap.val();
-    if (!up || !up.id) return;
-    const idx = allBookings.findIndex(b=>b.id===up.id);
-    if(idx>=0) allBookings[idx]={...allBookings[idx],...up}; else allBookings.unshift(up);
-    renderBookings(); renderHistory();
-    const st = (up.status||'').toLowerCase();
-    if(['confirmed','accepted','assigned'].includes(st))
-      showToast('\uD83C\uDF89 Your booking was accepted by a professional!');
-    else if(st === 'otp_sent') {
-      console.log('Status changed to otp_sent, showing OTP modal for booking:', up.id);
-      handleOtpSent(up);
-    }
-    else if(st === 'payment_pending') {
-      console.log('Status changed to payment_pending, showing payment dialog for booking:', up.id);
-      handlePaymentRequest(up);
-    }
-    else if(st === 'completed')
-      showToast('\u2705 Service completed! Thank you for using HamaraService.');
-  });
-  // job_otp updates — SCOPED to this customer only (never listen on the whole node,
-  // which would download every customer's OTP). Requires .indexOn ["customerId"]
-  // on /job_otp and customerId on each OTP record (provider-dashboard writes it).
-  const otpQuery = fbDB.ref('job_otp').orderByChild('customerId').equalTo(uid);
-  // child_added — fires when provider clicks Complete Job (and replays history on attach)
-  otpQuery.on('child_added', snap => {
-    const d = snap.val(); if (!d || !d.otp) return;
-    const bkId = d.bookingId || snap.key;
-    const bk = allBookings.find(b => b.id === bkId);
-    const st = (bk?.status || d.status || '').toLowerCase();
-    if (st === 'payment_pending' && bk) { handlePaymentRequest(bk); return; }
-    // Don't show OTP for already paid/completed bookings (child_added replays history)
-    if (['paid','completed','cancelled','rejected','verified'].includes(st)) return;
-    showOtpModal(bkId, d.otp, d);
-  });
-  // child_changed — fires when provider verifies OTP
-  otpQuery.on('child_changed', snap => {
-    const d = snap.val(); if (!d || d.status !== 'verified') return;
-    const bkId = d.bookingId || snap.key;
-    closeOtpModal();
-    const bkIdx = allBookings.findIndex(b => b.id === bkId);
-    if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, allBookings[bkIdx], {status:'payment_pending'});
-    const bk = bkIdx >= 0 ? allBookings[bkIdx]
-             : {id:bkId, status:'payment_pending', amount:d.amount||0, service:d.service||''};
-    if (bkIdx < 0) allBookings.unshift(bk);
-    renderBookings();
-    handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
-  });
-  // New bookings added
-  fbDB.ref('bookings').orderByChild('customerId').equalTo(uid).on('child_added', snap => {
-    const bk = snap.val();
-    if (!bk || !bk.id) return;
-    if (!allBookings.find(b => b.id === bk.id)) {
-      allBookings.unshift(bk);
-      allBookings.sort((a,b) => new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
-      renderBookings(); renderHistory(); updateStats();
-    }
-  });
+function startLivePoller() { stopLivePoller(); pollLive(); }
+function stopLivePoller()  { clearTimeout(_livePollTimer); _livePollTimer = null; }
 
-  // active_bookings — scoped query (never the whole node)
-  const activeQuery = fbDB.ref('active_bookings').orderByChild('customerId').equalTo(uid);
-  activeQuery.on('child_added', snap => {
-    const bk = snap.val(); if (!bk) return;
-    const bkId = bk.id || snap.key;
-    if (!allBookings.find(b=>b.id===bkId)) {
-      allBookings.unshift(Object.assign({},bk,{id:bkId}));
-      allBookings.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
-      renderBookings(); renderHistory(); updateStats();
+async function pollLive() {
+  clearTimeout(_livePollTimer);
+  if (!currentUser || _livePolling) return;
+  _livePolling = true;
+  let next = 30000;
+  try {
+    if (!document.hidden) {
+      const res = await apiCall('bookings.php', 'active');
+      if (res && res.success) applyLiveBooking(res.data ? normBk(res.data) : null);
     }
-  });
-  activeQuery.on('child_changed', snap => {
-    const bk = snap.val(); if (!bk) return;
-    const bkId = bk.id || snap.key;
-    const idx = allBookings.findIndex(b=>b.id===bkId);
-    if (idx>=0) allBookings[idx]=Object.assign({},allBookings[idx],bk,{id:bkId});
-    else allBookings.unshift(Object.assign({},bk,{id:bkId}));
-    allBookings.sort((a,b)=>new Date(b.createdAt||b.date||0)-new Date(a.createdAt||a.date||0));
-    renderBookings(); renderHistory(); updateStats();
-    const st=(bk.status||'').toLowerCase();
-    if(st==='accepted') showToast('🎉 Provider accepted your booking!');
-    else if(st==='otp_sent') {
-      // Only show OTP if not already paid
-      const curBk = allBookings.find(b=>b.id===bkId);
-      if (!curBk || !['paid','completed'].includes((curBk.status||'').toLowerCase()))
-        fetchAndShowOTP(bkId);
+    if (_liveBk) next = 5000;
+  } catch(e) {
+    if (_liveBk) next = 8000;
+  } finally {
+    _livePolling = false;
+  }
+  if (currentUser) _livePollTimer = setTimeout(pollLive, next);
+}
+document.addEventListener('visibilitychange', function() { if (!document.hidden && currentUser) pollLive(); });
+
+function applyLiveBooking(bk) {
+  const prev = _liveBk;
+  if (prev && (!bk || prev.id !== bk.id)) refreshOneBooking(prev.id, prev); // capture its final state
+  _liveBk = bk;
+  if (bk) {
+    upsertBooking(bk);
+    handleTransitions(prev && prev.id === bk.id ? prev : null, bk);
+  }
+  renderBookings(); renderHistory();
+}
+
+async function refreshOneBooking(id, prev) {
+  try {
+    const res = await apiCall('bookings.php', 'get', null, '&id=' + encodeURIComponent(id));
+    if (res && res.success && res.data) {
+      const bk = normBk(res.data);
+      upsertBooking(bk);
+      handleTransitions(prev, bk);
+      renderBookings(); renderHistory();
     }
-    else if(st==='payment_pending') {
-      // OTP verified — show payment popup
-      const bkFull = allBookings.find(b=>b.id===bkId);
-      if (bkFull) handlePaymentRequest(Object.assign({},bkFull,{status:'payment_pending'}));
+  } catch(e) {}
+}
+
+function handleTransitions(prev, bk) {
+  const s = stOf(bk), ps = prev ? stOf(prev) : null;
+  if (prev && ps !== s) {
+    if (s === 'price_quoted')           showToast('💬 ' + (bk.providerName || 'A provider') + ' sent you a price offer');
+    else if (s === 'negotiation_final') showToast('💰 Final price offer received');
+    else if (s === 'confirmed')         showToast('🎉 Booking confirmed! Share the start code when your provider arrives.');
+    else if (s === 'active')            showToast('🛠️ Your provider has started the job');
+    else if (s === 'completed')         showToast('✅ Service completed! Thank you for using HamaraService.');
+    else if (s === 'searching')         showToast('🔄 The provider could not take this job — searching for another professional');
+    else if (s === 'cancelled') {
+      if (bk.cancel_reason === 'expired') showToast('⌛ Search expired — no provider accepted in time');
+      else if (bk.cancelled_by === 'provider') showToast('❌ The provider cancelled this booking');
+      else if (bk.cancelled_by === 'admin') showToast('❌ This booking was cancelled by HamaraService');
     }
-  });
+  }
+  // Completion code — pop up once per OTP value
+  if (s === 'active' && bk.completion_otp && _liveSeen['cotp_' + bk.id] !== bk.completion_otp) {
+    _liveSeen['cotp_' + bk.id] = bk.completion_otp;
+    showOtpModal(bk.id, bk.completion_otp, { title: 'Job Completion Code', sub: 'Share this code only if you are satisfied with the work' });
+  }
+  if (s !== 'active') {
+    const m = document.getElementById('otpDisplayModal');
+    if (m && m.dataset.bid === bk.id) closeOtpModal();
+  }
+  // Payment prompt — once per booking, when the job is done and unpaid
+  if (s === 'completed' && isPayable(bk) && !isCashPending(bk) && !_liveSeen['pay_' + bk.id]) {
+    _liveSeen['pay_' + bk.id] = 1;
+    handlePaymentRequest(bk);
+  }
+  if (isPaid(bk)) {
+    if (_paymentBk && _paymentBk.id === bk.id) {
+      const m = document.getElementById('paymentRequestModal');
+      if (m && m.style.display !== 'none') { m.style.display = 'none'; showToast('✅ Payment confirmed'); }
+    }
+    if (prev && !isPaid(prev) && s === 'completed' && bk.providerId && !isReviewed(bk) && !_liveSeen['rev_' + bk.id]) {
+      _liveSeen['rev_' + bk.id] = 1;
+      setTimeout(function(){ showReviewModal(bk); }, 1200);
+    }
+  }
 }
 
 // ── Clear any stale modals from previous sessions ──────────────────────────
 function clearStaleModals() {
-  const paymentModal = document.getElementById('paymentRequestModal');
-  const otpModal = document.getElementById('otpDisplayModal');
-  const reviewModal = document.getElementById('reviewModal');
-  
-  if (paymentModal) {
-    paymentModal.style.display = 'none';
-    console.log('Cleared stale payment modal');
-  }
-  if (otpModal) {
-    otpModal.style.display = 'none';
-    console.log('Cleared stale OTP modal');
-  }
-  if (reviewModal) {
-    reviewModal.style.display = 'none';
-    console.log('Cleared stale review modal');
-  }
-}
-
-// ── Check for pending payments on page load ──────────────────────────────────
-function checkForPendingPayments() {
-  const pendingPayments = allBookings.filter(b => b.status === 'payment_pending');
-  if (pendingPayments.length > 0) {
-    // Show payment dialog for the first pending payment
-    const booking = pendingPayments[0];
-    setTimeout(() => handlePaymentRequest(booking), 1000); // Small delay to ensure page is loaded
-  }
-  
-  // Also check for pending or otp_sent bookings and show OTP modal if needed
-  const otpReadyBookings = allBookings.filter(b => b.status === 'pending' || b.status === 'otp_sent');
-  if (otpReadyBookings.length > 0) {
-    // Check if any of these bookings have OTP data in Firebase
-    otpReadyBookings.forEach(booking => {
-      fbDB.ref('job_otp/' + booking.id).once('value', snap => {
-        const otpData = snap.val();
-        if (otpData && otpData.otp) {
-          console.log('Found OTP data for booking on page load:', booking.id);
-          setTimeout(() => handleOtpSent(booking), 500);
-        }
-      });
-    });
-  }
-}
-
-// ── Customer sees 4-digit OTP code ────────────────────────────────────────────
-function handleOtpSent(bk) {
-  // Safety check: Only show OTP for pending or otp_sent status (handles race conditions)
-  if (bk && bk.status !== 'pending' && bk.status !== 'otp_sent') {
-    console.log('Preventing OTP modal for booking with wrong status:', bk.id, 'Status:', bk.status);
-    return;
-  }
-  console.log('Showing OTP modal for booking:', bk.id, 'Status:', bk.status);
-  // Fetch OTP from Firebase
-  fbDB.ref('job_otp/' + bk.id).once('value', snap => {
-    const otpData = snap.val();
-    if (!otpData || !otpData.otp) {
-      console.log('No OTP data found for booking:', bk.id);
-      return;
-    }
-    console.log('OTP data found, showing modal for booking:', bk.id);
-    showOtpModal(bk.id, otpData.otp, otpData);
+  ['paymentRequestModal','otpDisplayModal','reviewModal'].forEach(function(id) {
+    const m = document.getElementById(id);
+    if (m) m.style.display = 'none';
   });
 }
 
 // ── Customer payment ───────────────────────────────────────────────────────────
-// ── Active booking being paid ─────────────────────────────────────────────────
 let _paymentBk = null;
 
 function handlePaymentFromCard(bookingId) {
-  const booking = allBookings.find(b => b.id === bookingId);
-  if (booking) {
-    handlePaymentRequest(booking);
-  } else {
-    console.error('Booking not found for payment:', bookingId);
-    showToast('⚠️ Booking not found. Please refresh the page.');
-  }
+  const booking = findBk(bookingId);
+  if (booking) handlePaymentRequest(booking);
+  else showToast('⚠️ Booking not found. Please refresh the page.');
 }
 
 function handlePaymentRequest(bk) {
-  // Safety check: Only show payment for payment_pending status
-  if (bk && bk.status !== 'payment_pending') {
-    console.log('Preventing payment dialog for non-payment_pending booking:', bk.id, 'Status:', bk.status);
-    return;
-  }
-  console.log('Showing payment dialog for booking:', bk.id, 'Status:', bk.status);
+  if (!bk || !isPayable(bk)) return;
+  if (isCashPending(bk)) { showToast('💵 Cash payment — awaiting provider confirmation'); return; }
   _paymentBk = bk;
   let modal = document.getElementById('paymentRequestModal');
   if (!modal) {
@@ -1559,7 +1676,7 @@ function handlePaymentRequest(bk) {
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box;';
     document.body.appendChild(modal);
   }
-  const amount = esc(bk.amount || bk.priceVal || 0);
+  const amount = esc(payableAmt(bk));
   modal.innerHTML = `
     <div style="background:white;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
       <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
@@ -1567,7 +1684,7 @@ function handlePaymentRequest(bk) {
       </div>
       <div style="font-size:48px;margin-bottom:12px;">💳</div>
       <h2 style="font-size:20px;font-weight:800;color:#0f1117;margin-bottom:8px;">Payment Due</h2>
-      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;">Your service is complete. Pay securely to close the job.</p>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;">Pay securely online, or tell us you paid the provider in cash.</p>
       <div style="background:#f7f8fc;border-radius:14px;padding:18px;margin-bottom:20px;text-align:left;">
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">
           <span style="color:#6b7280;">Service</span><span style="font-weight:700;">${esc(bk.service||'—')}</span>
@@ -1580,8 +1697,11 @@ function handlePaymentRequest(bk) {
           <span style="font-size:22px;font-weight:900;color:#E8251A;">₹${amount}</span>
         </div>
       </div>
-      <button id="rzpPayBtn" onclick="startRazorpayPayment()" style="width:100%;padding:16px;background:#E8251A;color:white;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;letter-spacing:.3px;">
+      <button id="rzpPayBtn" onclick="startRazorpayPayment()" style="width:100%;padding:16px;background:#E8251A;color:white;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;letter-spacing:.3px;">
         🔒 Pay ₹${amount} Securely
+      </button>
+      <button id="cashPayBtn" onclick="payCash()" style="width:100%;padding:13px;background:white;color:#0f1117;border:1.5px solid #e5e7eb;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;">
+        💵 I paid in cash
       </button>
       <p style="font-size:12px;color:#9ca3af;margin-bottom:8px;">Secured by Razorpay · UPI · Cards · Netbanking</p>
       <p style="font-size:11px;color:#d1d5db;">Booking ID: ${esc(bk.id)}</p>
@@ -1589,50 +1709,61 @@ function handlePaymentRequest(bk) {
   modal.style.display = 'flex';
 }
 
+// Cash: customer claims payment → payment_status 'cash_pending' until the provider confirms
+async function payCash() {
+  const bk = _paymentBk;
+  if (!bk) return;
+  if (!confirm('Confirm that you paid ₹' + payableAmt(bk) + ' in cash to ' + (bk.providerName || 'the provider') + '?')) return;
+  const b = document.getElementById('cashPayBtn');
+  if (b) { b.disabled = true; b.textContent = 'Saving…'; }
+  try {
+    const res = await apiCall('bookings.php', 'mark_paid', { booking_id: bk.id });
+    if (!res || !res.success) {
+      showToast('⚠️ ' + ((res && res.error) || 'Could not record cash payment'));
+      if (b) { b.disabled = false; b.textContent = '💵 I paid in cash'; }
+      return;
+    }
+    const ps = (res.data && res.data.payment_status) || 'cash_pending';
+    const upd = Object.assign({}, bk, { payment_status: ps, payment_method: 'cash' });
+    upsertBooking(upd);
+    if (_liveBk && _liveBk.id === bk.id) _liveBk = Object.assign({}, _liveBk, { payment_status: ps, payment_method: 'cash' });
+    renderBookings(); renderHistory();
+    const m = document.getElementById('paymentRequestModal'); if (m) m.style.display = 'none';
+    showToast(ps === 'paid' ? '✅ Payment confirmed' : '💵 Noted — awaiting provider confirmation of your cash payment');
+  } catch(e) {
+    showToast('⚠️ Network error — please try again');
+    if (b) { b.disabled = false; b.textContent = '💵 I paid in cash'; }
+  }
+}
+
 async function startRazorpayPayment() {
   const bk = _paymentBk;
   if (!bk) return;
-  // IMPORTANT: re-query the button each time we update it. The payment modal
-  // is rebuilt by handlePaymentRequest on every invocation, so any reference
-  // captured at function start may be a now-detached DOM node by the time
-  // the Razorpay handler/dismiss callbacks fire.
+  // Re-query the button each time: the modal may be rebuilt while checkout is open
   const setBtn = (text, disabled) => {
     const b = document.getElementById('rzpPayBtn');
     if (b) { b.textContent = text; b.disabled = !!disabled; }
   };
-  const resetBtn = () => setBtn('🔒 Pay ₹' + (bk.amount||0) + ' Securely', false);
+  const resetBtn = () => setBtn('🔒 Pay ₹' + payableAmt(bk) + ' Securely', false);
   setBtn('Creating order...', true);
 
   try {
-    // Step 1: Create order on your server
-    const idToken = currentUser ? await currentUser.getIdToken() : '';
-    const res = await fetch('/api/create-order.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
-      body: JSON.stringify({
-        bookingId:  bk.id,
-        amount:     bk.amount || bk.priceVal || 0,
-        service:    bk.service || '',
-        customerId: currentUser ? currentUser.uid : '',
-        providerId: bk.providerId || '',
-      })
-    });
-    const order = await res.json();
-    if (!order.order_id) throw new Error(order.error || 'Failed to create order');
+    // Step 1: create the Razorpay order (amount is taken from the booking on the server)
+    const order = await apiCall('create-order.php', null, { bookingId: bk.id });
+    if (!order || !order.order_id) throw new Error((order && order.error) || 'Failed to create order');
 
-    // Step 2: Open Razorpay checkout popup
-    const rzpOptions = {
+    // Step 2: Razorpay checkout
+    const rzp = new Razorpay({
       key:         order.key_id,
       amount:      order.amount,
       currency:    'INR',
       name:        'HamaraService',
       description: bk.service || 'Home Service',
-      image:       'https://hamaraservice.in/icon.png',
       order_id:    order.order_id,
       prefill: {
-        name:  currentProfile ? (currentProfile.name || '') : '',
-        email: currentUser   ? (currentUser.email  || '') : '',
-        contact: bk.phone || (currentProfile ? currentProfile.phone || '' : ''),
+        name:    currentProfile ? (currentProfile.name || '') : '',
+        email:   currentUser    ? (currentUser.email  || '') : '',
+        contact: currentProfile ? (currentProfile.phone || '') : '',
       },
       theme: { color: '#E8251A' },
       modal: { ondismiss: function() {
@@ -1640,91 +1771,60 @@ async function startRazorpayPayment() {
         showToast('Payment cancelled. You can pay again from your bookings.');
       }},
       handler: async function(response) {
-        // Razorpay handler fires on client-side success, but the payment is only
-        // marked paid after the server verifies the signature.
+        // Step 3: the server verifies signature, amount and order with Razorpay
         setBtn('Verifying payment…', true);
-        let verified = false, result = null;
+        let result = null;
         try {
-          // Step 3a: server verification (verifies signature, records txn + RTDB status)
-          const vr = await fetch('/api/verify-payment.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id:   response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature:  response.razorpay_signature,
-              booking_id:          bk.id,
-              amount:              bk.amount || bk.priceVal || 0,
-              provider_id:         bk.providerId || '',
-              customer_id:         currentUser ? currentUser.uid : '',
-            })
+          result = await apiCall('bookings.php', 'razorpay_confirm', {
+            booking_id:          bk.id,
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature:  response.razorpay_signature,
           });
-          result = await vr.json();
-          verified = !!(result && result.success);
-        } catch(e) { console.warn('[Pay] Server verify failed:', e.message); }
+        } catch(e) { result = null; }
 
-        if (!verified) {
+        if (!result || !result.success) {
           setBtn('Verification pending', true);
-          showToast('⚠️ Payment received but not yet verified. Ref: ' + response.razorpay_payment_id + ' — contact support if it is not updated soon.');
+          showToast('⚠️ Payment received but not yet verified' + (result && result.error ? ' (' + result.error + ')' : '') +
+                    '. Ref: ' + response.razorpay_payment_id + ' — contact support at ' + SUPPORT_PHONE + ' if it is not updated soon.');
           return;
         }
 
-        // Step 3b: record in MySQL (signature is re-verified server-side)
-        if (currentUser) {
-          try {
-            const token = await currentUser.getIdToken();
-            await fetch('https://hamaraservice.com/api/bookings.php?action=razorpay_confirm', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                booking_id:          bk.id,
-                razorpay_order_id:   response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature:  response.razorpay_signature,
-              })
-            });
-          } catch(e) { console.warn('[Pay] MySQL confirm failed:', e.message); }
-        }
-
-        // Update in-memory only after verification
         const paidBk = Object.assign({}, bk, {
-          status:          'paid',
-          paidAt:          new Date().toISOString(),
-          paymentMethod:   'razorpay',
-          txnId:           response.razorpay_payment_id,
-          razorpayOrderId: response.razorpay_order_id,
+          payment_status: 'paid', payment_method: 'razorpay', razorpay_payment_id: response.razorpay_payment_id
         });
-        const bkIdx = allBookings.findIndex(b => b.id === bk.id);
-        if (bkIdx >= 0) allBookings[bkIdx] = paidBk;
+        upsertBooking(paidBk);
+        if (_liveBk && _liveBk.id === bk.id) _liveBk = Object.assign({}, _liveBk, paidBk);
         renderBookings(); renderHistory();
 
         const modal = document.getElementById('paymentRequestModal');
         if (modal) modal.style.display = 'none';
         setBtn('Paid ✓', true);
-        showToast('✅ Payment of ₹' + (bk.amount||0) + ' successful!');
-
-        // Show review after 1.5s
-        setTimeout(function(){ showReviewModal(paidBk); }, 1500);
+        showToast('✅ Payment of ₹' + payableAmt(bk) + ' successful!');
+        if (stOf(paidBk) === 'completed' && paidBk.providerId && !isReviewed(paidBk)) {
+          _liveSeen['rev_' + bk.id] = 1;
+          setTimeout(function(){ showReviewModal(paidBk); }, 1500);
+        }
+        pollLive();
       }
-    };
-
-    const rzp = new Razorpay(rzpOptions);
+    });
     rzp.on('payment.failed', function(resp) {
-      showToast('❌ Payment failed: ' + (resp.error.description || 'Try again'));
+      showToast('❌ Payment failed: ' + ((resp && resp.error && resp.error.description) || 'Try again'));
       resetBtn();
     });
     rzp.open();
 
   } catch(err) {
-    showToast('⚠️ Could not start payment. Check connection and try again.');
-    console.error('Payment error:', err);
+    showToast('⚠️ ' + ((err && err.message && err.message !== 'Failed to fetch') ? err.message : 'Could not start payment. Check connection and try again.'));
     resetBtn();
   }
 }
 
-// processPayment replaced by Razorpay checkout (startRazorpayPayment)
-
-// ── Review modal after payment ─────────────────────────────────────────────────
+// ── Review (reviews.php submit) ────────────────────────────────────────────────
+function reviewFromCard(id) {
+  const bk = findBk(id);
+  if (bk) showReviewModal(bk);
+}
 function showReviewModal(bk) {
   let modal = document.getElementById('reviewModal');
   if (!modal) {
@@ -1733,7 +1833,7 @@ function showReviewModal(bk) {
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
     document.body.appendChild(modal);
   }
-  let selStars = 0;
+  window._reviewStars = 0;
   modal.innerHTML = `
     <div style="background:white;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
       <div style="font-size:48px;margin-bottom:12px;">⭐</div>
@@ -1743,12 +1843,11 @@ function showReviewModal(bk) {
       <div id="reviewStars" style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;">
         ${[1,2,3,4,5].map(n => `<span data-star="${n}" onclick="setReviewStar(${n})" style="font-size:36px;cursor:pointer;transition:.2s;filter:grayscale(1);">★</span>`).join('')}
       </div>
-      <textarea id="reviewText" placeholder="Tell us about your experience... (optional)" rows="3" style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;margin-bottom:16px;"></textarea>
-      <button id="submitReviewBtn" data-bid="${esc(bk.id)}" data-prov="${esc(bk.providerName||'')}" onclick="submitReview(this.dataset.bid,this.dataset.prov)" style="width:100%;padding:14px;background:#e5e7eb;color:#9ca3af;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;" disabled>Select a rating to submit</button>
+      <textarea id="reviewText" placeholder="Tell us about your experience... (optional)" rows="3" maxlength="1000" style="width:100%;padding:12px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;margin-bottom:16px;"></textarea>
+      <button id="submitReviewBtn" data-bid="${esc(bk.id)}" onclick="submitReview(this.dataset.bid)" style="width:100%;padding:14px;background:#e5e7eb;color:#9ca3af;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;" disabled>Select a rating to submit</button>
       <button onclick="document.getElementById('reviewModal').style.display='none';" style="width:100%;padding:12px;background:transparent;border:none;color:#9ca3af;font-size:14px;cursor:pointer;margin-top:8px;">Skip for now</button>
     </div>`;
   modal.style.display = 'flex';
-  window._reviewBookingId = bk.id;
 }
 
 function setReviewStar(n) {
@@ -1767,30 +1866,37 @@ function setReviewStar(n) {
   }
 }
 
-function submitReview(bookingId, providerName) {
+async function submitReview(bookingId) {
   const stars = window._reviewStars || 0;
   if (!stars) { showToast('Please select a rating'); return; }
   const text = (document.getElementById('reviewText')||{value:''}).value.trim();
-  const bkForReview = allBookings.find(b => b.id === bookingId) || {};
-  const review = {
-    bookingId:    bookingId,
-    providerName: providerName,
-    providerId:   bkForReview.providerId || '',
-    stars:        stars,
-    text:         text || 'Great service!',
-    date:         new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}),
-    customerId:   currentUser ? currentUser.uid : '',
-    customerName: currentProfile ? (currentProfile.name || 'Customer') : 'Customer',
-    submittedAt:  new Date().toISOString()
-  };
-  fbDB.ref('reviews/' + bookingId).set(review);
-  if (review.providerId) {
-    fbDB.ref('provider_reviews/' + review.providerId + '/' + bookingId).set(review);
+  const btn = document.getElementById('submitReviewBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  try {
+    const res = await apiCall('reviews.php', 'submit', { booking_id: bookingId, rating: stars, comment: text });
+    if (!res || !res.success) {
+      if (res && /already reviewed/i.test(res.error || '')) {
+        markReviewed(bookingId);
+        const m = document.getElementById('reviewModal'); if (m) m.style.display = 'none';
+        renderBookings(); renderHistory();
+        showToast('You have already reviewed this booking');
+        return;
+      }
+      showToast('⚠️ ' + ((res && res.error) || 'Could not submit review'));
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit Review'; }
+      return;
+    }
+    markReviewed(bookingId);
+    const bk = findBk(bookingId);
+    if (bk) upsertBooking(Object.assign({}, bk, { rating: stars, review: text }));
+    const modal = document.getElementById('reviewModal');
+    if (modal) modal.style.display = 'none';
+    renderBookings(); renderHistory();
+    showToast('⭐ Thank you for your review!');
+  } catch(e) {
+    showToast('⚠️ Network error — review not submitted');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Review'; }
   }
-  fbDB.ref('bookings/' + bookingId).update({reviewed: true, reviewStars: stars});
-  const modal = document.getElementById('reviewModal');
-  if (modal) modal.style.display = 'none';
-  showToast('⭐ Thank you for your review!');
 }
 
 // ── TABS ───────────────────────────────────────
@@ -1826,7 +1932,8 @@ function showToast(msg) {
   clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3500);
 }
 
-// ── Customer tracking — see provider coming to you ───────────────────────────
+
+// ── Customer tracking — provider location from bookings.php get (provider_lat/lng) ──
 let _trackMap = null, _trackProvMarker = null, _trackTimer = null;
 
 function openCustomerTrackView(bk) {
@@ -1837,18 +1944,16 @@ function openCustomerTrackView(bk) {
     modal.style.cssText = 'position:fixed;inset:0;background:#0f1117;z-index:9999;display:flex;flex-direction:column;font-family:inherit;';
     document.body.appendChild(modal);
   }
-  const custLat = bk.customerLat || bk.lat;
-  const custLng = bk.customerLng || bk.lng;
   modal.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:#1a1a2e;border-bottom:1px solid rgba(255,255,255,.08);">
       <button onclick="closeCustomerTrackView();" style="width:36px;height:36px;background:rgba(255,255,255,.1);border:none;color:white;border-radius:50%;font-size:18px;cursor:pointer;flex-shrink:0;">&#x2190;</button>
-      <div style="flex:1;">
+      <div style="flex:1;min-width:0;">
         <div style="font-size:15px;font-weight:800;color:white;">${esc(bk.service || 'Your Booking')}</div>
         <div id="trackStatusTxt" style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">Locating provider…</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:11px;color:rgba(255,255,255,.4);">Amount</div>
-        <div style="font-size:14px;font-weight:800;color:#00ff88;">&#x20B9;${esc(bk.amount || bk.priceVal || '—')}</div>
+        <div style="font-size:14px;font-weight:800;color:#00ff88;">&#x20B9;${esc(payableAmt(bk) || '—')}</div>
       </div>
     </div>
     <div id="custTrackMapEl" style="flex:1;min-height:200px;"></div>
@@ -1876,39 +1981,56 @@ function openCustomerTrackView(bk) {
     if (_trackMap) { _trackMap.remove(); _trackMap = null; _trackProvMarker = null; }
     _trackMap = L.map(mapEl, { zoomControl: true, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(_trackMap);
+    _trackMap.setView([20.59, 78.96], 5);
+    let homeMarker = null;
 
-    if (custLat && custLng) {
-      const homeIco = L.divIcon({ html: '<div style="font-size:28px;">&#x1F3E0;</div>', className: '', iconSize: [28,28], iconAnchor: [14,28] });
-      L.marker([custLat, custLng], { icon: homeIco }).addTo(_trackMap).bindPopup('Your Location').openPopup();
-      _trackMap.setView([custLat, custLng], 14);
+    async function refreshTrack() {
+      if (!document.getElementById('custTrackOverlay')) { clearInterval(_trackTimer); _trackTimer = null; return; }
+      let d = null;
+      try {
+        const res = await apiCall('bookings.php', 'get', null, '&id=' + encodeURIComponent(bk.id));
+        d = res && res.success ? res.data : null;
+      } catch(e) {}
+      if (!d || !_trackMap) return;
+      const st = document.getElementById('trackStatusTxt');
+      const s = stOf(d);
+      if (s !== 'confirmed' && s !== 'active') {
+        if (st) st.textContent = 'Tracking ended — booking is ' + statusText(d).toLowerCase();
+        clearInterval(_trackTimer); _trackTimer = null;
+        return;
+      }
+      const custLat = parseFloat(d.lat), custLng = parseFloat(d.lng);
+      if (!homeMarker && custLat && custLng) {
+        const homeIco = L.divIcon({ html: '<div style="font-size:28px;">&#x1F3E0;</div>', className: '', iconSize: [28,28], iconAnchor: [14,28] });
+        homeMarker = L.marker([custLat, custLng], { icon: homeIco }).addTo(_trackMap).bindPopup('Your Location');
+        _trackMap.setView([custLat, custLng], 14);
+      }
+      const pLat = parseFloat(d.provider_lat), pLng = parseFloat(d.provider_lng);
+      if (!pLat || !pLng) { if (st) st.textContent = 'Waiting for provider location…'; return; }
+      const provIco = L.divIcon({ html: '<div style="font-size:26px;">&#x1F477;</div>', className: '', iconSize: [26,26], iconAnchor: [13,26] });
+      if (!_trackProvMarker) _trackProvMarker = L.marker([pLat, pLng], { icon: provIco }).addTo(_trackMap);
+      else _trackProvMarker.setLatLng([pLat, pLng]);
+      // provider_loc_at is set only for live GPS updates (action=track); otherwise it is the provider's base location
+      const live = !!d.provider_loc_at;
+      if (st) st.textContent = s === 'active' ? '🛠️ Provider is at work'
+                             : (live ? '\u{1F697} Provider is on the way' : 'Showing provider’s base location (live location not shared yet)');
+      if (custLat && custLng) {
+        const R=6371, dL=(custLat-pLat)*Math.PI/180, dN=(custLng-pLng)*Math.PI/180;
+        const a=Math.sin(dL/2)**2+Math.cos(pLat*Math.PI/180)*Math.cos(custLat*Math.PI/180)*Math.sin(dN/2)**2;
+        const dist = R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+        const eta  = Math.max(1, Math.round(dist * 3.5));
+        const etaEl = document.getElementById('trackEtaTxt');
+        const distEl = document.getElementById('trackDistTxt');
+        if (etaEl) etaEl.textContent = s === 'confirmed' ? '~' + eta + ' min' : '';
+        if (distEl) distEl.textContent = dist.toFixed(1) + ' km away';
+        _trackMap.fitBounds([[pLat,pLng],[custLat,custLng]], { padding:[60,60], maxZoom:16 });
+      } else {
+        _trackMap.setView([pLat, pLng], 14);
+      }
     }
-
     if (_trackTimer) clearInterval(_trackTimer);
-    _trackTimer = setInterval(() => {
-      if (!document.getElementById('custTrackOverlay')) { clearInterval(_trackTimer); return; }
-      fbDB.ref('tracking/' + bk.id + '/provider').once('value', snap => {
-        const d = snap.val();
-        if (!d || !d.lat) return;
-        const pLat = d.lat, pLng = d.lng;
-        const provIco = L.divIcon({ html: '<div style="font-size:26px;">&#x1F477;</div>', className: '', iconSize: [26,26], iconAnchor: [13,26] });
-        if (!_trackProvMarker) {
-          _trackProvMarker = L.marker([pLat, pLng], { icon: provIco }).addTo(_trackMap);
-        } else { _trackProvMarker.setLatLng([pLat, pLng]); }
-        const st = document.getElementById('trackStatusTxt');
-        if (st) st.textContent = '\u{1F697} Provider is on the way';
-        if (custLat && custLng) {
-          const R=6371, dL=(custLat-pLat)*Math.PI/180, dN=(custLng-pLng)*Math.PI/180;
-          const a=Math.sin(dL/2)**2+Math.cos(pLat*Math.PI/180)*Math.cos(custLat*Math.PI/180)*Math.sin(dN/2)**2;
-          const dist = R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-          const eta  = Math.max(1, Math.round(dist * 3.5));
-          const etaEl = document.getElementById('trackEtaTxt');
-          const distEl = document.getElementById('trackDistTxt');
-          if (etaEl) etaEl.textContent = '~' + eta + ' min';
-          if (distEl) distEl.textContent = dist.toFixed(1) + ' km away';
-          _trackMap.fitBounds([[pLat,pLng],[custLat,custLng]], { padding:[60,60], maxZoom:16 });
-        }
-      });
-    }, 5000);
+    refreshTrack();
+    _trackTimer = setInterval(refreshTrack, 5000);
   }, 150);
 }
 
@@ -1918,7 +2040,6 @@ function closeCustomerTrackView() {
   const m = document.getElementById('custTrackOverlay');
   if (m) m.remove();
 }
-
 
 // ── Sidebar user sync ────────────────────────────────────────────────────────
 function updateSidebarUser() {
@@ -1950,66 +2071,22 @@ async function refreshUserData() {
   }
 }
 
-// ── OTP helpers ──────────────────────────────────────────────────────────────
-function fetchAndShowOTP(bkId) {
-  // Don't show OTP if booking is already paid/completed
-  const bk = allBookings.find(b => b.id === bkId);
-  const st = (bk?.status || '').toLowerCase();
-  if (['paid','completed','cancelled','rejected'].includes(st)) return;
-  fbDB.ref('job_otp/' + bkId).once('value').then(snap => {
-    const d = snap.val();
-    if (d && d.otp) showOtpModal(bkId, d.otp, d);
-  }).catch(()=>{});
-}
 
-var _otpPollTimer = null;
-
-function _startOtpPoller(bkId) {
-  _stopOtpPoller();
-  console.log('[OTP Poll] Starting poller for:', bkId);
-  _otpPollTimer = setInterval(function() {
-    fbDB.ref('job_otp/' + bkId).once('value').then(function(snap) {
-      if (!snap.exists()) {
-        // Record deleted — provider verified OTP
-        console.log('[OTP Poll] Record gone — triggering payment for:', bkId);
-        _stopOtpPoller();
-        closeOtpModal();
-        const bkIdx = allBookings.findIndex(b => b.id === bkId);
-        const bk = bkIdx >= 0 ? allBookings[bkIdx] : {id:bkId, status:'payment_pending'};
-        if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, bk, {status:'payment_pending'});
-        handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
-        return;
-      }
-      const d = snap.val();
-      if (d && d.status === 'verified') {
-        console.log('[OTP Poll] Status=verified — triggering payment for:', bkId);
-        _stopOtpPoller();
-        closeOtpModal();
-        const bkIdx = allBookings.findIndex(b => b.id === bkId);
-        const bk = bkIdx >= 0 ? allBookings[bkIdx] : {id:bkId, status:'payment_pending', service:d.service||''};
-        if (bkIdx >= 0) allBookings[bkIdx] = Object.assign({}, bk, {status:'payment_pending'});
-        handlePaymentRequest(Object.assign({}, bk, {status:'payment_pending'}));
-      }
-    }).catch(function(){});
-  }, 2000); // poll every 2 seconds
-}
-
-function _stopOtpPoller() {
-  if (_otpPollTimer) { clearInterval(_otpPollTimer); _otpPollTimer = null; }
-}
-
-function showOtpModal(bkId, otp, otpData) {
+// ── OTP modal ────────────────────────────────────────────────────────────────
+function showOtpModal(bkId, otp, opts) {
   closeOtpModal();
-  const bk       = allBookings.find(b=>b.id===bkId) || {id:bkId};
-  const service  = (otpData&&otpData.service)      || bk.service      || 'Service';
-  const provider = (otpData&&otpData.providerName) || bk.providerName || '—';
+  opts = opts || {};
+  const bk       = findBk(bkId) || {id:bkId};
+  const service  = bk.service      || 'Service';
+  const provider = bk.providerName || '—';
   const modal    = document.createElement('div');
   modal.id = 'otpDisplayModal';
+  modal.dataset.bid = bkId;
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
   modal.innerHTML = `<div style="background:white;border-radius:22px;padding:32px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3);">
     <div style="font-size:52px;margin-bottom:10px;">🔐</div>
-    <h2 style="font-size:19px;font-weight:800;color:#0f1117;margin-bottom:6px;">Job Completion Code</h2>
-    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">Read this code to your provider</p>
+    <h2 style="font-size:19px;font-weight:800;color:#0f1117;margin-bottom:6px;">${esc(opts.title || 'Your code')}</h2>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">${esc(opts.sub || 'Read this code to your provider')}</p>
     <div style="background:#f0f9ff;border:2px dashed #1B6B7A;border-radius:16px;padding:22px;margin-bottom:14px;">
       <div style="font-size:54px;font-weight:900;letter-spacing:14px;color:#1B6B7A;font-family:monospace;user-select:all;">${esc(otp)}</div>
       <div style="font-size:11px;color:#6b7280;margin-top:6px;">${esc(service)} · ${esc(bkId)}</div>
@@ -2022,7 +2099,6 @@ function showOtpModal(bkId, otp, otpData) {
 }
 
 function closeOtpModal() {
-  _stopOtpPoller();
   const m = document.getElementById('otpDisplayModal');
   if (m) m.remove();
 }
@@ -2031,11 +2107,8 @@ function closeOtpModal() {
 var _cancelTimers = {};
 function buildCancelBtn(b) {
   const id = esc(b.id || '');
-  const st = (b.status||'').toLowerCase();
-  if (!id || st==='otp_sent'||st==='payment_pending'||st==='completed'||st==='cancelled') return '';
-  if (st==='searching'||st==='pending') {
-    return '<button class="bi-btn solid-red" data-bid="'+id+'" onclick="cancelBk(this.dataset.bid)">❌ Cancel</button>';
-  }
+  const st = stOf(b);
+  if (!id || !isCancellable(b)) return '';
   if (st==='accepted'||st==='confirmed') {
     const ref      = b.acceptedAt||b.createdAt||new Date().toISOString();
     const unlockAt = new Date(ref).getTime() + 2*60*60*1000;
@@ -2045,7 +2118,7 @@ function buildCancelBtn(b) {
     setTimeout(()=>startCancelCountdown(id, unlockAt), 80);
     return '<button class="bi-btn outline" id="cbtn-'+id+'" disabled style="min-width:120px;font-size:10px;cursor:not-allowed;opacity:.75;">⏳ --:--</button>';
   }
-  return '';
+  return '<button class="bi-btn solid-red" data-bid="'+id+'" onclick="cancelBk(this.dataset.bid)">❌ Cancel</button>';
 }
 function startCancelCountdown(id, unlockAt) {
   if (_cancelTimers[id]) clearInterval(_cancelTimers[id]);

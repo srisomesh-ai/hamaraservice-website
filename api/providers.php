@@ -13,6 +13,8 @@
 //   GET  ?action=services&id=X — get provider services
 //   POST ?action=approve    — admin approve provider
 //   POST ?action=suspend    — admin suspend provider
+//   POST ?action=schedule   — provider saves weekly schedule
+//                             {schedule:{mon:{on,from:"HH:MM",to:"HH:MM"},...,sun}}
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
@@ -36,6 +38,20 @@ runMigrationsOnce($db, 'providers_v1', [
     }
   },
 ]);
+
+// Weekly schedule: normalized object with all 7 days. A provider who never
+// saved one gets the default (every day 09:00–18:00).
+$SCHEDULE_DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
+function defaultSchedule() {
+  global $SCHEDULE_DAYS;
+  $o = [];
+  foreach ($SCHEDULE_DAYS as $d) $o[$d] = ['on' => true, 'from' => '09:00', 'to' => '18:00'];
+  return $o;
+}
+function decodeSchedule($raw) {
+  $s = is_string($raw) && $raw !== '' ? json_decode($raw, true) : null;
+  return is_array($s) ? array_merge(defaultSchedule(), $s) : defaultSchedule();
+}
 
 // Strip CR/LF so user input can never inject mail headers
 function hdrSafe($s) { return trim(str_replace(["\r", "\n", "\0"], ' ', (string)$s)); }
@@ -287,7 +303,7 @@ HamaraService Team";
     $stmt = $db->prepare("
       SELECT id, name, phone, email, whatsapp, gender, experience, bio,
              id_type, id_number, address, city, lat, lng, radius_km,
-             upi_id, areas, photo,
+             upi_id, areas, photo, schedule,
              status, available, rating, review_count,
              total_bookings, completed_bookings, total_earned, pending_earned,
              registered_at
@@ -305,7 +321,10 @@ HamaraService Team";
       $claims = providerClaims(getBearerToken());
       $self = $claims && (string)$claims['id'] === (string)$id;
     }
-    if (!$self) {
+    if ($self) {
+      $p['schedule'] = decodeSchedule($p['schedule']);
+    } else {
+      unset($p['schedule']);
       if ($p['status'] === 'deleted') err('Provider not found', 404);
       // A customer with a live booking assigned to this provider may call them
       $canContact = false;
@@ -536,6 +555,33 @@ HamaraService Team";
     }
 
     ok(['saved' => $saved]);
+  }
+
+  // ── WEEKLY SCHEDULE (provider self) ──────────────────
+  case 'schedule': {
+    $prov = requireProvider();
+    $b    = getBody();
+    $in   = $b['schedule'] ?? null;
+    if (!is_array($in) || empty($in)) err('schedule object required');
+    // days not sent keep their saved value
+    $cur = $db->prepare("SELECT schedule FROM providers WHERE id = ?");
+    $cur->execute([$prov['id']]);
+    $out = decodeSchedule($cur->fetchColumn());
+    foreach ($in as $day => $v) {
+      $day = strtolower((string)$day);
+      if (!in_array($day, $SCHEDULE_DAYS, true)) err("Invalid day: $day");
+      if (!is_array($v)) err("Invalid schedule for $day");
+      $from = (string)($v['from'] ?? $out[$day]['from']);
+      $to   = (string)($v['to']   ?? $out[$day]['to']);
+      foreach ([$from, $to] as $t) {
+        if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $t)) err("Invalid time for $day (use HH:MM)");
+      }
+      $on = !empty($v['on']) && $v['on'] !== 'false';
+      if ($on && strcmp($from, $to) >= 0) err("'from' must be before 'to' for $day");
+      $out[$day] = ['on' => $on, 'from' => $from, 'to' => $to];
+    }
+    $db->prepare("UPDATE providers SET schedule = ? WHERE id = ?")->execute([json_encode($out), $prov['id']]);
+    ok(['schedule' => $out]);
   }
 
   // ── ADMIN: DELETE ────────────────────────────────────

@@ -340,8 +340,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
 
 <script>
 
-var FB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-var FBP='hs_service_prices';
 var _tok='',_fb={},_dirty={},_cat='All',_savedN=0;
 
 // ── SERVICE CONFIG ────────────────────────────────────────────────────────────
@@ -436,17 +434,39 @@ var SVC=[
       {k:'heavy',name:'Heavy / Months without cleaning',          p:99}
     ]}
   ]},
+  // Sofa / carpet price schema (API contract keys, read by svc-sofa-carpet-cleaning.html):
+  // sofa.{1seater,2seater,3seater,5seater,lshape,recliner}, carpet.{small,medium,large,xlarge},
+  // mattress.{single,double}, rug.{small,large}, wooden.{chair,table,bed}, stain.{stain}
   {id:'SVC005',name:'Sofa / Carpet Cleaning',icon:'🛋️',cat:'Home Cleaning',base:299,groups:[
     {key:'sofa',title:'🛋️ Sofa Cleaning',style:'bhk',items:[
-      {k:'2seater',name:'2-Seater Sofa',         p:299},
-      {k:'3seater',name:'3-Seater Sofa',         p:399},
-      {k:'5seater',name:'5-Seater / L-Shape',    p:599},
-      {k:'recliner',name:'Per Recliner',         p:199}
+      {k:'1seater', name:'1-Seater Sofa',         p:199},
+      {k:'2seater', name:'2-Seater Sofa',         p:299},
+      {k:'3seater', name:'3-Seater Sofa',         p:399},
+      {k:'5seater', name:'5-Seater Sofa',         p:599},
+      {k:'lshape',  name:'L-Shape Sofa',          p:649},
+      {k:'recliner',name:'Per Recliner',          p:199}
     ]},
     {key:'carpet',title:'🟫 Carpet Cleaning',style:'bhk',items:[
-      {k:'small',  name:'Small Carpet (up to 5x8 ft)',  p:249},
-      {k:'medium', name:'Medium Carpet (5x8 to 8x10)', p:349},
-      {k:'large',  name:'Large Carpet (above 8x10)',    p:499}
+      {k:'small',  name:'Small Carpet (up to 4x6 ft)',   p:249},
+      {k:'medium', name:'Medium Carpet (4x6 to 6x9 ft)', p:349},
+      {k:'large',  name:'Large Carpet (6x9 to 8x12 ft)', p:499},
+      {k:'xlarge', name:'Extra Large Carpet (8x12 ft+)', p:699}
+    ]},
+    {key:'mattress',title:'🛏️ Mattress Shampooing',style:'bhk',items:[
+      {k:'single',name:'Single Mattress',p:249},
+      {k:'double',name:'Double / Queen / King Mattress',p:399}
+    ]},
+    {key:'rug',title:'🧶 Rug / Doormat Cleaning',style:'bhk',items:[
+      {k:'small',name:'Small Rug',p:149},
+      {k:'large',name:'Large Rug',p:249}
+    ]},
+    {key:'wooden',title:'🪑 Wooden Furniture Polish / Clean',style:'bhk',items:[
+      {k:'chair',name:'Chair (per piece)',p:99},
+      {k:'table',name:'Table (per piece)',p:199},
+      {k:'bed',  name:'Bed (per piece)',  p:399}
+    ]},
+    {key:'stain',title:'🧴 Stain Treatment Surcharge',style:'bhk',items:[
+      {k:'stain',name:'Heavy staining surcharge',p:99}
     ]}
   ]},
   {id:'SVC006',name:'Laundry / Ironing',icon:'👕',cat:'Home Cleaning',base:149,groups:[
@@ -953,7 +973,6 @@ function doLogout(){
   location.reload();
 }
 
-// ── FIREBASE REST ─────────────────────────────────────────────────────────────
 // ── MySQL API helpers (replaces Firebase) ────────────────────────
 var MAPI = 'https://hamaraservice.com/api';
 
@@ -1001,11 +1020,6 @@ function apiReset(svcId, cb) {
   .catch(function(e) { cb(e); });
 }
 
-// Legacy stubs — not used
-function getToken(cb) { cb(''); }
-function fbGet(p,cb) { cb(new Error('Firebase removed'), null); }
-function fbPut(p,data,cb) { cb(new Error('Firebase removed')); }
-function fbDel(p,cb) { cb(null); }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function initApp(){

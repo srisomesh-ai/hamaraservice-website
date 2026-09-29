@@ -578,8 +578,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
     <div id="pendingWithdrawSection" style="display:none;margin-bottom:22px;">
       <div class="sec-title" style="margin-bottom:12px;">⏳ Pending Withdrawal Requests</div>
       <div class="table-wrap">
-        <table><thead><tr><th>Request ID</th><th>Amount</th><th>To Account</th><th>Requested</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Request ID</th><th>Amount</th><th>To Account</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead>
         <tbody id="pendingWithdrawBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Penalties applied by admin -->
+    <div id="penaltySection" style="display:none;margin-bottom:22px;">
+      <div class="sec-title" style="margin-bottom:12px;">⚠️ Penalties <small style="font-size:12px;color:var(--muted);font-weight:700;">(applied total: <span id="penaltyTotal">₹0</span> · deducted from your balance)</small></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Date</th><th>Booking</th><th>Reason</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody id="penaltyBody"></tbody></table>
       </div>
     </div>
 
@@ -649,10 +658,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
           <div class="pfield"><label>Start Time</label><input type="time" id="workStart" value="08:00"/></div>
           <div class="pfield"><label>End Time</label><input type="time" id="workEnd" value="20:00"/></div>
         </div>
-      </div>
-      <div style="margin-bottom:14px;">
-        <div class="pcsec" style="font-size:13px;margin-bottom:10px;">🕐 Available Slots</div>
-        <div class="time-slots" id="timeSlots"></div>
       </div>
       <button class="save-btn" onclick="saveAvailability()">💾 Save Availability</button>
     </div>
@@ -833,9 +838,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   <div class="trk-drawer">
     <div class="drawer-handle"></div>
     <div class="gps-banner searching" id="provGpsBanner">&#128225; Acquiring GPS signal...</div>
-    <div id="fbSetupBanner" style="display:none;padding:10px 22px;font-size:12px;font-weight:700;background:#fffbe6;border-bottom:1px solid #ffe58a;color:#7a5a00;">
-      &#128994; Firebase connected! Set Rules: <a href="https://console.firebase.google.com/u/0/project/hamaraservice-s009/database/hamaraservice-s009-default-rtdb/rules" target="_blank" style="color:#E8251A;font-weight:800;">Click here → paste {".read":true,".write":true} → Publish</a>
-    </div>
     <div class="drw-head">
       <div class="drw-title" id="provDrwTitle">Navigating to Customer</div>
       <div class="drw-sub">Real GPS location active on this device</div>
@@ -861,7 +863,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
   </div>
 </div>
 
-<!-- ══ CUSTOMER TRACKING VIEW (real-time Firebase) ══ -->
+<!-- ══ CUSTOMER TRACKING VIEW (location from bookings.php get) ══ -->
 <div class="tracking-overlay" id="customerTrackingView">
   <div class="trk-map-wrap">
     <div id="custMap"></div>
@@ -923,7 +925,6 @@ let alertCountdown = null;
 let pendingBooking = null;
 
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const TIME_SLOTS = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
 
 // ════════ MySQL API (provider JWT from provider-portal login) ════════
 var HS_API = 'https://hamaraservice.com/api';
@@ -956,11 +957,11 @@ function jsq(v) {
 
 // ════════ BOOKING DB ════════
 function getBK() {
-  // Return localStorage cache (always synced from Firebase on load)
+  // In-memory cache (synced from MySQL on load)
   return _BK;
 }
 // Load bookings from MySQL — called on initDashboard
-function loadBKFromFirebase(cb) {
+function loadBookings(cb) {
   var pid = P.id;
   var jwt = localStorage.getItem('hs_provider_jwt') || '';
   fetch('https://hamaraservice.com/api/bookings.php?action=history&id=' + pid + '&role=provider', {
@@ -980,6 +981,7 @@ function loadBKFromFirebase(cb) {
           providerEarned: b.provider_earns || 0,
           createdAt:   b.created_at || b.createdAt,
           completedAt: b.completed_at,
+          paymentStatus: b.payment_status || '',
         });
       }) : [];
       var needFallback = false;
@@ -998,6 +1000,7 @@ function loadBKFromFirebase(cb) {
           });
         } else { sorted = getBK(); }
         if (pid === P.id) _BK = sorted;
+        if (typeof syncLiveTracking === 'function') syncLiveTracking();
         if(cb) cb(sorted);
       }
       if (!needFallback) { finish(fbBks, true); return; }
@@ -1014,17 +1017,12 @@ function loadBKFromFirebase(cb) {
     }).catch(function(){ if(cb) cb(getBK()); });
 }
 function saveBK(bk) {
-  // Cache locally for instant UI
-  // _BK set above //  // _BK updated above
-  // Always write every booking to Firebase (source of truth)
-  bk.forEach(function(b) {
-    if (b.id) {
-      fbWrite('bookings/' + b.id, Object.assign({}, b, { providerId: P.id, providerName: P.name }));
-    }
-  });
+  // In-memory only — MySQL (bookings.php) is the source of truth; every state
+  // change goes through a provApi() call, never a client-side DB write.
+  if (Array.isArray(bk)) _BK = bk;
 }
-// Load bookings from Firebase into localStorage cache (called on init)
-async function syncBKFromFirebase() {
+// Load bookings from MySQL into the in-memory cache
+async function syncBookings() {
   try {
     var jwt = localStorage.getItem('hs_provider_jwt') || '';
     var r = await fetch('https://hamaraservice.com/api/bookings.php?action=history&id=' + P.id + '&role=provider', {
@@ -1045,7 +1043,7 @@ async function syncBKFromFirebase() {
       var sorted = Object.values(merged).sort(function(a,b){ return new Date(b.createdAt||0)-new Date(a.createdAt||0); });
       _BK = sorted;
     }
-  } catch(e) { console.warn('syncBKFromFirebase:', e.message); }
+  } catch(e) { console.warn('syncBookings:', e.message); }
 }
 
 function getReviews() {
@@ -1061,7 +1059,7 @@ function _normApiReview(r, i) {
     submittedAt: r.created_at || ''
   };
 }
-function loadReviewsFromFirebase(cb) {
+function loadReviewsApi(cb) {
   // Reviews live in MySQL (reviews.php?action=provider)
   fetch(HS_API + '/reviews.php?action=provider&id=' + encodeURIComponent(P.id))
     .then(function(r){ return r.json(); })
@@ -1072,12 +1070,8 @@ function loadReviewsFromFirebase(cb) {
       if(cb) cb(rvs);
     }).catch(function(){ if(cb) cb(getReviews()); });
 }function saveReviews(rv) {
+  // In-memory only — reviews are written by customers via reviews.php.
   _REVIEWS = rv;
-  // Write each review to Firebase
-  rv.forEach(function(r, i) {
-    if (!r._fbKey) { r._fbKey = P.id + '_' + i; }
-    fbWrite('reviews/' + r._fbKey, Object.assign({}, r, { providerId: P.id }));
-  });
 }
 
 // ════════ STATS COMPUTE ════════
@@ -1117,7 +1111,11 @@ function computeStats(){
   const pendingWithdraw = payouts
     .filter(p => p.status === "pending")
     .reduce((s,p) => s+(Number(p.amount)||0), 0);
-  const available = Math.max(netEarned - withdrawn - pendingWithdraw, 0);
+  // Admin penalties are deducted from the provider's balance server-side
+  const penaltiesApplied = (typeof _PENALTIES !== 'undefined' ? _PENALTIES : [])
+    .filter(x => x.status === 'applied')
+    .reduce((t,x) => t+(Number(x.amount)||0), 0);
+  const available = Math.max(netEarned - withdrawn - pendingWithdraw - penaltiesApplied, 0);
 
   const reviews = getReviews();
   const avgRating = reviews.length
@@ -1181,7 +1179,7 @@ window.addEventListener('load', () => {
         initDashboard();
       })
       .catch(function(){
-        // Firebase unreachable — allow cached session (offline fallback)
+        // API unreachable — allow cached session (offline fallback)
         initDashboard();
       });
   } catch(e) { window.location.href = 'provider-portal.html'; }
@@ -1211,8 +1209,8 @@ function initDashboard() {
   // Seed demo bookings if demo account and no bookings yet
   if (P.id === 'HS-PRO-DEMO' && getBK().length === 0) seedDemoData();
 
-  // Sync bookings from Firebase
-  loadBKFromFirebase(function(){ loadOverview(); loadAllBookings(); loadEarnings(); loadRatings(); resumeAlertIfActive(); syncPayoutsFromFirebase(); });
+  // Sync bookings from MySQL
+  loadBookings(function(){ loadOverview(); loadAllBookings(); loadEarnings(); loadRatings(); resumeAlertIfActive(); syncPayouts(); });
   startResetListener();
 
   loadOverview();
@@ -1223,12 +1221,13 @@ function initDashboard() {
   loadRatings();
   loadNotifications();
 
-  // ── REAL Firebase polling for new bookings ──────────────────
+  // ── Poll bookings.php?action=open for new bookings ──────────────────
   startBookingPoller();
   if(typeof _loadCommRates==='function')_loadCommRates();
-  // Re-sync bookings from Firebase every 60s (catches updates from other devices)
+  loadPenalties(true);
+  // Re-sync bookings from MySQL every 60s (catches updates from other devices)
   setInterval(function(){
-    loadBKFromFirebase(function(){ loadOverview(); loadAllBookings(); loadEarnings(); syncPayoutsFromFirebase(); });
+    loadBookings(function(){ loadOverview(); loadAllBookings(); loadEarnings(); syncPayouts(); loadPenalties(); });
   }, 60000);
 }
 
@@ -1313,23 +1312,45 @@ function loadAllBookings(filter = 'all') {
       <td><strong>₹${Number(b.amount)||0}</strong></td>
       <td><span class="badge ${esc(b.status)}">${esc(cap(b.status))}</span></td>
       <td>
-        ${['pending','accepted','confirmed','active','searching'].includes(b.status)
-          ? `<button class="nav-btn-track" onclick="openProviderTracking('${jsq(b.id)}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
-             <br/><button class="abtn complete" onclick="updateStatus('${jsq(b.id)}','completed')">✅ Complete Job</button>
-             <button class="abtn cancel" onclick="updateStatus('${jsq(b.id)}','cancelled')">❌</button>`
-          : b.status === 'payment_pending' || b.status === 'otp_sent'
-          ? `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Customer Payment</div>`
-          : b.status === 'paid'
-          ? `<span class="badge paid">💰 Paid · Processing</span>`
-          : b.status === 'cancelled'
-          ? `<span class="badge cancelled">Cancelled</span>`
-          : b.status === 'completed'
-          ? `<button class="abtn view" onclick="viewBk('${jsq(b.id)}')">👁 View</button>`
-          : `<button class="abtn view" onclick="viewBk('${jsq(b.id)}')">👁 View</button>
-             <br/><button class="btn-track-cust" onclick="openCustomerTracking('${jsq(b.id)}')" style="margin-top:4px">📍 Track</button>`}
+        ${bkActions(b)}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No bookings found</td></tr>';
+}
+
+// Action buttons for one booking row (all values escaped via jsq/esc)
+var PRESTART_STATUSES = ['price_quoted','negotiating','negotiation_final','confirmed'];
+function bkActions(b) {
+  var id = jsq(b.id), st = b.status, h = '';
+  var cashBtn = (b.paymentStatus === 'cash_pending' || b.payment_status === 'cash_pending')
+    ? `<br/><button class="abtn complete" style="margin-top:4px" onclick="confirmCashReceived('${id}')">💵 Confirm cash received</button>`
+    : '';
+  if (st === 'price_quoted' || st === 'negotiating' || st === 'negotiation_final') {
+    h = `<span class="badge pending">⏳ Awaiting customer</span>
+         <br/><button class="abtn cancel" style="margin-top:4px" onclick="releaseBooking('${id}')">↩️ Decline job</button>`;
+  } else if (st === 'confirmed') {
+    h = `<button class="nav-btn-track" onclick="openProviderTracking('${id}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
+         <br/><button class="abtn complete" onclick="openStartOtp('${id}')">🔑 Start Job (OTP)</button>
+         <button class="abtn cancel" title="Decline this job" onclick="releaseBooking('${id}')">↩️</button>`;
+  } else if (['pending','accepted','active','searching'].includes(st)) {
+    h = `<button class="nav-btn-track" onclick="openProviderTracking('${id}');return false;" style="margin-bottom:5px">🗺️ Navigate</button>
+         <br/><button class="abtn complete" onclick="updateStatus('${id}','completed')">✅ Complete Job</button>
+         <button class="abtn cancel" onclick="updateStatus('${id}','cancelled')">❌</button>`;
+  } else if (st === 'payment_pending' || st === 'otp_sent') {
+    h = `<div class="pay-pending-badge"><div class="pay-pending-dot"></div>Awaiting Customer Payment</div>`;
+  } else if (st === 'paid') {
+    h = `<span class="badge paid">💰 Paid · Processing</span>`;
+  } else if (st === 'cancelled') {
+    h = `<span class="badge cancelled">Cancelled</span>`;
+  } else if (st === 'completed') {
+    h = `<button class="abtn view" onclick="viewBk('${id}')">👁 View</button>`;
+    if (!b.customer_rating && !b._customerRated)
+      h += `<br/><button class="abtn view" style="margin-top:4px" onclick="openRateCustomer('${id}')">⭐ Rate customer</button>`;
+  } else {
+    h = `<button class="abtn view" onclick="viewBk('${id}')">👁 View</button>
+         <br/><button class="btn-track-cust" onclick="openCustomerTracking('${id}')" style="margin-top:4px">📍 Track</button>`;
+  }
+  return h + cashBtn;
 }
 
 function filterBk(f, btn) {
@@ -1350,16 +1371,55 @@ function updateStatus(id, status) {
     initiateOTPCompletion(id);
     return;
   }
+  // Before work starts the provider *releases* the job (it goes back to
+  // searching for the customer) instead of cancelling the whole booking.
+  const cur = getBK().find(b => b.id === id);
+  if (cur && PRESTART_STATUSES.includes(cur.status)) { releaseBooking(id); return; }
   // Cancellation — via MySQL API (assigned provider may cancel)
   if (!confirm('Cancel this booking? This cannot be undone.')) return;
-  provApi('/bookings.php?action=cancel', { booking_id: id }).then(function(res){
+  provApi('/bookings.php?action=cancel', { booking_id: id, reason: 'Cancelled by provider' }).then(function(res){
     if (!res.success) { showToast('⚠️ ' + (res.error || 'Could not cancel booking')); return; }
     const bk = getBK();
     const idx = bk.findIndex(b => b.id === id);
     if (idx > -1) { bk[idx].status = 'cancelled'; _BK = bk; }
-    syncProviderStats();
+    syncProviderStats(); syncLiveTracking();
     loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
     showToast('❌ Booking cancelled');
+  });
+}
+
+// Provider declines / backs out before the job starts → bookings.php release.
+// The booking returns to 'searching' so the customer gets another provider.
+function releaseBooking(id) {
+  if (!confirm('Decline this job? The customer will be matched with another provider.')) return;
+  provApi('/bookings.php?action=release', { booking_id: id }).then(function(res){
+    if (!res.success) { showToast('⚠️ ' + (res.error || 'Could not decline job')); return; }
+    _BK = getBK().filter(b => b.id !== id);
+    syncProviderStats(); syncLiveTracking();
+    loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
+    showToast('↩️ Job declined — customer is being matched with someone else');
+    loadBookings(function(){ loadOverview(); loadAllBookings(); });
+  });
+}
+
+// Customer said they paid cash (payment_status 'cash_pending') → provider confirms
+var _cashConfirming = {};
+function confirmCashReceived(id) {
+  const b = getBK().find(x => x.id === id);
+  const amt = b ? (Number(b.amount) || 0) : 0;
+  if (!confirm('Confirm you received ' + (amt ? '₹' + amt + ' ' : '') + 'in cash for booking ' + id + '?')) return;
+  if (_cashConfirming[id]) return;
+  _cashConfirming[id] = true;
+  provApi('/bookings.php?action=mark_paid', { booking_id: id }).then(function(res){
+    _cashConfirming[id] = false;
+    if (!res.success) { showToast('⚠️ ' + (res.error || 'Could not confirm payment')); return; }
+    const bk = getBK();
+    const idx = bk.findIndex(x => x.id === id);
+    if (idx > -1) { bk[idx].paymentStatus = 'paid'; bk[idx].payment_status = 'paid'; bk[idx].paymentMethod = 'cash'; _BK = bk; }
+    buzz('payment');
+    loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
+    showToast('💵 Cash payment confirmed');
+    loadBookings(function(){ loadOverview(); loadAllBookings(); loadEarnings(); });
   });
 }
 
@@ -1380,21 +1440,44 @@ function initiateOTPCompletion(bookingId) {
       showToast('⚠️ ' + msg);
       return;
     }
-    pendingCompleteId = bookingId;
+    _showOtpModal('complete', booking);
+  });
+}
 
-    // Show the provider entry modal — ask customer to read their code
-    document.getElementById('otpBookingInfo').textContent =
-      'Service: ' + booking.service + ' · Customer: ' + (booking.customer || '—');
-    document.getElementById('otpCustomerInstruction').textContent =
-      'Ask ' + (booking.customer || 'the customer') + ' to open their app and read you the 4-digit code.';
+// ─── START-OF-JOB OTP (status 'confirmed') ───────────────────────
+// The customer sees the start OTP in their app; the provider enters it here →
+// bookings.php verify_otp → booking becomes 'active'.
+function openStartOtp(bookingId) {
+  const booking = getBK().find(b => b.id === bookingId);
+  if (!booking) return;
+  buzz('otp');
+  _showOtpModal('start', booking);
+}
 
-    ['od1','od2','od3','od4'].forEach(id => {
-      const el = document.getElementById(id);
-      el.value = ''; el.classList.remove('filled');
-    });
-    document.getElementById('otpErr').style.display = 'none';
-    document.getElementById('otpRequestModal').classList.add('show');
-    setTimeout(() => document.getElementById('od1').focus(), 300);
+var _otpMode = 'complete';
+function _showOtpModal(mode, booking) {
+  _otpMode = mode;
+  pendingCompleteId = booking.id;
+  var start = mode === 'start';
+  document.getElementById('otpModalTitle').textContent = start ? 'Enter Start Code' : 'Enter Completion Code';
+  document.getElementById('otpModalSub').textContent = start
+    ? 'Ask the customer for the 4-digit Start OTP shown in their app'
+    : 'Ask the customer for their 4-digit code';
+  document.getElementById('otpVerifyBtn').textContent = start ? '🔑 Verify & Start Job' : '✅ Verify & Close Job';
+  document.getElementById('otpBookingInfo').textContent =
+    'Service: ' + (booking.service || '—') + ' · Customer: ' + (booking.customer || '—');
+  document.getElementById('otpCustomerInstruction').textContent = start
+    ? 'Ask ' + (booking.customer || 'the customer') + ' to open their booking and read you the Start OTP.'
+    : 'Ask ' + (booking.customer || 'the customer') + ' to open their app and read you the 4-digit code.';
+  _clearOtpDigits();
+  document.getElementById('otpErr').style.display = 'none';
+  document.getElementById('otpRequestModal').classList.add('show');
+  setTimeout(() => document.getElementById('od1').focus(), 300);
+}
+function _clearOtpDigits() {
+  ['od1','od2','od3','od4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = ''; el.classList.remove('filled');
   });
 }
 
@@ -1434,11 +1517,23 @@ function verifyOTP() {
   if (!booking) { closeModal('otpRequestModal'); return; }
 
   _otpVerifying = true;
-  provApi('/bookings.php?action=complete', { booking_id: bookingId, completion_otp: entered }).then(function(res){
+  var isStart = _otpMode === 'start';
+  var call = isStart
+    ? provApi('/bookings.php?action=verify_otp', { booking_id: bookingId, otp: entered })
+    : provApi('/bookings.php?action=complete', { booking_id: bookingId, completion_otp: entered });
+  call.then(function(res){
     _otpVerifying = false;
     if (!res.success) {
-      if (/invalid/i.test(res.error || '')) {
-        document.getElementById('otpErr').style.display = 'block';
+      var errEl = document.getElementById('otpErr');
+      if (/too many/i.test(res.error || '')) {
+        // HTTP 429 — 5 wrong tries; server regenerated the OTP for the customer
+        errEl.textContent = '⛔ ' + res.error + ' Ask the customer for the new code.';
+        errEl.style.display = 'block';
+        _clearOtpDigits();
+        document.getElementById('od1').focus();
+      } else if (/invalid|wrong/i.test(res.error || '')) {
+        errEl.textContent = '❌ Wrong code. Ask the customer again.';
+        errEl.style.display = 'block';
         ['od1','od2','od3','od4'].forEach(id => {
           const el = document.getElementById(id);
           el.style.borderColor = 'var(--red)';
@@ -1448,6 +1543,20 @@ function verifyOTP() {
       } else {
         showToast('⚠️ ' + (res.error || 'Could not complete job'));
       }
+      return;
+    }
+
+    if (isStart) {
+      // ✅ Start OTP verified — job is now active
+      const bks = getBK();
+      const si = bks.findIndex(b => b.id === bookingId);
+      if (si > -1) { bks[si].status = 'active'; bks[si].startedAt = new Date().toISOString(); _BK = bks; }
+      pendingCompleteId = null;
+      closeModal('otpRequestModal');
+      syncLiveTracking();
+      loadAllBookings(); loadOverview(); loadNotifications();
+      showToast('✅ OTP verified — job started');
+      loadBookings(function(){ loadOverview(); loadAllBookings(); });
       return;
     }
 
@@ -1467,7 +1576,7 @@ function verifyOTP() {
     pendingCompleteId = null;
     closeModal('otpRequestModal');
 
-    syncProviderStats();
+    syncProviderStats(); syncLiveTracking();
     loadAllBookings(); loadOverview(); loadEarnings(); loadNotifications();
     showToast('✅ Job completed! Waiting for customer payment confirmation.');
 
@@ -1551,7 +1660,7 @@ function afterPaymentSuccess() {
   openCustomerRatingModal(booking);
 }
 
-// ─── PAYMENT POLLING — provider polls Firebase for customer payment ───
+// ─── PAYMENT POLLING — provider polls bookings.php get for customer payment ───
 let pollInterval = null;
 let _payPollBookingId = null;
 function startPaymentPolling(bookingId) {
@@ -1579,6 +1688,15 @@ function startPaymentPolling(bookingId) {
         data.paymentMethod = data.paymentMethod || data.payment_method;
         data.txnId = data.txnId || data.razorpay_payment_id;
         if (data.payment_status === 'paid') data.status = 'paid';
+        if (data.payment_status === 'cash_pending') {
+          const bkC = getBK();
+          const ci = bkC.findIndex(x => x.id === _payPollBookingId);
+          if (ci > -1 && bkC[ci].paymentStatus !== 'cash_pending') {
+            bkC[ci].paymentStatus = 'cash_pending'; _BK = bkC;
+            loadAllBookings();
+            showToast('💵 Customer says they paid cash — tap "Confirm cash received" in My Bookings');
+          }
+        }
       }
       if (data && data.status === 'paid') {
         stopPaymentPolling();
@@ -1620,8 +1738,15 @@ function showPaymentReceivedAlert(booking) {
   document.getElementById('jobDoneModal').classList.add('show');
 }
 
-// ─── STEP 4: Rating Modal ────────────────────────────────────────
+// ─── STEP 4: Provider rates the customer (bookings.php rate_customer) ──
+function openRateCustomer(bookingId) {
+  const booking = getBK().find(b => b.id === bookingId);
+  if (!booking) return;
+  currentRatingBookingId = bookingId;
+  openCustomerRatingModal(booking);
+}
 function openCustomerRatingModal(booking) {
+  if (booking && booking.id) currentRatingBookingId = booking.id;
   selectedRating = 0;
   document.getElementById('ratingLabel').textContent = '';
   document.getElementById('ratingReviewText').value = '';
@@ -1630,7 +1755,7 @@ function openCustomerRatingModal(booking) {
     document.getElementById('rs' + i).classList.remove('active');
   }
   document.getElementById('ratingProviderName').textContent =
-    'Rate your ' + (booking ? booking.service : 'service') + ' by ' + P.name;
+    'How was ' + ((booking && booking.customer) || 'the customer') + ' for ' + ((booking && booking.service) || 'this job') + '?';
   document.getElementById('ratingModal').classList.add('show');
 }
 
@@ -1642,47 +1767,25 @@ function setRating(n) {
   }
 }
 
+var _ratingSubmitting = false;
 function submitRating() {
   if (selectedRating === 0) { showToast('⭐ Please tap a star to rate'); return; }
-  const review = document.getElementById('ratingReviewText').value.trim();
-  const bk = getBK();
-  const booking = bk.find(b => b.id === currentRatingBookingId);
-
-  const reviewObj = {
-    customer: booking ? (booking.customer || 'Customer') : 'Customer',
-    stars: selectedRating,
-    text: review || OTP_LABELS[selectedRating].replace(/[^a-zA-Z ]/g,'').trim() || 'Great service!',
-    date: new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short'}),
-    bookingId: currentRatingBookingId || ''
-  };
-
-  // Save review
-  const reviews = getReviews();
-  reviews.push(reviewObj);
-  saveReviews(reviews);
-
-  // Update provider avg rating in providers list
-  const avgRating = (reviews.reduce((s,r) => s+r.stars, 0) / reviews.length).toFixed(1);
-  const all = JSON.parse(JSON.stringify(P ? [P] : []) || '[]');
-  const pidx = all.findIndex(p => p.id === P.id);
-  if (pidx > -1) {
-    all[pidx].rating = +avgRating;
-    all[pidx].reviews = reviews.length;
-    P = all[pidx];
-    if(all&&all[0]) P = all[0];
-    localStorage.setItem('hs_current_provider', JSON.stringify(P));
-  }
-
-  closeModal('ratingModal');
-  loadRatings(); loadOverview();
-
-  // Write review to Firebase so it persists cross-device
-  if (reviewObj.bookingId) {
-    fbWrite('reviews/' + reviewObj.bookingId, reviewObj);
-  }
-
-  showToast('⭐ Rating saved! Thank you.');
-  currentRatingBookingId = null;
+  const bookingId = currentRatingBookingId;
+  if (!bookingId) { closeModal('ratingModal'); return; }
+  if (_ratingSubmitting) return;
+  const comment = document.getElementById('ratingReviewText').value.trim();
+  _ratingSubmitting = true;
+  provApi('/bookings.php?action=rate_customer', { booking_id: bookingId, rating: selectedRating, comment: comment }).then(function(res){
+    _ratingSubmitting = false;
+    if (!res.success) { showToast('⚠️ ' + (res.error || 'Could not save rating')); return; }
+    const bk = getBK();
+    const idx = bk.findIndex(b => b.id === bookingId);
+    if (idx > -1) { bk[idx].customer_rating = selectedRating; bk[idx]._customerRated = true; _BK = bk; }
+    closeModal('ratingModal');
+    loadAllBookings();
+    showToast('⭐ Thanks! Customer rating saved.');
+    currentRatingBookingId = null;
+  });
 }
 
 function viewBk(id) {
@@ -1733,12 +1836,12 @@ function loadEarnings(){
   const sorted = [...s.completed].sort((a,b) => new Date(b.date)-new Date(a.date));
   document.getElementById("earnBody").innerHTML = sorted.map(b => `
     <tr>
-      <td><strong>${b.id}</strong></td>
-      <td>${b.service}</td>
-      <td>${b.date}</td>
-      <td><strong>₹${b.amount}</strong></td>
-      <td style="color:var(--red);font-weight:800;">-₹${b._commAmt||0} <small style="color:var(--muted)">(${b._commPct||15}%)</small></td>
-      <td style="color:var(--green);font-weight:900;">₹${b._provAmt||b.amount}</td>
+      <td><strong>${esc(b.id)}</strong></td>
+      <td>${esc(b.service)}</td>
+      <td>${esc(b.date||'')}</td>
+      <td><strong>₹${Number(b.amount)||0}</strong></td>
+      <td style="color:var(--red);font-weight:800;">-₹${Number(b._commAmt)||0} <small style="color:var(--muted)">(${Number(b._commPct)||15}%)</small></td>
+      <td style="color:var(--green);font-weight:900;">₹${Number(b._provAmt||b.amount)||0}</td>
       <td><span class="badge completed">Credited</span></td>
     </tr>
   `).join("") || "<tr><td colspan='7' style='text-align:center;color:var(--muted);padding:24px'>No completed bookings yet</td></tr>";
@@ -1748,12 +1851,12 @@ function loadEarnings(){
   document.getElementById("pendingWithdrawSection").style.display = pendingReqs.length ? "block" : "none";
   document.getElementById("pendingWithdrawBody").innerHTML = pendingReqs.map(p => `
     <tr>
-      <td><strong>${p.id}</strong></td>
-      <td style="color:var(--green);font-weight:800;">₹${p.amount.toLocaleString("en-IN")}</td>
-      <td style="font-size:12px">${p.account} <small>(${p.accountType})</small></td>
-      <td style="font-size:12px">${new Date(p.requestedAt).toLocaleDateString("en-IN")}</td>
+      <td><strong>${esc(p.id)}</strong></td>
+      <td style="color:var(--green);font-weight:800;">₹${(Number(p.amount)||0).toLocaleString("en-IN")}</td>
+      <td style="font-size:12px">${esc(p.account)} <small>(${esc(p.accountType)})</small></td>
+      <td style="font-size:12px">${p.requestedAt ? esc(new Date(p.requestedAt).toLocaleDateString("en-IN")) : "—"}</td>
       <td><span class="badge pending">⏳ Pending Admin Approval</span></td>
-      <td><button onclick="cancelWithdraw('${p.id}')" style="padding:5px 12px;background:var(--red);color:#fff;border:none;border-radius:7px;font-weight:800;cursor:pointer;font-size:12px;">✕ Cancel</button></td>
+      <td><button onclick="cancelWithdraw('${jsq(p.id)}')" style="padding:5px 12px;background:var(--red);color:#fff;border:none;border-radius:7px;font-weight:800;cursor:pointer;font-size:12px;">✕ Cancel</button></td>
     </tr>
   `).join("");
 
@@ -1761,17 +1864,56 @@ function loadEarnings(){
   const allPayouts = [...s.payouts].sort((a,b) => new Date(b.requestedAt)-new Date(a.requestedAt));
   document.getElementById("withdrawHistoryBody").innerHTML = allPayouts.length ? allPayouts.map(p => `
     <tr>
-      <td><strong>${p.id}</strong></td>
-      <td style="font-weight:800;">₹${p.amount.toLocaleString("en-IN")}</td>
-      <td style="font-size:12px">${p.account}</td>
-      <td style="font-size:12px">${new Date(p.requestedAt).toLocaleDateString("en-IN")}</td>
-      <td style="font-size:12px">${p.processedAt ? new Date(p.processedAt).toLocaleDateString("en-IN") : "—"}</td>
-      <td><span class="badge ${p.status}">${
+      <td><strong>${esc(p.id)}</strong></td>
+      <td style="font-weight:800;">₹${(Number(p.amount)||0).toLocaleString("en-IN")}</td>
+      <td style="font-size:12px">${esc(p.account)}</td>
+      <td style="font-size:12px">${p.requestedAt ? esc(new Date(p.requestedAt).toLocaleDateString("en-IN")) : "—"}</td>
+      <td style="font-size:12px">${p.processedAt ? esc(new Date(p.processedAt).toLocaleDateString("en-IN")) : "—"}</td>
+      <td><span class="badge ${esc(p.status)}">${
         p.status==="approved" ? "✅ Paid" :
-        p.status==="rejected" ? "❌ Rejected" : "⏳ Pending"
+        p.status==="rejected" ? "❌ Rejected" :
+        p.status==="cancelled" ? "↩️ Cancelled" : "⏳ Pending"
       }</span></td>
     </tr>
   `).join("") : "<tr><td colspan='6' style='text-align:center;color:var(--muted);padding:20px'>No withdrawal history</td></tr>";
+
+  renderPenalties();
+}
+
+// ── Penalties applied by admin (penalties.php?action=list → provider's own) ──
+var _PENALTIES = [];
+var _penaltiesLoadedAt = 0;
+function loadPenalties(force) {
+  if (!P || !P.id) return;
+  if (!force && Date.now() - _penaltiesLoadedAt < 55000) return;
+  _penaltiesLoadedAt = Date.now();
+  provApi('/penalties.php?action=list&_=' + Date.now()).then(function(res){
+    if (!res || !res.success) return;
+    var rows = Array.isArray(res.data) ? res.data : ((res.data && Array.isArray(res.data.rows)) ? res.data.rows : []);
+    _PENALTIES = rows;
+    loadEarnings();
+  });
+}
+function renderPenalties() {
+  var sec = document.getElementById('penaltySection');
+  var body = document.getElementById('penaltyBody');
+  if (!sec || !body) return;
+  sec.style.display = _PENALTIES.length ? 'block' : 'none';
+  var applied = _PENALTIES.filter(function(x){ return x.status === 'applied'; })
+    .reduce(function(t, x){ return t + (Number(x.amount) || 0); }, 0);
+  var tot = document.getElementById('penaltyTotal');
+  if (tot) tot.textContent = '₹' + applied.toLocaleString('en-IN');
+  body.innerHTML = _PENALTIES.map(function(x){
+    var st = x.status || 'applied';
+    var when = x.created_at ? new Date(String(x.created_at).replace(' ', 'T')).toLocaleDateString('en-IN') : '—';
+    return '<tr>'
+      + '<td style="font-size:12px">' + esc(when) + '</td>'
+      + '<td>' + esc(x.booking_id || '—') + '</td>'
+      + '<td>' + esc(x.reason || '') + '</td>'
+      + '<td style="color:var(--red);font-weight:800;">-₹' + (Number(x.amount) || 0).toLocaleString('en-IN') + '</td>'
+      + '<td><span class="badge ' + (st === 'waived' ? 'completed' : 'cancelled') + '">' + (st === 'waived' ? 'Waived' : 'Applied') + '</span></td>'
+      + '</tr>';
+  }).join('');
 }
 
 // ════════ PROFILE ════════
@@ -1792,7 +1934,7 @@ function _persistServices(){
   }catch(e){console.warn('[svc]',e.message);}
 }
 function openAddServiceModal(){
-  // Admin stores catalog in catalog.json on the server (not Firebase)
+  // Admin stores catalog in catalog.json on the server
   fetch('catalog.json?_=' + Date.now(), {signal:AbortSignal.timeout(8000)})
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -2424,7 +2566,7 @@ function buildServices(){ return [
 
 // ── Provider Dashboard: My Services Grid ─────────────────────────────────────
 var _psvcSel = {};       // { "SVC001_sweep_1bhk": true }
-var _psvcPx  = {};       // Firebase prices
+var _psvcPx  = {};       // admin prices (services.php price_ranges)
 var _psvcPxLoaded = false;
 var _psvcCat = 'All';
 
@@ -2591,7 +2733,7 @@ function renderSvcProfileGrid() {
     if(hdr) hdr.classList.add('open'); if(body) body.classList.add('open');
   });
 
-  // Load Firebase prices once
+  // Load admin prices once (services.php)
   if (!_psvcPxLoaded) {
     _psvcPxLoaded = true;
     fetch('https://hamaraservice.com/api/services.php?action=price_ranges')
@@ -2705,19 +2847,36 @@ function saveProfile() {
 }
 
 // ════════ AVAILABILITY ════════
+// Weekly schedule lives in MySQL: providers.php get → P.schedule,
+// saved with providers.php?action=schedule {schedule:{mon:{on,from,to},…,sun}}.
+const SCHED_KEYS = ['sun','mon','tue','wed','thu','fri','sat']; // index = DAYS index
+function _parseSchedule(raw) {
+  var sc = raw;
+  if (typeof sc === 'string') { try { sc = JSON.parse(sc); } catch(e) { sc = null; } }
+  return (sc && typeof sc === 'object' && !Array.isArray(sc)) ? sc : null;
+}
 function loadAvailability() {
-  const avail = P.availability || { days:[1,2,3,4,5], slots:['9AM','10AM','11AM','2PM','3PM'], start:'08:00', end:'20:00' };
-  if (avail.start) document.getElementById('workStart').value = avail.start;
-  if (avail.end)   document.getElementById('workEnd').value   = avail.end;
+  var sc = _parseSchedule(P.schedule);
+  var from = '08:00', to = '20:00';
+  var onDays = [1,2,3,4,5,6];
+  if (sc) {
+    onDays = [];
+    SCHED_KEYS.forEach(function(k, i){
+      var d = sc[k];
+      if (d && d.on) { onDays.push(i); if (d.from) from = d.from; if (d.to) to = d.to; }
+    });
+  }
+  document.getElementById('workStart').value = from;
+  document.getElementById('workEnd').value   = to;
 
   const grid = document.getElementById('availGrid');
   grid.innerHTML = '';
   DAYS.forEach((d, i) => {
-    const on = avail.days.includes(i);
+    const on = onDays.includes(i);
     const el = document.createElement('div');
     el.className = 'avail-day ' + (on ? 'on' : 'off');
     el.id = 'day_' + i;
-    el.innerHTML = `<div class="dn">${d}</div><div class="ds">${on ? '✅' : '❌'}</div>`;
+    el.innerHTML = `<div class="dn">${esc(d)}</div><div class="ds">${on ? '✅' : '❌'}</div>`;
     el.onclick = () => {
       const was = el.classList.contains('on');
       el.classList.toggle('on', !was); el.classList.toggle('off', was);
@@ -2725,32 +2884,37 @@ function loadAvailability() {
     };
     grid.appendChild(el);
   });
-
-  const slotWrap = document.getElementById('timeSlots');
-  slotWrap.innerHTML = '';
-  TIME_SLOTS.forEach(slot => {
-    const el = document.createElement('div');
-    el.className = 'tslot' + (avail.slots.includes(slot) ? ' active' : '');
-    el.textContent = slot;
-    el.onclick = () => el.classList.toggle('active');
-    slotWrap.appendChild(el);
-  });
+  // Refresh from the server in case another device changed it
+  if (!loadAvailability._fetched) {
+    loadAvailability._fetched = true;
+    provApi('/providers.php?action=get&id=' + encodeURIComponent(P.id)).then(function(res){
+      if (!res || !res.success || !res.data || res.data.schedule === undefined) return;
+      P.schedule = res.data.schedule;
+      try { localStorage.setItem('hs_current_provider', JSON.stringify(P)); } catch(e) {}
+      loadAvailability();
+    });
+  }
 }
 
+var _schedSaving = false;
 function saveAvailability() {
-  const days = DAYS.map((_, i) => document.getElementById('day_' + i)?.classList.contains('on') ? i : null).filter(v => v !== null);
-  const slots = [...document.querySelectorAll('.tslot.active')].map(el => el.textContent);
-  const all = JSON.parse(JSON.stringify(P ? [P] : []) || '[]');
-  const idx = all.findIndex(p => p.id === P.id);
-  if (idx > -1) {
-    all[idx].availability = { days, slots, start: document.getElementById('workStart').value, end: document.getElementById('workEnd').value };
-    P = all[idx];
-    if(all&&all[0]) P = all[0];
-    localStorage.setItem('hs_current_provider', JSON.stringify(P));
-    // NOTE: the MySQL API has no column for the weekly schedule yet, so this
-    // is stored on this device only.
-    showToast('✅ Availability saved on this device');
-  }
+  const from = document.getElementById('workStart').value || '09:00';
+  const to   = document.getElementById('workEnd').value   || '18:00';
+  if (from >= to) { showToast('⚠️ End time must be after start time'); return; }
+  const schedule = {};
+  SCHED_KEYS.forEach(function(k, i){
+    const on = !!document.getElementById('day_' + i)?.classList.contains('on');
+    schedule[k] = { on: on, from: from, to: to };
+  });
+  if (_schedSaving) return;
+  _schedSaving = true;
+  provApi('/providers.php?action=schedule', { schedule: schedule }).then(function(res){
+    _schedSaving = false;
+    if (!res.success) { showToast('⚠️ Availability not saved: ' + (res.error || 'server error')); return; }
+    P.schedule = schedule;
+    try { localStorage.setItem('hs_current_provider', JSON.stringify(P)); } catch(e) {}
+    showToast('✅ Availability saved');
+  });
 }
 
 // ════════ LOCATION ════════
@@ -2957,7 +3121,7 @@ function triggerIncomingAlert() {
 }
 
 // ════════════════════════════════════════════════════════════
-// REAL BOOKING POLLER — checks Firebase every 5 seconds
+// REAL BOOKING POLLER — checks bookings.php?action=open every 5 seconds
 // ════════════════════════════════════════════════════════════
 var bookingPoller = null;
 var seenBookingIds = {};
@@ -3120,7 +3284,7 @@ function runAlertCountdown(sec) {
       clearInterval(alertCountdown);
       document.getElementById('incomingAlert').style.display = 'none';
       sessionStorage.removeItem('hs_alert');
-      if (pendingBooking && pendingBooking.fromFirebase) saveSeenId(pendingBooking.id, false);
+      if (pendingBooking && pendingBooking.fromApi) saveSeenId(pendingBooking.id, false);
       pendingBooking = null;
       showToast('Booking request expired');
     }
@@ -3140,7 +3304,7 @@ function resumeAlertIfActive() {
     pendingBooking = { id:bk.id, customer:bk.customer||'Customer', phone:bk.phone||'',
       service:bk.service||'', date:bk.date||'', time:bk.time||'',
       amount:bk.priceVal||0, status:'pending', customerLat:bk.lat, customerLng:bk.lng,
-      address:bk.address||'', fromFirebase:true, fbKey:bk.id };
+      address:bk.address||'', fromApi:true, fbKey:bk.id };
     var ds = dist<1 ? Math.round(dist*1000)+'m' : parseFloat(dist).toFixed(1)+' km';
     var _rsumHtml = '';
     if (bk.summary && bk.summary.length > 0) {
@@ -3190,15 +3354,11 @@ function markSwSeen(id) {
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
+  // sw.js only relays notification clicks (Accept / Reject) back to this page.
+  // It does no polling — new jobs come from checkForNewBookings() (bookings.php
+  // open) while the page is open, and from server-sent FCM pushes otherwise.
   navigator.serviceWorker.register('sw.js', {scope: '/'})
-    .then(function(reg) {
-      console.log('HS SW registered');
-      navigator.serviceWorker.ready.then(function(r) {
-        if (!r.active) return;
-        var svcs = (P.services||[]).map(function(s){ return (s.name||'').toLowerCase(); });
-        r.active.postMessage({type:'HS_INIT', pid: P.id, svcs: svcs});
-      });
-    })
+    .then(function(reg) { if (reg && reg.update) reg.update().catch(function(){}); })
     .catch(function(e){ console.log('SW reg failed:', e.message); });
 
   navigator.serviceWorker.addEventListener('message', function(e) {
@@ -3225,7 +3385,7 @@ function showRealBookingAlert(bk, dist) {
     customerLat: bk.lat,
     customerLng: bk.lng,
     address:     bk.address || '',
-    fromFirebase: true,
+    fromApi: true,
     fbKey:       bk.id,
   };
 
@@ -3316,7 +3476,7 @@ async function acceptNewBooking() {
   showToast('✅ Quote of ₹' + price + ' sent! Waiting for the customer to confirm…');
   pendingBooking = null;
   // Refresh from server so the booking shows its real state
-  loadBKFromFirebase(function(){ loadOverview(); loadAllBookings(); });
+  loadBookings(function(){ loadOverview(); loadAllBookings(); });
 }
 
 function rejectNewBooking() {
@@ -3336,22 +3496,40 @@ function showWithdrawModal(){
   if(avail) avail.textContent = "₹"+s.available.toLocaleString("en-IN");
   document.getElementById("withdrawModal").classList.add("show");
 }
+var _wdCancelling = {};
 function cancelWithdraw(id){
-  if(!confirm('Cancel this withdrawal request?'))return;
-  var payouts=_PAYOUTS;
-  var p=payouts.find(function(x){return x.id===id;});
+  var p=_PAYOUTS.find(function(x){return x.id===String(id);});
   if(!p){showToast('Not found');return;}
   if(p.status!=='pending'){showToast('Already processed - cannot cancel');return;}
-  payouts=payouts.filter(function(x){return x.id!==id;});
-  _PAYOUTS = payouts;
-  if(typeof fbDelete==='function')fbDelete('providers/'+P.id+'/withdrawals/'+id);
-  else if(typeof fbWrite==='function')fbWrite('providers/'+P.id+'/withdrawals/'+id,null);
-  buzz('cancel');loadEarnings();showToast('Withdrawal request cancelled');
+  if(!confirm('Cancel this withdrawal request of ₹'+(Number(p.amount)||0)+'?'))return;
+  if(_wdCancelling[id])return;
+  _wdCancelling[id]=true;
+  // Server refunds pending_earned atomically; only 'pending' payouts can be cancelled
+  provApi('/payouts.php?action=cancel', { payout_id: isNaN(Number(id)) ? id : Number(id) }).then(function(res){
+    _wdCancelling[id]=false;
+    if(!res.success){showToast('⚠️ '+(res.error||'Could not cancel withdrawal'));syncPayouts();return;}
+    _PAYOUTS=_PAYOUTS.map(function(x){return x.id===String(id)?Object.assign({},x,{status:'cancelled'}):x;});
+    buzz('cancel');loadEarnings();showToast('Withdrawal request cancelled — amount returned to your balance');
+    // Refresh balance + history from the server
+    syncPayouts();
+    refreshProviderBalance();
+  });
+}
+// Re-fetch the provider row (pending_earned / totals) after a balance change
+function refreshProviderBalance(){
+  provApi('/providers.php?action=get&id='+encodeURIComponent(P.id)).then(function(res){
+    if(!res||!res.success||!res.data||!res.data.id)return;
+    var localAvail=P.available;
+    P=Object.assign({},P,res.data);
+    if(typeof localAvail!=='undefined')P.available=localAvail;
+    try{localStorage.setItem('hs_current_provider',JSON.stringify(P));}catch(e){}
+    loadEarnings();
+  });
 }
 
 
 // ── Sync withdrawal status from MySQL (payouts.php?action=history) ─────────────
-function syncPayoutsFromFirebase(cb) {
+function syncPayouts(cb) {
   if (!P || !P.id) { if(cb) cb(); return; }
   provApi('/payouts.php?action=history&_=' + Date.now())
     .then(function(res) {
@@ -3402,7 +3580,7 @@ function processWithdraw(){
   if(!acc){showToast("⚠️ Enter your bank account or UPI ID");return;}
 
   const s = computeStats();
-  const available = s.netEarned - s.withdrawn - s.pendingWithdraw;
+  const available = s.available;
   if(amt > available){showToast("⚠️ Amount exceeds available balance ₹"+available);return;}
 
   // Create payout request
@@ -3444,7 +3622,7 @@ function processWithdraw(){
       loadEarnings();
       showToast('⚠️ ' + (res.error || 'Payout request failed'));
     }
-    syncPayoutsFromFirebase();
+    syncPayouts();
   });
 }
 
@@ -3479,31 +3657,8 @@ function buzz(type){
 // REAL TRACKING ENGINE
 // GPS: navigator.geolocation.watchPosition (device GPS)
 // Routing: OSRM (free, real roads, no API key)
-// Sync: Firebase Realtime Database (free tier)
+// Sync: MySQL API — bookings.php?action=track (write), action=get (read)
 // ════════════════════════════════════════════════════════════════
-
-// ══════════════════════════════════════════════════════════════
-// REAL-TIME SYNC ENGINE
-// PRIMARY  : localStorage + BroadcastChannel (same device, instant)
-// SECONDARY: Firebase Realtime DB (cross-device — configure below)
-// ══════════════════════════════════════════════════════════════
-
-// ── FIREBASE SETUP (cross-device tracking) ────────────────────
-// STEP 1: Go to https://console.firebase.google.com
-// STEP 2: Create project → Build → Realtime Database → Create database
-// STEP 3: Rules tab → paste: { "rules": { ".read": true, ".write": true } }
-// STEP 4: Copy your database URL (looks like: https://YOURPROJECT-default-rtdb.firebaseio.com)
-// STEP 5: Replace the URL below
-const FB_URL = 'https://hamaraservice.com/api'; // MySQL API
-const FB_URL_ALT = 'https://hamaraservice.com/api'; // same
-// The MySQL API has no /api/<path>.json REST paths, so remote fbRead/fbWrite
-// calls always 404'd. Disabled: fbRead/fbWrite now only use sessionStorage +
-// BroadcastChannel (same device). Booking / profile / payout flows use provApi().
-const FB_ENABLED = false;
-
-// BroadcastChannel for same-device cross-tab sync (works immediately, no setup)
-var trackChannel = null;
-try { trackChannel = new BroadcastChannel('hs_tracking'); } catch(e) {}
 
 // ── MAP + STATE ──────────────────────────────────────────────────
 var provMap=null, custMap2=null;
@@ -3538,87 +3693,69 @@ async function getRoute(fromLat,fromLng,toLat,toLng){
   return{coords:[[fromLat,fromLng],[toLat,toLng]],dist:calcDist(fromLat,fromLng,toLat,toLng),dur:calcDist(fromLat,fromLng,toLat,toLng)*4};
 }
 
-// ── DUAL SYNC: localStorage + BroadcastChannel + Firebase ────────
+// ════════════════════════════════════════════════════════════════
+// LIVE LOCATION → bookings.php?action=track {booking_id, lat, lng}
+// Runs while the provider has a 'confirmed' or 'active' booking and the page
+// is visible; posts at most every ~15 s. Stops on completion / cancel /
+// release / page hide.
+// ════════════════════════════════════════════════════════════════
+var TRACK_STATUSES = ['confirmed','active'];
+var TRACK_INTERVAL_MS = 15000;
+var _trk = { id:null, watch:null, timer:null, lat:null, lng:null, lastSent:0, sending:false };
 
-// ── fbRestPatch: PATCH (merge) a Firebase path without overwriting ──────────
-async function fbRestPatch(path, data) {
-  if (!FB_ENABLED) return;
-  try {
-    var resp = await fetch(FB_URL + '/' + path + '.json', {
-      method: 'PATCH',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data),
-      signal: AbortSignal.timeout(8000)
-    });
-    if (resp.ok) console.log('Firebase PATCH OK:', path);
-    else console.warn('Firebase PATCH failed:', resp.status, path);
-  } catch(e) {
-    console.warn('fbRestPatch error:', e.message);
-  }
+function _trkTarget() {
+  var list = getBK();
+  // Prefer an in-progress job, then a confirmed one
+  return list.find(function(b){ return b.status === 'active'; }) ||
+         list.find(function(b){ return b.status === 'confirmed'; }) || null;
 }
-
-async function fbWrite(path, data) {
-  // 1. localStorage (same device, instant, always works)
-  try { sessionStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data)); } catch(e) {}
-  // 2. BroadcastChannel (cross-tab on same device, instant)
-  try { if(trackChannel) trackChannel.postMessage({path:path, data:data}); } catch(e) {}
-  // 3. Firebase (cross-device)
-  if (FB_ENABLED) {
-    var urls = [FB_URL, FB_URL_ALT];
-    for (var i=0; i<urls.length; i++) {
-      try {
-        var resp = await fetch(urls[i] + '/' + path + '.json', {
-          method:'PUT', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify(data), signal:AbortSignal.timeout(6000)
-        });
-        if (resp.ok) { console.log('Firebase write OK via', urls[i]); break; }
-      } catch(e) { console.warn('Firebase write failed for', urls[i], e.message); }
+function syncLiveTracking() {
+  if (!P || !P.id || !navigator.geolocation) return;
+  var b = _trkTarget();
+  if (!b || document.hidden) { stopLiveTracking(); return; }
+  if (_trk.id === b.id && _trk.watch !== null) return; // already tracking this booking
+  stopLiveTracking();
+  _trk.id = b.id;
+  _trk.watch = navigator.geolocation.watchPosition(function(pos){
+    _trk.lat = pos.coords.latitude; _trk.lng = pos.coords.longitude;
+    _trkSend(false);
+  }, function(err){
+    if (err && err.code === 1) stopLiveTracking(); // permission denied — don't spin
+  }, { enableHighAccuracy:true, maximumAge:10000, timeout:20000 });
+  _trk.timer = setInterval(function(){ _trkSend(true); }, TRACK_INTERVAL_MS);
+}
+function stopLiveTracking() {
+  if (_trk.watch !== null && navigator.geolocation) navigator.geolocation.clearWatch(_trk.watch);
+  if (_trk.timer) clearInterval(_trk.timer);
+  _trk.id = null; _trk.watch = null; _trk.timer = null; _trk.lastSent = 0;
+}
+// Called by the watcher / interval and by the navigation overlay's own GPS
+function _trkSend(fromTimer, bookingId, lat, lng) {
+  if (lat != null && lng != null) { _trk.lat = lat; _trk.lng = lng; }
+  var id = bookingId || _trk.id;
+  if (!id || _trk.lat == null || _trk.lng == null || _trk.sending) return;
+  var bk = getBK().find(function(b){ return b.id === id; });
+  if (!bk || TRACK_STATUSES.indexOf(bk.status) < 0) return;
+  var now = Date.now();
+  if (now - _trk.lastSent < TRACK_INTERVAL_MS - 1000) return;
+  _trk.lastSent = now; _trk.sending = true;
+  provApi('/bookings.php?action=track', { booking_id: id, lat: _trk.lat, lng: _trk.lng }).then(function(res){
+    _trk.sending = false;
+    if (res && !res.success && /status|not (confirmed|active)|not found|forbidden/i.test(res.error || '')) {
+      // Booking moved on (completed / cancelled / released) — stop and resync
+      stopLiveTracking();
+      loadBookings(function(){ loadOverview(); loadAllBookings(); loadEarnings(); });
     }
-  }
+  });
 }
-
-async function fbRead(path) {
-  // 1. Try Firebase (cross-device)
-  if (FB_ENABLED) {
-    var urls = [FB_URL, FB_URL_ALT];
-    for (var i=0; i<urls.length; i++) {
-      try {
-        var r = await fetch(urls[i] + '/' + path + '.json', {signal:AbortSignal.timeout(5000)});
-        if (r.ok) {
-          var d = await r.json();
-          // For booking data, return even if no .lat field
-          if (d !== null && d !== undefined) return d;
-        }
-      } catch(e) { console.warn('Firebase read failed for', urls[i]); }
-    }
-  }
-  // 2. Fallback: localStorage
-  try {
-    var raw = sessionStorage.getItem('hs_track_' + path.replace(/\//g,'_'));
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
-}
-
-async function fbDelete(path) {
-  if (!FB_ENABLED) return;
-  try {
-    await fetch(FB_URL + '/' + path + '.json', {method:'DELETE', signal:AbortSignal.timeout(5000)});
-  } catch(e) { console.warn('FB delete failed:', e.message); }
-}
-
-// Listen for BroadcastChannel messages (cross-tab same device)
-if (trackChannel) {
-  trackChannel.onmessage = function(ev) {
-    try {
-      var path = ev.data.path, data = ev.data.data;
-      sessionStorage.setItem('hs_track_' + path.replace(/\//g,'_'), JSON.stringify(data));
-    } catch(e) {}
-  };
-}
+document.addEventListener('visibilitychange', function(){
+  if (document.hidden) stopLiveTracking(); else syncLiveTracking();
+});
+window.addEventListener('pagehide', stopLiveTracking);
 
 // ════════════════════════════════════════════════════════════════
 // PROVIDER TRACKING — Opens on provider device
-// Uses real device GPS, publishes to Firebase every 4s
+// Uses real device GPS, posts to bookings.php?action=track every ~15s
 // ════════════════════════════════════════════════════════════════
 async function openProviderTracking(bookingId){
   var bk=getBK();
@@ -3634,9 +3771,14 @@ async function openProviderTracking(bookingId){
   document.getElementById('providerTrackingView').classList.add('show');
   setGpsBanner('prov','searching','Acquiring GPS signal...');
   updateProvSteps('searching');
-  // Show Firebase setup hint if not configured
-  var fbBanner = document.getElementById('fbSetupBanner');
-  if (fbBanner) fbBanner.style.display = 'block'; // show rules reminder until rules are published
+  // Customer pin: history rows carry no coordinates — fetch the booking once
+  if (!booking.customerLat) {
+    var gr = await provApi('/bookings.php?action=get&id=' + encodeURIComponent(bookingId));
+    if (gr && gr.success && gr.data && Number(gr.data.lat)) {
+      booking.customerLat = Number(gr.data.lat); booking.customerLng = Number(gr.data.lng);
+      if (!booking.phone && gr.data.customer_phone) booking.phone = gr.data.customer_phone;
+    }
+  }
 
   setTimeout(async function(){
     if(!provMap){
@@ -3705,8 +3847,8 @@ function startRealGPS(bookingId,destLat,destLng){
         provMap.setView([lat,lng],16);
       }
 
-      // PUBLISH to Firebase — customer map reads this
-      await fbWrite('tracking/'+bookingId+'/provider',{lat:lat,lng:lng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8,service:activeBookingData?(activeBookingData.service||''):''});
+      // PUBLISH to MySQL (throttled ~15 s) — customer app reads it via bookings.php get
+      _trkSend(false, bookingId, lat, lng);
     },
     function(err){
       var msgs={
@@ -3757,7 +3899,7 @@ function shareTrackingLink(bookingId){
 
 // ════════════════════════════════════════════════════════════════
 // CUSTOMER TRACKING — Opens on customer device
-// Reads provider location from Firebase every 4 seconds
+// Reads provider location from bookings.php get every 15 seconds
 // Shows real road route from provider to customer
 // ════════════════════════════════════════════════════════════════
 async function openCustomerTracking(bookingId){
@@ -3787,18 +3929,23 @@ async function openCustomerTracking(bookingId){
       custHomeMarker=L.marker([cLat,cLng],{icon:mkDestIcon('🏠')}).addTo(custMap2).bindPopup('<b>Your location</b>');
       custMap2.setView([cLat,cLng],14);
     }
-    startFirebasePoll(bookingId,cLat,cLng);
+    startLocationPoll(bookingId,cLat,cLng);
   },200);
 }
 
-async function startFirebasePoll(bookingId,custLat,custLng){
+async function startLocationPoll(bookingId,custLat,custLng){
   if(custPollTimer)clearInterval(custPollTimer);
 
   async function poll(){
     if(!document.getElementById('customerTrackingView').classList.contains('show')){clearInterval(custPollTimer);return;}
 
-    // PRIMARY: Read from Firebase (cross-device, real-time)
-    var data=await fbRead('tracking/'+bookingId+'/provider');
+    // Read the last location the provider posted (bookings.php get → provider_lat/lng/loc_at)
+    var data=null;
+    var gr=await provApi('/bookings.php?action=get&id='+encodeURIComponent(bookingId));
+    if(gr&&gr.success&&gr.data&&Number(gr.data.provider_lat)){
+      var locAt=gr.data.provider_loc_at?Date.parse(String(gr.data.provider_loc_at).replace(' ','T')+'+05:30'):NaN;
+      data={lat:Number(gr.data.provider_lat),lng:Number(gr.data.provider_lng),ts:isNaN(locAt)?Date.now():locAt,name:P.name};
+    }
 
     // FALLBACK: Same device demo — read from memory
     if((!data||!data.lat)&&myRealLat){data={lat:myRealLat,lng:myRealLng,ts:Date.now(),name:P.name,phone:P.phone,rating:P.rating||4.8};}
@@ -3812,7 +3959,7 @@ async function startFirebasePoll(bookingId,custLat,custLng){
 
     var pLat=data.lat, pLng=data.lng;
     var age=Date.now()-(data.ts||0);
-    var fresh=age<15000;
+    var fresh=age<45000;
     setGpsBanner('cust',fresh?'live':'searching',fresh?'Live GPS · Updated '+Math.round(age/1000)+'s ago':'Last seen '+Math.round(age/1000)+'s ago — reconnecting');
 
     // Place / animate provider marker
@@ -3848,7 +3995,7 @@ async function startFirebasePoll(bookingId,custLat,custLng){
   }
 
   await poll();
-  custPollTimer=setInterval(poll,4000);
+  custPollTimer=setInterval(poll,15000);
 }
 
 function stopCustomerTracking(){
@@ -3955,7 +4102,7 @@ function _hsMobileModeInit(){
     if(idEl)   idEl.textContent   = P.id   || '';
   }
   syncMobHeader();
-  setTimeout(syncMobHeader, 1200); // retry after Firebase load
+  setTimeout(syncMobHeader, 1200); // retry after API load
 
   // ── Sync availability toggle ─────────────────────────────────────────────
   var mainToggle = document.getElementById('availToggle');
@@ -4323,8 +4470,8 @@ function showJobTakenPopup(provName) {
 <div class="modal-overlay" id="otpRequestModal">
   <div class="otp-modal-box">
     <div style="font-size:48px;margin-bottom:8px;">🔐</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;">Enter Completion Code</div>
-    <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:4px;">Ask the customer for their 4-digit code</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;" id="otpModalTitle">Enter Completion Code</div>
+    <div style="font-size:14px;color:var(--muted);font-weight:600;margin-bottom:4px;" id="otpModalSub">Ask the customer for their 4-digit code</div>
     <div style="font-size:13px;color:var(--blue);font-weight:700;margin-bottom:4px;padding:8px 12px;background:var(--blue-light);border-radius:8px;" id="otpCustomerInstruction">Ask the customer to open their app for the code.</div>
     <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:4px;" id="otpBookingInfo">Service: — · Customer: —</div>
     <div class="otp-enter-row">
@@ -4334,18 +4481,18 @@ function showJobTakenPopup(provName) {
       <input class="otp-digit" type="text" maxlength="1" id="od4" oninput="otpInput(this,4)" onkeydown="otpBack(event,4)"/>
     </div>
     <div class="otp-err" id="otpErr">❌ Wrong code. Ask the customer again.</div>
-    <button class="otp-verify-btn" onclick="verifyOTP()">✅ Verify & Close Job</button>
+    <button class="otp-verify-btn" id="otpVerifyBtn" onclick="verifyOTP()">✅ Verify & Close Job</button>
     <div style="margin-top:14px;"><button onclick="closeModal('otpRequestModal')" style="background:none;border:none;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;">Cancel</button></div>
   </div>
 </div>
 
 <!-- Customer OTP shown in user panel only -->
 
-<!-- ══ RATING MODAL (After job complete — customer rates provider) ══ -->
+<!-- ══ RATING MODAL (After job complete — provider rates the customer) ══ -->
 <div class="modal-overlay" id="ratingModal">
   <div class="rating-modal-box">
     <div style="font-size:48px;margin-bottom:8px;">⭐</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;">Rate Your Service</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;">Rate the Customer</div>
     <div style="font-size:14px;color:var(--muted);font-weight:600;" id="ratingProviderName">How was your experience?</div>
     <div class="rating-stars-row" id="ratingStarsRow">
       <span class="rating-star" onclick="setRating(1)" id="rs1">⭐</span>
@@ -4355,7 +4502,7 @@ function showJobTakenPopup(provName) {
       <span class="rating-star" onclick="setRating(5)" id="rs5">⭐</span>
     </div>
     <div style="font-size:18px;font-weight:800;color:var(--text);height:24px;margin-bottom:14px;" id="ratingLabel"></div>
-    <textarea class="rating-text-input" id="ratingReviewText" placeholder="Share your experience (optional)…"></textarea>
+    <textarea class="rating-text-input" id="ratingReviewText" placeholder="Anything to note about this customer? (optional)"></textarea>
     <button class="rating-submit-btn" onclick="submitRating()">⭐ Submit Rating</button>
     <div class="rating-skip" onclick="closeModal('ratingModal')">Skip for now</div>
   </div>
@@ -5435,7 +5582,7 @@ function buildServices(){ return [
 
 // ── Service selection state ───────────────────────────────────────────────────
 var _portalSel = {};        // { "SVC001_sweep_1bhk": true, ... }
-var _portalFBPx = {};       // Firebase prices { SVC001: { sweep: { 1bhk: 149 } } }
+var _portalFBPx = {};       // admin prices { SVC001: { sweep: { 1bhk: 149 } } }
 var _portalCurCat = 'All';
 var _portalPxLoaded = false; // separate flag — not on the prices object
 

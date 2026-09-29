@@ -229,8 +229,14 @@ switch ($action) {
     $min_price = !empty($all_prices) ? min($all_prices) : 0;
     $max_price = !empty($all_prices) ? max($all_prices) : 0;
 
-    $stmt = $db->prepare("UPDATE services SET price_data = ?, min_price = ?, max_price = ? WHERE id = ?");
-    $stmt->execute([json_encode($data), $min_price, $max_price, $svc_id]);
+    if (!empty($all_prices)) {
+      $stmt = $db->prepare("UPDATE services SET price_data = ?, min_price = ?, max_price = ? WHERE id = ?");
+      $stmt->execute([json_encode($data), $min_price, $max_price, $svc_id]);
+    } else {
+      // No priced options (e.g. only commission changed) — keep existing min/max
+      $stmt = $db->prepare("UPDATE services SET price_data = ? WHERE id = ?");
+      $stmt->execute([json_encode($data), $svc_id]);
+    }
 
     if ($stmt->rowCount() === 0) {
       // Service row may not exist — insert
@@ -301,8 +307,13 @@ switch ($action) {
     $b      = getBody();
     $svc_id = $b['svc_id'] ?? '';
     if (empty($svc_id)) err('svc_id required');
-    $db->prepare("UPDATE services SET price_data = NULL, min_price = 0, max_price = 0 WHERE id = ?")
-       ->execute([$svc_id]);
+    // Keep the per-service commission — only option prices are reset
+    $cur = $db->prepare("SELECT price_data FROM services WHERE id = ?");
+    $cur->execute([$svc_id]);
+    $old = json_decode((string)($cur->fetchColumn() ?: ''), true);
+    $keep = (is_array($old) && isset($old['commission'])) ? json_encode(['commission' => $old['commission']]) : null;
+    $db->prepare("UPDATE services SET price_data = ?, min_price = 0, max_price = 0 WHERE id = ?")
+       ->execute([$keep, $svc_id]);
     ok(['reset' => true, 'svc_id' => $svc_id]);
   }
 
