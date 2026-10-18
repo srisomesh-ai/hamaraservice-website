@@ -1,0 +1,7 @@
+Options -Indexes
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+<FilesMatch "^(config|schema|razorpay|db|hs-secrets\.sample)\.php$">
+  Require all denied
+</FilesMatch>

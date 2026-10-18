@@ -15,15 +15,12 @@
 //   POST ?action=suspend    — admin suspend provider
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/schema.php';
 setCorsHeaders();
 
 $action = $_GET['action'] ?? '';
 $db     = getDB();
-
-// ── auto-migrate: upi_id + areas ──
-try { $db->exec("ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL"); } catch (Exception $e) {}
-try { $db->exec("ALTER TABLE providers ADD COLUMN areas TEXT NULL"); } catch (Exception $e) {}
-try { $db->exec("ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL"); } catch (Exception $e) {}
+ensureSchema($db);
 
 switch ($action) {
 
@@ -36,6 +33,10 @@ switch ($action) {
     foreach ($required as $f) {
       if (empty($b[$f])) err("$f is required");
     }
+    $b['phone'] = substr(preg_replace('/\D/', '', $b['phone']), -10);
+    if (!preg_match('/^[6-9]\d{9}$/', $b['phone'])) err('Enter a valid 10-digit mobile number');
+    if (!filter_var($b['email'], FILTER_VALIDATE_EMAIL)) err('Enter a valid email');
+    if (strlen($b['password']) < 8) err('Password must be at least 8 characters');
 
     // Check email not already registered
     $check = $db->prepare("SELECT id FROM providers WHERE email = ?");
@@ -52,7 +53,7 @@ switch ($action) {
     $exists = $db->prepare("SELECT id FROM providers WHERE id = ?");
     $exists->execute([$id]);
     if ($exists->fetch()) {
-      $id = $id . rand(10,99);
+      $id = $id . random_int(10,99);
     }
 
     // Hash password
@@ -224,7 +225,8 @@ HamaraService Team";
     if (!$provider) err('Email or password incorrect');
     // Check password — support both hashed and plain (migration)
     $pwdMatch = password_verify($pwd, $provider['password_hash']);
-    if (!$pwdMatch && $pwd === $provider['password_hash']) {
+    if (!$pwdMatch && strpos($provider['password_hash'], '$2y$') !== 0
+        && hash_equals((string)$provider['password_hash'], $pwd)) {
       // Plain text password — upgrade to hash
       $newHash = password_hash($pwd, PASSWORD_BCRYPT);
       $db->prepare("UPDATE providers SET password_hash = ? WHERE id = ?")
@@ -238,6 +240,8 @@ HamaraService Team";
       err('Account suspended. Contact support.');
     if ($provider['status'] === 'rejected')
       err('Application rejected. Contact support.');
+    if ($provider['status'] === 'deleted')
+      err('Email or password incorrect');
 
     // Remove sensitive fields
     unset($provider['password_hash']);
@@ -255,7 +259,22 @@ HamaraService Team";
   // ── GET PROFILE ───────────────────────────────────────
   case 'get': {
     $id = $_GET['id'] ?? '';
+    $me = currentUser();
+    if (empty($id) && $me && $me['role'] === 'provider') $id = $me['id'];
     if (empty($id)) err('id required');
+    $full = isAdminRequest() || ($me && $me['role'] === 'provider' && $me['id'] === $id);
+    if (!$full) {
+      // Public profile only — no phone, email, ID number, address, earnings
+      $stmt = $db->prepare("SELECT id, name, gender, experience, bio, city, photo, rating, review_count, completed_bookings
+                            FROM providers WHERE id = ? AND status = 'approved'");
+      $stmt->execute([$id]);
+      $p = $stmt->fetch();
+      if (!$p) err('Provider not found', 404);
+      $svc = $db->prepare("SELECT svc_id, svc_name, svc_icon, min_price, max_price FROM provider_services WHERE provider_id = ? AND enabled = 1");
+      $svc->execute([$id]);
+      $p['services'] = $svc->fetchAll();
+      ok($p);
+    }
 
     $stmt = $db->prepare("
       SELECT id, name, phone, email, whatsapp, gender, experience, bio,
@@ -294,10 +313,24 @@ HamaraService Team";
       }
     }
     if (empty($fields)) err('Nothing to update');
+    if (isset($b['available']) && (int)$b['available'] === 1 && $prov['status'] !== 'approved') err('Account not approved yet', 403);
+    if (isset($b['areas']) && is_array($b['areas'])) $params[':areas'] = json_encode($b['areas']);
+    $fields[] = "last_seen = CURRENT_TIMESTAMP";
 
     $db->prepare("UPDATE providers SET " . implode(', ', $fields) . " WHERE id = :id")
        ->execute($params);
 
+    ok(['updated' => true]);
+  }
+
+  // ── LIVE LOCATION (call every 30-60s while online / on a job) ──
+  case 'location': {
+    $prov = requireProvider();
+    $b    = getBody();
+    $lat = (float)($b['lat'] ?? 0); $lng = (float)($b['lng'] ?? 0);
+    if (!$lat || !$lng) err('lat and lng required');
+    $db->prepare("UPDATE providers SET lat = ?, lng = ?, last_seen = CURRENT_TIMESTAMP WHERE id = ?")
+       ->execute([$lat, $lng, $prov['id']]);
     ok(['updated' => true]);
   }
 
@@ -326,7 +359,8 @@ HamaraService Team";
       $avail = $cur->fetchColumn() ? 0 : 1;
     }
 
-    $db->prepare("UPDATE providers SET available = ? WHERE id = ?")
+    if ($avail === 1 && $prov['status'] !== 'approved') err('Account not approved yet', 403);
+    $db->prepare("UPDATE providers SET available = ?, last_seen = CURRENT_TIMESTAMP WHERE id = ?")
        ->execute([$avail, $prov['id']]);
     ok(['available' => (bool)$avail]);
   }
@@ -343,7 +377,7 @@ HamaraService Team";
 
     // Haversine distance in SQL
     $sql = "
-      SELECT p.id, p.name, p.phone, p.rating, p.review_count,
+      SELECT p.id, p.name, p.rating, p.review_count,
              p.lat, p.lng, p.radius_km, p.city,
              (6371 * ACOS(
                COS(RADIANS(:lat)) * COS(RADIANS(p.lat))
@@ -369,6 +403,7 @@ HamaraService Team";
       $sql .= "
         WHERE p.status    = 'approved'
           AND p.available = 1
+          AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
         HAVING (p.lat != 0 AND distance_km <= :radius)";
       if (!empty($city)) {
         $sql .= " OR (p.lat = 0 AND (p.city LIKE :city OR p.areas LIKE :city2))";
@@ -379,7 +414,7 @@ HamaraService Team";
       $params[':radius'] = $radius;
     } else {
       // No GPS: match by city only
-      $sql .= " WHERE p.status = 'approved' AND p.available = 1";
+      $sql .= " WHERE p.status = 'approved' AND p.available = 1 AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)";
       if (!empty($city)) {
         $sql .= " AND (p.city LIKE :city OR p.areas LIKE :city2)";
         $params[':city'] = "%$city%";
@@ -515,7 +550,7 @@ HamaraService Team";
        ->execute([$id]);
 
     // Get FCM token to notify provider
-    $stmt = $db->prepare("SELECT fcm_token, name FROM providers WHERE id = ?");
+    $stmt = $db->prepare("SELECT fcm_token, name, email FROM providers WHERE id = ?");
     $stmt->execute([$id]);
     $p = $stmt->fetch();
 
@@ -549,7 +584,20 @@ HamaraService Team";
         ])
       );
     }
-    ok(['approved' => true, 'fcm_token' => $p['fcm_token'] ?? '']);
+    sendPush($p['fcm_token'] ?? '', 'Account Approved ✅', 'You can now go online and receive jobs.', ['event'=>'account_approved']);
+    ok(['approved' => true]);
+  }
+
+  // ── ADMIN: SET STATUS (pending / review / rejected …) ──
+  case 'set_status': {
+    requireAdmin();
+    $b  = getBody();
+    $id = $b['id'] ?? '';
+    $st = $b['status'] ?? '';
+    if (empty($id) || !in_array($st, ['pending','review','approved','suspended','rejected'], true)) err('id and valid status required');
+    $db->prepare("UPDATE providers SET status = ?, available = IF(? = 'approved', available, 0) WHERE id = ?")
+       ->execute([$st, $st, $id]);
+    ok(['id' => $id, 'status' => $st]);
   }
 
   // ── ADMIN: SUSPEND ────────────────────────────────────
@@ -573,8 +621,8 @@ HamaraService Team";
     $sql    = "SELECT id, name, phone, email, whatsapp, gender, experience, bio,
                        id_type, id_number, address, city, lat, lng, radius_km,
                        status, available, rating, review_count,
-                       total_bookings, completed_bookings, total_earned,
-                       fcm_token, registered_at
+                       total_bookings, completed_bookings, total_earned, pending_earned,
+                       upi_id, photo, last_seen, registered_at
                FROM providers WHERE status != 'deleted'";
     $params = [];
 

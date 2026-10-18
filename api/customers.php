@@ -9,10 +9,12 @@
 //   GET  ?action=bookings&id=X — get customer booking history
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/schema.php';
 setCorsHeaders();
 
 $action = $_GET['action'] ?? '';
 $db     = getDB();
+ensureSchema($db);
 
 switch ($action) {
 
@@ -27,7 +29,7 @@ switch ($action) {
     $email = strtolower(trim($b['email'] ?? ''));
     $pwd   = $b['password'] ?? '';
     if (empty($name) || empty($email) || empty($pwd)) err('name, email, password required');
-    if (strlen($pwd) < 4) err('Password too short');
+    if (strlen($pwd) < 8) err('Password must be at least 8 characters');
 
     try { $db->exec("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
 
@@ -36,7 +38,7 @@ switch ($action) {
     $chk->execute([$email]);
     if ($chk->fetch()) err('Email already registered. Please login.');
 
-    $id = 'HS-CUST-' . strtoupper(substr(preg_replace('/[^a-z]/','',explode('@',$email)[0]).'xxxx',0,4)) . rand(100000,999999);
+    $id = 'HS-CUST-' . strtoupper(substr(preg_replace('/[^a-z]/','',explode('@',$email)[0]).'xxxx',0,4)) . random_int(100000,999999);
     $db->prepare("
       INSERT INTO customers (id, name, phone, email, password_hash, auth_method)
       VALUES (?, ?, ?, ?, ?, 'web')
@@ -61,7 +63,8 @@ switch ($action) {
     if (!$c) err('NOT_REGISTERED', 404);
     if (empty($c['password_hash']) || !password_verify($pwd, $c['password_hash'])) {
       // allow plain match upgrade
-      if ($pwd === ($c['password_hash'] ?? '__nope__')) {
+      if (!empty($c['password_hash']) && strpos($c['password_hash'], '$2y$') !== 0
+          && hash_equals((string)$c['password_hash'], $pwd)) {
         $db->prepare("UPDATE customers SET password_hash = ? WHERE id = ?")
            ->execute([password_hash($pwd, PASSWORD_BCRYPT), $c['id']]);
       } else {
@@ -98,7 +101,7 @@ switch ($action) {
     ");
 
     $name    = $b['name']    ?? $user['name']  ?? '';
-    $phone   = $b['phone']   ?? '';
+    $phone   = substr(preg_replace('/\D/', '', $b['phone'] ?? ($user['phone'] ?? '')), -10);
     $email   = $b['email']   ?? $user['email'] ?? '';
     $gender  = $b['gender']  ?? '';
     $address = $b['address'] ?? '';
@@ -174,7 +177,7 @@ switch ($action) {
     $b = getBody();
     $old = $b['old_password'] ?? '';
     $new = $b['new_password'] ?? '';
-    if (strlen($new) < 4) err('New password too short');
+    if (strlen($new) < 8) err('New password must be at least 8 characters');
     $stmt = $db->prepare("SELECT password_hash FROM customers WHERE id = ? LIMIT 1");
     $stmt->execute([$user['uid']]);
     $row = $stmt->fetch();
@@ -223,8 +226,17 @@ switch ($action) {
   // ── DELETE ACCOUNT ────────────────────────────────────
   case 'delete': {
     $user = requireCustomer();
-    $db->prepare("DELETE FROM customers WHERE id = ?")
-       ->execute([$user['uid']]);
+    $act = $db->prepare("SELECT id FROM bookings WHERE customer_id = ? AND status IN ('price_quoted','negotiating','negotiation_final','confirmed','active') LIMIT 1");
+    $act->execute([$user['uid']]);
+    if ($act->fetch()) err('Finish or cancel your active booking first', 409);
+    // Anonymise (bookings are kept for accounting; deleting would cascade them away)
+    $db->prepare("UPDATE customers SET name = 'Deleted user', phone = NULL, email = NULL, address = NULL,
+                  lat = NULL, lng = NULL, fcm_token = NULL WHERE id = ?")->execute([$user['uid']]);
+    try { $db->prepare("UPDATE customers SET password_hash = '' WHERE id = ?")->execute([$user['uid']]); } catch (Throwable $e) {}
+    $db->prepare("UPDATE bookings SET customer_name = 'Deleted user', customer_phone = NULL, contact_phone = NULL
+                  WHERE customer_id = ? AND status IN ('completed','cancelled')")->execute([$user['uid']]);
+    $db->prepare("UPDATE bookings SET status = 'cancelled', cancelled_by = 'customer', cancel_reason = 'Account deleted'
+                  WHERE customer_id = ? AND status = 'searching'")->execute([$user['uid']]);
     ok(['deleted' => true]);
   }
 
