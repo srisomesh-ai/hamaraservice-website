@@ -8,9 +8,6 @@
 <meta name="theme-color" content="#1B6B7A"/>
 <title>Service Details – Hamara Service</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 :root{
   --brand:#E8651A;--brand2:#c9510f;--brand-soft:#fff3eb;
@@ -288,7 +285,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="mob-book-bar">
   <div>
     <div class="mob-book-price" id="mobBookPrice">₹499 <sub>onwards</sub></div>
-    <div style="font-size:11px;color:var(--muted);">⭐ 4.8 · 1,200+ bookings</div>
+    <div style="font-size:11px;color:var(--muted);">✅ Verified professionals</div>
   </div>
   <button class="mob-book-btn" onclick="bookNow()">Book Now →</button>
 </div>
@@ -296,19 +293,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Firebase ─────────────────────────────────────────────────────
-var FIREBASE_CONFIG = {
-  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-  authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"hamaraservice-s009",
-  storageBucket:"hamaraservice-s009.firebasestorage.app",
-  messagingSenderId:"1064274729048",
-  appId:"1:1064274729048:web:86643c95419e9dc881d22d"
-};
-if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-var fbAuth = firebase.auth();
-
 // ── Full service catalog with detail data ─────────────────────────
 var SERVICE_DETAILS = {
   "House Maid":{ icon:"🧹", cat:"Home Cleaning", price:499, unit:"per visit", minHours:2, duration:"2–4 hours",
@@ -317,8 +301,8 @@ var SERVICE_DETAILS = {
     includes:["Sweeping & wet mopping all floors","Dusting furniture, shelves & ceiling fans","Cleaning kitchen counter & sink","Bathroom toilet & washbasin wipe-down","Waste bin emptying & disposal","Window sill & door handle cleaning"],
     excludes:["Deep scrubbing (separate Deep Cleaning service)","Washing clothes or utensils","Outside balcony or terrace"],
     steps:[{t:"Arrival & briefing",d:"Professional arrives on time and reviews your checklist."},{t:"Room-by-room cleaning",d:"Systematic sweep, mop, dust — starting from bedrooms to kitchen."},{t:"Bathroom & kitchen",d:"Wipe-down of surfaces, sink, toilet seat and mirrors."},{t:"Final check",d:"Walk-through with you before marking job complete."}],
-    faqs:[{q:"Do I need to provide cleaning supplies?",a:"No. Our professionals bring their own eco-friendly cleaning supplies and equipment."},{q:"Can I book a regular daily maid?",a:"Yes! After your first booking you can set a recurring schedule — daily, alternate days, or weekly."},{q:"What if something gets damaged?",a:"All our professionals are insured. Raise a complaint within 24 hours and we'll resolve it."},{q:"How many rooms does one visit cover?",a:"Standard 2-4 hours covers up to a 3BHK. Larger homes may need 2 slots."}],
-    rating:4.8, ratingCount:2840, before:"🏠", after:"✨",
+    faqs:[{q:"Do I need to provide cleaning supplies?",a:"No. Our professionals bring their own eco-friendly cleaning supplies and equipment."},{q:"Can I book a regular daily maid?",a:"Yes! After your first booking you can set a recurring schedule — daily, alternate days, or weekly."},{q:"What if something gets damaged?",a:"Raise a complaint with support within 24 hours and we will help resolve it with the professional."},{q:"How many rooms does one visit cover?",a:"Standard 2-4 hours covers up to a 3BHK. Larger homes may need 2 slots."}],
+    before:"🏠", after:"✨",
     similar:["Deep Cleaning","Bathroom Cleaning","Kitchen Cleaning"]
   },
   "Deep Cleaning":{ icon:"🧽", cat:"Home Cleaning", price:999, unit:"per session", minHours:4, duration:"4–8 hours",
@@ -328,7 +312,7 @@ var SERVICE_DETAILS = {
     excludes:["Upholstery shampooing (separate service)","Pest control","Outside building facade"],
     steps:[{t:"Pre-inspection",d:"Team assesses home size and creates a task plan."},{t:"Kitchen deep clean",d:"Chimney, stove, tiles, sink, and all surfaces degreased."},{t:"Bathroom descale",d:"Tiles, fixtures, and glass cleaned with descaling solution."},{t:"Rooms & furniture",d:"Wardrobes, shelves, fans, AC filters thoroughly cleaned."},{t:"Floor scrubbing",d:"Machine scrubbing for all floors, grout lines included."},{t:"Final walkthrough",d:"Photo documentation and your sign-off."}],
     faqs:[{q:"How often should I do a deep clean?",a:"Every 3–6 months is recommended. Many customers book quarterly."},{q:"Do I need to be home?",a:"Yes, for the first booking. After that you can share access instructions."},{q:"How many people come?",a:"Typically 2–4 professionals depending on home size."},{q:"What products do you use?",a:"We use professional-grade, pet-safe, non-toxic cleaning solutions."}],
-    rating:4.9, ratingCount:1920, before:"🏚️", after:"🏡",
+    before:"🏚️", after:"🏡",
     similar:["House Maid","Bathroom Cleaning","Kitchen Cleaning"]
   },
   "Bathroom Cleaning":{ icon:"🚿", cat:"Home Cleaning", price:399, unit:"per bathroom", minHours:1, duration:"45 min – 1.5 hours",
@@ -338,7 +322,7 @@ var SERVICE_DETAILS = {
     excludes:["Plumbing repairs","Window glass outside","Painting or re-grouting"],
     steps:[{t:"Apply descaling solution",d:"Solution applied to tiles, fixtures, and toilet bowl — left to work."},{t:"Scrub & clean",d:"Professional scrubs all surfaces with appropriate tools."},{t:"Rinse & disinfect",d:"All surfaces rinsed and disinfected with antibacterial solution."},{t:"Polish & finish",d:"Mirror, taps and fittings polished to shine."}],
     faqs:[{q:"How long does it take per bathroom?",a:"45 minutes to 1.5 hours depending on size and condition."},{q:"Is it safe for septic systems?",a:"Yes. All our cleaning agents are septic-safe."},{q:"Can you remove heavy water stains?",a:"Yes. We use professional descaling acids for stubborn mineral deposits."}],
-    rating:4.7, ratingCount:3100, before:"🚽", after:"🪥",
+    before:"🚽", after:"🪥",
     similar:["Deep Cleaning","House Maid","Kitchen Cleaning"]
   },
   "AC Cleaning":{ icon:"❄️", cat:"Appliance Care", price:799, unit:"per AC unit", minHours:1, duration:"45 min – 1.5 hours",
@@ -348,7 +332,7 @@ var SERVICE_DETAILS = {
     excludes:["Gas refill (separate AC Repair service)","Outdoor unit cleaning","PCB or electrical repairs"],
     steps:[{t:"Inspection",d:"Technician inspects unit for blockages, leaks, and filter condition."},{t:"Filter cleaning",d:"Filters removed, washed with water and dried."},{t:"Coil & drain cleaning",d:"Evaporator coil and drain pan cleaned to remove mold and debris."},{t:"Reassembly & test",d:"Unit reassembled, switched on and tested for temperature performance."}],
     faqs:[{q:"How often should AC be cleaned?",a:"At least once before summer (March–April) and once mid-season."},{q:"Will the AC work better after?",a:"Yes. Most customers report 1–3°C better cooling and lower power bills."},{q:"Do I need to switch off main power?",a:"Yes. Please ensure the main switch is accessible before the technician arrives."}],
-    rating:4.8, ratingCount:2200, before:"😰", after:"❄️",
+    before:"😰", after:"❄️",
     similar:["AC Repair","Home Appliance Repair","Water Purifier Service"]
   },
   "Plumber":{ icon:"🔧", cat:"Repairs", price:499, unit:"per visit", minHours:1, duration:"30 min – 3 hours",
@@ -358,7 +342,7 @@ var SERVICE_DETAILS = {
     excludes:["Major pipeline replacement","Civil work or wall cutting","RO or water purifier installation"],
     steps:[{t:"Diagnosis",d:"Plumber identifies the root cause of the issue."},{t:"Quotation",d:"Transparent estimate given before any work begins."},{t:"Repair",d:"Fix carried out using quality spare parts."},{t:"Testing",d:"Water flow tested and area cleaned up."}],
     faqs:[{q:"What if the problem recurs?",a:"30-day service guarantee. We'll return and fix it at no extra charge."},{q:"Do you supply spare parts?",a:"Yes. Parts are charged at MRP and shown to you before installation."},{q:"Can you fix things in the evening?",a:"Yes. We have morning, afternoon, and evening slots available."}],
-    rating:4.7, ratingCount:4100, before:"💧", after:"🔧",
+    before:"💧", after:"🔧",
     similar:["Electrician","Carpenter","Home Appliance Repair"]
   },
   "Electrician":{ icon:"⚡", cat:"Repairs", price:499, unit:"per visit", minHours:1, duration:"30 min – 3 hours",
@@ -368,7 +352,7 @@ var SERVICE_DETAILS = {
     excludes:["Heavy industrial wiring","Generator installation","Solar panel wiring"],
     steps:[{t:"Safety check",d:"Electrician checks main board and identifies the fault."},{t:"Quotation",d:"Clear estimate provided before starting work."},{t:"Repair",d:"Certified work done using ISI-marked components."},{t:"Test & sign-off",d:"All repaired circuits tested and demonstrated before leaving."}],
     faqs:[{q:"Are your electricians certified?",a:"Yes. All are ITI-certified with 2+ years of experience."},{q:"Do you handle emergency calls?",a:"Yes. We offer same-day emergency bookings for urgent issues."},{q:"What safety precautions do you take?",a:"Main power is isolated before any work. All components are ISI-marked."}],
-    rating:4.8, ratingCount:3800, before:"🔌", after:"⚡",
+    before:"🔌", after:"⚡",
     similar:["Plumber","Carpenter","CCTV Installation"]
   },
   "Car Wash":{ icon:"🚗", cat:"Vehicle Care", price:499, unit:"per car", minHours:1, duration:"45 min – 1.5 hours",
@@ -377,8 +361,8 @@ var SERVICE_DETAILS = {
     includes:["Exterior foam wash & rinse","Tyre and rim cleaning","Door sill wiping","Interior vacuum","Dashboard & console wipe","Window glass cleaning (inside + out)","Air freshener"],
     excludes:["Ceramic coating","Scratch removal or dent repair","Engine bay cleaning"],
     steps:[{t:"Exterior wash",d:"High-foam wash applied, scrubbed and rinsed with low-pressure water."},{t:"Tyre & rims",d:"Tyres scrubbed and dressed. Rims cleaned of brake dust."},{t:"Interior vacuum",d:"Seats, floor mats, and boot vacuumed."},{t:"Wipe & finish",d:"Dashboard, console, and glass cleaned. Air freshener applied."}],
-    faqs:[{q:"Do you use a lot of water?",a:"We use waterless or low-water techniques — safe for apartments."},{q:"Is the team insured?",a:"Yes. Any accidental damage during wash is covered."},{q:"Can I book weekly?",a:"Yes. Weekly subscription saves you 20%."}],
-    rating:4.6, ratingCount:1800, before:"🚗💨", after:"🚗✨",
+    faqs:[{q:"Do you use a lot of water?",a:"We use waterless or low-water techniques — safe for apartments."},{q:"Can I book weekly?",a:"Yes. Weekly subscription saves you 20%."}],
+    before:"🚗💨", after:"🚗✨",
     similar:["Bike Wash","4 Wheeler Mechanic","2 Wheeler Mechanic"]
   },
   "Doctor Visit":{ icon:"👨‍⚕️", cat:"Medical", price:699, unit:"per consultation", minHours:0.5, duration:"20–40 minutes",
@@ -388,7 +372,7 @@ var SERVICE_DETAILS = {
     excludes:["Blood sample collection (separate service)","Specialist consultation","ICU or emergency care"],
     steps:[{t:"Booking confirmation",d:"Doctor confirmed and ETA shared via SMS."},{t:"Arrival & examination",d:"Doctor examines and takes medical history."},{t:"Diagnosis",d:"Condition explained in simple terms."},{t:"Prescription & follow-up",d:"Digital prescription sent. Follow-up advice given."}],
     faqs:[{q:"Are the doctors MBBS qualified?",a:"Yes. All doctors are MBBS with minimum 3 years of clinical experience."},{q:"What can they treat at home?",a:"Fever, cold, infections, BP, diabetes check-ups, minor injuries, and more."},{q:"Can they prescribe controlled medicines?",a:"Doctors can prescribe standard medicines. Controlled substances require specialist review."}],
-    rating:4.9, ratingCount:1100, before:"🤒", after:"😊",
+    before:"🤒", after:"😊",
     similar:["Nurse Visit","Lab Test Collection","Elderly Care"]
   },
   "Pest Control":{ icon:"🐛", cat:"Pest Control", price:799, unit:"per treatment", minHours:1, duration:"1–2 hours",
@@ -398,7 +382,7 @@ var SERVICE_DETAILS = {
     excludes:["Fumigation (separate service)","Agricultural or commercial-scale treatment","Bird & reptile removal"],
     steps:[{t:"Inspection",d:"Technician identifies pest species and infestation level."},{t:"Preparation advice",d:"You're asked to clear kitchen shelves and cover food."},{t:"Treatment",d:"Chemical application in targeted areas using safe equipment."},{t:"Safety brief",d:"Re-entry time given (usually 30–60 min). Tips for prevention shared."}],
     faqs:[{q:"Is it safe for kids and pets?",a:"Yes, after the drying period (30–60 minutes). Keep kids and pets out during treatment."},{q:"How long does the effect last?",a:"Cockroach treatment lasts 3–6 months. Rodent control is ongoing."},{q:"Do I need to vacate the house?",a:"Only for 30–60 minutes during and after treatment."}],
-    rating:4.7, ratingCount:2300, before:"🐛", after:"🏠",
+    before:"🐛", after:"🏠",
     similar:["Deep Cleaning","House Maid","Gardener"]
   },
 };
@@ -422,7 +406,7 @@ function getDefaultDetail(name, cat, icon, price) {
       {q:'How do I reschedule?',a:'You can reschedule up to 2 hours before the appointment from your booking panel.'},
       {q:'What if I\'m not satisfied?',a:'We offer free re-service within 48 hours if you\'re not satisfied.'}
     ],
-    rating: 4.7, ratingCount: 800, before:'📦', after:'✅',
+    before:'📦', after:'✅',
     similar: []
   };
 }
@@ -514,7 +498,7 @@ function renderPage(name, d) {
   document.getElementById('bookMeta').innerHTML =
     '<div class="book-meta-row"><span class="book-meta-label">⏱ Minimum duration</span><span class="book-meta-val">' + d.duration + '</span></div>' +
     '<div class="book-meta-row"><span class="book-meta-label">👤 Team size</span><span class="book-meta-val">1–2 professionals</span></div>' +
-    '<div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">' + d.rating + ' (' + d.ratingCount.toLocaleString() + ' reviews)</span></div>' +
+    '<div class="book-meta-row"><span class="book-meta-label">✅ Providers</span><span class="book-meta-val">Verified professionals</span></div>' +
     '<div class="book-meta-row"><span class="book-meta-label">📦 Equipment</span><span class="book-meta-val">Provided by us</span></div>';
 
   // Includes
@@ -541,17 +525,7 @@ function renderPage(name, d) {
 
   // Ratings
   document.getElementById('ratingRow').innerHTML =
-    '<div style="text-align:center;padding-right:20px;">' +
-      '<div class="rating-num">' + d.rating + '</div>' +
-      '<div class="rating-stars">★★★★★</div>' +
-      '<div class="rating-count">' + d.ratingCount.toLocaleString() + ' reviews</div>' +
-    '</div>' +
-    '<div class="rating-bars" style="flex:1;">' +
-      ['5','4','3','2','1'].map(function(n, i){
-        var widths = ['72','18','6','2','2'];
-        return '<div class="rbar-row">' + n + '★ <div class="rbar-track"><div class="rbar-fill" style="width:' + widths[i] + '%"></div></div></div>';
-      }).join('') +
-    '</div>';
+    '<div class="rating-count" style="font-size:14px;">Verified professionals · Customers rate every completed job in the app</div>';
 
   // FAQ
   document.getElementById('faqList').innerHTML = d.faqs.map(function(f, i){
@@ -581,18 +555,12 @@ function toggleFaq(i) {
 }
 
 function openService(slug) {
-  window.location.href = 'service-detail.html?service=' + slug;
+  window.location.href = 'services.html?service=' + slug;
 }
 
 function bookNow() {
-  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
-  var url = 'user-booking.html?service=' + encodeURIComponent(currentServiceName);
-  if(user) {
-    window.location.href = url;
-  } else {
-    sessionStorage.setItem('hs_after_login', url);
-    window.location.href = 'user-panel.html?tab=login';
-  }
+  // Booking happens in the web app (login, address, live tracking, payment)
+  window.location.href = '/app/customer.html';
 }
 
 function showToast(msg) {
@@ -602,11 +570,6 @@ function showToast(msg) {
   t._t = setTimeout(function(){ t.style.display = 'none'; }, 3000);
 }
 
-// Auth
-fbAuth.onAuthStateChanged(function(user){
-  if(user) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:user.uid,name:user.displayName||'',email:user.email||''}));
-  else sessionStorage.removeItem('hs_current_customer');
-});
 </script>
 </body>
 </html>

@@ -10,10 +10,6 @@
 <title>Provider Portal – Hamara Service</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="js/email-triggers.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 :root{--brand:#E8651A;--brand2:#c9510f;--brand-light:#fff3eb;--teal:#1B6B7A;--teal2:#134f5c;--teal-light:#e6f4f6;--red:#E8651A;--red-dark:#c9510f;--red-light:#fff3eb;--orange:#E8651A;--green:#2ecc71;--green-light:#e8f8f0;--yellow:#f59e0b;--yellow-light:#fffbeb;--blue:#1A73E8;--blue-light:#e8f0fd;--bg:#f0f7f9;--white:#fff;--text:#1a1a2e;--muted:#718096;--border:#e2e8f0;--radius:16px;--shadow:0 4px 24px rgba(27,107,122,0.12);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -266,16 +262,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
       <div class="card-sub">Sign in with your registered email and password</div>
       <div class="err-box" id="loginErr"></div>
 
-      <button onclick="providerGoogleSignIn()" style="width:100%;padding:13px;background:white;border:1.5px solid #ddd;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#333;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Sign in with Google
-      </button>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <div style="flex:1;height:1px;background:var(--border);"></div>
-        <span style="font-size:12px;color:var(--muted);font-weight:600;">or sign in with email &amp; password</span>
-        <div style="flex:1;height:1px;background:var(--border);"></div>
-      </div>
-
       <div class="ffield">
         <label>Registered Email</label>
         <input type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"/>
@@ -285,10 +271,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
         <input type="password" id="loginPass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="big-btn" onclick="doLogin()">🚀 Login to Dashboard</button>
-      <button onclick="fillDemo()" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:2px dashed #f5c842;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#7a5a00;cursor:pointer;">⚡ Fill Demo Credentials</button>
-      <div class="hint-box">
-        💡 <strong>Demo login:</strong> Email = <strong>demo@hamaraservice.com</strong> · Password = <strong>demo123</strong>
-      </div>
     </div>
   </div>
 
@@ -461,7 +443,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
           <div class="success-step">🛠️ Services and prices listed</div>
           <div class="success-step">🔔 You will receive booking notifications immediately</div>
         </div>
-        <button class="big-btn" onclick="window.location.href='provider-dashboard.html'">🚀 Go to My Dashboard →</button>
+        <button class="big-btn" onclick="window.location.href='/app/provider.html'">🚀 Go to My Dashboard →</button>
         <div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--muted);">Login anytime with your Email + Password</div>
       </div>
     </div>
@@ -474,17 +456,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     <span>Home</span>
   </a>
-  <a class="mob-nav-item" href="user-booking.html">
+  <a class="mob-nav-item" href="/app/customer.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     <span>Services</span>
   </a>
-  <a class="mob-nav-item mob-nav-center" href="user-booking.html">
+  <a class="mob-nav-item mob-nav-center" href="/app/customer.html">
     <div class="mob-nav-fab">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
     </div>
     <span>Book Now</span>
   </a>
-  <a class="mob-nav-item" href="user-panel.html">
+  <a class="mob-nav-item" href="/app/customer.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     <span>Bookings</span>
   </a>
@@ -497,77 +479,24 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-var FIREBASE_CONFIG = {
-      apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-      authDomain:        "hamaraservice-s009.firebaseapp.com",
-      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId:         "hamaraservice-s009",
-      storageBucket:     "hamaraservice-s009.firebasestorage.app",
-      messagingSenderId: "1064274729048",
-      appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    var fbAuth = firebase.auth();
-    var fbDB   = firebase.database();
-    var googleProvider = new firebase.auth.GoogleAuthProvider();
-    googleProvider.addScope('email');
-    googleProvider.addScope('profile');
-
-// ── Firebase REST helper — NO auth token required ────────────────────────────
-// Firebase rules set to allow public read/write on providers path
-var FB_DB = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-
-function fbRest(method, path, data, cb){
-  var x = new XMLHttpRequest();
-  var url = FB_DB + '/' + path + '.json';
-  x.open(method, url, true);
-  x.setRequestHeader('Content-Type','application/json');
-  x.timeout = 10000;
-  x.onload = function(){
-    try{
-      var d = JSON.parse(x.responseText);
-      if(x.status >= 200 && x.status < 300){
-        if(cb) cb(null, d);
-      } else {
-        // 401/403 = rules blocking — try with SDK auth as fallback
-        fbRestWithAuth(method, path, data, cb);
-      }
-    }catch(e){ if(cb) cb(e, null); }
-  };
-  x.onerror = x.ontimeout = function(){ if(cb) cb(new Error('Network error. Check internet.'), null); };
-  x.send(data ? JSON.stringify(data) : null);
+// All provider data goes through the MySQL API (docs/API_CONTRACT.md).
+// The provider web app (/app/provider.html) stores its session in these keys:
+var API_BASE = '/api';
+var PROV_TOKEN_KEY = 'hs_prov_token', PROV_ME_KEY = 'hs_prov_me';
+function apiPost(action, body){
+  return fetch(API_BASE + '/providers.php?action=' + action, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  }).then(function(r){ return r.json().catch(function(){ return { success:false, error:'Server error (HTTP ' + r.status + ')' }; }); });
 }
-
-function fbRestWithAuth(method, path, data, cb){
-  // Fallback: use Firebase SDK anonymous auth
-  var doIt = function(){
-    var user = typeof fbAuth !== 'undefined' ? fbAuth.currentUser : null;
-    if(!user){ if(cb) cb(new Error('Auth required'), null); return; }
-    user.getIdToken().then(function(tok){
-      var x = new XMLHttpRequest();
-      x.open(method, FB_DB+'/'+path+'.json?auth='+tok, true);
-      x.setRequestHeader('Content-Type','application/json');
-      x.timeout = 10000;
-      x.onload = function(){
-        try{ var d=JSON.parse(x.responseText); if(cb) cb(x.status>=200&&x.status<300?null:new Error(x.status), d); }
-        catch(e){ if(cb) cb(e,null); }
-      };
-      x.onerror = x.ontimeout = function(){ if(cb) cb(new Error('network'),null); };
-      x.send(data ? JSON.stringify(data) : null);
-    }).catch(function(e){ if(cb) cb(e,null); });
-  };
-  if(typeof fbAuth !== 'undefined' && fbAuth.currentUser){
-    doIt();
-  } else if(typeof fbAuth !== 'undefined'){
-    fbAuth.signInAnonymously().then(doIt).catch(function(e){ if(cb) cb(e,null); });
-  } else {
-    if(cb) cb(new Error('Firebase not available'),null);
-  }
+function saveProviderSession(token, provider){
+  try {
+    localStorage.setItem(PROV_TOKEN_KEY, token || '');
+    localStorage.setItem(PROV_ME_KEY, JSON.stringify(provider || {}));
+    localStorage.setItem('hs_role', 'provider');
+    localStorage.removeItem('hs_current_provider'); localStorage.removeItem('hs_provider_jwt'); localStorage.removeItem('hs_providers');
+  } catch (e) {}
 }
-
-  
-
-
+function escHtml(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
 var REG_ID_RULES = {
   'Aadhaar Card': { pattern:/^[2-9]{1}[0-9]{11}$/, format:'12 digits starting 2-9', clean:function(v){return v.replace(/\s/g,'');}, placeholder:'e.g. 2345 6789 1234', maxlength:14, hint:'12 digits only. Spaces ignored.' },
@@ -660,7 +589,6 @@ function toggleRegEye() {
 }
 
 function regValidatePasswords() {
-  if (window._googleUid) return true; // Google users skip password
   var pwd  = document.getElementById('r_password').value;
   var conf = (document.getElementById('r_password_confirm')||{value:''}).value;
   if (!pwd) { showToast('⚠️ Please create a password'); return false; }
@@ -725,84 +653,34 @@ function switchTab(tab){
   document.getElementById('tabLogin').classList.toggle('active',isLogin);
   document.getElementById('tabReg').classList.toggle('active',!isLogin);
   if(!isLogin)buildPortalSvcGrid();
-  if(!isLogin && window._googleUid){
-    // Google user coming to register — show password optional note
-    setTimeout(function(){
-      var note = document.getElementById('passGoogleNote');
-      var req  = document.getElementById('passRequiredNote');
-      if(note) note.style.display = 'block';
-      if(req)  req.style.display  = 'none';
-    }, 350);
-  }
 }
 
 function doLogin(){
   const email=document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pass=document.getElementById('loginPass').value.trim();
+  const pass=document.getElementById('loginPass').value;
   const err=document.getElementById('loginErr');
   err.style.display='none';
   if(!email||!pass){showErr('Please enter your email and password');return;}
   if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)){showErr('Please enter a valid email address');return;}
-  // Demo shortcut
-  if(email==='demo@hamaraservice.com'&&pass==='demo123'){
-    const providers=JSON.parse(localStorage.getItem('hs_providers')||'[]');
-    const demo=createDemo(providers);
-    localStorage.setItem('hs_current_provider',JSON.stringify(demo));
-    showToast('✅ Login successful! Redirecting...');
-    setTimeout(()=>window.location.href='provider-dashboard.html',800);
-    return;
-  }
   showToast('🔍 Checking credentials...');
-  // Login via MySQL API — verifies email + password, returns JWT token
-  fetch('https://hamaraservice.com/api/providers.php?action=login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, password: pass })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(res) {
-    if (!res.success) {
+  apiPost('login', { email: email, password: pass }).then(function(res){
+    if (!res.success || !res.data || !res.data.token) {
+      // suspended / rejected accounts get an explanatory error from the server
       showErr(res.error || 'Email or password incorrect. Please check and try again.');
       return;
     }
-    var found   = res.data.provider;
-    var jwt     = res.data.token;
-    var pStatus = found.status || 'pending';
-    // If pending AND incomplete registration → go to registration form
-    if (pStatus === 'pending') {
-      var hasDetails = found.name && found.phone && (found.city || found.address);
-      if (!hasDetails) {
-        // Incomplete — scroll to registration section
-        showToast('⚠️ Please complete your registration first');
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('registerSection').style.display = 'block';
-        window.scrollTo(0, 0);
-        return;
-      }
-      showWaitingScreen(found); return;
-    }
-    if (pStatus === 'suspended') { showErr('Account suspended. Contact: 8985849710'); return; }
-    // Store JWT + provider data
-    localStorage.setItem('hs_provider_jwt',    jwt);
-    localStorage.setItem('hs_current_provider', JSON.stringify(found));
-    showToast('✅ Login successful! Redirecting...');
-    setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 800);
-  })
-  .catch(function(e) {
+    saveProviderSession(res.data.token, res.data.provider);
+    showToast('✅ Login successful! Opening your dashboard...');
+    // Pending providers see their approval status inside the app
+    setTimeout(function(){ window.location.href='/app/provider.html'; }, 600);
+  }).catch(function(){
     showErr('Connection error. Please check your internet and try again.');
   });
 }
 
 function showErr(msg){const e=document.getElementById('loginErr');e.textContent='❌ '+msg;e.style.display='block';}
 
-function createDemo(providers){
-  const demo={id:'HS-PRO-DEMO',password:'demo123',name:'Demo Provider',phone:'9999999999',email:'demo@hamaraservice.com',whatsapp:'9999999999',gender:'Male',experience:'3-5 years',bio:'Demo account for testing.',idType:'Aadhaar Card',idNum:'XXXX-XXXX-XXXX',services:[{name:'House Maid',icon:'🧹',price:499},{name:'Cooking Person',icon:'👨‍🍳',price:799},{name:'AC Cleaning',icon:'❄️',price:799}],lat:17.3850,lng:78.4867,address:'Hyderabad, Telangana',radius:10,rating:4.8,reviews:4,totalBookings:6,completedBookings:4,totalEarned:2796,pendingEarned:499,withdrawnEarned:0,available:true,registeredAt:new Date().toISOString()};
-  const idx=providers.findIndex(p=>p.id==='HS-PRO-DEMO');
-  if(idx===-1)providers.push(demo);else providers[idx]=demo;
-  localStorage.setItem('hs_providers',JSON.stringify(providers));
-  return demo;
-}
-
+let regCity='';
 let currentStep=1,regMap=null,regMarker=null,regCircle=null,regLat=null,regLng=null,regRadius=5,regAddress='';
 
 function nextStep(from){
@@ -1022,29 +900,6 @@ function _loadFirebasePrices(cb) {
   .then(function(res){
     if(cb) cb(null, (res.success && res.data) ? res.data : {});
   }).catch(function(e){ if(cb) cb(e, null); });
-  if (false) {
-  var API2 = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
-  var DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-  // Get anonymous token first
-  var x = new XMLHttpRequest();
-  x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+API,true);
-  x.setRequestHeader('Content-Type','application/json');
-  x.onload = function(){
-    try {
-      var tok = JSON.parse(x.responseText).idToken || '';
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', DB+'/hs_service_prices.json?auth='+tok, true);
-      xhr.timeout = 6000;
-      xhr.onload = function(){
-        try { _fbPrices = JSON.parse(xhr.responseText) || {}; } catch(e) {}
-        if (cb) cb();
-      };
-      xhr.onerror = function(){ if (cb) cb(); };
-      xhr.send();
-    } catch(e) { if (cb) cb(); }
-  };
-  x.onerror = function(){ if (cb) cb(); };
-  x.send(JSON.stringify({returnSecureToken:true}));
 }
 
 function buildSvcGrid(){
@@ -1236,6 +1091,7 @@ function reverseGeocode(lat,lng){
       const a=d.address||{};
       const parts=[a.road||a.suburb,a.suburb||a.neighbourhood,a.city||a.town||a.county,a.state,a.postcode].filter(Boolean);
       regAddress=parts.join(', ')||d.display_name;
+      regCity=a.city||a.town||a.village||a.county||a.state_district||'';
       document.getElementById('addrBox').textContent='📍 '+regAddress;
     }).catch(()=>{regAddress=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;document.getElementById('addrBox').textContent='📍 '+regAddress;});
 }
@@ -1252,68 +1108,58 @@ function buildSummary(){
     ['Location',regAddress||`${regLat?.toFixed(4)}, ${regLng?.toFixed(4)}`],
     ['Service Radius',regRadius+' km'],
   ];
-  document.getElementById('summaryBox').innerHTML=rows.map(([l,v])=>`<div class="summary-row"><span class="summary-label">${l}</span><span class="summary-value">${v}</span></div>`).join('');
+  document.getElementById('summaryBox').innerHTML=rows.map(([l,v])=>`<div class="summary-row"><span class="summary-label">${escHtml(l)}</span><span class="summary-value">${escHtml(v)}</span></div>`).join('');
 }
 
 function submitRegistration(){
-  const rawName=document.getElementById('r_name').value.trim();
-  const rawPhone=document.getElementById('r_phone').value.trim();
-  const rawPass=document.getElementById('r_password').value.trim() || (window._googleUid ? 'google-auth-'+window._googleUid.slice(0,8) : '');
-  // ID = first 4 letters of name (uppercase, letters only) + last 4 digits of phone
-  const namePart=rawName.replace(/[^a-zA-Z]/g,'').toUpperCase().padEnd(4,'X').slice(0,4);
-  const phonePart=rawPhone.slice(-4);
-  const id='HS-PRO-'+namePart+phonePart;
-  // Check Firebase for duplicate email (works across all devices)
-  var regEmail = document.getElementById('r_email').value.trim().toLowerCase();
-  showToast('⏳ Checking...');
-  // Check Firebase directly — works across ALL devices
-  fbRest('GET', 'providers/'+id, null, function(err, existing){
-    if(!err && existing && existing.id){
-      showToast('⚠️ Already registered. Please login.'); return;
-    }
-    _doRegister(id, rawName, rawPhone, rawPass, regEmail);
+  if(window._regBusy) return;
+  const pass=document.getElementById('r_password').value;
+  if(pass.length<8){showToast('⚠️ Password must be at least 8 characters');return;}
+  const phone=document.getElementById('r_phone').value.trim().replace(/\D/g,'').slice(-10);
+  if(phone.length!==10){showToast('⚠️ Enter a valid 10-digit mobile number');return;}
+  const idType=document.getElementById('r_idtype').value;
+  const rule=(typeof REG_ID_RULES!=='undefined')?REG_ID_RULES[idType]:null;
+  const rawId=document.getElementById('r_idnum').value.trim();
+  const svcs=getSelectedServices().map(function(sv){
+    var meta=(SERVICES||[]).find(function(x){return x.name===sv.name;})||{};
+    return {id:sv.id,name:sv.name,icon:sv.icon,cat:meta.cat||''};
   });
-}
-
-function _doRegister(id, rawName, rawPhone, rawPass, regEmail){
-  var provider={
-    id:id,
-    name:rawName,
-    phone:rawPhone,
-    password:rawPass,
-    email:document.getElementById('r_email').value.trim(),
-    whatsapp:document.getElementById('r_whatsapp').value.trim()||document.getElementById('r_phone').value.trim(),
+  if(!svcs.length){showToast('⚠️ Select at least one service');return;}
+  const body={
+    name:document.getElementById('r_name').value.trim(),
+    phone:phone,
+    email:document.getElementById('r_email').value.trim().toLowerCase(),
+    password:pass,
+    whatsapp:(document.getElementById('r_whatsapp').value.trim()||phone).replace(/\D/g,'').slice(-10),
     gender:document.getElementById('r_gender').value,
     experience:document.getElementById('r_exp').value,
     bio:document.getElementById('r_bio').value.trim(),
-    idType:document.getElementById('r_idtype').value,
-    idNum:document.getElementById('r_idnum').value.trim(),
-    services:getSelectedServices(),
-    lat:regLat,lng:regLng,address:regAddress,
-    radius:regRadius,
-    rating:0,reviews:0,
-    totalBookings:0,completedBookings:0,
-    totalEarned:0,pendingEarned:0,withdrawnEarned:0,
-    available:true,
-    registeredAt:new Date().toISOString()
+    id_type:idType,
+    id_number:rule&&rule.clean?rule.clean(rawId):rawId,
+    address:regAddress||'',
+    city:regCity||'',
+    lat:regLat,lng:regLng,
+    radius_km:regRadius,
+    areas:regCity?[regCity]:[],
+    services:svcs
   };
-  // Mark as pending — admin must approve before provider can log in
-  provider.status = 'pending';
-  provider.appliedAt = new Date().toISOString();
-  // Save to Firebase with success/error feedback
-  showToast('⏳ Saving registration...');
-  saveProviderToFirebase(provider, function(){
-    // ✅ Saved successfully
-    sendProviderRegistrationEmail(provider);
-    showRegistrationSuccess(provider.id);
-  }, function(err){
-    // ❌ Save failed — show error, let user retry
-    showToast('❌ Failed to save: ' + (err ? err.message : 'network error') + '. Please try again.');
+  window._regBusy=true;
+  showToast('⏳ Submitting registration...');
+  apiPost('register', body).then(function(res){
+    window._regBusy=false;
+    if(!res.success){showToast('❌ '+(res.error||'Registration failed'));return;}
+    var newId=(res.data&&res.data.id)||'';
+    // Pending providers get a token too → log in so /app/provider.html can show the status
+    apiPost('login',{email:body.email,password:body.password}).then(function(lr){
+      if(lr.success&&lr.data&&lr.data.token) saveProviderSession(lr.data.token, lr.data.provider);
+    }).catch(function(){}).then(function(){ showRegistrationSuccess(newId); });
+  }).catch(function(){
+    window._regBusy=false;
+    showToast('❌ Network error — please try again.');
   });
 }
 
 function showRegistrationSuccess(id){
-  // Show pending approval screen
   document.querySelectorAll('.form-card').forEach(function(card){ card.classList.remove('active'); });
   var succ = document.getElementById('stepSuccess');
   if(succ){
@@ -1325,147 +1171,23 @@ function showRegistrationSuccess(id){
       '<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:20px;">'+
         'Your application has been received.<br/>'+
         '<strong style="color:#0f1117;">Waiting for Admin Approval.</strong><br/><br/>'+
-        'You will be able to log in once your account is approved.'+
+        'You can check your approval status in the provider app. After approval you can go online, set your prices and receive jobs.'+
       '</p>'+
-      '<div style="background:#fff3eb;border:2px solid rgba(232,101,26,.25);border-radius:14px;padding:18px;margin-bottom:20px;">'+
-        '<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">For faster approval, contact Admin</div>'+
-        '<a href="tel:8985849710" style="font-size:26px;font-weight:800;color:#E8251A;text-decoration:none;display:block;margin-bottom:4px;">&#x1F4DE; 8985849710</a>'+
-        '<div style="font-size:13px;color:#6b7280;">Call or WhatsApp</div>'+
-      '</div>'+
       '<div style="background:#f7f8fc;border-radius:12px;padding:14px 16px;margin-bottom:20px;text-align:left;">'+
         '<div style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Your Provider ID</div>'+
-        '<div style="font-size:18px;font-weight:800;color:#6c4ff8;">'+id+'</div>'+
-        '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Save this — needed to log in after approval</div>'+
+        '<div style="font-size:18px;font-weight:800;color:#6c4ff8;">'+escHtml(id)+'</div>'+
+        '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Log in with your email and password.</div>'+
       '</div>'+
-      '<a href="provider-portal.html" style="display:inline-block;padding:13px 28px;background:#E8251A;color:white;border-radius:10px;font-weight:700;text-decoration:none;font-family:DM Sans,sans-serif;">Back to Login</a>'+
+      '<a href="/app/provider.html" style="display:inline-block;padding:13px 28px;background:#E8251A;color:white;border-radius:10px;font-weight:700;text-decoration:none;font-family:DM Sans,sans-serif;">Open Provider App</a>'+
       '</div>';
   }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// ── PROVIDER GOOGLE SIGN-IN ──────────────────────────────────────
-function providerGoogleSignIn(){
-  fbAuth.signInWithPopup(googleProvider)
-    .then(function(result){
-      var user = result.user;
-      // Check if this Google account is linked to a provider
-      // First check localStorage for existing provider with this Google UID or email
-      var localProviders = []; // always check Firebase directly
-      var localFound = localProviders.find(function(p){ return p.googleUid===user.uid || (p.email&&p.email.toLowerCase()===user.email.toLowerCase()); });
-      if(localFound){
-        var lStatus = localFound.status || 'pending';
-        if(lStatus === 'approved'){
-          localStorage.setItem('hs_current_provider', JSON.stringify(localFound));
-          showToast('Welcome back, '+localFound.name+'!');
-          setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
-        } else {
-          showWaitingScreen(localFound);
-        }
-        return;
-      }
-      fbDB.ref('providers').orderByChild('googleUid').equalTo(user.uid).once('value', function(snap){
-        var found = null;
-        snap.forEach(function(child){ found = child.val(); });
-        if(found){
-          // Existing provider — check approval status
-          var allProvs = JSON.parse(localStorage.getItem('hs_providers')||'[]');
-          if(!allProvs.find(function(p){return p.id===found.id;})) allProvs.push(found);
-          localStorage.setItem('hs_providers', JSON.stringify(allProvs));
-          var gStatus = found.status || 'pending';
-          if(gStatus === 'approved'){
-            localStorage.setItem('hs_current_provider', JSON.stringify(found));
-            showToast('Welcome back, '+found.name+'!');
-            setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 600);
-          } else if(gStatus === 'suspended'){
-            showToast('Account suspended. Contact: 8985849710');
-            showWaitingScreen(found);
-          } else {
-            showWaitingScreen(found);
-          }
-        } else {
-          // New provider — switch to register tab and pre-fill Google data
-          switchTab('register');
-          window.scrollTo({top:0,behavior:'smooth'});
-          setTimeout(function(){
-            var nameEl = document.getElementById('r_name');
-            var emailEl = document.getElementById('r_email');
-            if(nameEl) nameEl.value = user.displayName || '';
-            if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
-            // Store Google UID and photo for linking at submit time
-            window._googleUid = user.uid;
-            window._googlePhoto = user.photoURL || '';
-            showToast('✅ Google verified! Your name & email are pre-filled. Complete the form to register.');
-          }, 300);
-        }
-      }).catch(function(){
-        // Firebase offline — still allow registration flow
-        switchTab('register');
-        window.scrollTo({top:0,behavior:'smooth'});
-        setTimeout(function(){
-          var nameEl = document.getElementById('r_name');
-          var emailEl = document.getElementById('r_email');
-          if(nameEl) nameEl.value = user.displayName || '';
-          if(emailEl){ emailEl.value = user.email || ''; emailEl.readOnly = true; }
-          window._googleUid = user.uid;
-          window._googlePhoto = user.photoURL || '';
-          showToast('✅ Google verified! Complete your registration below.');
-        }, 300);
-      });
-    })
-    .catch(function(err){
-      if(err.code !== 'auth/popup-closed-by-user'){
-        showToast('⚠️ Google sign-in failed: '+(err.message||err.code));
-      }
-    });
-}
-
-// Save provider to Firebase after registration (called inside submitRegistration)
-function saveProviderToFirebase(prov, onSuccess, onError){
-  if(window._googleUid) prov.googleUid = window._googleUid;
-  if(window._googlePhoto) prov.photo = window._googlePhoto;
-  // Use fbRest (REST API with anon token) — works everywhere, no SDK needed
-  fbRest('PUT', 'providers/'+prov.id, prov, function(err, data){
-    if(err){
-      console.warn('Firebase save failed:', err.message);
-      if(onError) onError(err);
-    } else {
-      console.log('Provider saved to Firebase:', prov.id);
-      if(onSuccess) onSuccess(data);
-    }
-  });
-}
-
-// Firebase sync after login (non-blocking)
-function syncProviderFromFirebase(){
-  var prov = JSON.parse(localStorage.getItem('hs_current_provider')||'null');
-  if(prov && prov.id){
-    var jwt = localStorage.getItem('hs_provider_jwt') || '';
-    fetch('https://hamaraservice.com/api/providers.php?action=get&id='+prov.id)
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.success && res.data){
-        localStorage.setItem('hs_current_provider', JSON.stringify(res.data));
-      }
-    }).catch(function(){});
-  }
-}
-
-function fillDemo(){
-  document.getElementById('loginEmail').value = 'demo@hamaraservice.com';
-  document.getElementById('loginPass').value = 'demo123';
-  showToast('✅ Demo credentials filled — click Login!');
-}
-
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3200);}
 
-// Auto-redirect only if approved
-var _ex=localStorage.getItem('hs_current_provider');
-if(_ex){
-  try{
-    var _ep=JSON.parse(_ex);
-    if(_ep && _ep.id && _ep.status==='approved') window.location.href='provider-dashboard.html';
-  }catch(e){localStorage.removeItem('hs_current_provider');}
-}
+// Already logged in (token from /app/provider.html or this page) → go to the app
+try{ if(localStorage.getItem(PROV_TOKEN_KEY) && new URLSearchParams(location.search).get('tab')!=='register') window.location.href='/app/provider.html'; }catch(e){}
 // Handle ?tab=register from homepage "Register as Provider" link
 (function(){
   var urlTab = new URLSearchParams(window.location.search).get('tab');
@@ -1473,73 +1195,6 @@ if(_ex){
     setTimeout(function(){ switchTab('register'); }, 100);
   }
 })();
-
-function showWaitingScreen(prov){
-  var panelLogin = document.getElementById('panelLogin');
-  var panelReg   = document.getElementById('panelRegister');
-  if(panelLogin) panelLogin.style.display = 'none';
-  if(panelReg)   panelReg.style.display   = 'none';
-  var scr = document.getElementById('waitingScreen');
-  if(!scr){
-    scr = document.createElement('div');
-    scr.id = 'waitingScreen';
-    var wrap = document.querySelector('.auth-card')||document.querySelector('.auth-modal-box')||document.querySelector('.login-wrap')||document.body;
-    wrap.appendChild(scr);
-  }
-  scr.style.cssText = 'padding:28px 20px;text-align:center;';
-  var html = '';
-  html += '<div style="font-size:56px;margin-bottom:16px;">&#x23F3;</div>';
-  html += '<h2 style="font-family:Sora,sans-serif;color:#E8651A;margin-bottom:10px;">Waiting for Approval</h2>';
-  html += '<p style="color:#6b7280;font-size:15px;line-height:1.75;margin-bottom:18px;">';
-  html += 'Hello <strong style="color:#0f1117;">'+(prov.name||'Provider')+'</strong>,<br/>';
-  html += 'Your registration is under review.<br/>You will get access once the admin approves.';
-  html += '</p>';
-  html += '<div style="background:#fff3eb;border:2px solid rgba(232,101,26,.25);border-radius:14px;padding:16px;margin-bottom:16px;">';
-  html += '<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Contact Admin</div>';
-  html += '<a href="tel:8985849710" style="font-size:26px;font-weight:800;color:#E8251A;text-decoration:none;display:block;margin-bottom:4px;">&#x1F4DE; 8985849710</a>';
-  html += '<div style="font-size:13px;color:#6b7280;">Call or WhatsApp for faster approval</div>';
-  html += '</div>';
-  html += '<div style="background:#f7f8fc;border-radius:12px;padding:12px 16px;margin-bottom:16px;text-align:left;">';
-  html += '<div style="font-size:11px;font-weight:700;color:#8b909e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Your Provider ID</div>';
-  html += '<div style="font-size:16px;font-weight:800;color:#6c4ff8;">'+(prov.id||'')+'</div>';
-  html += '</div>';
-  html += '<button id="_chkBtn" style="width:100%;padding:13px;background:#E8651A;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:DM Sans,sans-serif;">Check Approval Status</button>';
-  html += '<button id="_backBtn" style="width:100%;padding:12px;background:#f7f8fc;border:1.5px solid #eaedf2;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;font-family:DM Sans,sans-serif;">Back to Login</button>';
-  scr.innerHTML = html;
-  document.getElementById('_chkBtn').onclick = function(){
-    document.getElementById('_chkBtn').textContent='Checking...';
-    // Use fbRest — works from any device, any browser
-    fbRest('GET', 'providers/'+prov.id, null, function(err, data){
-      var btn = document.getElementById('_chkBtn');
-      if(err || !data){
-        if(btn) btn.textContent='Check Approval Status';
-        showToast('Network error - check internet and try again');
-        return;
-      }
-      if(data.status === 'approved'){
-        localStorage.setItem('hs_current_provider', JSON.stringify(data));
-        showToast('✅ Approved! Redirecting...');
-        setTimeout(function(){ window.location.href='provider-dashboard.html'; }, 800);
-      } else {
-        if(btn) btn.textContent='Check Approval Status';
-        showToast('⏳ Not approved yet. Contact 8985849710');
-      }
-    });
-  };
-    document.getElementById('_backBtn').onclick = function(){
-    scr.style.display='none';
-    if(panelLogin) panelLogin.style.display='block';
-  };
-}
-// ── Email: provider registration + admin notification ─────────────────────────
-function sendProviderRegistrationEmail(provider) {
-  // Uses js/email-triggers.js → api/email.php → Hostinger SMTP
-  var serviceList = (provider.services||[]).map(function(s){ return s.name||s; }).join(', ');
-  emailProviderWelcome(provider.name, provider.email, provider.id, serviceList);
-  emailAdminProviderPending(provider);
-}
-
-
 
 function buildServices(){ return [
 {id:"SVC001",icon:"\ud83e\uddf9",name:"House Maid",cat:"Home Cleaning",tasks:[

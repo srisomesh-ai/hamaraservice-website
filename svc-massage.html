@@ -152,6 +152,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 .age-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
 .age-chip.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;}
 </style>
+<script src="js/hs-prices.js"></script>
 </head>
 <body>
 
@@ -413,16 +414,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="card">
   <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
   <div class="card-body">
-    <div class="rating-row">
-      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.8</div><div class="rating-stars">★★★★★</div><div class="rating-count">1,200 reviews</div></div>
-      <div style="flex:1;">
-        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:82%"></div></div></div>
-        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:13%"></div></div></div>
-        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:3%"></div></div></div>
-        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
-        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
-      </div>
-    </div>
+    <div class="rating-row"><div class="rating-count" style="font-size:14px">Verified professionals · Customers rate every completed job in the app</div></div>
   </div>
 </div>
 
@@ -461,7 +453,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
     </div>
     <div class="book-meta">
       <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val" id="deskDuration">60 min</span></div>
-      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.8 (1,200 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">✅ Providers</span><span class="book-meta-val">Verified professionals</span></div>
       <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
     </div>
     <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Customise &amp; Book →</button>
@@ -479,7 +471,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="mob-book-bar">
   <div>
     <div class="mob-price" id="mobPrice">… <sub>estimated</sub></div>
-    <div style="font-size:10px;color:var(--muted);">⭐ 4.8 · 1,200 reviews</div>
+    <div style="font-size:10px;color:var(--muted);">✅ Verified professionals</div>
   </div>
   <button onclick="bookNow()" id="mobBookBtn" disabled style="padding:11px 20px;background:var(--brand);color:white;border:none;border-radius:100px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:not-allowed;opacity:.4;">Book Now →</button>
 </div>
@@ -491,7 +483,6 @@ if (typeof firebase !== 'undefined') {
     firebase.initializeApp({
       apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
       authDomain:"hamaraservice-s009.firebaseapp.com",
-      databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId:"hamaraservice-s009", storageBucket:"hamaraservice-s009.firebasestorage.app",
       messagingSenderId:"1064274729048", appId:"1:1064274729048:web:86643c95419e9dc881d22d"
     });
@@ -620,8 +611,7 @@ function bookNow() {
     'Massage > ' + ageLabel
   ];
   if (people > 1) _mSum.push('Massage > ' + people + ' persons');
-  sessionStorage.setItem('hs_service_options', JSON.stringify({
-    service: 'Massage at Home', icon: '💆',
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ svcId:'SVC025', service: 'Massage at Home', icon: '💆',
     gender: gender, ageGroup: ageLabel, massageType: typeName,
     duration: durLabel, people: people, therapistPref: therapist,
     price: String(total),
@@ -629,9 +619,9 @@ function bookNow() {
   }));
   localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
   var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
-  var url = 'user-booking.html?service=Massage%20at%20Home';
+  var url = '/app/customer.html?book=1&svc=SVC025';
   if (user) { window.location.href = url; }
-  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = url; }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -648,19 +638,11 @@ function showToast(msg) {
 
 // ── Firebase Price Sync (SVC025) ───────────────────────────────────────────
 (function() {
-  var _DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _DB  = '';
   var _API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
   var _tok = '';
 
-  function getToken(cb) {
-    if (_tok) { cb(_tok); return; }
-    var x = new XMLHttpRequest();
-    x.open('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=' + _API, true);
-    x.setRequestHeader('Content-Type', 'application/json');
-    x.onload = function() { try { var d = JSON.parse(x.responseText); _tok = d.idToken||''; cb(_tok); } catch(e) { cb(''); } };
-    x.onerror = function() { cb(''); };
-    x.send(JSON.stringify({returnSecureToken: true}));
-  }
+  
 
   function applyPrices(d) {
     if (!d || d.error) return;
@@ -693,14 +675,7 @@ function showToast(msg) {
   }
 
   function load() {
-    getToken(function(tok) {
-      var url = _DB + '/hs_service_prices/SVC025.json' + (tok ? '?auth=' + tok : '');
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true); xhr.timeout = 6000;
-      xhr.onload = function() { try { var d = JSON.parse(xhr.responseText); if (d && !d.error) applyPrices(d); } catch(e) {} };
-      xhr.onerror = function() {};
-      xhr.send();
-    });
+    HS_adminPrices('SVC025',function(d){if(d)applyPrices(d);});
   }
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', load); }

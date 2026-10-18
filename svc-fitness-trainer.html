@@ -116,6 +116,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 .sub-panel{margin-left:8px;margin-bottom:4px;padding:16px;background:var(--bg);border-radius:14px;border:1.5px solid var(--brand);display:flex;flex-direction:column;gap:14px;}
 .sub-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
 </style>
+<script src="js/hs-prices.js"></script>
 </head>
 <body>
 
@@ -241,16 +242,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="card">
   <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
   <div class="card-body">
-    <div class="rating-row">
-      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.8</div><div class="rating-stars">★★★★★</div><div class="rating-count">2,050 reviews</div></div>
-      <div style="flex:1;">
-        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:80%"></div></div></div>
-        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:14%"></div></div></div>
-        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:4%"></div></div></div>
-        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
-        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
-      </div>
-    </div>
+    <div class="rating-row"><div class="rating-count" style="font-size:14px">Verified professionals · Customers rate every completed job in the app</div></div>
   </div>
 </div>
 
@@ -292,7 +284,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
     </div>
     <div class="book-meta">
       <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">45–90 min/session</span></div>
-      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.8 (2,050 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">✅ Providers</span><span class="book-meta-val">Verified professionals</span></div>
       <div class="book-meta-row"><span class="book-meta-label">💯 Promise</span><span class="book-meta-val">Satisfaction guaranteed</span></div>
     </div>
     <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Select Training &amp; Book →</button>
@@ -310,7 +302,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="mob-book-bar">
   <div>
     <div class="mob-price" id="mobPrice">₹0 <sub>select training</sub></div>
-    <div style="font-size:10px;color:var(--muted);">⭐ 4.8 · 2,050 reviews</div>
+    <div style="font-size:10px;color:var(--muted);">✅ Verified professionals</div>
   </div>
   <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
 </div>
@@ -320,7 +312,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 if(!firebase.apps.length) firebase.initializeApp({
   apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
   messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
 });
@@ -409,16 +400,16 @@ function bookNow() {
     document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  sessionStorage.setItem('hs_service_options', JSON.stringify({ service:'Fitness Trainer', training: selected,
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ svcId:'SVC026', service:'Fitness Trainer', training: selected,
     icon: '💪',
     price: (document.getElementById('totalPrice')||{textContent:''}).textContent.replace(/[^0-9]/g,''),
     summary: Object.keys(selected||{}).map(function(k){ return 'Fitness Trainer > '+k; })
   }));
   localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
   var user = JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
-  var url = 'user-booking.html?service=Fitness%20Trainer';
+  var url = '/app/customer.html?book=1&svc=SVC026';
   if(user){ window.location.href=url; }
-  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
+  else{ sessionStorage.setItem('hs_after_login',url); window.location.href=url; }
 }
 
 function showToast(msg) {
@@ -434,16 +425,8 @@ firebase.auth().onAuthStateChanged(function(u){
 
 // ── HS Firebase Price Sync (SVC022) ────────────────────────────────────────
 (function(){
-  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
-  function getToken(cb){
-    if(_tok){cb(_tok);return;}
-    var x=new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
-    x.onerror=function(){cb('');};
-    x.send(JSON.stringify({returnSecureToken:true}));
-  }
+  var _DB='',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  
   function applyPrices(d){
     if(!d||d.error) return;
     // Visit fee
@@ -466,12 +449,7 @@ firebase.auth().onAuthStateChanged(function(u){
     }
     if(typeof updatePrice==='function') updatePrice();
   }  function load(){
-    getToken(function(tok){
-      var url=_DB+'/hs_service_prices/SVC026.json'+(tok?'?auth='+tok:'');
-      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
-      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
-      xhr.onerror=function(){};xhr.send();
-    });
+    HS_adminPrices('SVC026',function(d){if(d)applyPrices(d);});
   }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
   else{load();}
@@ -496,129 +474,3 @@ firebase.auth().onAuthStateChanged(function(u){
 </script>
 </body>
 </html>
-var VISIT_PRICE = 0;
-
-if(!firebase.apps.length) firebase.initializeApp({
-  apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-  authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
-  messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
-});
-
-var selected  = {};   // svc -> { base, extra, sessions }
-var counts    = {};   // svc -> session count
-var SVCS = ['weightloss','muscle','yoga','zumba','rehab','senior','monthly'];
-
-function toggleSvc(el) {
-  var svc = el.dataset.svc;
-  var chk = document.getElementById('chk-' + svc);
-  var panel = document.getElementById('sub-' + svc);
-  if(el.classList.contains('active')) {
-    el.classList.remove('active');
-    delete selected[svc];
-    if(chk) chk.textContent = '\u2610';
-    if(panel) panel.style.display = 'none';
-  } else {
-    el.classList.add('active');
-    var base = parseInt(el.dataset.base) || 0;
-    counts[svc] = counts[svc] || 1;
-    selected[svc] = { base: base, extra: 0, sessions: counts[svc] };
-    if(chk) chk.textContent = '\u2611';
-    if(panel) panel.style.display = 'block';
-  }
-  updatePrice();
-}
-
-function selectInGroup(el, group) {
-  var container = el.parentElement;
-  container.querySelectorAll('.calc-chip').forEach(function(c){ c.classList.remove('active'); });
-  el.classList.add('active');
-  // Update extra for groups that have data-extra
-  var extra = parseInt(el.dataset.extra || 0);
-  var svc = groupToSvc(group);
-  if(svc && selected[svc] !== undefined && el.dataset.extra !== undefined) {
-    selected[svc].extra = extra;
-    updatePrice();
-  }
-}
-
-function groupToSvc(g) {
-  if(g.indexOf('wl') === 0)  return 'weightloss';
-  if(g.indexOf('mu') === 0)  return 'muscle';
-  if(g.indexOf('yo') === 0)  return 'yoga';
-  if(g.indexOf('zu') === 0)  return 'zumba';
-  if(g.indexOf('re') === 0)  return 'rehab';
-  if(g.indexOf('se') === 0)  return 'senior';
-  if(g.indexOf('mo') === 0)  return 'monthly';
-  return null;
-}
-
-function changeSessions(svc, delta) {
-  counts[svc] = Math.max(1, Math.min(30, (counts[svc]||1) + delta));
-  var el = document.getElementById('cnt-' + svc); if(el) el.textContent = counts[svc];
-  if(selected[svc]) { selected[svc].sessions = counts[svc]; updatePrice(); }
-}
-
-function updatePrice() {
-  var p = VISIT_PRICE || 599;
-  var fmt = '₹' + p.toLocaleString('en-IN');
-  ['stickyPrice','visitPriceDisplay'].forEach(function(id){
-    var e = document.getElementById(id); if(e) e.textContent = fmt;
-  });
-  var sn = document.getElementById('stickyNote');
-  if(sn) sn.textContent = 'Per trainer visit · At your home';
-  var btn = document.getElementById('stickyBookBtn');
-  if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
-}
-function bookNow() {
-  if (!VISIT_PRICE) { showToast('⚠️ Price still loading, please wait'); return; }
-  sessionStorage.setItem('hs_service_options', JSON.stringify({
-    service: 'Gym / Fitness Trainer', icon: '💪',
-    price: String(VISIT_PRICE),
-    summary: ['Fitness Trainer > Trainer Visit']
-  }));
-  localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
-  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
-  var url = 'user-booking.html?service=Gym%20Fitness%20Trainer';
-  if(user){ window.location.href=url; }
-  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
-}
-function showToast(msg) {
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.style.display='block';
-  clearTimeout(t._t); t._t=setTimeout(function(){ t.style.display='none'; },3000);
-}
-
-firebase.auth().onAuthStateChanged(function(u){
-  if(u) sessionStorage.setItem('hs_current_customer', JSON.stringify({uid:u.uid,name:u.displayName||'',email:u.email||''}));
-  else sessionStorage.removeItem('hs_current_customer');
-});
-
-// ── HS Firebase Price Sync (SVC022) ────────────────────────────────────────
-(function(){
-  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
-  function getToken(cb){
-    if(_tok){cb(_tok);return;}
-    var x=new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
-    x.onerror=function(){cb('');};
-    x.send(JSON.stringify({returnSecureToken:true}));
-  }
-  function applyPrices(d){
-    if(!d||d.error) return;
-    var p=0;
-    if(d.visit&&d.visit.visit!==undefined) p=parseInt(d.visit.visit);
-    else if(d.svc&&d.svc.visit!==undefined) p=parseInt(d.svc.visit);
-    else if(d.base!==undefined) p=parseInt(d.base);
-    if(p>0){
-      VISIT_PRICE=p;
-      if(typeof updatePrice==='function') updatePrice();
-    }
-  }  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
-  else{load();}
-  setInterval(load,30000);
-  window.addEventListener('storage',function(e){if(e.key==='hs_pricing_ts')load();});
-})();

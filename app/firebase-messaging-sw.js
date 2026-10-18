@@ -8,7 +8,9 @@ firebase.initializeApp({
   projectId: "hamaraservice-s009",
   storageBucket: "hamaraservice-s009.firebasestorage.app",
   messagingSenderId: "1064274729048",
-  appId: "1:1064274729048:web:placeholder"
+  // TODO(config): replace "web:placeholder" with the real Web App ID from Firebase Console →
+    //   Project settings → General → Your apps (web). FCM web push will not work until this is set.
+    appId: "1:1064274729048:web:placeholder"
 });
 
 const messaging = firebase.messaging();
@@ -28,8 +30,10 @@ messaging.onBackgroundMessage(function(payload) {
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  const url = event.notification.data && event.notification.data.role === 'provider'
-    ? '/app/provider.html' : '/app/customer.html';
+  const d = event.notification.data || {};
+  // Data-only messages carry data.event; these events are only ever sent to providers.
+  const PROVIDER_EVENTS = ['new_booking','price_negotiation','price_confirmed','payment_received','payout_approved','account_approved','booking_released'];
+  const url = (d.role === 'provider' || PROVIDER_EVENTS.indexOf(d.event) >= 0) ? '/app/provider.html' : '/app/customer.html';
   event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(function(list){
     for (const c of list) { if (c.url.includes('/app/') && 'focus' in c) return c.focus(); }
     if (clients.openWindow) return clients.openWindow(url);

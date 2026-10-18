@@ -14,3 +14,6 @@ RedirectMatch 404 ^/private/
 <FilesMatch "(\.sql|\.json\.bak|\.env|hs-secrets.*|service-account.*\.json|firebase-service-account.*|\.md)$">
   Require all denied
 </FilesMatch>
+
+# Retired duplicate page
+Redirect 301 /svc-car-mechanic.html /svc-mechanic.html
