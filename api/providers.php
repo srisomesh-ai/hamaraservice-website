@@ -375,57 +375,53 @@ HamaraService Team";
 
     $city = trim($_GET['city'] ?? '');
 
-    // Haversine distance in SQL
-    $sql = "
-      SELECT p.id, p.name, p.rating, p.review_count,
-             p.lat, p.lng, p.radius_km, p.city,
-             (6371 * ACOS(
-               COS(RADIANS(:lat)) * COS(RADIANS(p.lat))
-               * COS(RADIANS(p.lng) - RADIANS(:lng))
-               + SIN(RADIANS(:lat2)) * SIN(RADIANS(p.lat))
-             )) AS distance_km
-      FROM providers p
-    ";
-
-    $params = [':lat'=>$lat, ':lng'=>$lng, ':lat2'=>$lat];
-
-    // Filter by service if provided
+    // Online, approved providers (offering the service if svc_id given).
+    // Distance is computed in a subquery so the outer WHERE can filter on it
+    // (the old HAVING version failed with "Unknown column p.areas").
+    $params = [':lat' => $lat, ':lng' => $lng, ':lat2' => $lat];
+    $svcJoin = '';
     if (!empty($svc_id)) {
-      $sql .= " INNER JOIN provider_services ps
-                ON ps.provider_id = p.id
-                AND ps.svc_id = :svc_id
-                AND ps.enabled = 1";
+      $svcJoin = " INNER JOIN provider_services ps
+                   ON ps.provider_id = p.id AND ps.svc_id = :svc_id AND ps.enabled = 1";
       $params[':svc_id'] = $svc_id;
     }
-
+    $inner = "
+      SELECT p.id, p.name, p.rating, p.review_count, p.photo,
+             COALESCE(p.lat, 0) AS lat, COALESCE(p.lng, 0) AS lng, p.radius_km, p.city, p.areas,
+             CASE WHEN COALESCE(p.lat, 0) != 0 THEN
+               6371 * ACOS(LEAST(1, COS(RADIANS(:lat)) * COS(RADIANS(p.lat))
+                 * COS(RADIANS(p.lng) - RADIANS(:lng))
+                 + SIN(RADIANS(:lat2)) * SIN(RADIANS(p.lat))))
+             END AS distance_km
+      FROM providers p $svcJoin
+      WHERE p.status = 'approved' AND p.available = 1
+        AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
+    ";
+    $cityCond = '';
+    if (!empty($city)) {
+      $cityCond = "(t.city LIKE :city OR t.areas LIKE :city2)";
+      $params[':city']  = "%$city%";
+      $params[':city2'] = "%$city%";
+    }
     if ($lat != 0 && $lng != 0) {
-      // GPS mode: distance filter, but include providers without GPS if city matches
-      $sql .= "
-        WHERE p.status    = 'approved'
-          AND p.available = 1
-          AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
-        HAVING (p.lat != 0 AND distance_km <= :radius)";
-      if (!empty($city)) {
-        $sql .= " OR (p.lat = 0 AND (p.city LIKE :city OR p.areas LIKE :city2))";
-        $params[':city'] = "%$city%";
-        $params[':city2'] = "%$city%";
-      }
-      $sql .= " ORDER BY distance_km ASC LIMIT 20";
+      // GPS: within radius; providers without GPS match by city/area
+      $where = "(t.distance_km IS NOT NULL AND t.distance_km <= :radius)";
+      if ($cityCond) $where .= " OR (t.distance_km IS NULL AND $cityCond)";
       $params[':radius'] = $radius;
+      $sql = "SELECT * FROM ($inner) t WHERE $where ORDER BY t.distance_km IS NULL, t.distance_km ASC LIMIT 20";
     } else {
-      // No GPS: match by city only
-      $sql .= " WHERE p.status = 'approved' AND p.available = 1 AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)";
-      if (!empty($city)) {
-        $sql .= " AND (p.city LIKE :city OR p.areas LIKE :city2)";
-        $params[':city'] = "%$city%";
-        $params[':city2'] = "%$city%";
-      }
-      $sql .= " ORDER BY p.rating DESC LIMIT 20";
+      $sql = "SELECT * FROM ($inner) t" . ($cityCond ? " WHERE $cityCond" : '') . " ORDER BY t.rating DESC LIMIT 20";
     }
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $providers = $stmt->fetchAll();
+    foreach ($providers as &$pp) {
+      if (!$lat || !$lng || $pp['distance_km'] === null) $pp['distance_km'] = null;
+      else $pp['distance_km'] = round((float)$pp['distance_km'], 1);
+      unset($pp['areas'], $pp['lat'], $pp['lng']);   // no exact provider location to the public
+    }
+    unset($pp);
 
     // Add service price range per provider
     if (!empty($svc_id) && !empty($providers)) {
@@ -638,46 +634,48 @@ HamaraService Team";
 
   // ── SAVE PER-OPTION PRICES ───────────────────────────────
   case 'save_option_prices': {
+    // Body: {svc_id, option_prices|prices: {group_option: price}, min_price?, max_price?}
+    // The provider's min/max for the service (shown to customers as the price
+    // range) comes from explicit min/max if given, else from the option prices.
     $prov = requireProvider();
     $b    = getBody();
     $svc_id = $b['svc_id'] ?? '';
-    $prices = $b['option_prices'] ?? [];
     if (empty($svc_id)) err('svc_id required');
-
-    // Store in provider_service_prices table (create if needed)
-    // Using service_prices table with provider_id prefix
-    // We store as provider_id:svc_id:group_opt → price
-    // Simple approach: store as JSON in provider_services extras column
-    // Actually use a dedicated JSON column approach via provider_services notes
-
-    // Store prices as JSON in a new column
-    // Check if column exists, add if not
-    try {
-      $db->exec("ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL");
-    } catch (Exception $e) {} // Ignore if already exists
-
-    $stmt = $db->prepare("
-      INSERT INTO provider_services
-        (provider_id, svc_id, enabled, min_price, max_price, option_prices)
-      VALUES (?, ?, 1, 0, 0, ?)
-      ON DUPLICATE KEY UPDATE
-        option_prices = VALUES(option_prices)
-    ");
-    $stmt->execute([
-      $prov['id'],
-      $svc_id,
-      json_encode($prices),
-    ]);
-
-    // Also update min/max from the prices
-    if (!empty($prices)) {
-      $vals = array_values($prices);
-      $min = min($vals); $max = max($vals);
-      $db->prepare("UPDATE provider_services SET min_price=?, max_price=? WHERE provider_id=? AND svc_id=?")
-         ->execute([$min, $max, $prov['id'], $svc_id]);
+    $raw = $b['option_prices'] ?? $b['prices'] ?? [];
+    $prices = [];
+    if (is_array($raw)) {
+      foreach ($raw as $k => $v) {
+        if (is_numeric($v) && (int)$v > 0) $prices[(string)$k] = (int)$v;
+      }
     }
+    $min = (int)($b['min_price'] ?? 0);
+    $max = (int)($b['max_price'] ?? 0);
+    if ($prices) {
+      if ($min <= 0) $min = min($prices);
+      if ($max <= 0) $max = max($prices);
+    }
+    if ($min <= 0 && $max <= 0 && !$prices) err('Enter at least one price');
+    if ($min > 0 && $max > 0 && $max < $min) err('Max price must be greater than min price');
+    if ($max <= 0) $max = $min;
+    if ($min <= 0) $min = $max;
 
-    ok(['saved' => true, 'svc_id' => $svc_id]);
+    try { $db->exec("ALTER TABLE provider_services ADD COLUMN option_prices JSON NULL"); } catch (Exception $e) {}
+
+    $lookup = $db->prepare("SELECT name, icon, category FROM services WHERE id = ?");
+    $lookup->execute([$svc_id]);
+    $svc = $lookup->fetch() ?: ['name' => $svc_id, 'icon' => '', 'category' => ''];
+
+    $db->prepare("
+      INSERT INTO provider_services
+        (provider_id, svc_id, svc_name, svc_icon, svc_cat, enabled, min_price, max_price, option_prices)
+      VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        enabled = 1, min_price = VALUES(min_price), max_price = VALUES(max_price),
+        option_prices = VALUES(option_prices)
+    ")->execute([$prov['id'], $svc_id, $svc['name'], $svc['icon'], $svc['category'],
+                 $min, $max, json_encode((object)$prices)]);
+
+    ok(['saved' => true, 'svc_id' => $svc_id, 'min_price' => $min, 'max_price' => $max]);
   }
 
   // ── GET PER-OPTION PRICES ─────────────────────────────────

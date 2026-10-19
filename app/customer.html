@@ -367,7 +367,8 @@ window.HS_FCM = (function(){
         <div class="scan-center">📍</div>
       </div>
       <div class="status-big">Searching for providers…</div>
-      <div class="status-sub" id="radarSub">Scanning 5 km around you</div>
+      <div class="status-sub" id="radarSub">Scanning around you</div>
+      <div id="radarProviders" style="margin-top:14px;text-align:left"></div>
       <button class="btn ghost" style="max-width:220px;margin:16px auto 0" onclick="cancelBooking()">Cancel</button>
     </div>
     <div id="radarOffer" class="hide"></div>
@@ -521,13 +522,21 @@ function renderChips(){
   $('catChips').innerHTML=h;
 }
 function pickCat(ct){selCat=ct;renderChips();renderHome();window.scrollTo(0,0);}
+// Provider price range for a service (from approved providers' own min/max)
+function rangeText(id){
+  var r=priceRanges[id];
+  if(!r||!(r.provider_count>0)||!(r.min>0))return '';
+  return '₹'+r.min+((r.max>r.min)?(' – ₹'+r.max):'');
+}
 function tileHtml(s){
   var r=priceRanges[s.id];
+  var rt=rangeText(s.id);
   var pr=(r&&r.min>0)?r.min:(s.base||99);
   var img=svcImages[s.id]||('/assets/services/'+s.id+'.jpg');
   return '<div class="svc-tile" onclick="openSvc(\''+s.id+'\')">'
     +'<div class="ico-wrap"><img class="ico-img" src="'+img+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><span class="ico-emoji" style="display:none">'+s.icon+'</span></div>'
-    +'<div class="nm">'+s.name+'</div><div class="pr"><span class="from">from </span>₹'+pr+'</div></div>';
+    +'<div class="nm">'+s.name+'</div><div class="pr">'+(rt?rt:('<span class="from">from </span>₹'+pr))+'</div>'
+    +(rt?'<div style="font-size:10.5px;color:var(--muted);font-weight:600">'+r.provider_count+' provider'+(r.provider_count>1?'s':'')+'</div>':'')+'</div>';
 }
 function renderHome(){
   var q=($('homeSearch').value||'').trim().toLowerCase();
@@ -619,6 +628,12 @@ function priceOf(gk,ok_,fallback){
 }
 function renderSvc(){
   var h='';
+  var rt=rangeText(curSvc.id);
+  if(rt){
+    var pc=priceRanges[curSvc.id].provider_count;
+    h+='<div class="card" style="background:#eef7f0;border:1px solid #cfe9d6"><div style="font-weight:800;color:#1b7a3a">👷 '+pc+' provider'+(pc>1?'s':'')+' charge '+rt+'</div>'
+      +'<div style="font-size:12.5px;color:var(--muted);margin-top:4px">Estimate below · the provider confirms the final price before the job starts.</div></div>';
+  }
   (curSvc.groups||[]).forEach(function(g){
     if(g.style==='label'){
       h+='<div class="sec-title">'+g.title+' <span style="font-size:11px;color:var(--muted);font-weight:600">· tap to select</span></div><div class="task-grid">';
@@ -911,6 +926,46 @@ function resumeBooking(){_lastRenderKey='';
   show('pgRadar');startPoll();
 }
 
+// ── RADAR: real nearby providers, widening search 2 → 5 → 10 → 20 km ──
+var nbTimer=null,nbBid=null,nbStep=0,NB_RADII=[2,5,10,20];
+function startNearby(b){
+  if(nbBid===b.id&&nbTimer)return;
+  stopNearby();nbBid=b.id;nbStep=0;
+  var scan=function(){
+    var r=NB_RADII[Math.min(nbStep,NB_RADII.length-1)];
+    var q='nearby&svc_id='+encodeURIComponent(b.svc_id||'')+'&radius='+r
+      +'&lat='+(parseFloat(b.lat)||0)+'&lng='+(parseFloat(b.lng)||0)+'&city='+encodeURIComponent(b.city||'');
+    api('providers.php',q).then(function(res){
+      var list=(res&&res.success&&Array.isArray(res.data))?res.data:[];
+      renderNearby(list,r);
+      if(!list.length&&nbStep<NB_RADII.length-1)nbStep++;
+    }).catch(function(){});
+  };
+  scan();nbTimer=setInterval(scan,7000);
+}
+function stopNearby(){clearInterval(nbTimer);nbTimer=null;nbBid=null;var el=$('radarProviders');if(el)el.innerHTML='';}
+function renderNearby(list,r){
+  clearInterval(scanMsgTimer);
+  var sub=$('radarSub');
+  if(sub)sub.textContent=list.length
+    ?('✅ '+list.length+' provider'+(list.length>1?'s':'')+' available within '+r+' km — waiting for a quote')
+    :('Searching within '+r+' km…'+(r>=20?' No provider free right now, we keep looking.':''));
+  var h='';
+  list.slice(0,5).forEach(function(p){
+    var d=(p.distance_km!=null&&p.distance_km!=='')?(parseFloat(p.distance_km).toFixed(1)+' km'):'';
+    var mn=parseInt(p.min_price,10)||0,mx=parseInt(p.max_price,10)||0;
+    var pr=mn>0?('₹'+mn+(mx>mn?'–'+mx:'')):'';
+    var rt=parseFloat(p.rating)||0;
+    h+='<div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800">'+esc((p.name||'?').charAt(0))+'</div>'
+      +'<div style="flex:1"><div style="font-weight:800;font-size:14px">'+esc(p.name||'Provider')+'</div>'
+      +'<div style="font-size:12px;color:var(--muted)">'+(rt>0?('⭐ '+rt.toFixed(1)):'⭐ New')+(d?(' · 📍 '+d):'')+'</div></div>'
+      +(pr?'<div style="font-weight:800;color:var(--teal);font-size:13px">'+pr+'</div>':'')
+      +'</div>';
+  });
+  var el=$('radarProviders');if(el)el.innerHTML=h;
+}
+
 // ── POLL BOOKING ──
 var scanMsgTimer=null;
 var scanMsgs=['Scanning 5 km around you','Contacting nearby professionals','Checking who is available now','Almost there — hold on'];
@@ -1000,8 +1055,10 @@ function renderBookingState(b){
   if(key===_lastRenderKey)return;
   _lastRenderKey=key;
   renderTimeline(st);
+  if(st!=='searching')stopNearby();
   if(st==='searching'){
     $('radarSearch').classList.remove('hide');$('radarOffer').classList.add('hide');$('radarActive').classList.add('hide');
+    startNearby(b);
   } else if(st==='negotiating'){
     // waiting for provider response to counter
     $('radarSearch').classList.add('hide');$('radarActive').classList.add('hide');

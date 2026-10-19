@@ -550,7 +550,17 @@ function regNext(){
 }
 
 // ── DASHBOARD ──
+function loadMyRanges(){
+  if(!ME.id)return;
+  api('providers.php','services',null,'&id='+encodeURIComponent(ME.id)).then(function(res){
+    if(res.success&&Array.isArray(res.data))res.data.forEach(function(r){
+      myRanges[r.svc_id]={min:parseInt(r.min_price,10)||0,max:parseInt(r.max_price,10)||0};
+    });
+  }).catch(function(){});
+  api('providers.php','get_option_prices').then(function(res){if(res.success&&res.data&&!Array.isArray(res.data))myPrices=res.data;}).catch(function(){});
+}
 function initDash(){
+  loadMyRanges();
   show('pgDash');
   $('dashName').textContent=ME.name||'Provider';
   if(ME.photo){$('dashAvatar').style.backgroundImage='url(https://hamaraservice.com'+ME.photo+')';$('dashAvatar').style.backgroundSize='cover';$('dashAvatar').style.backgroundPosition='center';$('dashAvatar').textContent='';}
@@ -657,6 +667,7 @@ function myPriceFor(b){
   var vals=[];
   for(var k in sv){var n=parseInt(sv[k],10);if(n>0)vals.push(n);}
   if(vals.length){return Math.min.apply(null,vals);} // base/lowest set price
+  var rg=myRanges[b.svc_id];if(rg&&rg.min>0)return rg.min; // provider's own minimum
   // fall back to admin default price for the service
   var ad=(adminAll[b.svc_id]&&adminAll[b.svc_id].admin_prices)||{};
   for(var k2 in ad){var n2=parseInt(ad[k2],10);if(n2>0)return n2;}
@@ -1021,13 +1032,17 @@ function openServices(){
     api('services.php','price_ranges'),
     api('providers.php','get_option_prices',null,'&id='+encodeURIComponent(ME.id))
   ]).then(function(rs){
-    mySvcs={};
-    if(rs[0].success&&rs[0].data)rs[0].data.forEach(function(s){if(s.enabled==1)mySvcs[s.svc_id]=true;});
+    mySvcs={};myRanges={};
+    if(rs[0].success&&rs[0].data)rs[0].data.forEach(function(s){
+      if(s.enabled==1)mySvcs[s.svc_id]=true;
+      myRanges[s.svc_id]={min:parseInt(s.min_price,10)||0,max:parseInt(s.max_price,10)||0};
+    });
     adminAll=rs[1].success?(rs[1].data||{}):{};
     myPrices=rs[2].success?(rs[2].data||{}):{};
     renderMySvcs();
   }).catch(function(){renderMySvcs();});
 }
+var myRanges={};
 function renderMySvcs(){
   var h='';
   SVC.forEach(function(s){
@@ -1035,7 +1050,7 @@ function renderMySvcs(){
     h+='<div class="svc-check'+on+'" id="ms_'+s.id+'">'
       +'<span style="font-size:22px" onclick="togMySvc(\''+s.id+'\')">'+s.icon+'</span>'
       +'<span style="flex:1;font-size:14px;font-weight:700" onclick="togMySvc(\''+s.id+'\')">'+s.name+'</span>'
-      +(mySvcs[s.id]?'<button class="price-btn" onclick="openPrices(\''+s.id+'\')">₹ Set</button>':'')
+      +(mySvcs[s.id]?'<button class="price-btn" onclick="openPrices(\''+s.id+'\')">'+((myRanges[s.id]&&myRanges[s.id].min>0)?('₹'+myRanges[s.id].min+(myRanges[s.id].max>myRanges[s.id].min?'–'+myRanges[s.id].max:'')):'₹ Set')+'</button>':'')
       +'</div>';
   });
   $('mySvcList').innerHTML=h;
@@ -1043,11 +1058,11 @@ function renderMySvcs(){
 function togMySvc(id){mySvcs[id]=!mySvcs[id];renderMySvcs();}
 function saveServices(){
   var arr=[];SVC.forEach(function(s){
-    arr.push({id:s.id,name:s.name,icon:s.icon,cat:s.cat,enabled:mySvcs[s.id]?1:0,
+    arr.push({svc_id:s.id,svc_name:s.name,svc_icon:s.icon,svc_cat:s.cat,enabled:mySvcs[s.id]?1:0,
       min_price:0,max_price:0});
   });
   api('providers.php','services',{services:arr}).then(function(res){
-    toast(res.success?'✅ Services saved':'Save failed');
+    toast(res.success?'✅ Services saved':(res.error||'Save failed'));
   });
 }
 function openPrices(svcId){
@@ -1060,9 +1075,15 @@ function openPrices(svcId){
     +'<span style="font-size:24px;margin-right:8px">'+s.icon+'</span>'
     +'<b style="flex:1;font-size:16px">'+s.name+' — Prices</b>'
     +'<span style="font-size:22px;cursor:pointer;padding:4px" onclick="closeSheet()">✕</span></div>';
+  var rg=myRanges[svcId]||{};
+  body+='<div class="sec-title" style="margin-top:4px">Your price range</div>'
+    +'<div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">Customers see this range before booking. You still send the exact quote for each job.</div>'
+    +'<div class="opt-price-row"><div class="nm">Minimum ₹</div><input type="number" id="pp__min" value="'+(rg.min||'')+'" placeholder="e.g. 300"></div>'
+    +'<div class="opt-price-row"><div class="nm">Maximum ₹</div><input type="number" id="pp__max" value="'+(rg.max||'')+'" placeholder="e.g. 800"></div>';
   var rows=0;
   (s.groups||[]).forEach(function(g){
     if(g.style!=='bhk')return;
+    if(!rows)body+='<div class="sec-title" style="margin-top:14px">Option prices (optional)</div>';
     body+='<div class="sec-title" style="margin-top:8px">'+g.title+'</div>';
     g.items.forEach(function(it){
       var key=g.key+'_'+it.k;
@@ -1075,7 +1096,7 @@ function openPrices(svcId){
       rows++;
     });
   });
-  if(!rows)body+='<div style="font-size:13.5px;color:var(--muted);padding:10px 0">This service has one base price — customers get your quote when booking.</div>';
+
   body+='<div style="height:10px"></div><button class="btn teal" onclick="savePrices(\''+svcId+'\')">💾 Save Prices</button><div style="height:16px"></div></div>';
   sheet.innerHTML=body;
 }
@@ -1098,9 +1119,11 @@ function savePrices(svcId){
     });
   });
   if(bad){toast('⚠️ '+bad);return;}
-  if(!Object.keys(prices).length){toast('Enter at least one price');return;}
-  api('providers.php','save_option_prices',{svc_id:svcId,prices:prices}).then(function(res){
-    if(res.success){myPrices[svcId]=prices;toast('✅ Prices saved');closeSheet();}
+  var mn=parseInt(($('pp__min')||{}).value,10)||0,mx=parseInt(($('pp__max')||{}).value,10)||0;
+  if(mn>0&&mx>0&&mx<mn){toast('⚠️ Maximum must be more than minimum');return;}
+  if(!Object.keys(prices).length&&!mn&&!mx){toast('Enter your price range');return;}
+  api('providers.php','save_option_prices',{svc_id:svcId,prices:prices,min_price:mn,max_price:mx}).then(function(res){
+    if(res.success){myPrices[svcId]=prices;myRanges[svcId]={min:res.data.min_price,max:res.data.max_price};mySvcs[svcId]=true;toast('✅ Prices saved');closeSheet();renderMySvcs();}
     else toast(res.error||'Save failed');
   });
 }
