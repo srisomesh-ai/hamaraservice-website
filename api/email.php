@@ -8,25 +8,17 @@
 //  Then upload to /public_html/api/email.php
 // ============================================================
 
-// ── CONFIG ────────────────────────────────────────────────────
-define('SMTP_HOST',   'smtp.hostinger.com');
-define('SMTP_PORT',   587);
-define('SMTP_USER',   'support@hamaraservice.in');
-define('SMTP_PASS',   'Simhadriappanna@143');  // ← fill this
+// ── CONFIG (secrets come from ~/hs-secrets.php via config.php) ──
+require_once __DIR__ . '/db.php';
 define('FROM_NAME',   'HamaraService');
-define('FROM_EMAIL',  'support@hamaraservice.in');
-define('ADMIN_EMAIL', 'support@hamaraservice.in');   // admin gets notified here
-define('SITE_URL',    'https://hamaraservice.in');
+define('FROM_EMAIL',  SMTP_USER ?: 'support@hamaraservice.in');
+define('ADMIN_EMAIL', SMTP_USER ?: 'support@hamaraservice.in');
+define('SITE_URL',    'https://hamaraservice.com');
 
-// ── CORS ──────────────────────────────────────────────────────
-$allowed = ['https://hamaraservice.in','https://www.hamaraservice.in','http://hamaraservice.in','http://www.hamaraservice.in'];
-$origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
-header('Access-Control-Allow-Origin: ' . (in_array($origin, $allowed) ? $origin : $allowed[0]));
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-header('Content-Type: application/json');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
-if ($_SERVER['REQUEST_METHOD'] !== 'POST')    { http_response_code(405); echo json_encode(['error'=>'Method not allowed']); exit; }
+setCorsHeaders();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') err('Method not allowed', 405);
+// Only the admin panel / server may trigger emails (was an open mail relay)
+requireAdmin();
 
 // ── INPUT ─────────────────────────────────────────────────────
 $body = json_decode(file_get_contents('php://input'), true);

@@ -133,6 +133,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 .cnt-val{min-width:48px;height:40px;border-top:2px solid var(--line);border-bottom:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:18px;font-weight:800;}
 .cnt-unit{font-size:12px;color:var(--muted);margin-left:12px;}
 </style>
+<script src="js/hs-prices.js"></script>
 </head>
 <body>
 
@@ -335,16 +336,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="card">
   <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
   <div class="card-body">
-    <div class="rating-row">
-      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.5</div><div class="rating-stars">★★★★★</div><div class="rating-count">760 reviews</div></div>
-      <div style="flex:1;">
-        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:72%"></div></div></div>
-        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:18%"></div></div></div>
-        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:6%"></div></div></div>
-        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
-        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
-      </div>
-    </div>
+    <div class="rating-row"><div class="rating-count" style="font-size:14px">Verified professionals · Customers rate every completed job in the app</div></div>
   </div>
 </div>
 
@@ -384,7 +376,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
     </div>
     <div class="book-meta">
       <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">1–4 hours</span></div>
-      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.5 (760 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">✅ Providers</span><span class="book-meta-val">Verified professionals</span></div>
       <div class="book-meta-row"><span class="book-meta-label">✅ Verified</span><span class="book-meta-val">Background checked</span></div>
     </div>
     <button class="scroll-btn" onclick="document.getElementById('calcCard').scrollIntoView({behavior:'smooth',block:'start'})">Select Services &amp; Book →</button>
@@ -402,7 +394,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="mob-book-bar">
   <div>
     <div class="mob-price" id="mobPrice">₹0 <sub>select services</sub></div>
-    <div style="font-size:10px;color:var(--muted);">⭐ 4.5 · 760 reviews</div>
+    <div style="font-size:10px;color:var(--muted);">✅ Verified professionals</div>
   </div>
   <button class="mob-btn" onclick="bookNow()" id="mobBookBtn" disabled style="opacity:.4;cursor:not-allowed;">Book Now →</button>
 </div>
@@ -412,7 +404,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 if(!firebase.apps.length) firebase.initializeApp({
   apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
   messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
 });
@@ -563,15 +554,14 @@ function bookNow() {
     return 'Laundry / Ironing > ' + nm + cnt;
   });
   Object.keys(addons||{}).forEach(function(a){ lSum.push('Laundry / Ironing > ' + (aNm[a]||a)); });
-  sessionStorage.setItem('hs_service_options', JSON.stringify({
-    service:'Laundry / Ironing', svcId:'SVC006', icon:'🧴',
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ svcId:'SVC006', service:'Laundry / Ironing', icon:'🧴',
     price: String(total > 0 ? total : 0), summary: lSum
   }));
   localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
   var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
-  var url = 'user-booking.html?service=Laundry%20%26%20Ironing';
+  var url = '/app/customer.html?book=1&svc=SVC006';
   if (user) { window.location.href = url; }
-  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = url; }
 }
 
 function showToast(msg) {
@@ -587,16 +577,8 @@ firebase.auth().onAuthStateChanged(function(u) {
 
 // ── HS Firebase Price Sync (SVC006) ────────────────────────────────────────
 (function(){
-  var _DB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
-  function getToken(cb){
-    if(_tok){cb(_tok);return;}
-    var x=new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload=function(){try{var d=JSON.parse(x.responseText);_tok=d.idToken||'';cb(_tok);}catch(e){cb('');}};
-    x.onerror=function(){cb('');};
-    x.send(JSON.stringify({returnSecureToken:true}));
-  }
+  var _DB='',_API='AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k',_tok='';
+  
   function applyPrices(d){
     if(!d||d.error) return;
     if(d.wash&&d.wash.basePrice!==undefined){
@@ -630,12 +612,7 @@ firebase.auth().onAuthStateChanged(function(u) {
     if(typeof updateTotal==='function') updateTotal();
   }
   function load(){
-    getToken(function(tok){
-      var url=_DB+'/hs_service_prices/SVC006.json'+(tok?'?auth='+tok:'');
-      var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=6000;
-      xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d&&!d.error)applyPrices(d);}catch(e){}};
-      xhr.onerror=function(){};xhr.send();
-    });
+    HS_adminPrices('SVC006',function(d){if(d)applyPrices(d);});
   }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',load);}
   else{load();}

@@ -232,6 +232,14 @@ switch ($action) {
     ok(['saved' => true, 'svc_id' => $svc_id, 'min' => $min_price, 'max' => $max_price]);
   }
 
+  // ── COMMISSION TABLE (public read; admin edits via update) ──
+  case 'commissions': {
+    try { $db->exec("ALTER TABLE services ADD COLUMN commission_pct INT NULL"); } catch (Throwable $e) {}
+    $rows = $db->query("SELECT id, name, commission_pct FROM services ORDER BY id")->fetchAll();
+    foreach ($rows as &$r) $r['commission_pct'] = $r['commission_pct'] === null ? DEFAULT_COMMISSION_PCT : (int)$r['commission_pct'];
+    ok($rows);
+  }
+
   // ── ADMIN: UPDATE SERVICE ─────────────────────────────
   case 'update': {
     requireAdmin();
@@ -240,7 +248,8 @@ switch ($action) {
     if (empty($id)) err('id required');
 
     $fields = []; $params = [':id' => $id];
-    $allowed = ['name','icon','category','base_price','description','is_active'];
+    $allowed = ['name','icon','category','base_price','description','is_active','commission_pct'];
+    if (isset($b['commission_pct']) && ((int)$b['commission_pct'] < 0 || (int)$b['commission_pct'] > 50)) err('commission_pct must be 0-50');
     foreach ($allowed as $f) {
       if (isset($b[$f])) { $fields[] = "$f = :$f"; $params[":$f"] = $b[$f]; }
     }

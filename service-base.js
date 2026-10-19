@@ -194,7 +194,7 @@ document.head.appendChild(styleEl);
 var C = window.SVC_CONFIG;
 if (!C) { console.error('SVC_CONFIG not defined'); return; }
 
-// ── SYNC PRICE FROM FIREBASE (admin source of truth) ─────────────────────
+// ── SYNC PRICE FROM API / catalog.json (admin source of truth) ──────────
 var CATALOG_URL = 'catalog.json';
 
 function applyAdminData(catalog) {
@@ -232,74 +232,23 @@ function applyAdminData(catalog) {
 
 document.title = C.name + ' – Hamara Service';
 
-// Step 2a: Fetch hs_service_prices from Firebase (set by hs-prices.html admin tool)
-// This is the PRIMARY price source — overrides everything else
+// Step 2a: Admin reference prices from the MySQL API (set by hs-prices.html).
+// This is the PRIMARY price source — overrides catalog.json.
 (function fetchHSPrices() {
-  var FB_PRICES = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices';
-  var API_KEY   = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
-
+  if (!C.id) return;
   function applyPrice(data) {
-    if (!data || data === 'null') return false;
-    var newPrice = data.base != null ? parseInt(data.base) : null;
-    if (newPrice && newPrice > 0) { C.price = newPrice; updatePriceDisplays(); return true; }
+    if (!data) return false;
+    var newPrice = data.base != null ? parseInt(data.base, 10) : null;
+    if (newPrice && newPrice > 0) { C.price = newPrice; _hsPriceLoaded = true; updatePriceDisplays(); return true; }
     return false;
   }
-
-  function fetchPrices(token) {
-    var auth  = token ? '?auth=' + token : '';
-    var idUrl = FB_PRICES + '/' + C.id + '.json' + auth + (token ? '&' : '?') + '_=' + Date.now();
-    var allUrl= FB_PRICES + '.json' + auth + (token ? '&' : '?') + '_=' + Date.now();
-
-    // Step 1: try by ID
-    if (C.id) {
-      var x1 = new XMLHttpRequest();
-      x1.open('GET', idUrl, true); x1.timeout = 6000;
-      x1.onload = function() {
-        try {
-          var d = JSON.parse(x1.responseText);
-          if (d && d !== 'null' && applyPrice(d)) return;
-        } catch(e) {}
-        fetchByName(allUrl); // fallback to name scan
-      };
-      x1.onerror = x1.ontimeout = function() { fetchByName(allUrl); };
-      x1.send();
-    } else {
-      fetchByName(allUrl);
-    }
-  }
-
-  function fetchByName(url) {
-    var x2 = new XMLHttpRequest();
-    x2.open('GET', url, true); x2.timeout = 8000;
-    x2.onload = function() {
-      try {
-        var all = JSON.parse(x2.responseText);
-        if (!all || typeof all !== 'object') return;
-        var cname = (C.name || '').toLowerCase().trim();
-        var keys = Object.keys(all);
-        for (var i = 0; i < keys.length; i++) {
-          var e = all[keys[i]]; if (!e) continue;
-          var ename = (e.name || e.service || '').toLowerCase().trim();
-          if ((ename && ename === cname) || keys[i] === C.id) {
-            if (applyPrice(e)) return;
-          }
-        }
-      } catch(e2) {}
-    };
-    x2.send();
-  }
-
-  // Get anonymous auth token first, then fetch
-  var xa = new XMLHttpRequest();
-  xa.open('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=' + API_KEY, true);
-  xa.setRequestHeader('Content-Type', 'application/json');
-  xa.timeout = 5000;
-  xa.onload = function() {
-    try { var d = JSON.parse(xa.responseText); fetchPrices(d.idToken || ''); }
-    catch(e) { fetchPrices(''); }
-  };
-  xa.onerror = xa.ontimeout = function() { fetchPrices(''); };
-  xa.send(JSON.stringify({returnSecureToken: true}));
+  if (window.HS_adminPrices) { window.HS_adminPrices(C.id, applyPrice); return; }
+  fetch('/api/services.php?action=price_ranges')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var row = res && res.success && res.data ? res.data[C.id] : null;
+      applyPrice(row && row.admin_prices);
+    }).catch(function(){});
 })();
 // Step 2b: Fetch catalog.json for service status and metadata
 (function fetchFromFirebase() {
@@ -408,16 +357,7 @@ document.body.innerHTML = `
     <div class="card">
       <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
       <div class="card-body">
-        <div class="rating-row">
-          <div style="text-align:center;padding-right:16px;">
-            <div class="rating-num">${C.rating}</div>
-            <div class="rating-stars">★★★★★</div>
-            <div class="rating-count">${C.ratingCount.toLocaleString()} reviews</div>
-          </div>
-          <div style="flex:1;">
-            ${['5','4','3','2','1'].map((n,i)=>{var w=['72','18','6','2','2'][i];return`<div class="rbar-row">${n}★<div class="rbar-track"><div class="rbar-fill" style="width:${w}%"></div></div></div>`;}).join('')}
-          </div>
-        </div>
+        <div class="rating-row"><div class="rating-count" style="font-size:14px">Verified professionals · Customers rate every completed job in the app</div></div>
       </div>
     </div>
 
@@ -455,7 +395,7 @@ document.body.innerHTML = `
       <div class="book-meta">
         <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">${C.duration}</span></div>
         <div class="book-meta-row"><span class="book-meta-label">👤 Team size</span><span class="book-meta-val">${C.teamSize||'1–2 professionals'}</span></div>
-        <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">${C.rating} (${C.ratingCount.toLocaleString()} reviews)</span></div>
+        <div class="book-meta-row"><span class="book-meta-label">✅ Providers</span><span class="book-meta-val">Verified professionals</span></div>
         <div class="book-meta-row"><span class="book-meta-label">📦 Equipment</span><span class="book-meta-val">${C.equipment||'Provided by professional'}</span></div>
       </div>
       <button class="book-btn" id="mainBookBtn" onclick="mainBookNow()">Book Now →</button>
@@ -472,7 +412,7 @@ document.body.innerHTML = `
 <div class="mob-book-bar">
   <div>
     <div class="mob-book-price">₹${C.price} <sub>${C.unit}</sub></div>
-    <div style="font-size:11px;color:var(--muted);">⭐ ${C.rating} · ${C.ratingCount.toLocaleString()} reviews</div>
+    <div style="font-size:11px;color:var(--muted);">✅ Verified professionals</div>
   </div>
   <button class="mob-book-btn" id="mobBookBtn" onclick="mainBookNow()">Book Now →</button>
 </div>
@@ -873,10 +813,8 @@ window.confirmBook = function(){
 function doBook(){
   // Copy to localStorage so it survives login redirect
   localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
-  var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
-  var url='user-booking.html?service='+encodeURIComponent(C.name);
-  if(user) window.location.href=url;
-  else{ sessionStorage.setItem('hs_after_login',url); window.location.href='user-panel.html?tab=login'; }
+  // Booking (login, address, live tracking, payment) happens in the web app
+  window.location.href='/app/customer.html?book=1'+(C.id?'&svc='+encodeURIComponent(C.id):'');
 }
 
 window.showToast = function(msg){

@@ -1,20 +1,15 @@
 <?php
-// ── HamaraService Database Config ─────────────────────────
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'u943205660_hamaraservice');
-define('DB_USER', 'u943205660_u123456_hs');
-define('DB_PASS', 'Simhadriappanna@143');
-define('DB_CHARSET', 'utf8mb4');
-
-// Firebase project ID for token verification
-define('FIREBASE_PROJECT_ID', 'hamaraservice-s009');
-
-// JWT secret for provider tokens
-define('JWT_SECRET', 'hamaraHS_jwt_2024_Simha@143');
+// ── HamaraService — shared DB, auth and response helpers ──
+require_once __DIR__ . '/config.php';
 
 function getDB() {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
+    if (DB_NAME === '' || JWT_SECRET === '') {
+        http_response_code(500);
+        echo json_encode(['success'=>false,'error'=>'Server not configured (hs-secrets.php missing)']);
+        exit;
+    }
     $dsn = "mysql:host=".DB_HOST.";dbname=".DB_NAME.";charset=".DB_CHARSET;
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -23,6 +18,7 @@ function getDB() {
     ];
     try {
         $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        $pdo->exec("SET time_zone = '+05:30'");   // match PHP (Asia/Kolkata)
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(['success'=>false,'error'=>'Database connection failed']);
@@ -32,13 +28,19 @@ function getDB() {
 }
 
 // ── CORS ──────────────────────────────────────────────────
+// Mobile apps send no Origin header and are unaffected. Browsers are
+// limited to our own domains.
 function setCorsHeaders() {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origin !== '' && in_array($origin, ALLOWED_ORIGINS, true)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Vary: Origin');
+    }
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Admin-Key, X-Requested-With');
     header('Access-Control-Max-Age: 86400');
     header('Content-Type: application/json; charset=utf-8');
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
         http_response_code(200); exit;
     }
 }
@@ -58,81 +60,166 @@ function getBody() {
     return json_decode(file_get_contents('php://input'), true) ?? [];
 }
 
-// ── Firebase token verify ─────────────────────────────────
-// Verifies Firebase ID token from customer app
-function verifyFirebaseToken($token) {
-    if (empty($token)) return null;
-    // Use Google's public endpoint to verify
-    $url = 'https://oauth2.googleapis.com/tokeninfo?id_token='.urlencode($token);
-    $ctx = stream_context_create(['http'=>['timeout'=>5]]);
-    $resp = @file_get_contents($url, false, $ctx);
-    if (!$resp) return null;
-    $data = json_decode($resp, true);
-    if (empty($data['sub'])) return null;
-    if (($data['aud'] ?? '') !== FIREBASE_PROJECT_ID) return null;
-    if (($data['exp'] ?? 0) < time()) return null;
-    return [
-        'uid'   => $data['sub'],
-        'email' => $data['email'] ?? '',
-        'name'  => $data['name']  ?? '',
-    ];
+// Cryptographically secure numeric OTP
+function makeOtp($digits = 4) {
+    return str_pad((string)random_int(0, 10 ** $digits - 1), $digits, '0', STR_PAD_LEFT);
 }
 
-// ── Provider JWT ──────────────────────────────────────────
-function generateJWT($providerId) {
-    $h = rtrim(base64_encode(json_encode(['alg'=>'HS256','typ'=>'JWT'])),  '=');
-    $p = rtrim(base64_encode(json_encode([
-        'id'  => $providerId,
-        'iat' => time(),
-        'exp' => time() + (30*24*3600),
-    ])), '=');
-    $s = rtrim(base64_encode(hash_hmac('sha256',"$h.$p",JWT_SECRET,true)),'=');
-    return "$h.$p.$s";
+// ── base64url ─────────────────────────────────────────────
+function b64url_enc($data) { return rtrim(strtr(base64_encode($data), '+/', '-_'), '='); }
+function b64url_dec($data) {
+    $data = strtr($data, '-_', '+/');
+    return base64_decode($data . str_repeat('=', (4 - strlen($data) % 4) % 4));
 }
-function verifyJWT($token) {
+
+// ── Firebase ID token verification (RS256, securetoken certs) ──
+function firebaseCerts() {
+    $cache = sys_get_temp_dir() . '/hs_fb_certs.json';
+    if (is_readable($cache) && filemtime($cache) > time() - 3600) {
+        $c = json_decode(file_get_contents($cache), true);
+        if (is_array($c) && $c) return $c;
+    }
+    $ctx  = stream_context_create(['http'=>['timeout'=>5]]);
+    $resp = @file_get_contents('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com', false, $ctx);
+    $c = $resp ? json_decode($resp, true) : null;
+    if (is_array($c) && $c) { @file_put_contents($cache, $resp); return $c; }
+    return [];
+}
+
+function verifyFirebaseToken($token) {
     if (empty($token)) return null;
     $parts = explode('.', $token);
     if (count($parts) !== 3) return null;
-    [$h,$p,$s] = $parts;
-    $expected = rtrim(base64_encode(hash_hmac('sha256',"$h.$p",JWT_SECRET,true)),'=');
-    if (!hash_equals($expected,$s)) return null;
-    $data = json_decode(base64_decode($p), true);
-    if (($data['exp']??0) < time()) return null;
+    [$h64, $p64, $s64] = $parts;
+    $header  = json_decode(b64url_dec($h64), true);
+    $payload = json_decode(b64url_dec($p64), true);
+    if (!$header || !$payload || ($header['alg'] ?? '') !== 'RS256') return null;
+
+    $certs = firebaseCerts();
+    $cert  = $certs[$header['kid'] ?? ''] ?? null;
+    if (!$cert) return null;
+    $pub = openssl_pkey_get_public($cert);
+    if (!$pub || openssl_verify("$h64.$p64", b64url_dec($s64), $pub, OPENSSL_ALGO_SHA256) !== 1) return null;
+
+    $now = time();
+    if (($payload['aud'] ?? '') !== FIREBASE_PROJECT_ID) return null;
+    if (($payload['iss'] ?? '') !== 'https://securetoken.google.com/' . FIREBASE_PROJECT_ID) return null;
+    if (($payload['exp'] ?? 0) < $now - 60) return null;
+    if (($payload['iat'] ?? 0) > $now + 300) return null;
+    if (empty($payload['sub'])) return null;
+
+    return [
+        'uid'   => $payload['sub'],
+        'email' => $payload['email'] ?? '',
+        'name'  => $payload['name']  ?? '',
+        'phone' => $payload['phone_number'] ?? '',
+    ];
+}
+
+// ── HS256 JWT (provider / web-customer / admin) ───────────
+function makeJWT($payload, $days = 30) {
+    $payload['iat'] = time();
+    $payload['exp'] = time() + ($days * 86400);
+    $h = b64url_enc(json_encode(['alg'=>'HS256','typ'=>'JWT']));
+    $p = b64url_enc(json_encode($payload));
+    $s = b64url_enc(hash_hmac('sha256', "$h.$p", JWT_SECRET, true));
+    return "$h.$p.$s";
+}
+function generateJWT($providerId) {
+    return makeJWT(['type' => 'provider', 'id' => $providerId], 30);
+}
+function verifyJWT($token) {
+    if (empty($token) || JWT_SECRET === '') return null;
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) return null;
+    [$h, $p, $s] = $parts;
+    $expected = b64url_enc(hash_hmac('sha256', "$h.$p", JWT_SECRET, true));
+    if (!hash_equals($expected, $s)) return null;
+    $data = json_decode(b64url_dec($p), true);
+    if (!is_array($data) || ($data['exp'] ?? 0) < time()) return null;
     return $data;
 }
 
-function makeJWT($payload, $days = 30) {
-    $payload['exp'] = time() + ($days * 86400);
-    $h = rtrim(base64_encode(json_encode(['alg'=>'HS256','typ'=>'JWT'])), '=');
-    $p = rtrim(base64_encode(json_encode($payload)), '=');
-    $s = rtrim(base64_encode(hash_hmac('sha256', "$h.$p", JWT_SECRET, true)), '=');
-    return "$h.$p.$s";
+function bearerToken() {
+    $auth = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? (function_exists('apache_request_headers') ? (apache_request_headers()['Authorization'] ?? '') : '');
+    return preg_match('/Bearer\s+(\S+)/i', $auth, $m) ? $m[1] : '';
 }
 
 // ── Auth middleware ───────────────────────────────────────
-function requireCustomer() {
-    $auth  = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    $token = str_replace('Bearer ', '', $auth);
-    // Web app JWT first (fast, local), then Firebase token (mobile app)
+// Returns ['role'=>'customer'|'provider'|'admin', 'id'=>…, …] or null
+function currentUser() {
+    static $cached = false;
+    if ($cached !== false) return $cached;
+    $token = bearerToken();
+    $cached = null;
+    if ($token === '') return null;
+
     $jwt = verifyJWT($token);
-    if ($jwt && ($jwt['type'] ?? '') === 'customer') {
-        return ['uid' => $jwt['uid'], 'email' => $jwt['email'] ?? '', 'name' => $jwt['name'] ?? ''];
+    if ($jwt) {
+        $type = $jwt['type'] ?? '';
+        if ($type === 'customer' && !empty($jwt['uid'])) {
+            $cached = ['role'=>'customer','id'=>$jwt['uid'],'uid'=>$jwt['uid'],'email'=>$jwt['email'] ?? '','name'=>$jwt['name'] ?? ''];
+        } elseif ($type === 'admin') {
+            $cached = ['role'=>'admin','id'=>'admin'];
+        } elseif (($type === 'provider' || $type === '') && !empty($jwt['id'])) {
+            // legacy provider tokens carry no type
+            $cached = ['role'=>'provider','id'=>$jwt['id']];
+        }
+        return $cached;
     }
-    $user = verifyFirebaseToken($token);
-    if (!$user) err('Unauthorized', 401);
-    return $user;
+    $fb = verifyFirebaseToken($token);
+    if ($fb) $cached = array_merge(['role'=>'customer','id'=>$fb['uid']], $fb);
+    return $cached;
 }
-function requireProvider() {
-    $auth  = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    $token = str_replace('Bearer ', '', $auth);
-    $data  = verifyJWT($token);
-    if (!$data) err('Unauthorized', 401);
-    return $data;
+
+function requireCustomer() {
+    $u = currentUser();
+    if (!$u || $u['role'] !== 'customer') err('Unauthorized', 401);
+    return $u;
+}
+
+// $approved = true → provider account must be approved (for job actions)
+function requireProvider($approved = false) {
+    $u = currentUser();
+    if (!$u || $u['role'] !== 'provider') err('Unauthorized', 401);
+    $stmt = getDB()->prepare("SELECT status FROM providers WHERE id = ?");
+    $stmt->execute([$u['id']]);
+    $status = $stmt->fetchColumn();
+    if ($status === false) err('Unauthorized', 401);
+    if (in_array($status, ['suspended','rejected','deleted'], true)) err('Account ' . $status, 403);
+    if ($approved && $status !== 'approved') err('Account not approved yet', 403);
+    $u['status'] = $status;
+    return $u;
+}
+
+function isAdminRequest() {
+    $u = currentUser();
+    if ($u && $u['role'] === 'admin') return true;
+    $key = $_SERVER['HTTP_X_ADMIN_KEY'] ?? '';
+    return ADMIN_KEY !== '' && $key !== '' && hash_equals(ADMIN_KEY, $key);
 }
 function requireAdmin() {
-    // Accept key from header OR query param (for CORS-restricted browsers)
-    $key = $_SERVER['HTTP_X_ADMIN_KEY']
-        ?? $_GET['key']
-        ?? '';
-    if ($key !== 'hamaraAdmin2024') err('Unauthorized', 401);
+    if (!isAdminRequest()) err('Unauthorized', 401);
+}
+
+// ── Push via Cloud Function relay (requires shared key) ──
+function sendPush($fcmToken, $title, $body, $data = []) {
+    if (empty($fcmToken) || PUSH_KEY === '') return;
+    $payload = json_encode([
+        'event'    => $data['event'] ?? 'notification',
+        'fcmToken' => $fcmToken,
+        'title'    => $title,
+        'body'     => $body,
+        'data'     => $data,
+    ]);
+    $ctx = stream_context_create(['http'=>[
+        'method'  => 'POST',
+        'header'  => "Content-Type: application/json\r\nX-HS-Key: " . PUSH_KEY . "\r\n",
+        'content' => $payload,
+        'timeout' => 5,
+        'ignore_errors' => true,
+    ]]);
+    @file_get_contents(PUSH_URL, false, $ctx);
 }

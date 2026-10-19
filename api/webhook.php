@@ -1,157 +1,82 @@
 <?php
 // ============================================================
-//  api/webhook.php
+//  api/webhook.php — Razorpay webhook → MySQL
 //  Razorpay Dashboard → Settings → Webhooks
-//  URL: https://hamaraservice.in/api/webhook.php
+//  URL: https://hamaraservice.com/api/webhook.php
 //  Events: payment.captured, payment.failed, refund.created
-//  Set a Webhook Secret in Razorpay and paste it below
+//  Secret: RZP_WEBHOOK_SECRET in ~/hs-secrets.php
+//  Settles bookings the app could not confirm (app killed, network loss).
 // ============================================================
-define('RZP_WEBHOOK_SECRET', 'HamaraSvr@2026');
-define('RZP_KEY_SECRET',     '7XI9IQ3TT1OyNs5ALYeSxiuz');
-define('COMMISSION_PCT', 12);
-define('FB_URL', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app');
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/schema.php';
 
 header('Content-Type: application/json');
 
 $payload   = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ?? '';
-
-// Verify webhook signature — ALWAYS required
-if (!$signature) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing webhook signature']);
-    exit;
-}
-$expectedSig = hash_hmac('sha256', $payload, RZP_WEBHOOK_SECRET);
-if (!hash_equals($expectedSig, $signature)) {
+if (RZP_WEBHOOK_SECRET === '' || $signature === ''
+    || !hash_equals(hash_hmac('sha256', $payload, RZP_WEBHOOK_SECRET), $signature)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid webhook signature']);
     exit;
 }
 
-$event      = json_decode($payload, true);
-$eventType  = $event['event'] ?? '';
-$payment    = $event['payload']['payment']['entity'] ?? [];
+$db = getDB();
+ensureSchema($db);
+$event   = json_decode($payload, true);
+$type    = $event['event'] ?? '';
+$payment = $event['payload']['payment']['entity'] ?? [];
 
-switch ($eventType) {
+function bookingByOrder($db, $orderId) {
+    if (!$orderId) return null;
+    $s = $db->prepare("SELECT * FROM bookings WHERE razorpay_order_id = ?");
+    $s->execute([$orderId]);
+    return $s->fetch() ?: null;
+}
 
-    case 'payment.captured':
-        $txnId      = $payment['id']       ?? '';
-        $orderId    = $payment['order_id'] ?? '';
-        $amountPs   = intval($payment['amount'] ?? 0);
-        $notes      = $payment['notes']    ?? [];
-        $bookingId  = $notes['booking_id'] ?? '';
-        $providerId = $notes['provider_id'] ?? '';
-        $customerId = $notes['customer_id'] ?? '';
-
-        if ($bookingId && $txnId) {
-            // Avoid double credit — check if already settled
-            $existing = fb_get('transactions/' . $txnId);
-            if (empty($existing['status'])) {
-                $amount          = $amountPs / 100;
-                $commAmt         = (int) round($amount * COMMISSION_PCT / 100);
-                $provAmt         = $amount - $commAmt;
-                $now             = date('c');
-
-                fb_patch('bookings/'        . $bookingId, [
-                    'status'          => 'paid',
-                    'paidAt'          => $now,
-                    'txnId'           => $txnId,
-                    'paymentMethod'   => 'razorpay',
-                    'totalAmount'     => $amount,
-                    'commissionAmt'   => $commAmt,
-                    'providerEarning' => $provAmt,
-                    'commissionPct'   => COMMISSION_PCT,
-                ]);
-                fb_patch('active_bookings/' . $bookingId, ['status'=>'paid','paidAt'=>$now,'txnId'=>$txnId]);
-
-                if ($providerId) {
-                    $wallet = fb_get('provider_wallet/' . $providerId);
-                    fb_put('provider_wallet/' . $providerId, [
-                        'providerId'      => $providerId,
-                        'balance'         => floatval($wallet['balance']         ?? 0) + $provAmt,
-                        'totalEarned'     => floatval($wallet['totalEarned']     ?? 0) + $provAmt,
-                        'totalCommission' => floatval($wallet['totalCommission'] ?? 0) + $commAmt,
-                        'lastCredited'    => $now,
-                        'lastBookingId'   => $bookingId,
-                    ]);
-                }
-
-                fb_put('transactions/' . $txnId, [
-                    'txnId'           => $txnId,
-                    'bookingId'       => $bookingId,
-                    'providerId'      => $providerId,
-                    'customerId'      => $customerId,
-                    'totalAmount'     => $amount,
-                    'commissionAmt'   => $commAmt,
-                    'providerEarning' => $provAmt,
-                    'commissionPct'   => COMMISSION_PCT,
-                    'paymentMethod'   => 'razorpay',
-                    'rzpOrderId'      => $orderId,
-                    'rzpPaymentId'    => $txnId,
-                    'status'          => 'settled',
-                    'createdAt'       => $now,
-                    'source'          => 'webhook',
-                ]);
-
-                // Mirror admin earnings record (parity with verify-payment.php)
-                fb_put('admin_earnings/' . date('Y-m') . '/' . $bookingId, [
-                    'bookingId'  => $bookingId,
-                    'commission' => $commAmt,
-                    'total'      => $amount,
-                    'month'      => date('Y-m'),
-                    'createdAt'  => $now,
-                    'source'     => 'webhook',
-                ]);
-            }
+switch ($type) {
+    case 'payment.captured': {
+        $bk = bookingByOrder($db, $payment['order_id'] ?? '');
+        if (!$bk || $bk['status'] !== 'completed' || (int)$bk['settled'] === 1) break;
+        $expected = ((int)$bk['amount'] ?: (int)$bk['confirmed_price']) * 100;
+        if ((int)($payment['amount'] ?? 0) !== $expected) {
+            error_log("webhook: amount mismatch for {$bk['id']}: got {$payment['amount']} expected $expected");
+            break;
+        }
+        $upd = $db->prepare("
+            UPDATE bookings SET payment_status = 'paid', payment_method = 'online',
+                   razorpay_payment_id = ?, paid_at = CURRENT_TIMESTAMP, settled = 1
+            WHERE id = ? AND settled = 0
+        ");
+        $upd->execute([$payment['id'] ?? '', $bk['id']]);
+        if ($upd->rowCount() === 1 && !empty($bk['provider_id'])) {
+            $db->prepare("UPDATE providers SET total_earned = total_earned + ?, pending_earned = pending_earned + ? WHERE id = ?")
+               ->execute([(int)$bk['provider_earns'], (int)$bk['provider_earns'], $bk['provider_id']]);
         }
         break;
+    }
 
     case 'payment.failed':
-        $notes     = $payment['notes']    ?? [];
-        $bookingId = $notes['booking_id'] ?? '';
-        if ($bookingId) {
-            fb_patch('bookings/' . $bookingId, [
-                'paymentFailed'   => true,
-                'paymentFailedAt' => date('c'),
-                'paymentError'    => $payment['error_description'] ?? 'Payment failed',
-            ]);
-        }
+        // Nothing to change: booking stays payment_status=pending, customer can retry.
         break;
 
-    case 'refund.created':
-        $refund    = $event['payload']['refund']['entity'] ?? [];
-        $refId     = $refund['id']         ?? '';
-        $payId     = $refund['payment_id'] ?? '';
-        $refAmtPs  = intval($refund['amount'] ?? 0);
-        $txn       = fb_get('transactions/' . $payId);
-        if (!empty($txn['bookingId'])) {
-            fb_patch('bookings/' . $txn['bookingId'], [
-                'status'     => 'refunded',
-                'refundId'   => $refId,
-                'refundAmt'  => $refAmtPs / 100,
-                'refundedAt' => date('c'),
-            ]);
+    case 'refund.created': {
+        $refund = $event['payload']['refund']['entity'] ?? [];
+        $s = $db->prepare("SELECT * FROM bookings WHERE razorpay_payment_id = ?");
+        $s->execute([$refund['payment_id'] ?? '']);
+        $bk = $s->fetch();
+        if (!$bk || $bk['payment_status'] === 'refunded') break;
+        $upd = $db->prepare("UPDATE bookings SET payment_status = 'refunded' WHERE id = ? AND payment_status = 'paid'");
+        $upd->execute([$bk['id']]);
+        // Reverse the provider credit for a full refund of an online payment
+        if ($upd->rowCount() === 1 && $bk['payment_method'] === 'online' && !empty($bk['provider_id'])
+            && (int)($refund['amount'] ?? 0) >= (int)$bk['amount'] * 100) {
+            $db->prepare("UPDATE providers SET total_earned = total_earned - ?, pending_earned = pending_earned - ? WHERE id = ?")
+               ->execute([(int)$bk['provider_earns'], (int)$bk['provider_earns'], $bk['provider_id']]);
         }
         break;
+    }
 }
 
 http_response_code(200);
 echo json_encode(['status' => 'ok']);
-
-function fb_patch($path, $data) {
-    $ch = curl_init(FB_URL . '/' . $path . '.json');
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_CUSTOMREQUEST=>'PATCH', CURLOPT_POSTFIELDS=>json_encode($data), CURLOPT_HTTPHEADER=>['Content-Type: application/json'], CURLOPT_TIMEOUT=>6]);
-    curl_exec($ch); curl_close($ch);
-}
-function fb_put($path, $data) {
-    $ch = curl_init(FB_URL . '/' . $path . '.json');
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_CUSTOMREQUEST=>'PUT', CURLOPT_POSTFIELDS=>json_encode($data), CURLOPT_HTTPHEADER=>['Content-Type: application/json'], CURLOPT_TIMEOUT=>6]);
-    curl_exec($ch); curl_close($ch);
-}
-function fb_get($path) {
-    $ch = curl_init(FB_URL . '/' . $path . '.json');
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>6]);
-    $r = curl_exec($ch); curl_close($ch);
-    return json_decode($r, true) ?? [];
-}

@@ -1,15 +1,14 @@
 <?php
 // ═══════════════════════════════════════════════════════
 // HamaraService — Firebase → MySQL Migration Tool
-// Run once: hamaraservice.com/api/migrate.php?key=hamaraAdmin2024
+// Run once (admin only): curl -H "X-Admin-Key: <ADMIN_KEY>" https://hamaraservice.com/api/migrate.php
 // Reads providers and customers from Firebase REST API
 // and inserts them into MySQL
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
 
-$key = $_GET['key'] ?? '';
-if ($key !== 'hamaraAdmin2024') err('Unauthorized', 401);
+requireAdmin();
 
 $db = getDB();
 

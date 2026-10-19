@@ -2,11 +2,8 @@
 require_once __DIR__ . '/db.php';
 setCorsHeaders();
 
-// Only allow with admin key
-$key = $_GET['key'] ?? '';
-if ($key !== 'hamaraAdmin2024') {
-    err('Unauthorized', 401);
-}
+// Admin only (Bearer admin token or X-Admin-Key header)
+requireAdmin();
 
 $db = getDB();
 $results = [];

@@ -137,6 +137,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:99999;display:none;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;max-width:90vw;}
 
 </style>
+<script src="js/hs-prices.js"></script>
 </head>
 <body>
 
@@ -273,16 +274,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="card">
   <div class="card-head"><div class="card-icon">⭐</div><div class="card-title">Customer Ratings</div></div>
   <div class="card-body">
-    <div class="rating-row">
-      <div style="text-align:center;padding-right:14px;"><div class="rating-num">4.7</div><div class="rating-stars">★★★★★</div><div class="rating-count">3,100 reviews</div></div>
-      <div style="flex:1;">
-        <div class="rbar-row">5★<div class="rbar-track"><div class="rbar-fill" style="width:75%"></div></div></div>
-        <div class="rbar-row">4★<div class="rbar-track"><div class="rbar-fill" style="width:17%"></div></div></div>
-        <div class="rbar-row">3★<div class="rbar-track"><div class="rbar-fill" style="width:5%"></div></div></div>
-        <div class="rbar-row">2★<div class="rbar-track"><div class="rbar-fill" style="width:2%"></div></div></div>
-        <div class="rbar-row">1★<div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div></div>
-      </div>
-    </div>
+    <div class="rating-row"><div class="rating-count" style="font-size:14px">Verified professionals · Customers rate every completed job in the app</div></div>
   </div>
 </div>
 
@@ -322,7 +314,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
     </div>
     <div class="book-meta">
       <div class="book-meta-row"><span class="book-meta-label">⏱ Duration</span><span class="book-meta-val">45 min – 1.5 hrs</span></div>
-      <div class="book-meta-row"><span class="book-meta-label">⭐ Rating</span><span class="book-meta-val">4.7 (3,100 reviews)</span></div>
+      <div class="book-meta-row"><span class="book-meta-label">✅ Providers</span><span class="book-meta-val">Verified professionals</span></div>
       <div class="book-meta-row"><span class="book-meta-label">✅ Verified</span><span class="book-meta-val">Background checked</span></div>
     </div>
     <button class="scroll-btn" onclick="scrollToCalc()">Select Options &amp; Book →</button>
@@ -340,7 +332,7 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 <div class="mob-book-bar">
   <div>
     <div class="mob-price" id="mobPrice">… <sub>estimated</sub></div>
-    <div style="font-size:10px;color:var(--muted);">⭐ 4.7 · 3,100 reviews</div>
+    <div style="font-size:10px;color:var(--muted);">✅ Verified professionals</div>
   </div>
   <button class="mob-btn" onclick="bookNow()" id="mobBtn">Book Now →</button>
 </div>
@@ -350,7 +342,6 @@ header{position:sticky;top:0;z-index:900;background:var(--teal);height:60px;padd
 if(!firebase.apps.length) firebase.initializeApp({
   apiKey:"AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
   authDomain:"hamaraservice-s009.firebaseapp.com",
-  databaseURL:"https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:"hamaraservice-s009",storageBucket:"hamaraservice-s009.firebasestorage.app",
   messagingSenderId:"1064274729048",appId:"1:1064274729048:web:86643c95419e9dc881d22d"
 });
@@ -540,15 +531,14 @@ function bookNow() {
     if (label) bSum.push(label);
   });
   var bTotal = total > 0 ? total : 0;
-  sessionStorage.setItem('hs_service_options', JSON.stringify({
-    service:'Bathroom Cleaning', svcId:'SVC003', icon:'🛀',
+  sessionStorage.setItem('hs_service_options', JSON.stringify({ svcId:'SVC003', service:'Bathroom Cleaning', icon:'🛀',
     price:String(bTotal), summary:bSum.map(function(s){ return 'Bathroom Cleaning > '+s; })
   }));
   localStorage.setItem('hs_service_options', sessionStorage.getItem('hs_service_options'));
   var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
-  var url = 'user-booking.html?service=Bathroom%20Cleaning';
+  var url = '/app/customer.html?book=1&svc=SVC003';
   if (user) { window.location.href = url; }
-  else { sessionStorage.setItem('hs_after_login', url); window.location.href = 'user-panel.html?tab=login'; }
+  else { sessionStorage.setItem('hs_after_login', url); window.location.href = url; }
 }
 
 firebase.auth().onAuthStateChanged(function(u) {
@@ -563,21 +553,11 @@ updatePrice();
 
 // ── HS Firebase Price Sync (SVC003 Bathroom Cleaning) ────────────────────────
 (function(){
-  var _DB  = 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _DB  = '';
   var _API = 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k';
   var _tok = '';
 
-  function getToken(cb){
-    if(_tok){ cb(_tok); return; }
-    var x = new XMLHttpRequest();
-    x.open('POST','https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key='+_API,true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.onload = function(){
-      try{ var d=JSON.parse(x.responseText); _tok=d.idToken||''; cb(_tok); }catch(e){ cb(''); }
-    };
-    x.onerror = function(){ cb(''); };
-    x.send(JSON.stringify({returnSecureToken:true}));
-  }
+  
 
   function applyPrices(d){
     if(!d || d.error) return;
@@ -621,16 +601,7 @@ updatePrice();
   }
 
   function load(){
-    getToken(function(tok){
-      var url = _DB + '/hs_service_prices/SVC003.json' + (tok ? '?auth='+tok : '');
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true); xhr.timeout = 6000;
-      xhr.onload = function(){
-        try{ var d=JSON.parse(xhr.responseText); if(d&&!d.error) applyPrices(d); }catch(e){}
-      };
-      xhr.onerror = function(){};
-      xhr.send();
-    });
+    HS_adminPrices('SVC003',function(d){if(d)applyPrices(d);});
   }
 
   if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', load); }

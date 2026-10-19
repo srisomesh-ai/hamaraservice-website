@@ -249,10 +249,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
   <div class="lbox">
     <div class="lbox-logo">Hamara<span>Service</span></div>
     <div class="lbox-sub">Price Manager · Admin Only</div>
+    <label>Username</label>
+    <input type="text" id="un" autocomplete="username" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()"/>
     <label>Password</label>
-    <input type="password" id="pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <button class="lbox-btn" onclick="doLogin()">Login →</button>
-    <div class="lbox-err" id="lErr">❌ Wrong password</div>
+    <input type="password" id="pw" autocomplete="current-password" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="lbox-btn" id="lBtn" onclick="doLogin()">Login →</button>
+    <div class="lbox-err" id="lErr">❌ Login failed</div>
   </div>
 </div>
 
@@ -340,9 +342,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);heig
 
 <script>
 
-var PASS='hamaraAdmin2024';
-var FB='https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app';
-var FBP='hs_service_prices';
+// Admin auth: same token as admin.html (api/admin.php?action=login), kept in sessionStorage
+var ADMIN_TOKEN_KEY='hs_admin_token';
+var _adminTok='';
+try{_adminTok=sessionStorage.getItem(ADMIN_TOKEN_KEY)||'';}catch(e){}
+if(!_adminTok){try{if(window.opener&&window.opener.sessionStorage)_adminTok=window.opener.sessionStorage.getItem(ADMIN_TOKEN_KEY)||'';}catch(e){}}
 var _tok='',_fb={},_dirty={},_cat='All',_savedN=0;
 
 // ── SERVICE CONFIG ────────────────────────────────────────────────────────────
@@ -913,69 +917,78 @@ function toggleTile(sid, taskKey) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-function doLogin(){
-  if(document.getElementById('pw').value===PASS){
-    document.getElementById('loginWrap').style.display='none';
-    document.getElementById('appWrap').style.display='block';
-    initApp();
-  }else{document.getElementById('lErr').style.display='block';}
+function showApp(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+  initApp();
 }
-function doLogout(){location.reload();}
+function showLogin(msg){
+  _adminTok='';try{sessionStorage.removeItem(ADMIN_TOKEN_KEY);}catch(e){}
+  document.getElementById('appWrap').style.display='none';
+  document.getElementById('loginWrap').style.display='';
+  var e=document.getElementById('lErr');
+  if(msg){e.textContent='❌ '+msg;e.style.display='block';}else{e.style.display='none';}
+}
+function doLogin(){
+  var u=document.getElementById('un').value.trim(),p=document.getElementById('pw').value;
+  var e=document.getElementById('lErr');e.style.display='none';
+  if(!u||!p){e.textContent='❌ Enter username and password';e.style.display='block';return;}
+  document.getElementById('lBtn').disabled=true;
+  fetch(MAPI+'/admin.php?action=login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      document.getElementById('lBtn').disabled=false;
+      if(res&&res.success&&res.data&&res.data.token){
+        _adminTok=res.data.token;try{sessionStorage.setItem(ADMIN_TOKEN_KEY,_adminTok);}catch(x){}
+        document.getElementById('pw').value='';showApp();
+      }else{e.textContent='❌ '+((res&&res.error)||'Login failed');e.style.display='block';}
+    })
+    .catch(function(){document.getElementById('lBtn').disabled=false;e.textContent='❌ Network error';e.style.display='block';});
+}
+function doLogout(){showLogin('');}
 
-// ── FIREBASE REST ─────────────────────────────────────────────────────────────
-// ── MySQL API helpers (replaces Firebase) ────────────────────────
-var MAPI = 'https://hamaraservice.com/api';
-var MKEY = 'hamaraAdmin2024';
+// ── MySQL API helpers (admin Bearer token) ───────────────────────
+var MAPI = '/api';
+function authHeaders(json){
+  var h={'Authorization':'Bearer '+_adminTok};
+  if(json)h['Content-Type']='application/json';
+  return h;
+}
+function handle(r){
+  if(r.status===401){showLogin('Session expired — please login again');throw new Error('Unauthorized');}
+  return r.json();
+}
 
 function apiGet(action, cb) {
-  fetch(MAPI + '/services.php?action=' + action + '&key=' + MKEY, {
-    headers: { 'X-Admin-Key': MKEY }
-  })
-  .then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  })
+  fetch(MAPI + '/services.php?action=' + encodeURIComponent(action), { headers: authHeaders(false) })
+  .then(handle)
   .then(function(res) {
-    // success=true with empty data is still connected — just no prices saved yet
     if (res.success) cb(null, res.data || {});
     else cb(new Error(res.error || 'API error'), null);
   })
-  .catch(function(e) {
-    console.error('apiGet error:', e);
-    cb(e, null);
-  });
+  .catch(function(e) { cb(e, null); });
 }
 
 function apiSave(svcId, data, cb) {
-  fetch(MAPI + '/services.php?action=save_prices&key=' + MKEY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
+  fetch(MAPI + '/services.php?action=save_prices', {
+    method: 'POST', headers: authHeaders(true),
     body: JSON.stringify({ svc_id: svcId, data: data })
   })
-  .then(function(r) { return r.json(); })
-  .then(function(res) {
-    if (res.success) cb(null);
-    else cb(new Error(res.error || 'Save failed'));
-  })
+  .then(handle)
+  .then(function(res) { if (res.success) cb(null); else cb(new Error(res.error || 'Save failed')); })
   .catch(function(e) { cb(e); });
 }
 
 function apiReset(svcId, cb) {
-  fetch(MAPI + '/services.php?action=reset_prices&key=' + MKEY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': MKEY },
+  fetch(MAPI + '/services.php?action=reset_prices', {
+    method: 'POST', headers: authHeaders(true),
     body: JSON.stringify({ svc_id: svcId })
   })
-  .then(function(r) { return r.json(); })
-  .then(function(res) { cb(res.success ? null : new Error('Reset failed')); })
+  .then(handle)
+  .then(function(res) { cb(res.success ? null : new Error(res.error || 'Reset failed')); })
   .catch(function(e) { cb(e); });
 }
 
-// Legacy stubs — not used
-function getToken(cb) { cb(''); }
-function fbGet(p,cb) { cb(new Error('Firebase removed'), null); }
-function fbPut(p,data,cb) { cb(new Error('Firebase removed')); }
-function fbDel(p,cb) { cb(null); }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function initApp(){
@@ -1332,6 +1345,13 @@ onI=function(inp){
   updateStats();
   updateSbDots();
 };
+
+// Reuse an existing admin session (token from admin.html) if it is still valid
+if(_adminTok){
+  fetch(MAPI+'/admin.php?action=me',{headers:authHeaders(false)}).then(function(r){
+    if(r.ok){try{sessionStorage.setItem(ADMIN_TOKEN_KEY,_adminTok);}catch(e){}showApp();}else showLogin('');
+  }).catch(function(){showLogin('');});
+}
 </script>
 </body>
 </html>

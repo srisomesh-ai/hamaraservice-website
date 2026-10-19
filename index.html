@@ -14,9 +14,6 @@
 
   <!-- Firebase SDKs -->
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   
 
 <style>
@@ -767,7 +764,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         👤 Login <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="login-drop" id="loginDrop">
-        <a class="login-drop-item" href="login.html">
+        <a class="login-drop-item" href="/app/customer.html">
           <span class="ldi-icon">👤</span>
           <div><div class="ldi-title">Customer Login</div><div class="ldi-sub">Book home services</div></div>
         </a>
@@ -785,9 +782,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="user-dropdown" id="userDropdown">
-        <a class="dd-item" href="user-panel.html" onclick="toggleUserMenu()">📋 My Bookings</a>
-        <a class="dd-item" href="user-panel.html?tab=profile" onclick="toggleUserMenu()">👤 My Profile</a>
-        <a class="dd-item" href="user-panel.html" onclick="toggleUserMenu()">💰 My Wallet</a>
+        <a class="dd-item" href="/app/customer.html" onclick="toggleUserMenu()">📋 My Bookings</a>
+        <a class="dd-item" href="/app/customer.html" onclick="toggleUserMenu()">👤 My Profile</a>
         <div class="dd-sep"></div>
         <a class="dd-item danger" onclick="logoutUser();">Sign out</a>
       </div>
@@ -827,11 +823,11 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   </div>
 
   <div class="hero-trust">
-    <div class="trust-item"><strong>1.5L+</strong> happy customers</div>
+    <div class="trust-item"><strong>Verified</strong> professionals</div>
     <div class="trust-sep"></div>
-    <div class="trust-item"><strong>10K+</strong> verified professionals</div>
+    <div class="trust-item"><strong>Upfront</strong> price before you confirm</div>
     <div class="trust-sep"></div>
-    <div class="trust-item"><strong>4.8★</strong> avg rating</div>
+    <div class="trust-item"><strong>Pay</strong> after the job</div>
     <div class="trust-sep"></div>
     <div class="trust-item"><strong>60 sec</strong> booking</div>
   </div>
@@ -905,11 +901,11 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <div class="why-grid">
       <div class="why-left">
         <div class="section-label">Why HamaraService</div>
-        <div class="section-title">The most trusted home service platform in India</div>
+        <div class="section-title">Home services made simple</div>
         <div class="why-features">
           <div class="why-feat">
             <div class="why-feat-ic r">🛡️</div>
-            <div><div class="why-feat-title">100% Background Verified</div><div class="why-feat-desc">Every professional is Aadhaar-verified and police-checked before onboarding.</div></div>
+            <div><div class="why-feat-title">ID-checked professionals</div><div class="why-feat-desc">Every provider submits a government ID that our team reviews before approving the account.</div></div>
           </div>
           <div class="why-feat">
             <div class="why-feat-ic g">⚡</div>
@@ -917,75 +913,29 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
           </div>
           <div class="why-feat">
             <div class="why-feat-ic b">💰</div>
-            <div><div class="why-feat-title">Transparent Pricing</div><div class="why-feat-desc">Fixed prices. No hidden charges. Pay only after the job is done.</div></div>
+            <div><div class="why-feat-title">Transparent Pricing</div><div class="why-feat-desc">See the provider's price before you confirm. Pay online or in cash only after the job is done.</div></div>
           </div>
           <div class="why-feat">
             <div class="why-feat-ic y">🔄</div>
-            <div><div class="why-feat-title">Satisfaction Guarantee</div><div class="why-feat-desc">Not happy? We'll re-do the service or give you a full refund. No questions asked.</div></div>
+            <div><div class="why-feat-title">Secure start &amp; finish</div><div class="why-feat-desc">The job starts and completes only with OTPs shown in your app. Problems? Our support team will help.</div></div>
           </div>
         </div>
       </div>
       <div class="why-right">
-        <div class="why-stats-row">
-          <div class="why-stat">
-            <div class="why-stat-num">1.5L<span>+</span></div>
-            <div class="why-stat-label">Customers served</div>
-          </div>
-          <div class="why-stat">
-            <div class="why-stat-num">10K<span>+</span></div>
-            <div class="why-stat-label">Verified professionals</div>
-          </div>
+        <div class="why-stat">
+          <div class="why-stat-num">OTP</div>
+          <div class="why-stat-label">Start and completion confirmed with one-time codes</div>
         </div>
         <div class="why-stat">
-          <div class="why-stat-num">4.8<span>/5</span></div>
-          <div class="why-stat-label">Average rating across all services</div>
-        </div>
-        <div class="why-stat">
-          <div class="why-stat-num">50<span>+ cities</span></div>
-          <div class="why-stat-label">Across India and growing</div>
+          <div class="why-stat-num">Live</div>
+          <div class="why-stat-label">Track your booking status in the app</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── TESTIMONIALS ─── -->
-<section class="testimonials-bg">
-  <div class="max-w">
-    <div class="section-head">
-      <div>
-        <div class="section-label">Customer stories</div>
-        <div class="section-title">Loved by families<br/>across India</div>
-      </div>
-    </div>
-    <div class="testimonials-grid">
-      <div class="t-card">
-        <div class="t-stars">★★★★★</div>
-        <div class="t-text">"Booked a deep cleaning and the team arrived exactly on time. My apartment has never looked this good. Will definitely use again!"</div>
-        <div class="t-author">
-          <div class="t-avatar" style="background:#fdecea;">👩</div>
-          <div><div class="t-name">Priya Sharma</div><div class="t-location">Hyderabad, Telangana</div></div>
-        </div>
-      </div>
-      <div class="t-card">
-        <div class="t-stars">★★★★★</div>
-        <div class="t-text">"The electrician fixed everything in 45 minutes. Very professional, wore shoe covers, and cleaned up after himself. Exceptional service!"</div>
-        <div class="t-author">
-          <div class="t-avatar" style="background:#eff3ff;">👨</div>
-          <div><div class="t-name">Rahul Nair</div><div class="t-location">Bengaluru, Karnataka</div></div>
-        </div>
-      </div>
-      <div class="t-card">
-        <div class="t-stars">★★★★★</div>
-        <div class="t-text">"I use HamaraService every month for house maid service. The quality is consistently excellent and the booking is so easy. 10/10 would recommend!"</div>
-        <div class="t-author">
-          <div class="t-avatar" style="background:#e6faf4;">👩</div>
-          <div><div class="t-name">Anita Reddy</div><div class="t-location">Chennai, Tamil Nadu</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- Testimonials removed: the previous ones were placeholders, not real customer reviews. -->
 
 <!-- ─── PARTNER CTA ─── -->
 <section class="provider-bg">
@@ -1084,7 +1034,6 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a href="#">Careers</a>
         <a href="#">Blog</a>
         <a href="#">Press</a>
-        <a href="admin.html">Admin</a>
       </div>
       <div class="footer-col">
         <h4>Support</h4>
@@ -1123,88 +1072,6 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   </div>
 </div>
 
-<!-- ─── AUTH MODAL ─── -->
-<div class="modal-overlay" id="authModal">
-  <div class="auth-modal-box">
-    <div class="auth-body">
-      <button onclick="closeAuthModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;">✕</button>
-
-      <div id="authLoginView">
-        <div class="auth-title">Welcome back 👋</div>
-        <div class="auth-sub">Sign in to track bookings and manage your account</div>
-
-        <!-- Google Sign-In -->
-        <button onclick="signInWithGoogle()" id="googleSignInBtn" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Continue with Google
-        </button>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-          <span style="font-size:12px;color:var(--muted);font-weight:600;">or</span>
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-        </div>
-
-        <!-- Email login -->
-        <div class="auth-err" id="loginErr"></div>
-        <div style="display:flex;flex-direction:column;gap:11px;">
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile Number or Email</label>
-            <input type="text" id="loginId" placeholder="Mobile number or email address" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Name (as registered)</label>
-            <input type="text" id="loginName" placeholder="Your full name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);color:var(--ink);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'" onkeydown="if(event.key==='Enter')doLogin()"/>
-          </div>
-          <button onclick="doLogin()" class="auth-submit">Log in →</button>
-        </div>
-        <div class="auth-alt">New here? <a onclick="closeAuthModal();window.location.href='login.html';" style="cursor:pointer;">Create free account</a></div>
-      </div>
-
-      <div id="authRegView" style="display:none;">
-        <div class="auth-title">Create account ✨</div>
-        <div class="auth-sub">Track bookings, get offers and manage your services</div>
-
-        <!-- Google Sign-Up -->
-        <button onclick="signInWithGoogle()" style="width:100%;padding:13px 16px;background:white;border:1.5px solid var(--line);border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--ink);transition:all .2s;box-shadow:var(--sh);margin-bottom:16px;">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Sign up with Google
-        </button>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-          <span style="font-size:12px;color:var(--muted);font-weight:600;">or sign up with mobile</span>
-          <div style="flex:1;height:1px;background:var(--line);"></div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div class="auth-2col">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Full Name</label>
-              <input type="text" id="regName" placeholder="Your name" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Mobile</label>
-              <input type="tel" id="regPhone" placeholder="10-digit" maxlength="10" inputmode="numeric" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-            </div>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">Email (optional)</label>
-            <input type="email" id="regEmail" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;">City</label>
-            <input type="text" id="regCity" placeholder="e.g. Hyderabad" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-family:'DM Sans';font-size:15px;outline:none;background:var(--bg);" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--line)'"/>
-          </div>
-          <button onclick="doRegister()" class="auth-submit">Create Account →</button>
-        </div>
-        <div class="auth-alt">Have an account? <a onclick="switchAuthTab('login')">Log in</a></div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
 <!-- ─── MOBILE BOTTOM NAV (Android App Style) ─── -->
 <nav class="mob-bottom-nav" id="mobBottomNav">
   <a class="mob-nav-item active" href="#" onclick="mobNavActive(this)">
@@ -1221,11 +1088,11 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     </div>
     <span>Book Now</span>
   </a>
-  <a class="mob-nav-item" href="user-panel.html" onclick="mobNavActive(this)">
+  <a class="mob-nav-item" href="/app/customer.html" onclick="mobNavActive(this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     <span>Bookings</span>
   </a>
-  <a class="mob-nav-item" href="user-panel.html?tab=profile" onclick="mobNavActive(this)">
+  <a class="mob-nav-item" href="/app/customer.html" onclick="mobNavActive(this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span>Account</span>
   </a>
@@ -1237,31 +1104,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// ══════════════════════════════════════════════════════════
-    // FIREBASE CONFIG — hamaraservice-s009
-    // To get your API key:
-    // 1. Go to https://console.firebase.google.com/project/hamaraservice-s009/settings/general
-    // 2. Scroll to "Your apps" → Web app → Config
-    // 3. Copy the apiKey, messagingSenderId, appId values below
-    // ══════════════════════════════════════════════════════════
-    var FIREBASE_CONFIG = {
-      apiKey:            "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-      authDomain:        "hamaraservice-s009.firebaseapp.com",
-      databaseURL:       "https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId:         "hamaraservice-s009",
-      storageBucket:     "hamaraservice-s009.firebasestorage.app",
-      messagingSenderId: "1064274729048",
-      appId:             "1:1064274729048:web:86643c95419e9dc881d22d"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    var fbAuth = firebase.auth();
-    var fbDB   = firebase.database();
-    // Google provider
-    var googleProvider = new firebase.auth.GoogleAuthProvider();
-    googleProvider.addScope('email');
-    googleProvider.addScope('profile');
-  
-
+// Customer accounts, bookings and payments live in the web app (/app/customer.html)
+// backed by the MySQL API. This page only reads the public catalog + prices.
+function escHtml(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function currentCustomer(){
+  try { if (!localStorage.getItem('hs_cust_token')) return null; return JSON.parse(localStorage.getItem('hs_cust_me') || 'null'); } catch (e) { return null; }
+}
 
 // ── Master service catalog — 34 services, synced from admin ─
 var HS_CATALOG=[
@@ -1330,23 +1178,19 @@ function loadAndRenderCatalog() {
     renderServicesGrid();
   }
 
-  // Step 2a: Fetch hs_service_prices from Firebase (set by hs-prices.html)
+  // Step 2a: Admin reference prices from the MySQL API (set by hs-prices.html)
   // This overrides catalog.json base prices with admin-set prices
-  var xhrP = new XMLHttpRequest();
-  xhrP.open('GET', 'https://hamaraservice-s009-default-rtdb.asia-southeast1.firebasedatabase.app/hs_service_prices.json?_=' + Date.now(), true);
-  xhrP.timeout = 8000;
-  xhrP.onload = function() {
+  fetch('/api/services.php?action=price_ranges').then(function(r){ return r.json(); }).then(function(res) {
     try {
-      var priceData = JSON.parse(xhrP.responseText);
-      if (priceData && typeof priceData === 'object') {
-        // Apply base prices to HS_CATALOG
-        Object.keys(priceData).forEach(function(svcId) {
-          var p = priceData[svcId];
-          if (!p) return;
+      var ranges = (res && res.success && res.data) ? res.data : null;
+      if (ranges && typeof ranges === 'object') {
+        Object.keys(ranges).forEach(function(svcId) {
+          var p = ranges[svcId] && ranges[svcId].admin_prices;
           var svc = HS_CATALOG.find(function(s){ return s.id === svcId; });
           if (!svc) return;
+          if (!p) { if (ranges[svcId].min > 0) svc.price = ranges[svcId].min; return; }
           // Try base price first (cleaning/multi-option services)
-          if (p.base != null) {
+          if (p.base != null && typeof p.base !== 'object') {
             svc.price = parseInt(p.base) || svc.price;
           }
           // Visit-only services: read visit.price (SVC007-SVC018 etc.)
@@ -1375,8 +1219,7 @@ function loadAndRenderCatalog() {
         renderServicesGrid();
       }
     } catch(e) {}
-  };
-  xhrP.send();
+  }).catch(function(){});
 
 // Step 2b: Fetch catalog.json for service list/status
   var xhr = new XMLHttpRequest();
@@ -1440,10 +1283,10 @@ function liveSearchFn(q) {
   }
   dd.innerHTML = results.map(function(s, i) {
     return '<div data-svc="'+encodeURIComponent(s.name)+'" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background=\'#fff1f0\'" onmouseout="this.style.background=\'\'">'+
-      '<span style="font-size:22px;flex-shrink:0;">'+s.emoji+'</span>'+
+      '<span style="font-size:22px;flex-shrink:0;">'+escHtml(s.emoji)+'</span>'+
       '<div style="flex:1;">'+
-        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+s.name+'</div>'+
-        '<div style="font-size:12px;font-weight:600;color:#00956a;">₹'+s.price+'</div>'+
+        '<div style="font-size:14px;font-weight:700;color:#0f1117;">'+escHtml(s.name)+'</div>'+
+        '<div style="font-size:12px;font-weight:600;color:#00956a;">₹'+escHtml(s.price)+'</div>'+
       '</div>'+
       '<span style="font-size:13px;font-weight:700;color:#E8651A;flex-shrink:0;">View →</span>'+
     '</div>';
@@ -1459,7 +1302,7 @@ function pickService(name) {
   selectedServiceName = name;
   document.getElementById('heroSearchInput').value = name;
   document.getElementById('srchDrop').style.display = 'none';
-  var page = SVC_PAGE_MAP[name] || ('service-detail.html?service=' + encodeURIComponent(name));
+  var page = SVC_PAGE_MAP[name] || '/app/customer.html';
   window.location.href = page;
 }
 
@@ -1471,13 +1314,7 @@ function pickFirstResult() {
 }
 
 function mobBookNow() {
-  var user = JSON.parse(sessionStorage.getItem('hs_current_customer') || 'null');
-  if (user) {
-    window.location.href = 'user-booking.html';
-  } else {
-    sessionStorage.setItem('hs_after_login', 'user-booking.html');
-    window.location.href = 'login.html';
-  }
+  window.location.href = '/app/customer.html';
 }
 function mobNavActive(el) {
   document.querySelectorAll('.mob-nav-item').forEach(function(i){ i.classList.remove('active'); });
@@ -1505,7 +1342,7 @@ function heroSearch(){
     return;
   }
   // Go to service detail page — no login required to browse details
-  var page = SVC_PAGE_MAP[svc] || ('service-detail.html?service=' + encodeURIComponent(svc));
+  var page = SVC_PAGE_MAP[svc] || '/app/customer.html';
   window.location.href = page;
 }
 var SVC_PAGE_MAP = {
@@ -1545,39 +1382,13 @@ var SVC_PAGE_MAP = {
 function openService(slug){
   var name = decodeURIComponent(slug);
   // Known services → dedicated page; admin-added new services → generic detail page
-  var page = SVC_PAGE_MAP[name] || ('service-detail.html?service=' + encodeURIComponent(name));
+  var page = SVC_PAGE_MAP[name] || '/app/customer.html';
   window.location.href = page;
 }
 function selectService(name){
   selectedServiceName = name;
-  var loc = selectedLatLng ? encodeURIComponent(JSON.stringify(selectedLatLng)) : '';
-  var addr = encodeURIComponent(selectedAddress||'');
-  var url = 'user-booking.html?service='+encodeURIComponent(name)+(loc?'&loc='+loc:'')+(addr?'&addr='+addr:'');
-
-  function doNavigate(){
-    var user = JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
-    if(user){
-      window.location.href = url;
-    } else {
-      sessionStorage.setItem('hs_after_login', url);
-      window.location.href = 'login.html';
-    }
-  }
-
-  if(_fbAuthReady){
-    // Firebase already resolved — act immediately
-    doNavigate();
-  } else {
-    // Firebase not yet resolved — wait up to 3s then act
-    var waited = 0;
-    var interval = setInterval(function(){
-      waited += 50;
-      if(_fbAuthReady || waited >= 3000){
-        clearInterval(interval);
-        doNavigate();
-      }
-    }, 50);
-  }
+  var svc = HS_CATALOG.find(function(s){ return s.name === name; });
+  window.location.href = '/app/customer.html' + (svc && svc.id ? '?svc=' + encodeURIComponent(svc.id) : '');
 }
 
 // ── MAP
@@ -1654,159 +1465,13 @@ function confirmLocation(){
 }
 
 
-function openUserAuth(tab){
-  document.getElementById('authModal').classList.add('show');
-  switchAuthTab(tab||'login');
+function openUserAuth(){
+  // Customer login / registration happens in the web app
+  window.location.href = '/app/customer.html';
 }
-function closeAuthModal(){
-  document.getElementById('authModal').classList.remove('show');
-}
-function switchAuthTab(tab){
-  var isLogin=(tab==='login');
-  document.getElementById('authLoginView').style.display=isLogin?'block':'none';
-  document.getElementById('authRegView').style.display=isLogin?'none':'block';
-}
-
-// ── GOOGLE SIGN-IN ─────────────────────────────────────────────
-function signInWithGoogle(){
-  var btn = document.getElementById('googleSignInBtn');
-  if(btn){btn.textContent='Signing in…';btn.disabled=true;}
-  fbAuth.signInWithPopup(googleProvider)
-    .then(function(result){
-      var user = result.user;
-      var userData = {
-        id:          'HS-CU-'+user.uid.slice(0,8).toUpperCase(),
-        uid:         user.uid,
-        name:        user.displayName || 'Customer',
-        email:       user.email || '',
-        phone:       user.phoneNumber || '',
-        photo:       user.photoURL || '',
-        city:        '',
-        provider:    'google',
-        registeredAt: new Date().toISOString(),
-      };
-      // Save to Firebase Realtime DB only
-      fbDB.ref('customers/'+user.uid).set(userData);
-      sessionStorage.setItem('hs_current_customer', JSON.stringify(userData));
-      closeAuthModal();
-      updateUserWidget();
-      showToast('✅ Welcome, '+userData.name+'!');
-      var gAfter=sessionStorage.getItem('hs_after_login');
-      if(gAfter){ sessionStorage.removeItem('hs_after_login'); window.location.href=gAfter; }
-      else if(_pendingUrl){ var gUrl=_pendingUrl; _pendingUrl=null; window.location.href=gUrl; }
-      else { window.location.href='user-panel.html'; }
-    })
-    .catch(function(err){
-      console.error('Google sign-in error:', err);
-      if(btn){btn.textContent='Continue with Google';btn.disabled=false;}
-      if(err.code==='auth/popup-closed-by-user'){showToast('Sign-in cancelled');return;}
-      showToast('⚠️ Sign-in failed: '+err.message);
-    });
-}
-
-// ── MOBILE/EMAIL LOGIN ─────────────────────────────────────────
-function doLogin(){
-  var id   = document.getElementById('loginId').value.trim();
-  var name = document.getElementById('loginName').value.trim();
-  var err  = document.getElementById('loginErr');
-  if(!id){err.textContent='Enter your mobile or email';err.style.display='block';return;}
-  if(!name){err.textContent='Enter your registered name';err.style.display='block';return;}
-  err.style.display='none';
-
-  // Always check Firebase — no local cache fallback
-  fbDB.ref('customers').orderByChild('phone').equalTo(id).once('value', function(snap){
-    var found = null;
-    snap.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-    if(!found){
-      // Try by email
-      fbDB.ref('customers').orderByChild('email').equalTo(id).once('value', function(s2){
-        s2.forEach(function(child){ var d=child.val(); if(d.name.toLowerCase()===name.toLowerCase()){found=d;} });
-        if(found){ loginSuccess(found); }
-        else {
-          err.innerHTML='Account not found. <a onclick="closeAuthModal();window.location.href=\'login.html\';" style="color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;">Create an account</a>';
-          err.style.display='block';
-        }
-      });
-    } else { loginSuccess(found); }
-  }).catch(function(){
-    err.textContent='⚠️ Could not reach server. Check your connection and try again.';
-    err.style.display='block';
-  });
-}
-
-function loginSuccess(user){
-  sessionStorage.setItem('hs_current_customer', JSON.stringify(user));
-  closeAuthModal();
-  updateUserWidget();
-  showToast('✅ Welcome back, '+user.name+'!');
-  var afterLogin = sessionStorage.getItem('hs_after_login');
-  if(afterLogin){ sessionStorage.removeItem('hs_after_login'); window.location.href=afterLogin; return; }
-  if(_pendingUrl){ var url=_pendingUrl; _pendingUrl=null; window.location.href=url; return; }
-  window.location.href='user-panel.html';
-}
-
-// ── REGISTER ───────────────────────────────────────────────────
-function doRegister(){
-  var name  = document.getElementById('regName').value.trim();
-  var phone = document.getElementById('regPhone').value.trim();
-  var email = document.getElementById('regEmail').value.trim();
-  var city  = document.getElementById('regCity').value.trim();
-  if(!name){showToast('⚠️ Enter your name');return;}
-  if(!phone||!/^\d{10}$/.test(phone)){showToast('⚠️ Enter valid 10-digit mobile');return;}
-
-  var userData = {
-    id:          'HS-CU-'+Date.now().toString(36).toUpperCase(),
-    name:        name,
-    phone:       phone,
-    email:       email,
-    city:        city,
-    provider:    'manual',
-    registeredAt: new Date().toISOString(),
-  };
-
-  // Check if phone already exists in Firebase before registering
-  fbDB.ref('customers').orderByChild('phone').equalTo(phone).once('value', function(snap){
-    if(snap.exists()){
-      showToast('⚠️ Mobile already registered — log in');
-      switchAuthTab('login');
-      return;
-    }
-    // Save to Firebase only — no local cache
-    fbDB.ref('customers/'+userData.id).set(userData).then(function(){
-      sessionStorage.setItem('hs_current_customer', JSON.stringify(userData));
-      closeAuthModal();
-      updateUserWidget();
-      showToast('🎉 Welcome to HamaraService, '+name+'!');
-      var rAfter=sessionStorage.getItem('hs_after_login');
-      if(rAfter){ sessionStorage.removeItem('hs_after_login'); window.location.href=rAfter; }
-      else if(_pendingUrl){ var rUrl=_pendingUrl; _pendingUrl=null; window.location.href=rUrl; }
-      else { window.location.href='user-panel.html'; }
-    }).catch(function(e){
-      showToast('⚠️ Registration failed. Check connection and try again.');
-      console.warn('Firebase save failed:', e.message);
-    });
-  }).catch(function(){
-    showToast('⚠️ Could not reach server. Check your connection.');
-  });
-}
-
-// ── AUTH STATE LISTENER ────────────────────────────────────────
-fbAuth.onAuthStateChanged(function(user){
-  if(user){
-    fbDB.ref('customers/'+user.uid).once('value', function(snap){
-      if(snap.exists()){
-        sessionStorage.setItem('hs_current_customer', JSON.stringify(snap.val()));
-      }
-      updateUserWidget();
-    });
-  } else {
-    sessionStorage.removeItem('hs_current_customer');
-    updateUserWidget();
-  }
-});
 
 function logoutUser(){
-  fbAuth.signOut().catch(function(){});
+  try { localStorage.removeItem('hs_cust_token'); localStorage.removeItem('hs_cust_me'); localStorage.removeItem('hs_active_bk'); } catch (e) {}
   sessionStorage.removeItem('hs_current_customer');
   document.getElementById('userDropdown').classList.remove('open');
   updateUserWidget();
@@ -1848,7 +1513,7 @@ function providerLoginClick(){
 
 // ── USER WIDGET ────────────────────────────────────────────────
 function updateUserWidget(){
-  var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
+  var user=currentCustomer();
   var loginWrap=document.getElementById('loginDropWrap');
   var widget=document.getElementById('userWidget');
   if(user){
@@ -1872,9 +1537,7 @@ function toggleUserMenu(){
 }
 
 function showUserProfile(){
-  var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
-  if(!user){showToast('⚠️ Please log in first');return;}
-  showToast('👤 '+user.name+' · '+user.phone+(user.city?' · '+user.city:''));
+  window.location.href='/app/customer.html';
 }
 
 // Close user dropdown on outside click
@@ -1895,9 +1558,8 @@ function _buildCatTabs() {
   var cats = ['All'];
   HS_CATALOG.forEach(function(s){ if(s.cat && cats.indexOf(s.cat) === -1) cats.push(s.cat); });
   wrap.innerHTML = cats.map(function(c){
-    var safeC = c.replace(/'/g, "\\'");
-    return '<button class="cat-tab' + (c === _activeCat ? ' active' : '') + '" onclick="setCat(\'' + safeC + '\')">'
-      + (c === 'All' ? '&#11088; All' : c) + '</button>';
+    return '<button class="cat-tab' + (c === _activeCat ? ' active' : '') + '" data-cat="' + escHtml(c) + '" onclick="setCat(this.getAttribute(\'data-cat\'))">'
+      + (c === 'All' ? '&#11088; All' : escHtml(c)) + '</button>';
   }).join('');
 }
 
@@ -1924,11 +1586,12 @@ function renderServicesGrid() {
   var toShow = (_showAllSvc || _activeCat !== 'All') ? filtered : filtered.slice(0, LIMIT);
   grid.innerHTML = toShow.map(function(s){
     var slug = encodeURIComponent(s.name);
-    return '<div class="svc-card" onclick="openService(\'' + slug + '\')">'  
-      + '<div class="svc-card-img">' + (s.image ? '<img src="'+s.image+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.parentNode.innerHTML=(s&&s.icon?s.icon:\'🔧\')">' : (s.icon||s.emoji||'🔧')) + '</div>'
+    var icon = escHtml(s.icon||s.emoji||'🔧');
+    return '<div class="svc-card" onclick="openService(\'' + escHtml(slug).replace(/'/g,'%27') + '\')">'
+      + '<div class="svc-card-img" data-icon="' + icon + '">' + (s.image ? '<img src="'+escHtml(s.image)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.parentNode.textContent=this.parentNode.getAttribute(\'data-icon\')||\'🔧\'">' : icon) + '</div>'
       + '<div class="svc-card-info">'
-        + '<div class="svc-name">' + s.name + '</div>'
-        + '<div class="svc-price-tag" id="ptag-'+s.id+'">' + (s.price > 0 ? 'from ₹'+s.price.toLocaleString('en-IN') : '…') + '</div>'
+        + '<div class="svc-name">' + escHtml(s.name) + '</div>'
+        + '<div class="svc-price-tag" id="ptag-'+escHtml(s.id)+'">' + (s.price > 0 ? 'from ₹'+Number(s.price).toLocaleString('en-IN') : '…') + '</div>'
       + '</div>'
       + '<button class="svc-book">View Details →</button>'
       + '</div>';
@@ -1941,7 +1604,7 @@ function renderServicesGrid() {
   }
 }
 
-// Load catalog from Firebase (with localStorage cache fallback)
+// Load catalog (catalog.json + API prices, with localStorage cache fallback)
 loadAndRenderCatalog();
 
 
@@ -1957,8 +1620,7 @@ window.addEventListener('scroll',function(){
   var btn=document.getElementById('menuBtn');
   if(!btn)return;
   btn.addEventListener('click',function(){
-    var user=JSON.parse(sessionStorage.getItem('hs_current_customer')||'null');
-    window.location.href = user ? 'user-panel.html' : 'login.html';
+    window.location.href = '/app/customer.html';
   });
 })();
 

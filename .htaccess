@@ -1,0 +1,19 @@
+# ── HamaraService security rules (Apache / Hostinger) ──
+Options -Indexes
+
+# Pass the Authorization header through to PHP (needed for Bearer tokens)
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Never serve VCS data, SQL dumps, secrets, or sample config
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.github
+RedirectMatch 404 ^/database/
+RedirectMatch 404 ^/private/
+<FilesMatch "(\.sql|\.json\.bak|\.env|hs-secrets.*|service-account.*\.json|firebase-service-account.*|\.md)$">
+  Require all denied
+</FilesMatch>
+
+# Retired duplicate page
+Redirect 301 /svc-car-mechanic.html /svc-mechanic.html
