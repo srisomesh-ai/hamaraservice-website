@@ -89,16 +89,18 @@ switch ($action) {
       VALUES
         (:id, :name, :phone, :email, :gender, :address, :city, :lat, :lng, :auth, :fcm)
       ON DUPLICATE KEY UPDATE
-        name        = IF(:name2 != '', :name2, name),
-        phone       = IF(:phone2 != '', :phone2, phone),
-        gender      = IF(:gender2 != '', :gender2, gender),
-        address     = IF(:address2 != '', :address2, address),
-        city        = IF(:city2 != '', :city2, city),
-        lat         = IF(:lat2 != 0, :lat2, lat),
-        lng         = IF(:lng2 != 0, :lng2, lng),
-        fcm_token   = IF(:fcm2 != '', :fcm2, fcm_token),
+        name        = IF(VALUES(name)    != '', VALUES(name),    name),
+        phone       = IF(VALUES(phone)   != '', VALUES(phone),   phone),
+        gender      = IF(VALUES(gender)  != '', VALUES(gender),  gender),
+        address     = IF(VALUES(address) != '', VALUES(address), address),
+        city        = IF(VALUES(city)    != '', VALUES(city),    city),
+        lat         = IF(VALUES(lat)     != 0,  VALUES(lat),     lat),
+        lng         = IF(VALUES(lng)     != 0,  VALUES(lng),     lng),
+        fcm_token   = IF(VALUES(fcm_token) != '', VALUES(fcm_token), fcm_token),
         updated_at  = CURRENT_TIMESTAMP
     ");
+    // (Each named placeholder may appear only once with native prepares —
+    //  the old ':name2' style raised SQLSTATE[HY093] on every call.)
 
     $name    = $b['name']    ?? $user['name']  ?? '';
     $phone   = substr(preg_replace('/\D/', '', $b['phone'] ?? ($user['phone'] ?? '')), -10);
@@ -113,16 +115,16 @@ switch ($action) {
 
     $stmt->execute([
       ':id'      => $user['uid'],
-      ':name'    => $name,    ':name2'    => $name,
-      ':phone'   => $phone,   ':phone2'   => $phone,
+      ':name'    => $name,
+      ':phone'   => $phone,
       ':email'   => $email,
-      ':gender'  => $gender,  ':gender2'  => $gender,
-      ':address' => $address, ':address2' => $address,
-      ':city'    => $city,    ':city2'    => $city,
-      ':lat'     => $lat,     ':lat2'     => $lat,
-      ':lng'     => $lng,     ':lng2'     => $lng,
+      ':gender'  => $gender,
+      ':address' => $address,
+      ':city'    => $city,
+      ':lat'     => $lat,
+      ':lng'     => $lng,
       ':auth'    => $auth,
-      ':fcm'     => $fcm,     ':fcm2'     => $fcm,
+      ':fcm'     => $fcm,
     ]);
 
     // Return customer data
