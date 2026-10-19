@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-18-1';
+const HS_SCHEMA_VERSION = '2026-10-19-1';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -40,6 +40,8 @@ function ensureSchema(PDO $db) {
         "ALTER TABLE providers MODIFY COLUMN pending_earned INT DEFAULT 0",
         // services — per-service commission
         "ALTER TABLE services ADD COLUMN commission_pct INT NULL",
+        // customers — local password for web logins
+        "ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''",
         // reviews — one per booking
         "ALTER TABLE reviews ADD UNIQUE KEY uniq_booking (booking_id)",
     ];

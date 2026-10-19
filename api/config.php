@@ -38,6 +38,11 @@ define('DB_PASS',    hsCfg('DB_PASS'));
 define('DB_CHARSET', 'utf8mb4');
 
 define('FIREBASE_PROJECT_ID', hsCfg('FIREBASE_PROJECT_ID', 'hamaraservice-s009'));
+// Public Firebase *web/client* API key (not a secret — it ships in the apps).
+// Lets web login/register use the same Firebase accounts as the mobile app.
+// Set to '' to keep web-only accounts.
+define('FIREBASE_WEB_API_KEY', hsCfg('FIREBASE_WEB_API_KEY', 'AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k'));
+define('FIREBASE_AUTH_URL',    hsCfg('FIREBASE_AUTH_URL', 'https://identitytoolkit.googleapis.com/v1'));
 
 define('JWT_SECRET', hsCfg('JWT_SECRET'));
 
