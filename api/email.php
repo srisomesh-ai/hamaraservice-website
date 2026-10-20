@@ -224,7 +224,7 @@ function sendProviderApproved($name, $email, $id) {
         <div><strong style="color:#0f1117;">Accept your first job!</strong><br/><span style="font-size:13px;color:#6b7280;">You will get an alert when a customer books near you</span></div>
       </div>
     </div>
-    ' . ctaButton('Go to Provider Dashboard', SITE_URL . '/provider-portal.html') . '
+    ' . ctaButton('Go to Provider Dashboard', SITE_URL . '/app/provider.html') . '
     <p style="font-size:13px;color:#9ca3af;margin:24px 0 0;text-align:center;">
       Questions? Call us at <strong>8985849710</strong> or reply to this email.
     </p>

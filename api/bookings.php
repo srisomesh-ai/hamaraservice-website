@@ -28,6 +28,9 @@ setCorsHeaders();
 $action = $_GET['action'] ?? '';
 $db     = getDB();
 ensureSchema($db);
+if (in_array($action, ['get','active','open','confirm_price','accept','history','admin_list'], true)) {
+  try { expireStaleQuotes($db); } catch (Throwable $e) {}
+}
 
 const PRE_ACTIVE = ['searching','price_quoted','negotiating','negotiation_final','confirmed'];
 
@@ -38,6 +41,27 @@ function getFcm($db, $table, $id) {
     $stmt = $db->prepare("SELECT fcm_token FROM $table WHERE id = ?");
     $stmt->execute([$id]);
     return $stmt->fetchColumn() ?: '';
+}
+
+// Quotes the customer did not answer within QUOTE_TTL_MIN go back to searching
+function expireStaleQuotes($db) {
+    $q = $db->prepare("SELECT id, provider_id FROM bookings
+                       WHERE status IN ('price_quoted','negotiation_final') AND quote_at IS NOT NULL
+                         AND quote_at < NOW() - INTERVAL ? MINUTE");
+    $q->execute([QUOTE_TTL_MIN]);
+    foreach ($q->fetchAll() as $r) {
+        $u = $db->prepare("
+            UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
+                   quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
+                   negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
+            WHERE id = ? AND status IN ('price_quoted','negotiation_final')");
+        $u->execute([$r['id']]);
+        if ($u->rowCount() === 1 && !empty($r['provider_id'])) {
+            sendPush(getFcm($db, 'providers', $r['provider_id']), "Quote expired ⌛",
+              "The customer did not confirm within " . QUOTE_TTL_MIN . " minutes. The job was released.",
+              ['event'=>'booking_released','bookingId'=>$r['id']]);
+        }
+    }
 }
 
 function makeBookingId() {
@@ -64,11 +88,26 @@ function bookingFor($db, $id, $user, $statuses = null) {
 }
 
 // Strip secrets / PII the caller must not see
+// Can this booking be paid in cash? (provider wallet must cover the platform fee)
+function cashAllowed($db, array $bk) {
+    if (empty($bk['provider_id'])) return false;
+    $w = $db->prepare("SELECT pending_earned FROM providers WHERE id = ?");
+    $w->execute([$bk['provider_id']]);
+    $bal = (int)$w->fetchColumn();
+    $amt = (int)($bk['amount'] ?: $bk['confirmed_price'] ?: $bk['final_price'] ?: $bk['quoted_price']);
+    $fee = (int)($bk['commission_amt'] ?: round($amt * (int)($bk['commission_pct'] ?? DEFAULT_COMMISSION_PCT) / 100));
+    return $bal >= $fee;
+}
+
 function sanitizeBooking(array $bk, string $role) {
     $status = $bk['status'] ?? '';
     $otpStart = $bk['start_otp'] ?? null;
     $otpDone  = $bk['completion_otp'] ?? null;
     unset($bk['otp'], $bk['start_otp'], $bk['completion_otp'], $bk['otp_attempts'], $bk['settled']);
+    $bk['quote_expires_in'] = null;
+    if (in_array($status, ['price_quoted','negotiation_final'], true) && !empty($bk['quote_at'])) {
+        $bk['quote_expires_in'] = max(0, strtotime($bk['quote_at']) + QUOTE_TTL_MIN * 60 - time());
+    }
 
     if ($role === 'customer') {
         // The customer is the OTP holder: shows it to the provider at the door / at the end
@@ -125,9 +164,9 @@ function settleBooking($db, $bk, $method, $paymentId = null) {
 }
 
 function providerOffers($db, $providerId, $svcId) {
-    $c = $db->prepare("SELECT COUNT(*) FROM provider_services WHERE provider_id = ? AND enabled = 1");
+    $c = $db->prepare("SELECT COUNT(*) FROM provider_services WHERE provider_id = ?");
     $c->execute([$providerId]);
-    if ((int)$c->fetchColumn() === 0) return true;   // no list saved → offers everything
+    if ((int)$c->fetchColumn() === 0) return true;   // legacy: never saved a list → offers everything
     $s = $db->prepare("SELECT 1 FROM provider_services WHERE provider_id = ? AND svc_id = ? AND enabled = 1");
     $s->execute([$providerId, $svcId]);
     return (bool)$s->fetchColumn();
@@ -201,7 +240,7 @@ switch ($action) {
       ':lat'      => (float)($b['lat'] ?? 0),
       ':lng'      => (float)($b['lng'] ?? 0),
       ':date'     => $slotDate,
-      ':time'     => $b['slot_time'] ?? '',
+      ':time'     => mb_substr(trim((string)($b['slot_time'] ?? '')), 0, 80),
       ':notes'    => $b['notes'] ?? '',
       ':summary'  => $summary,
       ':est'      => max(0, (int)($b['est_price'] ?? $b['price'] ?? 0)),
@@ -215,13 +254,15 @@ switch ($action) {
       $blng = (float)($b['lng'] ?? 0);
       $svcId = $b['svc_id'];
       $pstmt = $db->prepare("
-        SELECT p.id, p.fcm_token, p.lat, p.lng, p.radius_km, p.city, p.areas
+        SELECT p.id, p.fcm_token,
+               COALESCE(NULLIF(p.base_lat, 0), p.lat) AS lat, COALESCE(NULLIF(p.base_lng, 0), p.lng) AS lng,
+               p.radius_km, p.city, p.areas
         FROM providers p
         WHERE p.status = 'approved' AND p.available = 1
           AND p.fcm_token IS NOT NULL AND p.fcm_token != ''
           AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
           AND (
-            NOT EXISTS (SELECT 1 FROM provider_services x WHERE x.provider_id = p.id AND x.enabled = 1)
+            NOT EXISTS (SELECT 1 FROM provider_services x WHERE x.provider_id = p.id)
             OR EXISTS (SELECT 1 FROM provider_services ps WHERE ps.provider_id = p.id AND ps.svc_id = ? AND ps.enabled = 1)
           )
       ");
@@ -249,13 +290,16 @@ switch ($action) {
     $prov = requireProvider(true);
     $db->prepare("UPDATE providers SET last_seen = CURRENT_TIMESTAMP WHERE id = ?")->execute([$prov['id']]);
 
-    $p = $db->prepare("SELECT lat, lng, radius_km, city, areas, available FROM providers WHERE id = ?");
+    $p = $db->prepare("SELECT COALESCE(NULLIF(base_lat, 0), lat) AS lat, COALESCE(NULLIF(base_lng, 0), lng) AS lng,
+                              radius_km, city, areas, available FROM providers WHERE id = ?");
     $p->execute([$prov['id']]);
     $me = $p->fetch();
 
-    $svc = $db->prepare("SELECT svc_id FROM provider_services WHERE provider_id = ? AND enabled = 1");
+    $svc = $db->prepare("SELECT svc_id, enabled FROM provider_services WHERE provider_id = ?");
     $svc->execute([$prov['id']]);
-    $mySvcs = $svc->fetchAll(PDO::FETCH_COLUMN);
+    $rows = $svc->fetchAll();
+    $mySvcs = array_values(array_map(fn($r) => $r['svc_id'], array_filter($rows, fn($r) => (int)$r['enabled'] === 1)));
+    if ($rows && !$mySvcs) ok([]);   // every service switched off → no jobs
 
     $sql = "SELECT id, svc_id, svc_name, svc_icon, address, landmark, city, lat, lng,
                    slot_date, slot_time, notes, summary, est_price, status, created_at
@@ -326,7 +370,7 @@ switch ($action) {
       UPDATE bookings SET
         provider_id = ?, provider_name = ?, status = 'price_quoted',
         quoted_price = ?, counter_price = 0, final_price = 0,
-        negotiation_status = 'quoted', accepted_at = CURRENT_TIMESTAMP
+        negotiation_status = 'quoted', accepted_at = CURRENT_TIMESTAMP, quote_at = CURRENT_TIMESTAMP
       WHERE id = ? AND status = 'searching' AND provider_id IS NULL
     ");
     $upd->execute([$prov['id'], $me['name'], $price, $id]);
@@ -370,7 +414,7 @@ switch ($action) {
     if ($price > (int)$bk['quoted_price']) err('Final price cannot exceed your quote');
 
     $db->prepare("
-      UPDATE bookings SET status = 'negotiation_final', final_price = ?, negotiation_status = 'provider_final'
+      UPDATE bookings SET status = 'negotiation_final', final_price = ?, negotiation_status = 'provider_final', quote_at = CURRENT_TIMESTAMP
       WHERE id = ? AND status = 'negotiating'
     ")->execute([$price, $bk['id']]);
 
@@ -439,7 +483,7 @@ switch ($action) {
       UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
              quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
              start_otp = NULL, otp = NULL, otp_attempts = 0,
-             negotiation_status = NULL, accepted_at = NULL
+             negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
       WHERE id = ?
     ")->execute([$bk['id']]);
 
@@ -461,7 +505,7 @@ switch ($action) {
       UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
              quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
              start_otp = NULL, otp = NULL, otp_attempts = 0,
-             negotiation_status = NULL, accepted_at = NULL
+             negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
       WHERE id = ?
     ")->execute([$bk['id']]);
 
@@ -569,6 +613,16 @@ switch ($action) {
     $b    = getBody();
     $bk   = bookingFor($db, $b['booking_id'] ?? '', $prov, ['completed']);
     if ($bk['payment_status'] === 'paid') ok(['payment_status'=>'paid','already'=>true]);
+    // Cash: the provider keeps the money, so the platform fee comes out of the
+    // wallet — allowed only when the wallet can cover it.
+    $w = $db->prepare("SELECT pending_earned FROM providers WHERE id = ?");
+    $w->execute([$prov['id']]);
+    $bal = (int)$w->fetchColumn();
+    $fee = (int)$bk['commission_amt'];
+    if ($bal < $fee) {
+      err('CASH_NOT_ALLOWED: Wallet balance ₹' . max(0, $bal) . ' is less than the platform fee ₹' . $fee .
+          '. Ask the customer to pay online, or add money to your wallet.', 402);
+    }
     settleBooking($db, $bk, 'cash');
     sendPush(getFcm($db, 'customers', $bk['customer_id']),
       "Payment Recorded ✅", "Cash payment of ₹" . (int)$bk['amount'] . " recorded. Please rate your provider.",
@@ -669,6 +723,7 @@ switch ($action) {
     if ($role === 'provider' && !in_array($bk['status'], ['confirmed','active','completed'], true)) {
       unset($bk['lat'], $bk['lng']);
     }
+    $bk['cash_allowed'] = cashAllowed($db, $bk) ? 1 : 0;
     ok(sanitizeBooking($bk, $role));
   }
 
@@ -690,6 +745,7 @@ switch ($action) {
     ");
     $stmt->execute([$user['id']]);
     $bk = $stmt->fetch();
+    if ($bk) $bk['cash_allowed'] = cashAllowed($db, $bk) ? 1 : 0;
     ok($bk ? sanitizeBooking($bk, $user['role']) : null);
   }
 
@@ -815,6 +871,7 @@ switch ($action) {
     $row['unpaid_completed'] = (int)$db->query("SELECT COUNT(*) FROM bookings WHERE status='completed' AND payment_status != 'paid'")->fetchColumn();
     $row['provider_balances'] = (int)$db->query("SELECT COALESCE(SUM(GREATEST(pending_earned,0)),0) FROM providers")->fetchColumn();
     $row['provider_dues']     = (int)$db->query("SELECT COALESCE(SUM(LEAST(pending_earned,0)),0) FROM providers")->fetchColumn();
+    $row['payments_mode'] = strpos(RZP_KEY_ID, 'rzp_live_') === 0 ? 'live' : (RZP_KEY_ID === '' ? 'not configured' : 'test');
     ok($row);
   }
 

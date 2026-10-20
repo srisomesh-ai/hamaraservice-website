@@ -191,6 +191,8 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 </style>
 
 <!-- Firebase Cloud Messaging -->
+<script src="/js/hs-site.js"></script>
+<script src="/js/hs-map.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script>
@@ -315,6 +317,7 @@ window.HS_FCM = (function(){
   <div class="topbar"><span class="back" onclick="show('pgSvc')">←</span><h1>Service Address</h1></div>
   <div class="page">
     <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Detecting your location…</div>
+    <button type="button" class="btn ghost" id="pinMapBtn" onclick="pinOnMap()" style="margin:-2px 0 12px">🗺️ Pin exact location on map</button>
     <div id="nearbyWrap" class="hide nearby-card">
       <div class="nearby-head">
         <span class="nearby-ico">🏢</span>
@@ -336,14 +339,13 @@ window.HS_FCM = (function(){
       <input class="inp" id="bPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
       <label>When?</label>
       <div class="chip-row" id="slotRow"></div>
-      <label>Preferred Hour <span style="font-weight:500;color:var(--muted)">(optional)</span></label>
-      <select class="inp" id="bHour">
-        <option value="">Any time</option>
-        <option>6 AM</option><option>7 AM</option><option>8 AM</option><option>9 AM</option>
-        <option>10 AM</option><option>11 AM</option><option>12 PM</option><option>1 PM</option>
-        <option>2 PM</option><option>3 PM</option><option>4 PM</option><option>5 PM</option>
-        <option>6 PM</option><option>7 PM</option><option>8 PM</option><option>9 PM</option>
-      </select>
+      <div id="slotWhen" class="hide">
+        <label>Day</label>
+        <div class="chip-row" id="dateRow"></div>
+        <label>Preferred Hour <span style="font-weight:500;color:var(--muted)">(optional)</span></label>
+        <select class="inp" id="bHour"><option value="">Any time in this window</option></select>
+      </div>
+      <div id="slotNote" style="font-size:12px;color:var(--muted);margin:-4px 0 10px"></div>
     </div>
     <button class="btn" onclick="createBooking()">Find Provider →</button>
   </div>
@@ -373,6 +375,7 @@ window.HS_FCM = (function(){
     </div>
     <div id="radarOffer" class="hide"></div>
     <div id="radarActive" class="hide"></div>
+    <div style="text-align:center;margin:14px 0 4px"><a href="javascript:void(0)" onclick="HS_support('customer','Booking '+activeBookingId+'.')" style="color:var(--teal);font-weight:800;font-size:13px;text-decoration:none">💬 Need help with this booking? WhatsApp us</a></div>
   </div>
   <div class="tabbar">
     <div class="tab" onclick="show('pgHome')"><span class="i">🏠</span>Home</div>
@@ -478,7 +481,7 @@ function doAuth(){
         toast('✓ Logged in — set your address');
         goAddressFromSite();
       } else { initHome(); }
-    } else if(res.error==='NOT_REGISTERED'){swapAuth();$('authErr').textContent='Email not found — create your account';
+    } else if(/^NOT_REGISTERED/.test(res.error||'')){if(!isReg)swapAuth();$('authErr').textContent='No account found for this email — create your account below';
     } else {$('authErr').textContent=res.error||'Failed';}
   }).catch(function(){$('authBtn').disabled=false;$('authErr').textContent='Network error';});
 }
@@ -678,7 +681,38 @@ function calcTotal(){
 }
 
 // ── ADDRESS ──
-var slots=['Now / ASAP','Morning','Afternoon','Evening'];var selSlot='Now / ASAP';
+// Booking time: Now/ASAP, or a preferred window (Morning / Afternoon / Evening) on a chosen day
+var SLOTS=[
+  {k:'Now / ASAP',lbl:'⚡ Now / ASAP',sub:'Nearest free provider'},
+  {k:'Morning',lbl:'🌅 Morning',sub:'8 AM – 12 PM',from:8,to:12},
+  {k:'Afternoon',lbl:'☀️ Afternoon',sub:'12 – 4 PM',from:12,to:16},
+  {k:'Evening',lbl:'🌇 Evening',sub:'4 – 8 PM',from:16,to:20}
+];
+var slots=SLOTS.map(function(x){return x.k;});var selSlot='Now / ASAP';var selDay=0;
+function _ymd(off){var d=new Date();d.setDate(d.getDate()+off);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function _hrLbl(h){return (h%12||12)+' '+(h<12?'AM':'PM');}
+function _slotOpen(sl,day){return !sl.to||day>0||new Date().getHours()<sl.to-1;} // today: window must still have ≥1 h left
+function renderSlots(){
+  var h='';SLOTS.forEach(function(sl){
+    var open=_slotOpen(sl,selDay)||sl.k==='Now / ASAP';
+    h+='<div class="chip'+(sl.k===selSlot?' on':'')+(open?'':' disabled')+'" style="'+(open?'':'opacity:.45;')+'text-align:center;line-height:1.25" onclick="'+(open?'pickSlot(\''+sl.k+'\')':'')+'">'
+      +sl.lbl+'<div style="font-size:10.5px;font-weight:600;opacity:.8">'+sl.sub+'</div></div>';
+  });
+  $('slotRow').innerHTML=h;
+  var cur=SLOTS.find(function(x){return x.k===selSlot;})||SLOTS[0];
+  var asap=cur.k==='Now / ASAP';
+  $('slotWhen').classList.toggle('hide',asap);
+  if(!asap){
+    var dn=['Today','Tomorrow',new Date(Date.now()+2*864e5).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})];
+    var dh='';dn.forEach(function(n,i){dh+='<div class="chip'+(i===selDay?' on':'')+'" onclick="pickDay('+i+')">'+n+'</div>';});
+    $('dateRow').innerHTML=dh;
+    var keep=$('bHour').value,oh='<option value="">Any time in this window</option>';
+    for(var hr=cur.from;hr<cur.to;hr++){if(selDay===0&&hr<=new Date().getHours())continue;oh+='<option'+(_hrLbl(hr)===keep?' selected':'')+'>'+_hrLbl(hr)+'</option>';}
+    $('bHour').innerHTML=oh;
+  }
+  $('slotNote').textContent=asap?'⚡ We will send the nearest available provider right away.':('🗓️ '+(selDay===0?'Today':selDay===1?'Tomorrow':_ymd(selDay))+', '+cur.sub+' — the provider confirms the exact time.');
+}
+function pickDay(i){selDay=i;var cur=SLOTS.find(function(x){return x.k===selSlot;});if(cur&&!_slotOpen(cur,selDay))selSlot='Now / ASAP';renderSlots();}
 function goAddress(){
   var anyTaskGroup=(curSvc.groups||[]).some(function(g){return g.style==='label';});
   var anyTask=Object.keys(sel.tasks).some(function(k){return sel.tasks[k];});
@@ -694,15 +728,14 @@ function goAddress(){
       }
     }).catch(function(){});
   }
-  var h='';slots.forEach(function(s){h+='<div class="chip'+(s===selSlot?' on':'')+'" onclick="pickSlot(\''+s+'\')">'+s+'</div>';});
-  $('slotRow').innerHTML=h;
+  renderSlots();
   show('pgAddr');
   selNearby='';
   if($('nbSearch')){$('nbSearch').style.display='';$('nbSearch').value='';}
   if($('nbList'))$('nbList').style.display='';
   captureGPS(true); // always fetch fresh precise location
 }
-function pickSlot(s){selSlot=s;var h='';slots.forEach(function(x){h+='<div class="chip'+(x===selSlot?' on':'')+'" onclick="pickSlot(\''+x+'\')">'+x+'</div>';});$('slotRow').innerHTML=h;}
+function pickSlot(s){selSlot=s;if(s!=='Now / ASAP'){var cur=SLOTS.find(function(x){return x.k===s;});if(selDay===0&&!_slotOpen(cur,0))selDay=1;}renderSlots();}
 function captureGPS(force){
   if(gps.lat&&!force){gpsOk('');return;}
   $('locOverlay').classList.remove('hide');
@@ -754,6 +787,21 @@ function captureGPS(force){
     loadNearbyPlaces(gps.lat,gps.lng);
     api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
   }
+}
+// Customer pins the service location on a map (more exact than GPS alone)
+function pinOnMap(){
+  if(!window.HS_MapPicker){toast('Map not available');return;}
+  HS_MapPicker.open({
+    lat:gps.lat||0,lng:gps.lng||0,title:'Pin your service location',confirmText:'Use this location',
+    onConfirm:function(r){
+      gps.lat=r.lat;gps.lng=r.lng;
+      if(r.address)$('bAddr').value=r.address;
+      gpsOk(' — pinned on map ✓');
+      $('locOverlay').classList.add('hide');
+      loadNearbyPlaces(gps.lat,gps.lng);
+      api('customers.php','update',{lat:gps.lat,lng:gps.lng}).catch(function(){});
+    }
+  });
 }
 function gpsOk(extra){var b=$('gpsBanner');b.className='gps-banner gps-ok';b.textContent='✅ Location updated'+(extra||'');}
 var selNearby='';
@@ -905,7 +953,9 @@ function createBooking(){
     svc_id:curSvc.id,svc_name:curSvc.name,svc_icon:curSvc.icon,
     address:addr,city:city,
     lat:gps.lat,lng:gps.lng,
-    slot_time:selSlot+(($('bHour')&&$('bHour').value)?(' · '+$('bHour').value):''),notes:taskNames.join(', '),
+    slot_date:selSlot==='Now / ASAP'?_ymd(0):_ymd(selDay),
+    slot_time:selSlot==='Now / ASAP'?'Now / ASAP':((SLOTS.find(function(x){return x.k===selSlot;})||{}).lbl.replace(/^\S+\s/,'')+' ('+(SLOTS.find(function(x){return x.k===selSlot;})||{}).sub+')'+(($('bHour')&&$('bHour').value)?(' · '+$('bHour').value):'')),
+    notes:taskNames.join(', '),
     contact_name:ME.name||'',contact_phone:ph,
     est_price:(siteBooking&&siteBooking.price)?siteBooking.price:calcTotalSafe(),
     summary:taskNames
@@ -1018,10 +1068,41 @@ function detectChange(b){
   _lastStatus=st;_lastPayStatus=b.payment_status;_lastReviewReq=b.review_requested?1:0;
 }
 
+// 5-minute window to accept a quote (server releases the provider after that)
+var quoteDeadline=0,quoteTick=null;
+// "2026-10-20 10:42:05" (server, IST) → "10:42 AM" (+ date if not today)
+function fmtTime(v){
+  if(!v)return '';
+  var d=new Date(String(v).replace(' ','T')+'+05:30');if(isNaN(d))return esc(v);
+  var t=d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'});
+  var today=new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'});
+  var day=d.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'});
+  return day===today?t:(d.toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'Asia/Kolkata'})+', '+t);
+}
+function fmtDur(a,b){
+  var s=(new Date(String(b).replace(' ','T')+'+05:30')-new Date(String(a).replace(' ','T')+'+05:30'))/1000;
+  if(!(s>=0))return '';var h=Math.floor(s/3600),m=Math.round((s%3600)/60);
+  return (h?h+' h ':'')+m+' min';
+}
+setInterval(function(){var e=$('workElapsed');if(e)e.textContent=' · '+fmtDur(e.getAttribute('data-start'),new Date(Date.now()+19800000).toISOString().slice(0,19).replace('T',' '))+' so far';},30000);
+function setQuoteDeadline(b){
+  var live=(b.status==='price_quoted'||b.status==='negotiation_final')&&b.quote_expires_in!=null;
+  quoteDeadline=live?Date.now()+parseInt(b.quote_expires_in,10)*1000:0;
+  if(live&&!quoteTick){quoteTick=setInterval(updQuoteCountdown,1000);}
+  if(!live){clearInterval(quoteTick);quoteTick=null;}
+  updQuoteCountdown();
+}
+function updQuoteCountdown(){
+  var el=$('qCountdown');if(!el||!quoteDeadline)return;
+  var left=Math.max(0,Math.round((quoteDeadline-Date.now())/1000));
+  if(left<=0){el.textContent='⌛ Quote expired — finding another provider for you…';el.style.color='#b91c1c';return;}
+  el.textContent='⏳ Confirm within '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0')+' — otherwise we find another provider';
+  el.style.color=left<=60?'#b91c1c':'#b45309';
+}
 function checkBooking(){
   api('bookings.php','get&id='+activeBookingId).then(function(res){
     if(!res.success)return;
-    var b=res.data;detectChange(b);renderBookingState(b);
+    var b=res.data;detectChange(b);renderBookingState(b);setQuoteDeadline(b);
   }).catch(function(){});
 }
 function renderTimeline(st){
@@ -1051,7 +1132,7 @@ function renderTimeline(st){
 var _lastRenderKey='';
 function renderBookingState(b){
   var st=b.status;
-  var key=st+'|'+(b.start_otp||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.review_requested||0)+'|'+(b.rating||'');
+  var key=st+'|'+(b.start_otp||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.cash_allowed||0)+'|'+(b.review_requested||0)+'|'+(b.rating||'');
   if(key===_lastRenderKey)return;
   _lastRenderKey=key;
   renderTimeline(st);
@@ -1079,6 +1160,7 @@ function renderBookingState(b){
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">'+distPill+ratePill+'</div></div></div>'
       +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+esc(b.provider_phone)+'</div>':'')
       +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
+      +'<div id="qCountdown" style="font-size:13px;font-weight:800;color:#b45309;background:#fff5e6;border-radius:10px;padding:7px 10px;margin-bottom:10px">⏳ Confirm within 5:00</div>'
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(st==='negotiation_final'?'This is the provider\'s final price. Confirm to book, or decline to find another.':'Confirm to book, send a counter offer, or decline to find another.')+'</div>'
       +'<button class="btn green" onclick="confirmBooking()">✓ Confirm Booking · ₹'+price+'</button>'
@@ -1111,13 +1193,18 @@ function renderBookingState(b){
     var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+encodeURI(b.provider_photo)+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+esc((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
     a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">🧰</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Work In Progress</div><div style="font-size:13px;color:var(--muted)">Your provider is working on the job</div></div>'
       +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+esc(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+'</div></div><div style="font-size:19px;font-weight:900;color:var(--teal)">₹'+price+'</div></div>'
-      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+esc(b.provider_phone)+'">📞 Call Provider</a></div>':'')+'</div>'
+      +'<div style="margin-top:12px"><button class="btn" disabled style="background:#e5e9ea;color:#7b8a8e;cursor:not-allowed">📞 Calling off — provider is working</button></div></div>'
+      +(b.started_at?'<div class="card" style="font-size:13px">🕐 Work started at <b>'+fmtTime(b.started_at)+'</b><span id="workElapsed" data-start="'+esc(b.started_at)+'" style="color:var(--muted)"></span></div>':'')
       +compBlock;
   } else if(st==='completed'){
     if(b.payment_status==='paid')clearInterval(pollTimer);
     $('radarActive').classList.remove('hide');$('radarSearch').classList.add('hide');$('radarOffer').classList.add('hide');
     var amt=b.amount||b.confirmed_price||b.final_price||b.quoted_price||0;
     var paid=(b.payment_status==='paid');
+    var timesBlock=(b.started_at||b.completed_at)?('<div class="card" style="font-size:13px;line-height:1.7">'
+      +(b.started_at?'▶️ Work started: <b>'+fmtTime(b.started_at)+'</b><br>':'')
+      +(b.completed_at?'⏹️ Work closed: <b>'+fmtTime(b.completed_at)+'</b>':'')
+      +((b.started_at&&b.completed_at)?'<br>⏱️ Duration: <b>'+fmtDur(b.started_at,b.completed_at)+'</b>':'')+'</div>'):'';
     // Payment section
     var payBlock;
     if(!paid){
@@ -1125,7 +1212,10 @@ function renderBookingState(b){
         +'<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Pay ₹'+amt+' to '+esc(b.provider_name||'your provider')+'</div>'
         +'<button class="btn green" onclick="payNow()">💳 Pay ₹'+amt+' Online</button>'
         +'<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">UPI · Cards · Netbanking · Wallets</div>'
-        +'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;border-top:1px solid #eee;padding-top:10px">💵 Paying in cash? Hand the cash to your provider — they will confirm it in their app and this booking will update automatically.</div></div>';
+        +(b.cash_allowed==1
+          ?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;border-top:1px solid #eee;padding-top:10px">💵 Paying in cash? Hand the cash to your provider — they will confirm it in their app and this booking will update automatically.</div>'
+          :'<div style="font-size:12px;color:#9a4c00;text-align:center;margin-top:10px;border-top:1px solid #eee;padding-top:10px">💳 Online payment only for this booking — cash is not available.</div>')
+        +'</div>';
     } else {
       payBlock='<div class="card" style="text-align:center;border:2px solid var(--green)"><div style="font-size:15px;font-weight:800;color:var(--green)">✅ Payment Done · ₹'+amt+'</div></div>';
     }
@@ -1145,7 +1235,7 @@ function renderBookingState(b){
       rateBlock='<div class="card" style="text-align:center;font-size:14px">⭐ You rated this '+b.rating+'/5 — thank you!</div>';
     }
     $('radarActive').innerHTML='<div class="card" style="text-align:center"><div style="font-size:42px">🎉</div><div style="font-size:17px;font-weight:800;margin:6px 0">Service Completed!</div><div style="font-size:14px;color:var(--muted)">'+esc(b.provider_name||'')+' · ₹'+amt+'</div></div>'
-      +payBlock+rateBlock
+      +timesBlock+payBlock+rateBlock
       +'<div style="height:8px"></div><button class="btn ghost" onclick="goHomeFresh()">← Back to Home</button>';
   } else if(st==='cancelled'){
     clearInterval(pollTimer);localStorage.removeItem('hs_active_bk');activeBookingId='';
@@ -1312,7 +1402,7 @@ function renderProfile(){
 
     +'<div class="sec-title">ℹ️ More</div>'
     +'<div class="card" style="padding:6px 16px">'
-    +'<div class="pf-row" onclick="location.href=\'mailto:info@hamaraservice.com\'"><span>📧 Contact Support</span><span>›</span></div>'
+    +'<div class="pf-row" onclick="HS_support(\'customer\',ME.id?(\'Customer ID \'+ME.id+\'.\'):\'\')"><span>💬 WhatsApp Support</span><span>›</span></div>'
     +'<div class="pf-row" onclick="location.href=\'https://hamaraservice.com\'"><span>🌐 Visit Website</span><span>›</span></div>'
     +'<div class="pf-row" style="border:none" onclick="logout()"><span style="color:var(--red);font-weight:800">🚪 Logout</span><span>›</span></div>'
     +'</div>'
@@ -1352,6 +1442,8 @@ function openBkDetail(id){
       +(b.notes?'<div class="dt-row"><span>Tasks</span><span style="text-align:right;max-width:60%">'+esc(b.notes)+'</span></div>':'')
       +'<div class="dt-row"><span>Address</span><span style="text-align:right;max-width:60%">'+esc(b.address||'')+'</span></div>'
       +(b.slot_time?'<div class="dt-row"><span>Time</span><span>'+esc(b.slot_time)+'</span></div>':'')
+      +(b.started_at?'<div class="dt-row"><span>Work started</span><span>'+fmtTime(b.started_at)+'</span></div>':'')
+      +(b.completed_at?'<div class="dt-row"><span>Work closed</span><span>'+fmtTime(b.completed_at)+(b.started_at?' ('+fmtDur(b.started_at,b.completed_at)+')':'')+'</span></div>':'')
       +(b.provider_name?'<div class="dt-row"><span>Provider</span><span>'+esc(b.provider_name)+(b.provider_phone?' · <a href="tel:'+esc(b.provider_phone)+'">📞</a>':'')+'</span></div>':'')
       +((b.confirmed_price>0||b.quoted_price>0)?'<div class="dt-row"><span>Price</span><b style="color:var(--teal);font-size:16px">₹'+(b.confirmed_price||b.final_price||b.quoted_price)+'</b></div>':'')
       +(b.start_otp&&b.status==='confirmed'?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Start OTP — share when provider arrives</div><div class="otp-big">'+esc(b.start_otp)+'</div>':'')
@@ -1433,8 +1525,7 @@ function goAddressFromSite(){
       if(res.success&&res.data){ME=Object.assign(ME,res.data);localStorage.setItem('hs_cust_me',JSON.stringify(ME));if(!$('bPhone').value)$('bPhone').value=ME.phone||'';}
     }).catch(function(){});
   }
-  var h='';slots.forEach(function(s){h+='<div class="chip'+(s===selSlot?' on':'')+'" onclick="pickSlot(\''+s+'\')">'+s+'</div>';});
-  $('slotRow').innerHTML=h;
+  renderSlots();
   show('pgAddr');
   selNearby='';
   if($('nbSearch')){$('nbSearch').style.display='';$('nbSearch').value='';}

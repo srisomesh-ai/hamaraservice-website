@@ -18,6 +18,7 @@
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
+require_once __DIR__ . '/razorpay.php';
 setCorsHeaders();
 
 $action = $_GET['action'] ?? '';
@@ -72,6 +73,38 @@ switch ($action) {
     $db->commit();
 
     ok(['id' => $payoutId, 'status' => 'pending', 'amount' => $amount]);
+  }
+
+  // ── WALLET TOP-UP (provider pays the platform via Razorpay) ──
+  case 'topup_order': {
+    $prov = requireProvider(true);
+    $b = getBody();
+    $amount = (int)($b['amount'] ?? 0);
+    if ($amount < 100 || $amount > 50000) err('Top-up amount must be between ₹100 and ₹50,000');
+    try {
+      $order = rzpRequest('POST', '/v1/orders', [
+        'amount' => $amount * 100, 'currency' => 'INR',
+        'receipt' => substr('TOP-' . $prov['id'] . '-' . time(), 0, 40),
+        'notes' => ['type' => 'wallet_topup', 'provider_id' => $prov['id']],
+      ]);
+    } catch (Throwable $e) { err('Payment gateway error: ' . $e->getMessage(), 502); }
+    $db->prepare("INSERT INTO wallet_topups (provider_id, amount, razorpay_order_id) VALUES (?, ?, ?)")
+       ->execute([$prov['id'], $amount, $order['id']]);
+    ok(['order_id' => $order['id'], 'amount' => $amount * 100, 'currency' => 'INR', 'key_id' => RZP_KEY_ID]);
+  }
+
+  case 'topup_confirm': {
+    $prov = requireProvider(true);
+    $b = getBody();
+    $oid = $b['razorpay_order_id'] ?? ''; $pid = $b['razorpay_payment_id'] ?? ''; $sig = $b['razorpay_signature'] ?? '';
+    if ($oid === '' || $pid === '' || $sig === '') err('Missing payment fields');
+    $t = $db->prepare("SELECT * FROM wallet_topups WHERE razorpay_order_id = ? AND provider_id = ?");
+    $t->execute([$oid, $prov['id']]);
+    $top = $t->fetch();
+    if (!$top) err('Top-up not found', 404);
+    if (!rzpVerifySignature($oid, $pid, $sig)) err('Invalid payment signature');
+    creditTopup($db, $top, $pid);
+    ok(['credited' => (int)$top['amount']]);
   }
 
   case 'balance': {

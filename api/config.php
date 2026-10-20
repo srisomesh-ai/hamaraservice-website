@@ -64,6 +64,8 @@ define('PUSH_KEY', hsCfg('PUSH_KEY'));
 // Business rules
 define('DEFAULT_COMMISSION_PCT', (int)hsCfg('DEFAULT_COMMISSION_PCT', 15));
 define('MIN_JOB_MINUTES',        (int)hsCfg('MIN_JOB_MINUTES', 5));
+// Customer must accept a quote / final offer within this many minutes
+define('QUOTE_TTL_MIN',          (int)hsCfg('QUOTE_TTL_MIN', 5));
 // A provider whose balance (cash commission owed) drops below this cannot accept new jobs
 define('CASH_DUE_LIMIT',         (int)hsCfg('CASH_DUE_LIMIT', -1000));
 
@@ -72,6 +74,15 @@ define('SMTP_HOST', hsCfg('SMTP_HOST', 'smtp.hostinger.com'));
 define('SMTP_PORT', (int)hsCfg('SMTP_PORT', 587));
 define('SMTP_USER', hsCfg('SMTP_USER'));
 define('SMTP_PASS', hsCfg('SMTP_PASS'));
+
+// Public site settings (served by api/site.php — safe to expose)
+define('SUPPORT_WHATSAPP',  preg_replace('/\D/', '', hsCfg('SUPPORT_WHATSAPP', '')));   // e.g. 919876543210
+define('SUPPORT_EMAIL',     hsCfg('SUPPORT_EMAIL', 'info@hamaraservice.com'));
+// App links. Empty = not published yet → web login stays available.
+define('CUSTOMER_APP_URL',  hsCfg('CUSTOMER_APP_URL', ''));   // Play Store / APK link
+define('PROVIDER_APP_URL',  hsCfg('PROVIDER_APP_URL', ''));
+// 'web' = website login buttons open the web app; 'app' = they send users to the app links
+define('WEB_LOGIN_MODE',    hsCfg('WEB_LOGIN_MODE', 'web'));
 
 // Allowed browser origins for CORS
 define('ALLOWED_ORIGINS', [

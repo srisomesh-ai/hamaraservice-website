@@ -730,7 +730,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <div class="sp-div-line"></div>
   </div>
   <div class="sp-or-m"><span>OR</span></div>
-  <div class="sp-side sp-provide" onclick="window.location.href='provider-portal.html'">
+  <div class="sp-side sp-provide" onclick="HS_login('provider')">
     <div class="sp-content">
       <div class="sp-icon">💼</div>
       <div class="sp-label">For Professionals</div>
@@ -764,12 +764,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         👤 Login <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="login-drop" id="loginDrop">
-        <a class="login-drop-item" href="/app/customer.html">
+        <a class="login-drop-item" href="/app/customer.html" onclick="HS_login('customer');return false;">
           <span class="ldi-icon">👤</span>
           <div><div class="ldi-title">Customer Login</div><div class="ldi-sub">Book home services</div></div>
         </a>
         <div class="login-drop-sep"></div>
-        <a class="login-drop-item" href="provider-portal.html">
+        <a class="login-drop-item" href="/app/provider.html" onclick="HS_login('provider');return false;">
           <span class="ldi-icon">🔧</span>
           <div><div class="ldi-title">Service Provider</div><div class="ldi-sub">Manage your jobs</div></div>
         </a>
@@ -952,8 +952,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
           <div class="perk"><div class="perk-ic">🛡️</div>Insurance & safety support included</div>
         </div>
         <div class="provider-cta-btns">
-          <a class="btn-primary" href="provider-portal.html?tab=register">Register as Provider →</a>
-          <a class="btn-ghost" href="provider-portal.html">Already a Provider? Login</a>
+          <a class="btn-primary" href="/app/provider.html?register=1" onclick="HS_login('provider','?register=1');return false;">Register as Provider →</a>
+          <a class="btn-ghost" href="/app/provider.html" onclick="HS_login('provider');return false;">Already a Provider? Login</a>
         </div>
       </div>
       <div class="provider-right">
@@ -1092,20 +1092,30 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     <span>Bookings</span>
   </a>
-  <a class="mob-nav-item" href="/app/customer.html" onclick="mobNavActive(this)">
+  <a class="mob-nav-item" href="/app/customer.html" onclick="mobNavActive(this);HS_login('customer');return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span>Account</span>
   </a>
-  <a class="mob-nav-item" href="provider-portal.html" onclick="mobNavActive(this)">
+  <a class="mob-nav-item" href="/app/provider.html" onclick="mobNavActive(this);HS_login('provider');return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
     <span>Provider</span>
   </a>
 </nav>
 
+<script src="/js/hs-site.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // Customer accounts, bookings and payments live in the web app (/app/customer.html)
 // backed by the MySQL API. This page only reads the public catalog + prices.
+// "₹300 – ₹800 · 3 pros" when providers set prices, else "from ₹X"
+function priceTagHtml(s){
+  var f = function(n){ return '₹' + Number(n).toLocaleString('en-IN'); };
+  if (s.provRange) {
+    var r = s.provRange;
+    return f(r.min) + (r.max > r.min ? ' – ' + f(r.max) : '') + ' <span style="font-weight:600;opacity:.75;font-size:.85em">· ' + r.n + ' pro' + (r.n > 1 ? 's' : '') + '</span>';
+  }
+  return s.price > 0 ? 'from ' + f(s.price) : 'Price on request';
+}
 function escHtml(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function currentCustomer(){
   try { if (!localStorage.getItem('hs_cust_token')) return null; return JSON.parse(localStorage.getItem('hs_cust_me') || 'null'); } catch (e) { return null; }
@@ -1188,6 +1198,9 @@ function loadAndRenderCatalog() {
           var p = ranges[svcId] && ranges[svcId].admin_prices;
           var svc = HS_CATALOG.find(function(s){ return s.id === svcId; });
           if (!svc) return;
+          // Providers' own price range (approved providers who set a price)
+          var rr = ranges[svcId];
+          if (rr && rr.provider_count > 0 && rr.min > 0) svc.provRange = { min: rr.min, max: rr.max, n: rr.provider_count };
           if (!p) { if (ranges[svcId].min > 0) svc.price = ranges[svcId].min; return; }
           // Try base price first (cleaning/multi-option services)
           if (p.base != null && typeof p.base !== 'object') {
@@ -1507,8 +1520,7 @@ document.addEventListener('click', function(e){
 });
 
 function providerLoginClick(){
-  // Provider portal handles both login and registration in one place
-  window.location.href = 'provider-portal.html';
+  HS_login('provider');
 }
 
 // ── USER WIDGET ────────────────────────────────────────────────
@@ -1537,7 +1549,7 @@ function toggleUserMenu(){
 }
 
 function showUserProfile(){
-  window.location.href='/app/customer.html';
+  HS_login('customer');
 }
 
 // Close user dropdown on outside click
@@ -1591,7 +1603,7 @@ function renderServicesGrid() {
       + '<div class="svc-card-img" data-icon="' + icon + '">' + (s.image ? '<img src="'+escHtml(s.image)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.parentNode.textContent=this.parentNode.getAttribute(\'data-icon\')||\'🔧\'">' : icon) + '</div>'
       + '<div class="svc-card-info">'
         + '<div class="svc-name">' + escHtml(s.name) + '</div>'
-        + '<div class="svc-price-tag" id="ptag-'+escHtml(s.id)+'">' + (s.price > 0 ? 'from ₹'+Number(s.price).toLocaleString('en-IN') : '…') + '</div>'
+        + '<div class="svc-price-tag" id="ptag-'+escHtml(s.id)+'">' + priceTagHtml(s) + '</div>'
       + '</div>'
       + '<button class="svc-book">View Details →</button>'
       + '</div>';

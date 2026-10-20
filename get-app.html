@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Get the App - Hamara Service</title>
+<style>
+:root{--teal:#0f4c5c;--orange:#f26b1d;--ink:#13262b;--muted:#5a6b70;--bg:#f4f8f9}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);padding:16px}
+.wrap{max-width:440px;margin:24px auto}
+.head{text-align:center;margin-bottom:18px}
+.head h1{font-size:22px;margin:10px 0 4px}.head p{color:var(--muted);font-size:14px;margin:0}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 6px 24px rgba(15,76,92,.08)}
+.card h2{font-size:17px;margin:0 0 4px}.card p{font-size:13px;color:var(--muted);margin:0 0 14px}
+.btn{display:block;text-align:center;text-decoration:none;font-weight:800;border-radius:12px;padding:13px;font-size:15px;margin-top:8px}
+.btn.app{background:var(--orange);color:#fff}.btn.web{background:#fff;color:var(--teal);border:2px solid var(--teal)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div style="font-size:44px">&#128241;</div>
+    <h1>Hamara Service works best in the app</h1>
+    <p>Live job alerts, OTPs and payments — right on your phone.</p>
+  </div>
+  <div class="card" id="cCard">
+    <h2>&#127968; For customers</h2>
+    <p>Book trusted home services near you.</p>
+    <a class="btn app hide" id="cApp" href="#">&#11015;&#65039; Download the Customer App</a>
+    <a class="btn web" href="/app/customer.html">Continue on website</a>
+  </div>
+  <div class="card" id="pCard">
+    <h2>&#128119; For service providers</h2>
+    <p>Get jobs near you and grow your earnings.</p>
+    <a class="btn app hide" id="pApp" href="#">&#11015;&#65039; Download the Provider App</a>
+    <a class="btn web" href="/app/provider.html">Continue on website</a>
+  </div>
+</div>
+<script src="/js/hs-site.js"></script>
+<script>
+(function(){
+  var who=(location.search.match(/[?&]for=(customer|provider)/)||[])[1];
+  if(who==='customer')document.getElementById('pCard').style.display='none';
+  if(who==='provider')document.getElementById('cCard').style.display='none';
+  HS_site(function(c){
+    if(c.customer_app_url){var a=document.getElementById('cApp');a.href=c.customer_app_url;a.classList.remove('hide');}
+    if(c.provider_app_url){var b=document.getElementById('pApp');b.href=c.provider_app_url;b.classList.remove('hide');}
+  });
+})();
+</script>
+</body>
+</html>

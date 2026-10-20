@@ -301,6 +301,7 @@ table { min-width: 600px; }
     <div class="nav-item" data-page="services"><span class="nav-icon">&#128295;</span>Service Catalog</div>
     <div class="nav-item" data-page="customers"><span class="nav-icon">&#128100;</span>Customers</div>
     <div class="nav-item" data-page="notify"><span class="nav-icon">&#128276;</span>Push Notifications</div>
+    <div class="nav-item" data-page="reset"><span class="nav-icon">&#129529;</span>Reset Test Data</div>
   </nav>
   <div class="sb-footer"><button class="logout-btn" id="logoutBtn" type="button">&#128682; Logout</button></div>
 </div>
@@ -311,6 +312,7 @@ table { min-width: 600px; }
       <div class="topbar-title" id="pageTitle">&#128202; Dashboard</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
+      <span id="liveTag" title="Data refreshes automatically every 15 seconds" style="font-size:12px;color:#1b7a3a;font-weight:700;white-space:nowrap">&#9679; Live</span>
       <button class="btn outline sm" id="refreshBtn" type="button">&#128260; Refresh</button>
       <div class="topbar-date" id="topbarDate"></div>
     </div>
@@ -424,7 +426,7 @@ table { min-width: 600px; }
       </div>
     </div>
     <div id="ordersErr"></div>
-    <div class="table-wrap"><table><thead><tr><th>Booking</th><th>Customer</th><th>Provider</th><th>Service</th><th>City</th><th>Created</th><th>Amount</th><th>Commission</th><th>Status</th><th>Payment</th><th>Action</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Booking</th><th>Customer</th><th>Provider</th><th>Service</th><th>City</th><th>Created</th><th>Work started</th><th>Work closed</th><th>Amount</th><th>Commission</th><th>Status</th><th>Payment</th><th>Action</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
   </div>
 
   <!-- COMMISSION -->
@@ -464,6 +466,25 @@ table { min-width: 600px; }
   </div>
 
   <!-- PUSH NOTIFICATIONS -->
+  <div class="page" id="page-reset">
+    <div class="card" style="max-width:640px;border:2px solid var(--brand)">
+      <div class="card-title">&#129529; Delete test data before launch</div>
+      <div style="font-size:13.5px;line-height:1.6;margin:6px 0 14px">This permanently deletes data from the live database. It <b>cannot be undone</b>.
+        Services, prices, commission settings and your admin login are never touched.
+        <br>Tip: take a database backup in Hostinger (Databases &rarr; Backups) first.</div>
+      <div id="resetCounts" style="font-size:13px;margin-bottom:12px;color:var(--muted)">Loading current counts…</div>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:14px"><input type="checkbox" id="rsBk" checked style="margin-top:3px">
+        <span><b>Bookings, payments, reviews, payouts, wallet top-ups</b><br><span class="muted">Provider earnings, wallets and ratings are reset to zero.</span></span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:14px"><input type="checkbox" id="rsCu">
+        <span><b>Customer accounts</b><br><span class="muted">Their logins stay in Firebase; they get a fresh profile if they log in again.</span></span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;font-size:14px"><input type="checkbox" id="rsPr">
+        <span><b>Provider accounts</b><br><span class="muted">Leave unticked to keep your real, approved providers.</span></span></label>
+      <div class="ffield"><label>Type <b>DELETE TEST DATA</b> to confirm</label><input id="rsConfirm" autocomplete="off" placeholder="DELETE TEST DATA"></div>
+      <button class="btn danger" id="rsBtn" type="button" style="margin-top:10px">&#128465;&#65039; Delete selected data</button>
+      <div id="rsResult" style="margin-top:12px;font-size:13.5px"></div>
+    </div>
+  </div>
+
   <div class="page" id="page-notify">
     <div class="notif-grid">
       <div class="card">
@@ -579,12 +600,13 @@ function unlock(){
 // ── navigation ────────────────────────────────────────
 var TITLES = { dashboard:'&#128202; Dashboard', approvals:'&#9989; Approvals', providers:'&#128119; All Providers',
   payments:'&#128184; Payouts &amp; Finance', orders:'&#128203; All Bookings', commission:'&#128185; Commission',
-  services:'&#128295; Service Catalog', customers:'&#128100; Customers', notify:'&#128276; Push Notifications' };
+  services:'&#128295; Service Catalog', customers:'&#128100; Customers', notify:'&#128276; Push Notifications',
+  reset:'&#129529; Reset Test Data' };
 function showPage(name){
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-page') === name); });
   document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('active', p.id === 'page-' + name); });
   $('pageTitle').innerHTML = TITLES[name] || '';
-  var loaders = { commission: loadCommission, services: loadCatalog, customers: loadCustomers, orders: loadOrders, payments: loadPayments };
+  var loaders = { commission: loadCommission, services: loadCatalog, customers: loadCustomers, orders: loadOrders, payments: loadPayments, reset: loadResetCounts };
   if (loaders[name]) safe(loaders[name], name)();
 }
 document.querySelectorAll('.nav-item').forEach(function(n){ n.addEventListener('click', function(){ showPage(n.getAttribute('data-page')); }); });
@@ -613,6 +635,61 @@ function refreshAll(){
   var active = document.querySelector('.page.active');
   if (active && active.id === 'page-commission') safe(loadCommission,'commission')();
   if (active && active.id === 'page-services') safe(loadCatalog,'catalog')();
+  if (active && active.id === 'page-orders') safe(loadOrders,'orders')();
+  var t = $('liveTag'); if (t) t.innerHTML = '&#9679; Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+// ── reset test data ──
+function loadResetCounts(){
+  return api('admin.php?action=data_counts').then(function(c){
+    $('resetCounts').innerHTML = 'Currently: <b>' + esc(c.bookings) + '</b> bookings · <b>' + esc(c.reviews) + '</b> reviews · <b>'
+      + esc(c.payouts) + '</b> payouts · <b>' + esc(c.customers) + '</b> customers · <b>' + esc(c.providers) + '</b> providers';
+  }).catch(function(e){ if (!(e instanceof AuthError)) $('resetCounts').textContent = 'Could not load counts: ' + e.message; });
+}
+$('rsBtn').addEventListener('click', function(){
+  var body = { confirm: $('rsConfirm').value.trim(), bookings: $('rsBk').checked, customers: $('rsCu').checked, providers: $('rsPr').checked };
+  if (body.confirm !== 'DELETE TEST DATA') { toast('Type DELETE TEST DATA to confirm'); return; }
+  if ((body.customers || body.providers) && !body.bookings) { toast('Bookings must also be deleted when deleting customers or providers'); return; }
+  var what = [body.bookings && 'bookings & payments', body.customers && 'customers', body.providers && 'providers'].filter(Boolean).join(', ');
+  if (!confirm('Permanently delete ' + what + '? This cannot be undone.')) return;
+  $('rsBtn').disabled = true;
+  api('admin.php?action=wipe_test_data', body).then(function(r){
+    var d = (r && r.deleted) || {};
+    $('rsResult').innerHTML = '<div style="color:var(--green);font-weight:800">&#9989; Done.</div><div class="muted">'
+      + Object.keys(d).map(function(k){ return esc(k) + ': ' + esc(d[k]); }).join(' · ') + '</div>';
+    $('rsConfirm').value = ''; $('rsBtn').disabled = false; loadResetCounts(); refreshAll();
+  }).catch(function(e){ $('rsBtn').disabled = false; if (!(e instanceof AuthError)) toast('Failed: ' + e.message); });
+});
+
+// ── auto-refresh (every 15 s while the tab is visible) ──
+// Skipped while an input is focused or a popup is open so it never wipes
+// something the admin is typing; edit-heavy pages (commission, catalog,
+// push) are only refreshed by the button.
+var AUTO_MS = 15000, _seen = null;
+function autoRefresh(){
+  if (document.hidden || $('app').style.display === 'none') return;
+  var ae = document.activeElement;
+  if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+  if (document.querySelector('.modal.show')) return;
+  var active = document.querySelector('.page.active');
+  var editPage = active && /page-(commission|services|notify)/.test(active.id);
+  [ [loadProviders,'providers'], [loadBookingsForDash,'bookings'], [loadFinance,'finance'], [loadPayouts,'payouts'] ]
+    .forEach(function(x){ safe(x[0], x[1])(); });
+  if (!editPage && active && active.id === 'page-orders') safe(loadOrders,'orders')();
+  if (!editPage && active && active.id === 'page-customers') safe(loadCustomers,'customers')();
+  var t = $('liveTag'); if (t) t.innerHTML = '&#9679; Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(autoRefresh, AUTO_MS);
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) autoRefresh(); });
+
+// Toast when something new needs attention (new provider / payout request)
+function notifyNew(){
+  var pend = PROVIDERS.filter(function(p){ return p.status === 'pending' || p.status === 'review'; }).length;
+  var pay  = PAYOUTS.filter(function(p){ return p.status === 'pending'; }).length;
+  if (_seen && (pend > _seen.pend || pay > _seen.pay)) {
+    toast(pend > _seen.pend ? '\uD83D\uDD14 New provider registration waiting for approval' : '\uD83D\uDD14 New payout request');
+  }
+  _seen = { pend: pend, pay: pay };
 }
 
 // ── providers ─────────────────────────────────────────
@@ -620,7 +697,7 @@ function loadProviders(){
   return api('providers.php?action=list').then(function(list){
     PROVIDERS = Array.isArray(list) ? list : [];
     showErr('providersErr',''); showErr('approvalsErr','');
-    renderProviders(); renderApprovals(); renderDashStats();
+    renderProviders(); renderApprovals(); renderDashStats(); notifyNew();
   }).catch(function(e){
     if (e instanceof AuthError) return;
     showErr('providersErr', 'Could not load providers: ' + e.message);
@@ -745,6 +822,11 @@ function bookingRowCells(b){
     + '<td>' + esc(b.provider_name || '—') + '</td>'
     + '<td>' + esc(b.svc_icon || '') + ' ' + esc(b.svc_name) + '</td>';
 }
+function durMin(a, b){
+  var s = (new Date(String(b).replace(' ','T')) - new Date(String(a).replace(' ','T'))) / 1000;
+  if (!(s >= 0)) return ''; var h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
+  return (h ? h + ' h ' : '') + m + ' min';
+}
 function amountOf(b){ return num(b.amount) || num(b.confirmed_price) || num(b.final_price) || num(b.quoted_price) || num(b.est_price); }
 function payCell(b){
   if (b.payment_status === 'paid') return '<span class="badge paid">paid' + (b.payment_method ? ' · ' + esc(b.payment_method) : '') + '</span>';
@@ -783,10 +865,11 @@ function renderOrders(list){
   var cancellable = ['searching','price_quoted','negotiating','negotiation_final','confirmed'];
   $('ordersBody').innerHTML = rows.length ? rows.map(function(b){
     return '<tr>' + bookingRowCells(b) + '<td>' + esc(b.city || '') + '</td><td>' + dt(b.created_at) + '</td>'
+      + '<td>' + dt(b.started_at) + '</td><td>' + dt(b.completed_at) + (b.started_at && b.completed_at ? '<div class="muted">' + esc(durMin(b.started_at, b.completed_at)) + '</div>' : '') + '</td>'
       + '<td>' + money(amountOf(b)) + '</td><td>' + (b.commission_amt != null ? money(b.commission_amt) + ' <span class="muted">(' + esc(b.commission_pct || 0) + '%)</span>' : '—') + '</td>'
       + '<td>' + badge(b.status) + (b.cancel_reason ? '<div class="muted">' + esc(b.cancel_reason) + '</div>' : '') + '</td><td>' + payCell(b) + '</td>'
       + '<td>' + (cancellable.indexOf(b.status) >= 0 ? '<button class="abtn reject" data-bcancel="' + esc(b.id) + '">Cancel</button>' : '') + '</td></tr>';
-  }).join('') : emptyRow(11, 'No bookings found');
+  }).join('') : emptyRow(13, 'No bookings found');
 }
 $('orderSearch').addEventListener('input', function(){ renderOrders(); });
 $('orderReload').addEventListener('click', function(){ safe(loadOrders,'orders')(); });
@@ -814,7 +897,9 @@ function loadFinance(){
       + kpi('Provider earnings', money(FINANCE.provider_earnings))
       + kpi('Owed to providers (wallets)', money(FINANCE.provider_balances), 'var(--teal)')
       + kpi('Owed by providers (dues)', money(Math.abs(num(FINANCE.provider_dues))), 'var(--brand)')
-      + kpi('Completed, unpaid', esc(FINANCE.unpaid_completed || 0), 'var(--yellow)');
+      + kpi('Completed, unpaid', esc(FINANCE.unpaid_completed || 0), 'var(--yellow)')
+      + kpi('Payments mode', FINANCE.payments_mode === 'live' ? '&#128994; LIVE' : (FINANCE.payments_mode === 'test' ? '&#128992; TEST' : '&#9888;&#65039; Not set'),
+            FINANCE.payments_mode === 'live' ? 'var(--green)' : 'var(--brand)');
     $('financeKpis').innerHTML = h; $('financeKpis2').innerHTML = h;
   }).catch(function(e){
     if (e instanceof AuthError) return;
@@ -825,7 +910,7 @@ function loadFinance(){
 function loadPayouts(){
   return api('payouts.php?action=all').then(function(list){
     PAYOUTS = Array.isArray(list) ? list : [];
-    showErr('payoutsErr',''); renderPayouts();
+    showErr('payoutsErr',''); renderPayouts(); notifyNew();
   }).catch(function(e){ if (!(e instanceof AuthError)) showErr('payoutsErr', 'Could not load payouts: ' + e.message); });
 }
 function loadPayments(){ return Promise.all([loadPayouts(), loadFinance(), loadBookingsForDash()]); }

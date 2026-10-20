@@ -9,6 +9,7 @@
 // ============================================================
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
+require_once __DIR__ . '/razorpay.php';
 
 header('Content-Type: application/json');
 
@@ -36,6 +37,13 @@ function bookingByOrder($db, $orderId) {
 
 switch ($type) {
     case 'payment.captured': {
+        // Provider wallet top-up?
+        $t = $db->prepare("SELECT * FROM wallet_topups WHERE razorpay_order_id = ?");
+        $t->execute([$payment['order_id'] ?? '']);
+        if ($top = $t->fetch()) {
+            if ((int)($payment['amount'] ?? 0) === (int)$top['amount'] * 100) creditTopup($db, $top, $payment['id'] ?? '');
+            break;
+        }
         $bk = bookingByOrder($db, $payment['order_id'] ?? '');
         if (!$bk || $bk['status'] !== 'completed' || (int)$bk['settled'] === 1) break;
         $expected = ((int)$bk['amount'] ?: (int)$bk['confirmed_price']) * 100;

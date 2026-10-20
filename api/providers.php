@@ -99,9 +99,15 @@ switch ($action) {
       ':city'    => $city,
       ':lat'     => (float)($b['lat'] ?? 0),
       ':lng'     => (float)($b['lng'] ?? 0),
-      ':radius'  => (int)($b['radius_km'] ?? $b['radius'] ?? 5),
+      ':radius'  => max(1, min(50, (int)($b['radius_km'] ?? $b['radius'] ?? 5))),
       ':areas'   => json_encode($b['areas'] ?? []),
     ]);
+
+    // Pinned service base location (map picker during registration)
+    if (!empty($b['base_lat']) && !empty($b['base_lng'])) {
+      $db->prepare("UPDATE providers SET base_lat = ?, base_lng = ? WHERE id = ?")
+         ->execute([(float)$b['base_lat'], (float)$b['base_lng'], $id]);
+    }
 
     // Save services if provided
     if (!empty($b['services']) && is_array($b['services'])) {
@@ -126,7 +132,14 @@ switch ($action) {
     $provEmail = $b['email'] ?? '';
     $provPhone = $b['phone'] ?? '';
     $provCity  = $b['city']  ?? '';
-    $svcNames  = implode(', ', array_column($b['services'] ?? [], 'name'));
+    // List exactly the services saved for THIS provider (not the request
+    // payload or the whole catalog).
+    $sv = $db->prepare("SELECT COALESCE(NULLIF(ps.svc_name,''), s.name, ps.svc_id) AS n
+                        FROM provider_services ps LEFT JOIN services s ON s.id = ps.svc_id
+                        WHERE ps.provider_id = ? AND ps.enabled = 1 ORDER BY n");
+    $sv->execute([$id]);
+    $svcList  = $sv->fetchAll(PDO::FETCH_COLUMN);
+    $svcNames = $svcList ? implode(', ', $svcList) : '—';
 
     // 1. Email to admin
     $adminSubject = 'New Provider Registration — ' . $provName;
@@ -170,11 +183,10 @@ switch ($action) {
         . "Your application is under review. We will approve your account within 24-48 hours.
 
 "
-        . "Provider ID: $id
-
-"
+        . "Provider ID: $id\n"
+        . "Services you selected: $svcNames\n\n"
         . "Once approved, login at:
-https://hamaraservice.com/provider-portal.html
+https://hamaraservice.com/app/provider.html
 
 "
         . "Or use the HamaraService Provider App.
@@ -222,7 +234,7 @@ HamaraService Team";
     $stmt->execute([$email]);
     $provider = $stmt->fetch();
 
-    if (!$provider) err('Email or password incorrect');
+    if (!$provider) err('NOT_REGISTERED: No provider account found for this email. Please register first.', 404);
     // Check password — support both hashed and plain (migration)
     $pwdMatch = password_verify($pwd, $provider['password_hash']);
     if (!$pwdMatch && strpos($provider['password_hash'], '$2y$') !== 0
@@ -233,7 +245,7 @@ HamaraService Team";
          ->execute([$newHash, $provider['id']]);
       $pwdMatch = true;
     }
-    if (!$pwdMatch) err('Email or password incorrect');
+    if (!$pwdMatch) err('Incorrect password. Please try again.');
 
     // Status check
     if ($provider['status'] === 'suspended')
@@ -241,7 +253,7 @@ HamaraService Team";
     if ($provider['status'] === 'rejected')
       err('Application rejected. Contact support.');
     if ($provider['status'] === 'deleted')
-      err('Email or password incorrect');
+      err('NOT_REGISTERED: No provider account found for this email. Please register first.', 404);
 
     // Remove sensitive fields
     unset($provider['password_hash']);
@@ -278,7 +290,7 @@ HamaraService Team";
 
     $stmt = $db->prepare("
       SELECT id, name, phone, email, whatsapp, gender, experience, bio,
-             id_type, id_number, address, city, lat, lng, radius_km,
+             id_type, id_number, address, city, lat, lng, base_lat, base_lng, radius_km,
              upi_id, areas, photo,
              status, available, rating, review_count,
              total_bookings, completed_bookings, total_earned, pending_earned,
@@ -305,7 +317,8 @@ HamaraService Team";
     $fields = [];
     $params = [':id' => $prov['id']];
     $allowed = ['name','phone','whatsapp','gender','experience','bio',
-                'address','city','lat','lng','radius_km','available','upi_id','areas','photo'];
+                'address','city','lat','lng','radius_km','available','upi_id','areas','photo',
+                'base_lat','base_lng'];
     foreach ($allowed as $f) {
       if (isset($b[$f])) {
         $fields[]   = "$f = :$f";
@@ -314,6 +327,8 @@ HamaraService Team";
     }
     if (empty($fields)) err('Nothing to update');
     if (isset($b['available']) && (int)$b['available'] === 1 && $prov['status'] !== 'approved') err('Account not approved yet', 403);
+    if (isset($params[':radius_km'])) $params[':radius_km'] = max(1, min(50, (int)$params[':radius_km']));
+    foreach ([':base_lat', ':base_lng', ':lat', ':lng'] as $k) if (isset($params[$k])) $params[$k] = (float)$params[$k];
     if (isset($b['areas']) && is_array($b['areas'])) $params[':areas'] = json_encode($b['areas']);
     $fields[] = "last_seen = CURRENT_TIMESTAMP";
 
@@ -387,11 +402,12 @@ HamaraService Team";
     }
     $inner = "
       SELECT p.id, p.name, p.rating, p.review_count, p.photo,
-             COALESCE(p.lat, 0) AS lat, COALESCE(p.lng, 0) AS lng, p.radius_km, p.city, p.areas,
-             CASE WHEN COALESCE(p.lat, 0) != 0 THEN
-               6371 * ACOS(LEAST(1, COS(RADIANS(:lat)) * COS(RADIANS(p.lat))
-                 * COS(RADIANS(p.lng) - RADIANS(:lng))
-                 + SIN(RADIANS(:lat2)) * SIN(RADIANS(p.lat))))
+             COALESCE(NULLIF(p.base_lat, 0), p.lat, 0) AS lat, COALESCE(NULLIF(p.base_lng, 0), p.lng, 0) AS lng,
+             p.radius_km, p.city, p.areas,
+             CASE WHEN COALESCE(NULLIF(p.base_lat, 0), p.lat, 0) != 0 THEN
+               6371 * ACOS(LEAST(1, COS(RADIANS(:lat)) * COS(RADIANS(COALESCE(NULLIF(p.base_lat, 0), p.lat)))
+                 * COS(RADIANS(COALESCE(NULLIF(p.base_lng, 0), p.lng)) - RADIANS(:lng))
+                 + SIN(RADIANS(:lat2)) * SIN(RADIANS(COALESCE(NULLIF(p.base_lat, 0), p.lat)))))
              END AS distance_km
       FROM providers p $svcJoin
       WHERE p.status = 'approved' AND p.available = 1
@@ -405,7 +421,8 @@ HamaraService Team";
     }
     if ($lat != 0 && $lng != 0) {
       // GPS: within radius; providers without GPS match by city/area
-      $where = "(t.distance_km IS NOT NULL AND t.distance_km <= :radius)";
+      // within the search radius AND within the provider's own service range
+      $where = "(t.distance_km IS NOT NULL AND t.distance_km <= :radius AND t.distance_km <= GREATEST(1, COALESCE(t.radius_km, 10)))";
       if ($cityCond) $where .= " OR (t.distance_km IS NULL AND $cityCond)";
       $params[':radius'] = $radius;
       $sql = "SELECT * FROM ($inner) t WHERE $where ORDER BY t.distance_km IS NULL, t.distance_km ASC LIMIT 20";
@@ -561,7 +578,7 @@ HamaraService Team";
 "
         . "You can now login and start receiving jobs:
 "
-        . "https://hamaraservice.com/provider-portal.html
+        . "https://hamaraservice.com/app/provider.html
 
 "
         . "Or login on the HamaraService Provider App.
