@@ -930,6 +930,8 @@ function _renderActiveJobNow(el,b,st){
     +jobDetailsHtml(b).replace('justify-content:center','justify-content:flex-start')
     +(b.notes?'<div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">📝 '+esc(b.notes)+'</div>':'')
     +navBtn(b)
+    +((st==='confirmed'||st==='active')&&b.cash_allowed==0&&b.platform_fee>0
+      ?'<div style="background:#fdecec;color:#c53030;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:10px">💳 Online payment only for this job — your wallet balance is less than the platform fee ₹'+esc(b.platform_fee)+'. Tell the customer to pay online (do not collect cash), or add at least ₹'+esc(b.platform_fee)+' to your wallet to accept cash. <a href="javascript:topUpWallet()" style="color:var(--teal)">Add money</a></div>':'')
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.amount||b.confirmed_price||b.final_price||b.quoted_price||0)+'</div>';
   if(st==='completed'){
     var paid=(b.payment_status==='paid');

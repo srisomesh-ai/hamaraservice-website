@@ -94,9 +94,13 @@ function cashAllowed($db, array $bk) {
     $w = $db->prepare("SELECT pending_earned FROM providers WHERE id = ?");
     $w->execute([$bk['provider_id']]);
     $bal = (int)$w->fetchColumn();
+    return $bal >= platformFee($bk);
+}
+
+// Platform fee for this job (known once a price is agreed)
+function platformFee(array $bk) {
     $amt = (int)($bk['amount'] ?: $bk['confirmed_price'] ?: $bk['final_price'] ?: $bk['quoted_price']);
-    $fee = (int)($bk['commission_amt'] ?: round($amt * (int)($bk['commission_pct'] ?? DEFAULT_COMMISSION_PCT) / 100));
-    return $bal >= $fee;
+    return (int)($bk['commission_amt'] ?: round($amt * (int)($bk['commission_pct'] ?? DEFAULT_COMMISSION_PCT) / 100));
 }
 
 function sanitizeBooking(array $bk, string $role) {
@@ -724,6 +728,7 @@ switch ($action) {
       unset($bk['lat'], $bk['lng']);
     }
     $bk['cash_allowed'] = cashAllowed($db, $bk) ? 1 : 0;
+    $bk['platform_fee'] = platformFee($bk);
     ok(sanitizeBooking($bk, $role));
   }
 
@@ -745,7 +750,7 @@ switch ($action) {
     ");
     $stmt->execute([$user['id']]);
     $bk = $stmt->fetch();
-    if ($bk) $bk['cash_allowed'] = cashAllowed($db, $bk) ? 1 : 0;
+    if ($bk) { $bk['cash_allowed'] = cashAllowed($db, $bk) ? 1 : 0; $bk['platform_fee'] = platformFee($bk); }
     ok($bk ? sanitizeBooking($bk, $user['role']) : null);
   }
 
