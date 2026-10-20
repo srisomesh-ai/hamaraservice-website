@@ -60,6 +60,12 @@ define('RZP_WEBHOOK_SECRET', hsCfg('RZP_WEBHOOK_SECRET'));
 // Push relay (Cloud Function notifyBooking) + shared key it requires
 define('PUSH_URL', hsCfg('PUSH_URL', 'https://notifybooking-mlchyp6tra-as.a.run.app'));
 define('PUSH_KEY', hsCfg('PUSH_KEY'));
+// Direct FCM (no Cloud Function, no billing): Firebase service-account JSON
+// saved as hs-firebase.json next to hs-secrets.php (outside public_html).
+define('FCM_SA_FILE', hsCfg('FCM_SA_FILE') ?: (is_file(dirname(__DIR__, 2) . '/hs-firebase.json')
+    ? dirname(__DIR__, 2) . '/hs-firebase.json' : dirname(__DIR__, 3) . '/hs-firebase.json'));
+define('FCM_OAUTH_URL', hsCfg('FCM_OAUTH_URL') ?: 'https://oauth2.googleapis.com/token');
+define('FCM_API_BASE',  hsCfg('FCM_API_BASE')  ?: 'https://fcm.googleapis.com');
 
 // Business rules
 define('DEFAULT_COMMISSION_PCT', (int)hsCfg('DEFAULT_COMMISSION_PCT', 15));
