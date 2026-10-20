@@ -27,7 +27,7 @@ return [
     'CASH_DUE_LIMIT'         => -1000,
 
     // Public site settings
-    'SUPPORT_WHATSAPP'    => '',            // e.g. '919876543210' (country code + number)
+    'SUPPORT_WHATSAPP'    => '919346220090',  // e.g. '919876543210' (country code + number)
     'SUPPORT_EMAIL'       => 'info@hamaraservice.com',
     'CUSTOMER_APP_URL'    => '',            // Play Store link (or APK download link) for the customer app
     'PROVIDER_APP_URL'    => '',            // Play Store link (or APK download link) for the provider app
