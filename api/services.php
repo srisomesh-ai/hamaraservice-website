@@ -69,8 +69,53 @@ function buildPriceRanges($db, $city = '') {
     if (!$pd) continue;
     if (!isset($result[$row['id']])) $result[$row['id']] = ['min' => 0, 'max' => 0, 'provider_count' => 0];
     $result[$row['id']]['admin_prices'] = $pd;
+    [$amin, $amax] = adminPriceSpan($pd);
+    if ($amin > 0) { $result[$row['id']]['admin_min'] = $amin; $result[$row['id']]['admin_max'] = $amax; }
   }
+  /* 3. Catalogue default prices (catalog.json) as the last fallback */
+  $cat = @json_decode(@file_get_contents(dirname(__DIR__) . '/catalog.json'), true);
+  if (is_array($cat)) foreach ($cat as $c) {
+    $id = $c['id'] ?? ''; if ($id === '' || !empty($result[$id]['admin_min'])) continue;
+    $cmin = (int)($c['minPrice'] ?? 0) ?: (int)($c['defaultPrice'] ?? 0) ?: (int)($c['userPrice'] ?? 0);
+    $cmax = (int)($c['maxPrice'] ?? 0) ?: $cmin;
+    if ($cmin <= 0) continue;
+    if (!isset($result[$id])) $result[$id] = ['min' => 0, 'max' => 0, 'provider_count' => 0];
+    $result[$id]['admin_min'] = $cmin; $result[$id]['admin_max'] = max($cmin, $cmax);
+  }
+  /* Display range: providers' own range when any provider set a price,
+     otherwise the admin/catalogue reference range. */
+  foreach ($result as &$r) {
+    $r['ref_min'] = (int)($r['admin_min'] ?? 0);
+    $r['ref_max'] = (int)($r['admin_max'] ?? 0);
+    if (($r['provider_count'] ?? 0) <= 0 || ($r['min'] ?? 0) <= 0) {
+      $r['min'] = $r['ref_min']; $r['max'] = $r['ref_max'];
+      $r['source'] = $r['ref_min'] > 0 ? 'reference' : 'none';
+    } else {
+      $r['source'] = 'providers';
+    }
+  }
+  unset($r);
   return $result;
+}
+
+// Lowest / highest customer price in the admin price sheet (hs-prices.html).
+// Option prices are plain numbers; keys ending _min/_max are provider bounds
+// and only used when no plain price exists.
+function adminPriceSpan($pd) {
+  $plain = []; $bounds = [];
+  $walk = function ($node) use (&$walk, &$plain, &$bounds) {
+    if (!is_array($node)) return;
+    foreach ($node as $k => $v) {
+      if (is_array($v)) { $walk($v); continue; }
+      if (!is_numeric($v) || (float)$v <= 0) continue;
+      $k = (string)$k;
+      if (preg_match('/_(min|max)$/', $k)) $bounds[] = (int)$v;
+      elseif (!in_array($k, ['commission', 'comm', 'pct', 'qty', 'hours', 'sort'], true)) $plain[] = (int)$v;
+    }
+  };
+  $walk($pd);
+  $vals = $plain ?: $bounds;
+  return $vals ? [min($vals), max($vals)] : [0, 0];
 }
 
 switch ($action) {

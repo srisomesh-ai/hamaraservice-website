@@ -1201,6 +1201,8 @@ function loadAndRenderCatalog() {
           // Providers' own price range (approved providers who set a price)
           var rr = ranges[svcId];
           if (rr && rr.provider_count > 0 && rr.min > 0) svc.provRange = { min: rr.min, max: rr.max, n: rr.provider_count };
+          // Server already resolved the range (providers' prices, else admin/catalog reference)
+          if (rr && rr.source) { if (!svc.provRange && rr.min > 0) svc.price = rr.min; return; }
           if (!p) { if (ranges[svcId].min > 0) svc.price = ranges[svcId].min; return; }
           // Try base price first (cleaning/multi-option services)
           if (p.base != null && typeof p.base !== 'object') {
