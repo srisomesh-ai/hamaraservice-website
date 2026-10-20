@@ -206,7 +206,7 @@ switch ($action) {
 
     $id = makeBookingId();
     $summary = $b['summary'] ?? null;
-    if (is_array($summary)) $summary = json_encode($summary, JSON_UNESCAPED_UNICODE);
+    if (is_array($summary)) $summary = json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
     $stmt = $db->prepare("
       INSERT INTO bookings

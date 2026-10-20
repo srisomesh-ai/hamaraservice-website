@@ -192,6 +192,7 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 
 <!-- Firebase Cloud Messaging -->
 <script src="/js/hs-site.js"></script>
+<script src="/js/hs-questions.js"></script>
 <script src="/js/hs-map.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
@@ -316,6 +317,7 @@ window.HS_FCM = (function(){
 <div id="pgAddr" class="hide">
   <div class="topbar"><span class="back" onclick="show('pgSvc')">←</span><h1>Service Address</h1></div>
   <div class="page">
+    <div id="jobQs" class="card hide"></div>
     <div id="gpsBanner" class="gps-banner gps-no" onclick="captureGPS(true)">📍 Detecting your location…</div>
     <button type="button" class="btn ghost" id="pinMapBtn" onclick="pinOnMap()" style="margin:-2px 0 12px">🗺️ Pin exact location on map</button>
     <div id="nearbyWrap" class="hide nearby-card">
@@ -616,7 +618,7 @@ function openSvc(id){
   openSvcApp(id);
 }
 function openSvcApp(id){
-  curSvc=SVC.find(function(s){return s.id===id;});sel={tasks:{},opts:{}};
+  curSvc=SVC.find(function(s){return s.id===id;});sel={tasks:{},opts:{}};JOBQ={};
   $('svcTitle').textContent=curSvc.name;
   adminPrices={};
   api('services.php','prices&id='+id).then(function(res){
@@ -731,6 +733,7 @@ function goAddress(){
     }).catch(function(){});
   }
   renderSlots();
+  renderJobQs();
   show('pgAddr');
   selNearby='';
   if($('nbSearch')){$('nbSearch').style.display='';$('nbSearch').value='';}
@@ -934,6 +937,35 @@ function requireLogin(next){
   toast('Login or register to continue booking');
   return false;
 }
+// ── Job questions (js/hs-questions.js) — so the provider can quote correctly ──
+var JOBQ={};
+function _jobQs(){return (window.HS_JOB_QUESTIONS&&curSvc&&HS_JOB_QUESTIONS[curSvc.id])||[];}
+function renderJobQs(){
+  var el=$('jobQs'); if(!el)return;
+  var qs=_jobQs(); if(!qs.length){el.classList.add('hide');el.innerHTML='';return;}
+  el.classList.remove('hide');
+  el.innerHTML='<div style="font-size:15px;font-weight:900">Tell the provider about the job</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin:2px 0 6px">Helps the provider quote the right price before visiting.</div>'
+    +qs.map(function(q,qi){
+      var a=JOBQ[q.k]||[];
+      return '<label>'+esc(q.q)+' <span style="font-weight:600;font-size:11px;color:'+(q.req&&!a.length?'var(--red,#e53e3e)':'var(--muted)')+'">'
+        +(q.multi?'(select all that apply)':(q.req?'*':'(optional)'))+'</span></label>'
+        +'<div class="chip-row" style="margin-bottom:6px">'+q.opts.map(function(o,oi){
+          return '<span class="chip'+(a.indexOf(o)>=0?' on':'')+'" onclick="pickJobQ('+qi+','+oi+')">'+esc(o)+'</span>';
+        }).join('')+'</div>';
+    }).join('');
+}
+function pickJobQ(qi,oi){
+  var q=_jobQs()[qi]; if(!q)return; var o=q.opts[oi]; var a=JOBQ[q.k]||[];
+  if(q.multi){ a=a.indexOf(o)>=0?a.filter(function(x){return x!==o;}):a.concat([o]); } else a=[o];
+  JOBQ[q.k]=a; renderJobQs();
+}
+function jobQsMissing(){ return _jobQs().find(function(q){return q.req&&!(JOBQ[q.k]||[]).length;})||null; }
+function jobQsSummary(){
+  return _jobQs().filter(function(q){return (JOBQ[q.k]||[]).length;}).map(function(q){
+    return q.label+': '+q.opts.filter(function(o){return JOBQ[q.k].indexOf(o)>=0;}).join(', ');
+  });
+}
 function createBooking(){
   if(!requireLogin('addr'))return;
   var locAddr=$('bAddr').value.trim(),flat=$('bFlat').value.trim(),ph=$('bPhone').value.trim()||ME.phone||'';
@@ -951,6 +983,8 @@ function createBooking(){
   if(siteBooking&&siteBooking.summary&&siteBooking.summary.length){
     taskNames=siteBooking.summary.map(function(t){return (typeof t==='string')?t:(t.name||t.label||JSON.stringify(t));});
   }
+  var qMiss=jobQsMissing(); if(qMiss){toast('Please answer: '+qMiss.q);var jq=$('jobQs');if(jq)jq.scrollIntoView({behavior:'smooth'});return;}
+  taskNames=taskNames.concat(jobQsSummary());
   var body={
     svc_id:curSvc.id,svc_name:curSvc.name,svc_icon:curSvc.icon,
     address:addr,city:city,
@@ -1503,7 +1537,7 @@ var siteBooking=null;
   var s=SVC.find(function(x){return x.id===wantId;})||SVC.find(function(x){return x.name===opts.service;})
     ||SVC.find(function(x){return opts.service&&x.name.toLowerCase().indexOf(String(opts.service).toLowerCase())>=0;});
   if(!s&&!wantId){toast('Please pick your service');return;}
-  curSvc=s||{id:wantId,name:opts.service,icon:opts.icon||'🔧',groups:[]};
+  curSvc=s||{id:wantId,name:opts.service,icon:opts.icon||'🔧',groups:[]};JOBQ={};
   sel={tasks:{},opts:{}};
   siteBooking={price:parseInt(opts.price||'0',10)||0,summary:opts.summary||[]};
   history.replaceState(null,'','customer.html');
@@ -1527,6 +1561,7 @@ function goAddressFromSite(){
     }).catch(function(){});
   }
   renderSlots();
+  renderJobQs();
   show('pgAddr');
   selNearby='';
   if($('nbSearch')){$('nbSearch').style.display='';$('nbSearch').value='';}

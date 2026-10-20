@@ -734,6 +734,18 @@ function myPriceFor(b){
   return 0;
 }
 
+// Booking summary (tasks + the customer's job answers) as chips
+function jobSummary(b){
+  var v=b&&b.summary; if(!v) return [];
+  if(typeof v==='string'){ try{ v=JSON.parse(v); }catch(e){ return [v]; } }
+  if(!Array.isArray(v)) return [];
+  return v.map(function(t){ return typeof t==='string'?t:(t.name||t.label||''); }).filter(Boolean);
+}
+function jobDetailsHtml(b){
+  var l=jobSummary(b); if(!l.length) return '';
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 8px">'
+    +l.map(function(t){ return '<span style="font-size:11.5px;font-weight:700;background:var(--teal-soft,#e6f4f6);color:var(--teal,#1b6b7a);padding:4px 9px;border-radius:100px">'+esc(t)+'</span>'; }).join('')+'</div>';
+}
 function showJobPopup(b){
   var pop=$('jobPop');
   pop.className='job-pop';
@@ -742,7 +754,8 @@ function showJobPopup(b){
     +'<div class="count" id="jpCount">Respond in 30s</div>'
     +'<div style="font-size:34px;text-align:center">'+esc(b.svc_icon||'🔔')+'</div>'
     +'<div style="font-size:18px;font-weight:900;text-align:center;margin:6px 0">'+esc(b.svc_name)+'</div>'
-    +(b.notes?'<div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px">'+esc(b.notes)+'</div>':'')
+    +jobDetailsHtml(b)
+    +(b.notes?'<div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:6px">📝 '+esc(b.notes)+'</div>':'')
     +'<div style="font-size:13px;margin:10px 0"><b>📍</b> '+esc(b.address||b.city||'')+(b.distance_km!=null?' · '+esc(b.distance_km)+' km':'')+'</div>'
     +(b.slot_time?'<div style="font-size:13px;margin-bottom:12px"><b>🕐</b> '+esc(slotDayLbl(b.slot_date))+esc(b.slot_time)+'</div>':'')
     +'<label>Your Price (₹)</label><input class="inp" id="jpPrice" type="number" value="'+(myPriceFor(b)||'')+'" placeholder="Your price">'
@@ -914,6 +927,8 @@ function _renderActiveJobNow(el,b,st){
     +'<span class="badge '+esc(st)+'">'+esc(st.replace(/_/g,' '))+'</span></div>'
     +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+esc(b.contact_name||b.customer_name||'Customer')+' '+((b.contact_phone||b.customer_phone)?('· <a href="tel:'+esc(b.contact_phone||b.customer_phone)+'">📞 '+esc(b.contact_phone||b.customer_phone)+'</a>'):'')+'</div>'
     +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+esc(b.address||'')+'</div>'
+    +jobDetailsHtml(b).replace('justify-content:center','justify-content:flex-start')
+    +(b.notes?'<div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">📝 '+esc(b.notes)+'</div>':'')
     +navBtn(b)
     +'<div style="font-size:19px;font-weight:900;color:var(--teal);margin-bottom:12px">₹'+(b.amount||b.confirmed_price||b.final_price||b.quoted_price||0)+'</div>';
   if(st==='completed'){
