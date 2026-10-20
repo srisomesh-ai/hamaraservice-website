@@ -876,6 +876,7 @@ switch ($action) {
     $row['unpaid_completed'] = (int)$db->query("SELECT COUNT(*) FROM bookings WHERE status='completed' AND payment_status != 'paid'")->fetchColumn();
     $row['provider_balances'] = (int)$db->query("SELECT COALESCE(SUM(GREATEST(pending_earned,0)),0) FROM providers")->fetchColumn();
     $row['provider_dues']     = (int)$db->query("SELECT COALESCE(SUM(LEAST(pending_earned,0)),0) FROM providers")->fetchColumn();
+    $row['push_mode'] = pushMode();
     $row['payments_mode'] = strpos(RZP_KEY_ID, 'rzp_live_') === 0 ? 'live' : (RZP_KEY_ID === '' ? 'not configured' : 'test');
     ok($row);
   }

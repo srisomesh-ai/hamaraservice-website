@@ -898,6 +898,8 @@ function loadFinance(){
       + kpi('Owed to providers (wallets)', money(FINANCE.provider_balances), 'var(--teal)')
       + kpi('Owed by providers (dues)', money(Math.abs(num(FINANCE.provider_dues))), 'var(--brand)')
       + kpi('Completed, unpaid', esc(FINANCE.unpaid_completed || 0), 'var(--yellow)')
+      + kpi('Push notifications', FINANCE.push_mode === 'direct' ? '&#128994; ON' : (FINANCE.push_mode === 'relay' ? '&#128992; Relay' : '&#9888;&#65039; OFF'),
+            FINANCE.push_mode === 'direct' ? 'var(--green)' : 'var(--brand)')
       + kpi('Payments mode', FINANCE.payments_mode === 'live' ? '&#128994; LIVE' : (FINANCE.payments_mode === 'test' ? '&#128992; TEST' : '&#9888;&#65039; Not set'),
             FINANCE.payments_mode === 'live' ? 'var(--green)' : 'var(--brand)');
     $('financeKpis').innerHTML = h; $('financeKpis2').innerHTML = h;

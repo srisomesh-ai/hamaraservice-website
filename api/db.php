@@ -204,9 +204,15 @@ function requireAdmin() {
     if (!isAdminRequest()) err('Unauthorized', 401);
 }
 
-// ── Push via Cloud Function relay (requires shared key) ──
+// ── Push notifications ───────────────────────────────────
+// Sent straight to FCM (HTTP v1) with the Firebase service account when
+// hs-firebase.json is present; otherwise via the Cloud Function relay.
+// Data-only messages: the apps display them (and wake the screen) themselves.
 function sendPush($fcmToken, $title, $body, $data = []) {
-    if (empty($fcmToken) || PUSH_KEY === '') return;
+    if (empty($fcmToken)) return;
+    $sa = fcmServiceAccount();
+    if ($sa) { fcmSendDirect($sa, $fcmToken, $title, $body, $data); return; }
+    if (PUSH_KEY === '') return;
     $payload = json_encode([
         'event'    => $data['event'] ?? 'notification',
         'fcmToken' => $fcmToken,
@@ -222,4 +228,69 @@ function sendPush($fcmToken, $title, $body, $data = []) {
         'ignore_errors' => true,
     ]]);
     @file_get_contents(PUSH_URL, false, $ctx);
+}
+
+function pushMode() {
+    if (fcmServiceAccount()) return 'direct';
+    return PUSH_KEY !== '' ? 'relay' : 'off';
+}
+
+function fcmServiceAccount() {
+    static $sa = null;
+    if ($sa !== null) return $sa ?: null;
+    $j = is_readable(FCM_SA_FILE) ? json_decode((string)file_get_contents(FCM_SA_FILE), true) : null;
+    $sa = (is_array($j) && !empty($j['client_email']) && !empty($j['private_key']) && !empty($j['project_id'])) ? $j : false;
+    return $sa ?: null;
+}
+
+function fcmHttp($url, $headers, $body) {
+    $ctx = stream_context_create(['http' => [
+        'method' => 'POST', 'header' => implode("\r\n", $headers) . "\r\n",
+        'content' => $body, 'timeout' => 5, 'ignore_errors' => true,
+    ]]);
+    $res = @file_get_contents($url, false, $ctx);
+    return $res === false ? null : json_decode($res, true);
+}
+
+// OAuth access token from the service account (signed JWT), cached ~55 min.
+function fcmAccessToken(array $sa) {
+    $cache = sys_get_temp_dir() . '/hs_fcm_' . md5($sa['client_email']) . '.json';
+    $c = is_readable($cache) ? json_decode((string)@file_get_contents($cache), true) : null;
+    if (!empty($c['token']) && ($c['exp'] ?? 0) > time() + 60) return $c['token'];
+    $b64 = function ($v) { return rtrim(strtr(base64_encode($v), '+/', '-_'), '='); };
+    $now = time();
+    $unsigned = $b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT'])) . '.' . $b64(json_encode([
+        'iss' => $sa['client_email'], 'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+        'aud' => FCM_OAUTH_URL, 'iat' => $now, 'exp' => $now + 3600,
+    ]));
+    if (!openssl_sign($unsigned, $sig, $sa['private_key'], 'sha256WithRSAEncryption')) return null;
+    $r = fcmHttp(FCM_OAUTH_URL, ['Content-Type: application/x-www-form-urlencoded'], http_build_query([
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion' => $unsigned . '.' . $b64($sig),
+    ]));
+    if (empty($r['access_token'])) { error_log('FCM token error: ' . json_encode($r)); return null; }
+    @file_put_contents($cache, json_encode(['token' => $r['access_token'], 'exp' => $now + (int)($r['expires_in'] ?? 3600)]));
+    @chmod($cache, 0600);
+    return $r['access_token'];
+}
+
+function fcmSendDirect(array $sa, $fcmToken, $title, $body, $data) {
+    $tok = fcmAccessToken($sa);
+    if (!$tok) return false;
+    $d = [];
+    foreach ($data as $k => $v) $d[(string)$k] = is_scalar($v) ? (string)$v : json_encode($v);
+    $d += ['event' => 'notification'];
+    $d['title'] = (string)($title ?: 'HamaraService');
+    $d['body']  = (string)($body ?: 'You have a new update.');
+    $d['click_action'] = 'FLUTTER_NOTIFICATION_CLICK';
+    $d['channel_id']   = 'hamaraservice_high_priority';
+    $r = fcmHttp(FCM_API_BASE . '/v1/projects/' . rawurlencode($sa['project_id']) . '/messages:send',
+        ['Content-Type: application/json', 'Authorization: Bearer ' . $tok],
+        json_encode(['message' => [
+            'token' => $fcmToken, 'data' => $d,
+            'android' => ['priority' => 'HIGH', 'ttl' => '3600s'],
+            'apns' => ['headers' => ['apns-priority' => '10', 'apns-push-type' => 'background'],
+                       'payload' => ['aps' => ['content-available' => 1, 'sound' => 'default']]],
+        ]]));
+    if (empty($r['name'])) { error_log('FCM send error: ' . json_encode($r)); return false; }
+    return true;
 }
