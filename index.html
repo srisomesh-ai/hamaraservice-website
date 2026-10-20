@@ -700,6 +700,46 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   .sp-or-m span{color:rgba(255,255,255,.35);font-size:10px;font-weight:800;letter-spacing:1px;}
 }
 @media(min-width:601px){.sp-or-m{display:none;}}
+
+/* ═══ MOBILE POLISH ═══ */
+.logo-img{height:54px;}
+.sp-nav-logo img{width:auto;height:30px;filter:brightness(0) invert(1);}
+.sp-nav-logo img + .sp-nav-name{display:none;}
+.footer-logo-img{height:44px;width:auto;filter:brightness(0) invert(1);display:block;}
+@media(max-width:768px){
+  /* header stays teal when scrolled (the logo is white) */
+  header.scrolled{background:var(--teal) !important;}
+  header.scrolled .logo-name{color:#fff;}
+  .logo-img{height:38px;}
+
+  /* hero: tighter, trust points as a neat 2×2 grid */
+  .hero{padding:20px 16px 44px;}
+  .hero-badge{margin-bottom:14px;}
+  .hero-sub{line-height:1.6;margin-bottom:18px;}
+  .hero-trust{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;}
+  .trust-sep{display:none;}
+  .trust-item{flex-direction:column;gap:1px;justify-content:center;text-align:center;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+    border-radius:12px;padding:10px 8px;font-size:11.5px;line-height:1.3;color:rgba(255,255,255,.7);}
+  .trust-item strong{font-size:13.5px;color:#fff;}
+
+  /* service cards: compact, image on top, light "View details" */
+  .services-grid{gap:10px;}
+  .svc-card{border-radius:14px;border:1px solid var(--line);box-shadow:0 1px 6px rgba(16,24,40,.06);}
+  .svc-card-img{height:104px;border-radius:14px 14px 0 0;background:#f2f8f9;}
+  .svc-card-info{padding:10px 10px 4px;}
+  .svc-name{font-size:13.5px;min-height:36px;margin-bottom:2px;color:var(--ink);}
+  .svc-price-tag{font-size:13px;margin-bottom:8px;}
+  .svc-book{width:calc(100% - 20px);margin:0 10px 12px;padding:8px 6px;font-size:12.5px;
+    background:transparent;color:var(--brand);border:1.5px solid var(--brand);border-radius:100px;}
+  .svc-book:active{background:var(--brand);color:#fff;}
+
+  /* bottom bar: all labels on one line */
+  .mob-nav-item{gap:4px;}
+  .mob-nav-item > svg{width:22px;height:22px;margin:2px 0;}
+  .mob-nav-fab{width:38px;height:26px;border-radius:9px;}
+  .mob-nav-fab svg{width:16px;height:16px;}
+}
 </style>
 </head>
 <body>
@@ -708,7 +748,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <div id="splitOverlay">
   <nav class="sp-nav">
     <a class="sp-nav-logo" href="#">
-      <img src="images/rlogo.png" alt="HamaraService" onerror="this.style.display='none'"/>
+      <img src="images/rlogo-tight.png" alt="HamaraService" onerror="this.style.display='none'"/>
       <span class="sp-nav-name">HamaraService</span>
     </a>
     <span class="sp-skip" onclick="dismissOverlay()">Skip →</span>
@@ -745,7 +785,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <!-- ─── HEADER ─── -->
 <header id="siteHeader">
   <a class="logo" href="#">
-    <img src="images/rlogo.png" alt="Hamara Service" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <img src="images/rlogo-tight.png" alt="Hamara Service" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
     <div class="logo-fallback" style="display:none;align-items:center;gap:10px;">
       <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
       <div class="logo-text">
@@ -1005,11 +1045,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <div class="footer-top">
       <div class="footer-brand">
         <a class="logo" href="#">
-          <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
-          <div class="logo-text">
-            <span class="logo-name" style="color:white;">HAMARA <span class="logo-accent">SERVICE</span></span>
-            <span class="logo-tagline" style="color:rgba(255,255,255,.4);">FOR EVERY HOME, EVERY NEED</span>
-          </div>
+          <img src="images/rlogo-tight.png" alt="Hamara Service" class="footer-logo-img"/>
         </a>
         <p class="footer-desc">India's most trusted platform for home services. Safe, reliable, and always on time.</p>
         <div class="footer-social">
@@ -1041,7 +1077,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a href="legal-pages.html#privacy">Privacy Policy</a>
         <a href="legal-pages.html#terms">Terms & Conditions</a>
         <a href="legal-pages.html#refund">Refund Policy</a>
-        <a href="tel:+918898584971">📞 88985849710</a>
+        <a href="tel:+919346220090">📞 +91 93462 20090</a>
         <a href="mailto:support@hamaraservice.com">✉️ support@hamaraservice.com</a>
       </div>
     </div>
