@@ -1261,7 +1261,8 @@ var HS_CATALOG=[
 function _getLiveCatalog(){
   try{
     var s=JSON.parse(localStorage.getItem('hs_catalog')||'[]');
-    if(s&&s.length>0) return s.filter(function(x){return x.status!=='inactive';}).map(function(x){
+    // SVC008/SVC018/SVC020 are legacy duplicates (not offered on the site or in the apps)
+    if(s&&s.length>0) return s.filter(function(x){return x.status!=='inactive'&&!/^SVC0(08|18|20)$/.test(x.id);}).map(function(x){
       var m=HS_CATALOG.find(function(m){return m.name===x.name||(m.id&&m.id===x.id);})||{};
       return {id:x.id,icon:x.icon||m.icon||'🔧',name:x.name||m.name,
               cat:x.cat||m.cat||'Other',price:x.userPrice||x.defaultPrice||m.price||499,keywords:m.keywords||[],image:x.image||m.image||''};
