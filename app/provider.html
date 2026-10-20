@@ -74,6 +74,34 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 .qa small{font-weight:600;color:var(--muted)}
 .qa:active{transform:scale(.96)}
 .btn.red-ghost{background:#fff;color:var(--red);border:2px solid var(--red)}
+.badge.cancelled{background:#fee2e2;color:#991b1b}
+.badge.paid,.badge.approved{background:#d1f2dd;color:#0f6d33}
+.badge.pay_pending,.badge.pending{background:#fff3cd;color:#8a6d00}
+.badge.rejected{background:#fee2e2;color:#991b1b}
+.cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;margin-bottom:4px}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-chip{flex:0 0 auto;padding:8px 14px;border-radius:99px;background:#fff;border:1.5px solid #d5e2e6;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.cat-chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.seg{display:flex;background:#e3eef1;border-radius:12px;padding:4px;margin-bottom:12px}
+.seg div{flex:1;text-align:center;padding:9px 4px;border-radius:9px;font-size:13px;font-weight:800;color:var(--muted);cursor:pointer}
+.seg div.on{background:#fff;color:var(--teal);box-shadow:0 1px 4px rgba(15,76,92,.12)}
+.dl{display:flex;gap:8px;font-size:13px;color:#3a4c52;margin-top:5px;line-height:1.35}
+.dl span:first-child{flex:0 0 auto}
+.job-timer{display:flex;align-items:center;gap:10px;background:#e6f4f6;border-radius:12px;padding:12px 14px;margin-bottom:10px;color:var(--teal2)}
+.job-timer .t{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.open-job{display:flex;align-items:center;gap:12px;cursor:pointer}
+.open-job .ic{width:44px;height:44px;border-radius:12px;background:#e6f4f6;display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
+.open-job .q{background:#e6f4f6;color:var(--teal);border:none;border-radius:10px;font-weight:800;font-size:13.5px;padding:10px 14px;cursor:pointer}
+.pf-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #eef3f5;font-size:14px;font-weight:600;cursor:pointer}
+.pf-row small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+.faq{background:#fff;border-radius:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(15,76,92,.06)}
+.faq summary{list-style:none;padding:14px 16px;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'⌄';color:var(--muted);font-weight:900}
+.faq[open] summary::after{content:'⌃';color:var(--teal)}
+.faq p{padding:0 16px 14px;font-size:13px;color:#3a4c52;line-height:1.5}
+.contact-btn{flex:1;text-align:center;padding:14px 8px;border-radius:14px;font-size:12px;font-weight:800;cursor:pointer}
+.contact-btn span{display:block;font-size:24px;margin-bottom:4px}
 @keyframes notifSlide{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
 </style>
@@ -261,13 +289,17 @@ window.HS_FCM = (function(){
     </div>
     <div class="sec-title">Active Job</div>
     <div id="activeJob"><div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div></div>
+    <div id="openJobsWrap" class="hide"></div>
     <div class="sec-title">Quick Actions</div>
     <div class="qa-grid">
       <div class="qa" onclick="openServices()"><span>🧰</span>My Services<br><small>& Prices</small></div>
       <div class="qa" onclick="openReviews()"><span>⭐</span>My Ratings<br><small>& Reviews</small></div>
       <div class="qa" onclick="openEarnings()"><span>💰</span>Earnings<br><small>Balance & withdraw</small></div>
       <div class="qa" onclick="openProf()"><span>📍</span>My Areas<br><small>Edit zones</small></div>
+      <div class="qa" onclick="openHistory()"><span>📋</span>Job History<br><small>Active, completed & cancelled</small></div>
+      <div class="qa" onclick="openEditProfile()"><span>✏️</span>Edit Profile<br><small>Name, phone, city, bio</small></div>
       <div class="qa" onclick="HS_support('provider','Provider ID '+(ME.id||'')+'.')"><span>💬</span>Support<br><small>WhatsApp</small></div>
+      <div class="qa" onclick="openHelp()"><span>❓</span>Help & FAQ<br><small>Quick help & requests</small></div>
     </div>
   </div>
   <div class="tabbar">
@@ -286,6 +318,14 @@ window.HS_FCM = (function(){
       <div style="font-size:11.5px;color:var(--teal);font-weight:700;cursor:pointer;margin-bottom:6px" onclick="pickPhoto('profile')">📷 Change photo</div>
       <div style="font-weight:900;font-size:16px" id="profName"></div>
       <div style="font-size:12px;color:var(--muted)" id="profMeta"></div>
+    </div>
+    <div class="sec-title" id="editProfTitle">✏️ Edit Profile</div>
+    <div class="card">
+      <label>Full Name</label><input class="inp" id="epName">
+      <label>Phone Number</label><input class="inp" id="epPhone" type="tel" maxlength="10">
+      <label>City</label><input class="inp" id="epCity">
+      <label>Short Bio</label><textarea class="inp" id="epBio" rows="3" placeholder="Tell customers about yourself..."></textarea>
+      <button class="btn teal" id="epSave" onclick="saveProfile()">Save Changes</button>
     </div>
     <div class="sec-title">💳 Payment Setup</div>
     <div class="card">
@@ -306,6 +346,13 @@ window.HS_FCM = (function(){
       <div id="profAreaSug"></div>
       <div class="chip-row" id="profAreaChips" style="flex-wrap:wrap;margin-top:6px"></div>
       <button class="btn" style="margin-top:10px" onclick="saveAreas()">Save Areas</button>
+    </div>
+    <div class="sec-title">More</div>
+    <div class="card" style="padding:4px 16px">
+      <div class="pf-row" onclick="openReviews()"><span>⭐ My ratings & reviews</span><span>›</span></div>
+      <div class="pf-row" onclick="openHistory()"><span>📋 Job history<small>Active, completed and cancelled jobs</small></span><span>›</span></div>
+      <div class="pf-row" onclick="HS_support('provider','Provider ID '+(ME.id||'')+'.')"><span>💬 WhatsApp support<small>Chat with HamaraService</small></span><span>›</span></div>
+      <div class="pf-row" style="border:none" onclick="openHelp()"><span>❓ Help & FAQ</span><span>›</span></div>
     </div>
     <div class="sec-title">Account</div>
     <div class="card">
@@ -354,6 +401,42 @@ window.HS_FCM = (function(){
     </div>
     <div class="sec-title">🧾 Withdrawal History</div>
     <div id="earnHist"><div class="card">Loading…</div></div>
+    <div id="earnJobs"></div>
+  </div>
+  <div class="tabbar">
+    <div class="tab" onclick="show('pgDash')"><span class="i">🏠</span>Dashboard</div>
+    <div class="tab" onclick="openServices()"><span class="i">🧰</span>Services</div>
+    <div class="tab" onclick="openProf()"><span class="i">👤</span>Profile</div>
+  </div>
+</div>
+
+<!-- ══ JOB HISTORY ══ -->
+<div id="pgHist" class="hide">
+  <div class="topbar"><span class="back" onclick="show('pgDash')">←</span><h1>Job history</h1><span style="font-size:13px;font-weight:800;cursor:pointer" onclick="openHistory()">⟳</span></div>
+  <div class="page" style="padding-bottom:90px">
+    <div class="seg" id="histTabs"></div>
+    <div id="histList"><div class="card">Loading…</div></div>
+  </div>
+  <div class="tabbar">
+    <div class="tab" onclick="show('pgDash')"><span class="i">🏠</span>Dashboard</div>
+    <div class="tab" onclick="openServices()"><span class="i">🧰</span>Services</div>
+    <div class="tab" onclick="openProf()"><span class="i">👤</span>Profile</div>
+  </div>
+</div>
+
+<!-- ══ HELP & SUPPORT ══ -->
+<div id="pgHelp" class="hide">
+  <div class="topbar"><span class="back" onclick="show('pgDash')">←</span><h1>Help & Support</h1></div>
+  <div class="page" style="padding-bottom:90px">
+    <label>Contact us</label>
+    <div style="display:flex;gap:10px;margin-bottom:18px">
+      <div class="contact-btn" id="helpWa" style="background:#e9fbf0;color:#1a9e4b;border:1.5px solid #b8ecca" onclick="HS_support('provider','Provider ID '+(ME.id||'')+'.')"><span>💬</span>WhatsApp support</div>
+      <div class="contact-btn" id="helpMail" style="background:#fff1e8;color:var(--amber);border:1.5px solid #fbd3b8" onclick="helpEmail()"><span>📧</span><span id="helpMailLbl" style="font-size:12px;display:inline;margin:0">Email info@hamaraservice.com</span></div>
+    </div>
+    <label>Raise a request</label>
+    <div id="helpReq" class="card"></div>
+    <label style="margin-top:8px">Quick help</label>
+    <div id="helpFaq"></div>
   </div>
   <div class="tabbar">
     <div class="tab" onclick="show('pgDash')"><span class="i">🏠</span>Dashboard</div>
@@ -373,7 +456,7 @@ window.HS_FCM = (function(){
 <div id="jobPop" class="hide"></div>
 <div class="toast" id="toast"></div>
 
-<script src="catalog.js"></script>
+<script src="catalog.js?v=3"></script>
 <script>
 var API='https://hamaraservice.com/api';
 var TOKEN=localStorage.getItem('hs_prov_token')||'';
@@ -385,7 +468,7 @@ function $(id){return document.getElementById(id);}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var _curPage='pgDash';
 function show(p,fromPop){
-  ['pgAuth','pgReg','pgPending','pgDash','pgSvcs','pgProf','pgEarn'].forEach(function(x){$(x).classList.add('hide');});
+  ['pgAuth','pgReg','pgPending','pgDash','pgSvcs','pgProf','pgEarn','pgHist','pgHelp'].forEach(function(x){$(x).classList.add('hide');});
   $(p).classList.remove('hide');window.scrollTo(0,0);
   if(!fromPop&&p!==_curPage){history.pushState({pg:p},'','');}
   _curPage=p;
@@ -671,7 +754,7 @@ function toggleAvail(){
   var doSet=function(){
     api('providers.php','available',{available:next?1:0}).then(function(res){
       if(!res.success){available=!next;updAvail();toast(res.error||'Could not update');}
-      else toast(next?'✅ You are Online':'You are Offline');
+      else{toast(next?'✅ You are Online':'You are Offline');pollJobs();}
     }).catch(function(){available=!next;updAvail();toast('Network error');});
   };
   if(next&&navigator.geolocation){
@@ -701,16 +784,23 @@ function pollJobs(){
     if(res.success&&res.data&&res.data.id){pDetect(res.data);activeJob=res.data;renderActiveJob();setProvQuoteDeadline(res.data);}
     else{activeJob=null;renderActiveJob();}
     syncLocationPings();
+    renderOpenJobs();
   }).catch(function(){});
-  if(!available)return;
-  if(activeJob)return;
+  if(!available||activeJob){openJobs=[];renderOpenJobs();return;}
   api('bookings.php','open').then(function(res){
     if(!res.success||!res.data)return;
-    var myIds={};SVC.forEach(function(s){if(mySvcs[s.id])myIds[s.id]=1;});
+    var myIds={};Object.keys(mySvcs).forEach(function(k){if(mySvcs[k])myIds[k]=1;});
     var useFilter=Object.keys(myIds).length>0;
-    for(var i=0;i<res.data.length;i++){
-      var b=res.data[i];
-      if(useFilter&&!myIds[b.svc_id])continue;
+    openJobs=res.data.filter(function(b){return !useFilter||myIds[b.svc_id];});
+    renderOpenJobs();
+    var pop=$('jobPop');
+    if(pop._bid){ // popup open: close it if that job was taken / cancelled
+      if(!openJobs.some(function(j){return j.id===pop._bid;})){dismissJob();toast('That job is no longer available.');}
+      return;
+    }
+    if(activeJob)return;
+    for(var i=0;i<openJobs.length;i++){
+      var b=openJobs[i];
       // re-alert if not shown in the last 45s (in case provider missed it)
       var now=Date.now();
       if(shownJobs[b.id]&&(now-shownJobs[b.id])<45000)continue;
@@ -719,6 +809,37 @@ function pollJobs(){
       break;
     }
   }).catch(function(){});
+}
+
+// ── NEW JOBS NEAR YOU (all open jobs — a skipped alert can be reopened & quoted) ──
+var openJobs=[],_openKey=null;
+function renderOpenJobs(){
+  var wrap=$('openJobsWrap');if(!wrap)return;
+  var showIt=available&&!activeJob&&ME.status==='approved';
+  var key=showIt?openJobs.map(function(j){return j.id+':'+(j.distance_km||'');}).join(','):'-';
+  if(key===_openKey)return;_openKey=key;
+  wrap.classList.toggle('hide',!showIt);
+  if(!showIt){wrap.innerHTML='';return;}
+  var h='<div class="sec-title">New jobs near you ('+openJobs.length+')</div>';
+  if(!openJobs.length){
+    h+='<div class="card" style="text-align:center;padding:20px 16px"><div style="font-size:30px">🔔</div>'
+      +'<div style="font-weight:800;margin:6px 0 3px">Waiting for new jobs</div>'
+      +'<div style="font-size:12.5px;color:var(--muted)">Keep the app open — you will hear an alert as soon as a customer near you books.</div></div>';
+  } else openJobs.forEach(function(j){
+    var place=(j.address||j.city||'')+(j.distance_km!=null?' · '+j.distance_km+' km':'');
+    var slot=j.slot_time?(slotDayLbl(j.slot_date)+j.slot_time):'';
+    h+='<div class="card open-job" onclick="quoteOpenJob(\''+esc(j.id)+'\')"><div class="ic">'+esc(j.svc_icon||'🔧')+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14.5px">'+esc(j.svc_name||'Service')+'</div>'
+      +(slot?'<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(slot)+'</div>':'')
+      +(place?'<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(place)+'</div>':'')+'</div>'
+      +'<button class="q" onclick="event.stopPropagation();quoteOpenJob(\''+esc(j.id)+'\')">Quote</button></div>';
+  });
+  wrap.innerHTML=h;
+}
+function quoteOpenJob(id){
+  var b=openJobs.find(function(j){return j.id===id;});
+  if(!b){toast('That job is no longer available.');return;}
+  dismissJob();shownJobs[id]=Date.now();showJobPopup(b);
 }
 
 function myPriceFor(b){
@@ -748,6 +869,8 @@ function jobDetailsHtml(b){
 }
 function showJobPopup(b){
   var pop=$('jobPop');
+  clearInterval(pop._iv);
+  pop._bid=b.id;
   pop.className='job-pop';
   var secs=30;
   pop.innerHTML='<div class="job-card">'
@@ -779,36 +902,30 @@ function slotDayLbl(d){
   var tom=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());
   return d===today?'Today · ':d===tom?'Tomorrow · ':(new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' · ');
 }
-function dismissJob(){var p=$('jobPop');clearInterval(p._iv);p.className='hide';p.innerHTML='';}
+function dismissJob(){var p=$('jobPop');clearInterval(p._iv);p._bid=null;p.className='hide';p.innerHTML='';}
 function acceptJob(bid){
   var p=parseInt($('jpPrice').value,10);
   if(!p||p<1){toast('Enter your price for this job');return;}
   api('bookings.php','accept',{booking_id:bid,quoted_price:p}).then(function(res){
     dismissJob();
-    if(res.success){toast('✅ Quote sent to customer!');pollJobs();}
+    if(res.success){toast('✅ Quote sent to customer!');openJobs=openJobs.filter(function(j){return j.id!==bid;});renderOpenJobs();pollJobs();}
     else toast(res.error||'Job no longer available'); // 409 taken / busy, 402 commission dues
   }).catch(function(){dismissJob();toast('Network error');});
 }
 
 
+// Live elapsed timer (HH:MM:SS) on a job in progress — same as the app's job screen
 var _jobTimerInt=null;
 function startJobTimer(b){
-  clearInterval(_jobTimerInt);
-  if(!b.started_at)return;
-  var mins=b.min_duration_min||5;
-  // parse server IST timestamp as ms
-  var startMs=Date.parse(b.started_at.replace(' ','T')+'+05:30');
+  clearInterval(_jobTimerInt);_jobTimerInt=null;
+  if(!b||b.status!=='active'||!b.started_at)return;
+  var startMs=Date.parse(String(b.started_at).replace(' ','T')+'+05:30');
   if(isNaN(startMs))startMs=Date.now();
+  function two(n){return (n<10?'0':'')+n;}
   function tick(){
-    var el=document.getElementById('jobTimer');if(!el){clearInterval(_jobTimerInt);return;}
+    var el=document.getElementById('jobTimer');if(!el){clearInterval(_jobTimerInt);_jobTimerInt=null;return;}
     var s=Math.floor((Date.now()-startMs)/1000);if(s<0)s=0;
-    var m=Math.floor(s/60),ss=s%60;
-    el.textContent=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
-    var btn=document.getElementById('reqCompleteBtn');
-    if(btn){
-      if(s>=mins*60){btn.disabled=false;btn.style.opacity='1';btn.textContent='✅ Complete Job';}
-      else{var rem=mins*60-s;var rm=Math.ceil(rem/60);btn.textContent='⏳ Wait '+rm+' min';}
-    }
+    el.textContent=two(Math.floor(s/3600))+':'+two(Math.floor(s/60)%60)+':'+two(s%60);
   }
   tick();_jobTimerInt=setInterval(tick,1000);
 }
@@ -905,7 +1022,7 @@ function updProvQuoteLeft(){
 function renderActiveJob(){
   var el=$('activeJob');
   if(!activeJob){
-    if(_jobRenderKey!=='none'){_jobRenderKey='none';el.innerHTML='<div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div>';}
+    if(_jobRenderKey!=='none'){_jobRenderKey='none';startJobTimer(null);el.innerHTML='<div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div>';}
     return;
   }
   var b=activeJob,st=b.status;
@@ -918,13 +1035,14 @@ function renderActiveJob(){
   // keep anything typed in the OTP boxes across a redraw
   var keep={};['jobOtp','doneOtp'].forEach(function(id){var x=$(id);if(x)keep[id]={v:x.value,f:document.activeElement===x};});
   _renderActiveJobNow(el,b,st);
+  startJobTimer(b);
   Object.keys(keep).forEach(function(id){var x=$(id);if(x){x.value=keep[id].v;if(keep[id].f){x.focus();try{x.setSelectionRange(x.value.length,x.value.length);}catch(e){}}}});
 }
 function _renderActiveJobNow(el,b,st){
   var h='<div class="card">'
     +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:26px">'+esc(b.svc_icon||'🔧')+'</span>'
     +'<div style="flex:1"><div style="font-weight:800">'+esc(b.svc_name)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(b.id)+'</div></div>'
-    +'<span class="badge '+esc(st)+'">'+esc(st.replace(/_/g,' '))+'</span></div>'
+    +'<span class="badge '+esc(stClass(st,b.payment_status))+'">'+esc(stLabel(st,b.payment_status))+'</span></div>'
     +'<div style="font-size:13px;margin-bottom:4px"><b>👤</b> '+esc(b.contact_name||b.customer_name||'Customer')+' '+((b.contact_phone||b.customer_phone)?('· <a href="tel:'+esc(b.contact_phone||b.customer_phone)+'">📞 '+esc(b.contact_phone||b.customer_phone)+'</a>'):'')+'</div>'
     +'<div style="font-size:13px;margin-bottom:8px"><b>📍</b> '+esc(b.address||'')+'</div>'
     +jobDetailsHtml(b).replace('justify-content:center','justify-content:flex-start')
@@ -970,7 +1088,8 @@ function _renderActiveJobNow(el,b,st){
       +'<label>Start OTP (from customer)</label><input class="inp" id="jobOtp" inputmode="numeric" maxlength="6" placeholder="OTP from customer">'
       +'<button class="btn teal" onclick="verifyOtp()">🔑 Verify & Start Job</button>'+releaseBtn;
   } else if(st==='active'){
-    if(b.started_at)h+='<div style="font-size:12.5px;margin-bottom:8px">▶️ Work started at <b>'+pTime(b.started_at)+'</b></div>';
+    if(b.started_at)h+='<div class="job-timer"><span style="font-size:22px">⏱️</span><div style="flex:1;font-size:15px;font-weight:800">Job in progress</div><div class="t" id="jobTimer">00:00:00</div></div>'
+      +'<div style="font-size:12.5px;margin-bottom:8px">▶️ Work started at <b>'+pTime(b.started_at)+'</b></div>';
     if(b.completion_otp_requested==1){
       h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">The customer has received the <b>Completion OTP</b>. Ask them for it and enter it here.</div>'
         +'<label>Completion OTP (from customer)</label><input class="inp" id="doneOtp" inputmode="numeric" maxlength="6" placeholder="OTP from customer">'
@@ -1056,6 +1175,134 @@ function openEarnings(){
       +'<div style="font-size:12px;color:var(--muted);margin-top:8px">'+esc(d.completed_bookings||0)+' completed jobs</div>';
   }).catch(function(){$('earnBal').innerHTML='<div class="err">Network error</div>';});
   loadPayoutHistory();
+  loadEarnJobs();
+}
+// Completed jobs with the commission split (job amount, commission %, your share) — as in the app
+function loadEarnJobs(){
+  api('bookings.php','history',null,'&id='+encodeURIComponent(ME.id)+'&role=provider').then(function(res){
+    var jobs=((res.success&&res.data)?res.data:[]).filter(function(b){return b.status==='completed';});
+    if(!jobs.length){$('earnJobs').innerHTML='';return;}
+    $('earnJobs').innerHTML='<div class="sec-title">✅ Completed jobs ('+jobs.length+')</div><div class="card" style="padding:4px 16px">'
+      +jobs.map(function(j,i){
+        var paid=j.payment_status==='paid';
+        var sub=[j.other_party||'',fmtDay(j.completed_at||j.slot_date)].filter(Boolean).join(' · ');
+        return '<div class="earn-job" style="padding:12px 0;'+(i?'border-top:1px solid #eef3f5':'')+'">'
+          +'<div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">'+esc(j.svc_name||'Service')+'</div>'
+          +'<div style="font-size:12px;color:var(--muted)">'+esc(sub)+'</div></div>'
+          +'<div style="text-align:right"><div style="font-weight:900;color:var(--green);font-size:15px">₹'+(parseInt(j.provider_earns,10)||0)+'</div>'
+          +'<div style="font-size:11.5px;color:'+(paid?'var(--muted)':'#b45309')+';font-weight:700">'+(paid?(j.payment_method==='cash'?'Paid in cash':'Paid online'):'Payment pending')+'</div></div></div>'
+          +'<div style="font-size:12px;color:#3a4c52;margin-top:5px">Job ₹'+(parseInt(j.amount,10)||0)+' · Commission ('+(parseInt(j.commission_pct,10)||0)+'%) ₹'+(parseInt(j.commission_amt,10)||0)+'</div></div>';
+      }).join('')+'</div>';
+  }).catch(function(){});
+}
+function fmtDay(v){
+  var d=new Date(String(v||'').replace(' ','T'));if(!v||isNaN(d))return v||'';
+  return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getFullYear();
+}
+
+// ── JOB HISTORY (bookings.php?action=history&role=provider) ──
+var histAll=[],histTab=0;
+var _ENGAGED=['price_quoted','negotiating','negotiation_final','confirmed','active'];
+function _histOpen(b){return _ENGAGED.indexOf(b.status)>=0||(b.status==='completed'&&b.payment_status!=='paid');}
+// Status labels as in the app
+function stLabel(st,pay){
+  var m={searching:'Searching',price_quoted:'Price quoted',negotiating:'Negotiating',negotiation_final:'Final offer sent',confirmed:'Confirmed',active:'In progress',cancelled:'Cancelled'};
+  if(st==='completed')return pay==='paid'?'Paid':'Payment pending';
+  return m[st]||String(st||'').replace(/_/g,' ');
+}
+function stClass(st,pay){return st==='completed'?(pay==='paid'?'paid':'pay_pending'):st;}
+function openHistory(){
+  show('pgHist');
+  $('histList').innerHTML='<div class="card" style="text-align:center;color:var(--muted)">Loading…</div>';
+  api('bookings.php','history',null,'&id='+encodeURIComponent(ME.id)+'&role=provider').then(function(res){
+    if(!res.success){$('histList').innerHTML='<div class="card err">'+esc(res.error||'Could not load')+'</div>';return;}
+    histAll=res.data||[];renderHistory();
+  }).catch(function(){$('histList').innerHTML='<div class="card err">Network error</div>';});
+}
+function pickHistTab(i){histTab=i;renderHistory();}
+function renderHistory(){
+  var open=histAll.filter(_histOpen);
+  var done=histAll.filter(function(b){return b.status==='completed'&&!_histOpen(b);});
+  var canc=histAll.filter(function(b){return b.status==='cancelled';});
+  var tabs=['Active ('+open.length+')','Completed ('+done.length+')','Cancelled'];
+  $('histTabs').innerHTML=tabs.map(function(t,i){return '<div class="'+(i===histTab?'on':'')+'" onclick="pickHistTab('+i+')">'+t+'</div>';}).join('');
+  var list=[open,done,canc][histTab],empty=['No active jobs','No completed jobs yet','No cancelled jobs'][histTab];
+  if(!list.length){$('histList').innerHTML='<div class="card" style="text-align:center;padding:28px 16px;color:var(--muted)"><div style="font-size:30px">🧾</div><div style="font-weight:800;margin-top:6px">'+empty+'</div></div>';return;}
+  $('histList').innerHTML=list.map(function(b){
+    var amt=parseInt(b.amount,10)||parseInt(b.confirmed_price,10)||parseInt(b.quoted_price,10)||0;
+    var when=b.slot_time?(slotDayLbl(b.slot_date)+b.slot_time):(b.slot_date||'');
+    var tap=(b.status!=='cancelled'&&activeJob&&activeJob.id===b.id)?' onclick="show(\'pgDash\')" style="cursor:pointer"':'';
+    return '<div class="card hist-item"'+tap+'>'
+      +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+esc(b.svc_icon||'🔧')+'</span>'
+      +'<div style="flex:1;font-weight:800;font-size:14.5px">'+esc(b.svc_name||'Service')+'</div>'
+      +'<span class="badge '+esc(stClass(b.status,b.payment_status))+'">'+esc(stLabel(b.status,b.payment_status))+'</span></div>'
+      +(b.other_party?'<div class="dl"><span>👤</span><span>'+esc(b.other_party)+'</span></div>':'')
+      +(when?'<div class="dl"><span>🕐</span><span>'+esc(when)+'</span></div>':'')
+      +(b.address?'<div class="dl"><span>📍</span><span>'+esc(b.address)+'</span></div>':'')
+      +(b.status==='cancelled'&&b.cancel_reason?'<div class="dl"><span>ℹ️</span><span>'+esc(b.cancel_reason)+'</span></div>':'')
+      +'<div style="display:flex;align-items:center;margin-top:8px"><div style="font-size:17px;font-weight:900;color:var(--teal2);flex:1">'+(amt>0?'₹'+amt:'—')+'</div>'
+      +(b.status==='completed'&&parseInt(b.provider_earns,10)>0?'<div style="font-size:13px;font-weight:800;color:var(--green)">You earned ₹'+parseInt(b.provider_earns,10)+'</div>':'')
+      +'</div></div>';
+  }).join('');
+}
+
+// ── HELP & SUPPORT (same topics / text as the app) ──
+var HELP_TYPES=[['complaint','⚠️','Complaint'],['suggestion','💡','Suggestion'],['add_service','➕','Add Service'],['payment','💰','Payment Issue'],['technical','🔧','Technical Issue'],['other','📝','Other']];
+var HELP_FAQ=[
+  ['How do I get approved?','After registering, admin reviews your profile and approves within 24 hours.'],
+  ['How do I add more services?','Go to Dashboard → My Services → Edit My Services to add or remove services.'],
+  ['When will I get paid?','Online payments are added to your wallet; withdraw from Earnings. Cash jobs add the platform commission to your dues.'],
+  ['My booking alert is not showing','Keep the app open and Online, allow location, and make sure your services are enabled in My Services.']
+];
+var helpType='complaint',helpCfg={};
+function openHelp(){
+  show('pgHelp');
+  $('helpFaq').innerHTML=HELP_FAQ.map(function(f){return '<details class="faq"><summary>'+esc(f[0])+'</summary><p>'+esc(f[1])+'</p></details>';}).join('');
+  renderHelpReq(false);
+  if(window.HS_site)HS_site(function(c){helpCfg=c||{};
+    $('helpWa').classList.toggle('hide',!helpCfg.support_whatsapp);
+    $('helpMailLbl').textContent='Email '+(helpCfg.support_email||'info@hamaraservice.com');
+    renderHelpReq(false);
+  });
+}
+function renderHelpReq(sent){
+  var wa=!!helpCfg.support_whatsapp,el=$('helpReq');
+  if(sent){
+    el.style.background='#e8f7ee';
+    el.innerHTML='<div style="text-align:center;padding:6px 0"><div style="font-size:42px">✅</div>'
+      +'<div style="font-size:17px;font-weight:900;color:var(--green);margin:6px 0">'+(wa?'WhatsApp opened':'Email app opened')+'</div>'
+      +'<div style="font-size:13px;color:var(--muted)">'+(wa?'Send the message in WhatsApp. We usually reply within 24 hours.':'Send the email from your mail app. We usually reply within 24 hours.')+'</div>'
+      +'<div style="margin-top:12px;color:var(--teal);font-weight:800;cursor:pointer" onclick="renderHelpReq(false)">Submit Another</div></div>';
+    return;
+  }
+  var keep=$('helpMsg')?$('helpMsg').value:'';
+  el.style.background='';
+  el.innerHTML='<div style="font-size:13px;font-weight:800;margin-bottom:8px">Type of Request</div>'
+    +'<div class="chip-row" style="margin-bottom:14px">'+HELP_TYPES.map(function(t){
+      return '<div class="chip'+(t[0]===helpType?' on':'')+'" style="padding:8px 12px;font-size:12.5px" onclick="helpType=\''+t[0]+'\';renderHelpReq(false)">'+t[1]+' '+t[2]+'</div>';
+    }).join('')+'</div>'
+    +'<div style="font-size:13px;font-weight:800;margin-bottom:8px">Describe your issue</div>'
+    +'<textarea class="inp" id="helpMsg" rows="5" placeholder="Tell us what happened or what you need..."></textarea>'
+    +'<div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:12px">👤 '+esc(ME.name||'')+' · '+esc(ME.email||'')+'</div>'
+    +'<button class="btn teal" id="helpSend" onclick="sendHelpRequest()">'+(wa?'Send via WhatsApp':'Send via Email')+'</button>';
+  $('helpMsg').value=keep;
+}
+function sendHelpRequest(){
+  var msg=($('helpMsg').value||'').trim();
+  if(!msg){toast('Please describe your issue');return;}
+  var t=(HELP_TYPES.find(function(x){return x[0]===helpType;})||HELP_TYPES[5])[2];
+  var id=ME.id||'';
+  var text='Hi HamaraService support, I am a provider'+(id?' (ID: '+id+')':'')+'.\nRequest: '+t+'\n\n'+msg
+    +'\n\n---\nProvider: '+(ME.name||'')+'\nEmail: '+(ME.email||'')+'\nProvider ID: '+id+'\n';
+  if(helpCfg.support_whatsapp)window.open('https://wa.me/'+helpCfg.support_whatsapp+'?text='+encodeURIComponent(text),'_blank');
+  else location.href='mailto:'+(helpCfg.support_email||'info@hamaraservice.com')+'?subject='+encodeURIComponent('Provider support'+(id?' ('+id+')':''))+'&body='+encodeURIComponent(text);
+  window._lastHelpText=text;
+  renderHelpReq(true);
+}
+function helpEmail(){
+  var id=ME.id||'';
+  location.href='mailto:'+(helpCfg.support_email||'info@hamaraservice.com')+'?subject='+encodeURIComponent('Provider support'+(id?' ('+id+')':''))
+    +'&body='+encodeURIComponent('Hi HamaraService support, I am a provider'+(id?' (ID: '+id+')':'')+'. I need help with: ');
 }
 function loadPayoutHistory(){
   api('payouts.php','history').then(function(res){
@@ -1158,11 +1405,34 @@ function openProf(){
   $('profPhone').textContent=ME.phone||'';
   $('profEmail').textContent=ME.email||'';
   $('profUpi').value=ME.upi_id||'';
+  $('epName').value=ME.name||'';$('epPhone').value=ME.phone||'';$('epCity').value=ME.city||'';$('epBio').value=ME.bio||'';
   renderLocInfo();
   try{areaSel=JSON.parse(ME.areas||'[]')||[];}catch(e){}
   initAreaSearch('profAreaSearch','profAreaSug');
   renderAreaChips();
 }
+function openEditProfile(){
+  openProf();
+  setTimeout(function(){var t=$('editProfTitle');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});$('epName').focus({preventScroll:true});},60);
+}
+function saveProfile(){
+  var name=$('epName').value.trim();
+  var ph=$('epPhone').value.replace(/\D/g,'');if(ph.length>10)ph=ph.slice(-10);
+  if(!name){toast('Enter your name');return;}
+  if(!/^[6-9]\d{9}$/.test(ph)){toast('Enter a valid 10-digit mobile number');return;}
+  var body={name:name,phone:ph,city:$('epCity').value.trim(),bio:$('epBio').value.trim()};
+  $('epSave').disabled=true;
+  api('providers.php','update',body).then(function(res){
+    $('epSave').disabled=false;
+    if(!res.success){toast(res.error||'Save failed');return;}
+    ME=Object.assign(ME,body);localStorage.setItem('hs_prov_me',JSON.stringify(ME));
+    $('profName').textContent=ME.name;$('profPhone').textContent=ME.phone;
+    $('dashName').textContent=ME.name;$('dashId').textContent=(ME.id||'')+' · '+(ME.city||'');
+    if(!ME.photo){$('dashAvatar').textContent=ME.name.charAt(0).toUpperCase();}
+    toast('Profile updated!');
+  }).catch(function(){$('epSave').disabled=false;toast('Network error');});
+}
+
 // ── SERVICE LOCATION & RANGE (map) ──
 function renderLocInfo(){
   var el=$('profLocInfo');if(!el)return;
@@ -1236,9 +1506,17 @@ function openServices(){
   }).catch(function(){renderMySvcs();});
 }
 var myRanges={};
+// Category filter chips (same order as the app)
+var SVC_CATS=['All','Home Cleaning','Home Services','Vehicle Care','Cooking','Beauty & Wellness','Health Services','Care Services','Outdoor','Security','Pest Control'];
+var svcCat='All';
+function pickSvcCat(c){svcCat=c;renderMySvcs();}
 function renderMySvcs(){
   var act=[],avail=[];
-  SVC.forEach(function(s){(mySvcs[s.id]?act:avail).push(s);});
+  var cats=SVC_CATS.filter(function(c){return c==='All'||SVC.some(function(s){return s.cat===c;});});
+  SVC.forEach(function(s){if(cats.indexOf(s.cat)<0)cats.push(s.cat);});
+  if(cats.indexOf(svcCat)<0)svcCat='All';
+  var totalActive=SVC.filter(function(s){return mySvcs[s.id];}).length;
+  SVC.forEach(function(s){if(svcCat!=='All'&&s.cat!==svcCat)return;(mySvcs[s.id]?act:avail).push(s);});
   function row(s){
     var on=!!mySvcs[s.id];
     var rg=myRanges[s.id]||{};
@@ -1256,12 +1534,16 @@ function renderMySvcs(){
           :'<button class="price-btn" style="background:var(--teal)" onclick="togMySvc(\''+s.id+'\')">+ Add</button>')
       +'</div>';
   }
-  var h='<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Tap a service to switch it on/off — changes save instantly. Customers only see your active services with a price.</div>';
+  var h='<div class="cat-scroll" id="svcCats">'+cats.map(function(c){return '<div class="cat-chip'+(c===svcCat?' on':'')+'" onclick="pickSvcCat(\''+c.replace(/'/g,"\\'")+'\')">'+esc(c)+'</div>';}).join('')+'</div>';
+  h+='<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Tap a service to switch it on/off — changes save instantly. Customers only see your active services with a price. <b style="color:var(--teal);white-space:nowrap">'+totalActive+' active</b></div>';
   h+='<div class="sec-title">✅ Active services ('+act.length+')</div>';
   h+=act.length?act.map(row).join(''):'<div class="card" style="font-size:13px;color:var(--muted)">No active services yet — add from the list below.</div>';
   h+='<div class="sec-title" style="margin-top:16px">➕ Available to add ('+avail.length+')</div>';
   h+=avail.map(row).join('');
   $('mySvcList').innerHTML=h;
+  // keep the selected category chip visible in the horizontal row
+  var cs=$('svcCats'),on=cs&&cs.querySelector('.cat-chip.on');
+  if(on)cs.scrollLeft=Math.max(0,on.offsetLeft-cs.offsetLeft-16);
 }
 function togMySvc(id){
   mySvcs[id]=!mySvcs[id];renderMySvcs();
