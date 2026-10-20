@@ -700,6 +700,46 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   .sp-or-m span{color:rgba(255,255,255,.35);font-size:10px;font-weight:800;letter-spacing:1px;}
 }
 @media(min-width:601px){.sp-or-m{display:none;}}
+
+/* ═══ MOBILE POLISH ═══ */
+.logo-img{height:54px;}
+.sp-nav-logo img{width:auto;height:30px;filter:brightness(0) invert(1);}
+.sp-nav-logo img + .sp-nav-name{display:none;}
+.footer-logo-img{height:44px;width:auto;filter:brightness(0) invert(1);display:block;}
+@media(max-width:768px){
+  /* header stays teal when scrolled (the logo is white) */
+  header.scrolled{background:var(--teal) !important;}
+  header.scrolled .logo-name{color:#fff;}
+  .logo-img{height:38px;}
+
+  /* hero: tighter, trust points as a neat 2×2 grid */
+  .hero{padding:20px 16px 44px;}
+  .hero-badge{margin-bottom:14px;}
+  .hero-sub{line-height:1.6;margin-bottom:18px;}
+  .hero-trust{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;}
+  .trust-sep{display:none;}
+  .trust-item{flex-direction:column;gap:1px;justify-content:center;text-align:center;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+    border-radius:12px;padding:10px 8px;font-size:11.5px;line-height:1.3;color:rgba(255,255,255,.7);}
+  .trust-item strong{font-size:13.5px;color:#fff;}
+
+  /* service cards: compact, image on top, light "View details" */
+  .services-grid{gap:10px;}
+  .svc-card{border-radius:14px;border:1px solid var(--line);box-shadow:0 1px 6px rgba(16,24,40,.06);}
+  .svc-card-img{height:104px;border-radius:14px 14px 0 0;background:#f2f8f9;}
+  .svc-card-info{padding:10px 10px 4px;}
+  .svc-name{font-size:13.5px;min-height:36px;margin-bottom:2px;color:var(--ink);}
+  .svc-price-tag{font-size:13px;margin-bottom:8px;}
+  .svc-book{width:calc(100% - 20px);margin:0 10px 12px;padding:8px 6px;font-size:12.5px;
+    background:transparent;color:var(--brand);border:1.5px solid var(--brand);border-radius:100px;}
+  .svc-book:active{background:var(--brand);color:#fff;}
+
+  /* bottom bar: all labels on one line */
+  .mob-nav-item{gap:4px;}
+  .mob-nav-item > svg{width:22px;height:22px;margin:2px 0;}
+  .mob-nav-fab{width:38px;height:26px;border-radius:9px;}
+  .mob-nav-fab svg{width:16px;height:16px;}
+}
 </style>
 </head>
 <body>
@@ -708,7 +748,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <div id="splitOverlay">
   <nav class="sp-nav">
     <a class="sp-nav-logo" href="#">
-      <img src="images/rlogo.png" alt="HamaraService" onerror="this.style.display='none'"/>
+      <img src="images/rlogo-tight.png" alt="HamaraService" onerror="this.style.display='none'"/>
       <span class="sp-nav-name">HamaraService</span>
     </a>
     <span class="sp-skip" onclick="dismissOverlay()">Skip →</span>
@@ -735,7 +775,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
       <div class="sp-icon">💼</div>
       <div class="sp-label">For Professionals</div>
       <div class="sp-title">Want to Provide Services?</div>
-      <div class="sp-desc">Join our network of skilled professionals. Earn on your own schedule with steady work near you.</div>
+      <div class="sp-desc">Get job requests from customers near you, set your own prices and work on your own schedule.</div>
       <div class="sp-tap">Tap to join →</div>
     </div>
   </div>
@@ -745,7 +785,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <!-- ─── HEADER ─── -->
 <header id="siteHeader">
   <a class="logo" href="#">
-    <img src="images/rlogo.png" alt="Hamara Service" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <img src="images/rlogo-tight.png" alt="Hamara Service" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
     <div class="logo-fallback" style="display:none;align-items:center;gap:10px;">
       <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
       <div class="logo-text">
@@ -794,9 +834,9 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 
 <!-- ─── HERO ─── -->
 <section class="hero">
-  <div class="hero-badge"><span></span>Live in 50+ cities across India</div>
+  <div class="hero-badge"><span></span>Now accepting bookings</div>
   <h1>Professional Home Services<br/>at Your <em>Doorstep</em></h1>
-  <p class="hero-sub">Trusted, background-verified professionals for every home need. Book in 60 seconds.</p>
+  <p class="hero-sub">ID-verified local professionals for every home need. Book in 60 seconds.</p>
 
   <div class="search-box" id="searchBox" style="overflow:visible;">
     <div class="search-body" style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:14px;overflow:visible;position:relative;">
@@ -871,7 +911,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <div class="hiw-num">01</div>
         <div class="hiw-icon brand">📍</div>
         <div class="hiw-title">Pick your service</div>
-        <div class="hiw-desc">Choose from 15+ home services. Set your date, time, and location in seconds.</div>
+        <div class="hiw-desc">Choose from 30+ home services. Set your date, time, and location in seconds.</div>
       </div>
       <div class="hiw-card">
         <div class="hiw-num">02</div>
@@ -943,13 +983,13 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <div class="provider-card">
       <div class="provider-left">
         <div class="section-label">For professionals</div>
-        <div class="section-title">Earn ₹800–₹2000<br/>every day</div>
-        <p>Join thousands of professionals who have transformed their income with HamaraService. Flexible hours, guaranteed payments, and a steady flow of customers.</p>
+        <div class="section-title">Grow your income<br/>with local jobs</div>
+        <p>Get job requests from customers near you, quote your own price and choose when you work. Customers pay online or in cash after the job.</p>
         <div class="provider-perks">
-          <div class="perk"><div class="perk-ic">✅</div>Get paid within 24 hours</div>
+          <div class="perk"><div class="perk-ic">💰</div>Set your own price for every service</div>
           <div class="perk"><div class="perk-ic">📍</div>Work within your preferred radius</div>
           <div class="perk"><div class="perk-ic">📱</div>Manage everything from your phone</div>
-          <div class="perk"><div class="perk-ic">🛡️</div>Insurance & safety support included</div>
+          <div class="perk"><div class="perk-ic">🔐</div>OTP-secured job start and finish</div>
         </div>
         <div class="provider-cta-btns">
           <a class="btn-primary" href="/app/provider.html?register=1" onclick="HS_login('provider','?register=1');return false;">Register as Provider →</a>
@@ -958,9 +998,9 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
       </div>
       <div class="provider-right">
         <div class="earn-card">
-          <div class="earn-card-label">Average monthly earnings</div>
-          <div class="earn-card-val"><span>₹</span>24,000</div>
-          <div class="earn-card-sub">Working 6 days/week · 4–6 bookings/day</div>
+          <div class="earn-card-label">How you earn</div>
+          <div class="earn-card-val">Your price</div>
+          <div class="earn-card-sub">You quote each job · a small platform fee per completed job · withdraw your earnings from the app</div>
         </div>
         <div class="earn-tags">
           <div class="earn-tag">🧹 House Maid</div>
@@ -968,7 +1008,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
           <div class="earn-tag">🔧 Plumber</div>
           <div class="earn-tag">👨‍🍳 Cook</div>
           <div class="earn-tag">❄️ AC Service</div>
-          <div class="earn-tag">+ 10 more</div>
+          <div class="earn-tag">+ 25 more</div>
         </div>
       </div>
     </div>
@@ -979,20 +1019,13 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <section class="app-bg" style="padding:80px 40px;">
   <div class="app-inner">
     <h2>Get the HamaraService App</h2>
-    <p>Book services, track professionals in real-time, and manage everything from your pocket.</p>
+    <p>Book services, get live job updates and pay securely — all from your phone.</p>
     <div class="app-btns">
-      <a class="app-btn" href="#">
-        <div class="app-btn-icon">🍎</div>
+      <a class="app-btn" href="/get-app.html">
+        <div class="app-btn-icon">🤖</div>
         <div class="app-btn-text">
-          <div class="app-btn-label">Download on the</div>
-          <div class="app-btn-store">App Store</div>
-        </div>
-      </a>
-      <a class="app-btn" href="#">
-        <div class="app-btn-icon">▶️</div>
-        <div class="app-btn-text">
-          <div class="app-btn-label">Get it on</div>
-          <div class="app-btn-store">Google Play</div>
+          <div class="app-btn-label">Get the app for</div>
+          <div class="app-btn-store">Android</div>
         </div>
       </a>
     </div>
@@ -1005,35 +1038,24 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <div class="footer-top">
       <div class="footer-brand">
         <a class="logo" href="#">
-          <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
-          <div class="logo-text">
-            <span class="logo-name" style="color:white;">HAMARA <span class="logo-accent">SERVICE</span></span>
-            <span class="logo-tagline" style="color:rgba(255,255,255,.4);">FOR EVERY HOME, EVERY NEED</span>
-          </div>
+          <img src="images/rlogo-tight.png" alt="Hamara Service" class="footer-logo-img"/>
         </a>
-        <p class="footer-desc">India's most trusted platform for home services. Safe, reliable, and always on time.</p>
-        <div class="footer-social">
-          <div class="social-btn">📘</div>
-          <div class="social-btn">📷</div>
-          <div class="social-btn">🐦</div>
-          <div class="social-btn">▶️</div>
-        </div>
+        <p class="footer-desc">Book ID-verified local professionals for home services — upfront prices, OTP-secured jobs, pay after the work is done.</p>
       </div>
       <div class="footer-col">
         <h4>Services</h4>
-        <a href="#">House Cleaning</a>
-        <a href="#">AC Service</a>
-        <a href="#">Plumbing</a>
-        <a href="#">Electrical</a>
-        <a href="#">Carpentry</a>
-        <a href="#">Pest Control</a>
+        <a href="/app/customer.html?svc=SVC001">House Cleaning</a>
+        <a href="/app/customer.html?svc=SVC007">AC Service</a>
+        <a href="/app/customer.html?svc=SVC011">Plumbing</a>
+        <a href="/app/customer.html?svc=SVC012">Electrical</a>
+        <a href="/app/customer.html?svc=SVC013">Carpentry</a>
+        <a href="/app/customer.html?svc=SVC021">Pest Control</a>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
-        <a href="#">About us</a>
-        <a href="#">Careers</a>
-        <a href="#">Blog</a>
-        <a href="#">Press</a>
+        <a href="#about">About us</a>
+        <a href="#how">How it works</a>
+        <a href="/app/provider.html?register=1">Become a provider</a>
       </div>
       <div class="footer-col">
         <h4>Support</h4>
@@ -1041,7 +1063,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a href="legal-pages.html#privacy">Privacy Policy</a>
         <a href="legal-pages.html#terms">Terms & Conditions</a>
         <a href="legal-pages.html#refund">Refund Policy</a>
-        <a href="tel:+918898584971">📞 88985849710</a>
+        <a href="tel:+919346220090">📞 +91 93462 20090</a>
         <a href="mailto:support@hamaraservice.com">✉️ support@hamaraservice.com</a>
       </div>
     </div>
