@@ -31,6 +31,7 @@ return [
     'SUPPORT_EMAIL'       => 'info@hamaraservice.com',
     'CUSTOMER_APP_URL'    => '',            // Play Store link (or APK download link) for the customer app
     'PROVIDER_APP_URL'    => '',            // Play Store link (or APK download link) for the provider app
+    'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)
     'WEB_LOGIN_MODE'      => 'web',         // 'web' = website login works; 'app' = login buttons send people to the apps
 
     'SMTP_HOST'           => 'smtp.hostinger.com',
