@@ -1247,6 +1247,14 @@ function loadAndRenderCatalog() {
       // Firebase may return object (keyed by id) or array — normalise to array
       var arr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data).filter(Boolean);
       if (!arr.length) return;
+      // Default prices for cards the price API hasn't priced (API slow or down)
+      var seeded = false;
+      arr.forEach(function(c){
+        var m = c && HS_CATALOG.find(function(m){ return m.id === c.id; });
+        var dp = c && (parseInt(c.minPrice) || parseInt(c.defaultPrice) || parseInt(c.userPrice) || 0);
+        if (m && !m.provRange && !(m.price > 0) && dp > 0) { m.price = dp; seeded = true; }
+      });
+      if (seeded) renderServicesGrid();
       // Save to localStorage for next visit
       try { localStorage.setItem('hs_catalog', JSON.stringify(arr)); } catch(e) {}
       // Build active services
