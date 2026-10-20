@@ -118,9 +118,10 @@ switch ($action) {
     $stmt->execute([$email]);
     $local = $stmt->fetch() ?: null;
 
-    $uid = null;
+    $uid = null; $fbErr = '';
     if (FIREBASE_WEB_API_KEY !== '') {
       $r = fbAuth('signInWithPassword', ['email' => $email, 'password' => $pwd, 'returnSecureToken' => true]);
+      $fbErr = $r['error'];
       if ($r['ok']) {
         $uid = $r['data']['localId'];
       } elseif (!in_array($r['error'], ['EMAIL_NOT_FOUND','INVALID_LOGIN_CREDENTIALS','INVALID_PASSWORD'], true)) {
@@ -134,8 +135,10 @@ switch ($action) {
           password_verify($pwd, $local['password_hash'])
           || (strpos($local['password_hash'], '$2y$') !== 0 && hash_equals((string)$local['password_hash'], $pwd)));
       if (!$legacyOk) {
-        if (!$local && FIREBASE_WEB_API_KEY === '') err('NOT_REGISTERED', 404);
-        err('Incorrect email or password', 401);
+        if (!$local && (FIREBASE_WEB_API_KEY === '' || $fbErr === 'EMAIL_NOT_FOUND'))
+          err('NOT_REGISTERED: No account found for this email. Please create an account.', 404);
+        if ($local || $fbErr === 'INVALID_PASSWORD') err('Incorrect password. Please try again.', 401);
+        err('Incorrect email or password. New here? Create an account.', 401);
       }
       $uid = $local['id'];
       // Move this web-only account onto Firebase so the mobile app can use it too

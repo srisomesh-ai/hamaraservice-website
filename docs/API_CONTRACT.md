@@ -112,3 +112,13 @@ Public: `all`, `categories`, `get&id=`, `prices&id=`, `price_ranges`, `commissio
 
 ## Push notifications (FCM data messages)
 `data.event` values: `new_booking, price_quoted, price_negotiation, negotiation_final, price_confirmed, booking_confirmed, booking_released, provider_declined, service_started, completion_otp_ready, completed, payment_done, payment_received, booking_cancelled, new_review, review_requested, payout_approved, account_approved, admin_broadcast`; plus `bookingId`, `title`, `body`. Messages are **data-only**: the app must display them itself (flutter_local_notifications) in foreground AND background handlers, and route taps to the booking.
+
+## Additions (Oct 2026)
+- **Quote window:** bookings in `price_quoted` / `negotiation_final` carry `quote_expires_in` (seconds). After `QUOTE_TTL_MIN` (default 5) the server releases the provider and the booking returns to `searching`.
+- **Cash rule:** `get` / `active` include `cash_allowed` (0/1). `cash_collected` returns **402 `CASH_NOT_ALLOWED: …`** when the provider wallet is below the job's platform fee.
+- **Wallet top-up (provider):** `payouts.php?action=topup_order {amount}` → `{order_id, amount (paise), currency, key_id}` for Razorpay Checkout; then `payouts.php?action=topup_confirm {razorpay_order_id, razorpay_payment_id, razorpay_signature}`. The webhook also credits top-ups. Each top-up is credited once.
+- **Provider base location:** `providers.php?action=update {base_lat, base_lng, radius_km}`. Matching uses the pinned base if set, else the live `lat/lng`. `radius_km` is clamped to 1–50. `register` also accepts `base_lat/base_lng`.
+- **Login errors:** `providers.php?action=login` → **404 `NOT_REGISTERED: …`** for an unknown email, **400 `Incorrect password…`** for a wrong password. `customers.php?action=web_login` returns `NOT_REGISTERED: …` (404) when it can tell.
+- **Site settings (public):** `site.php?action=config` → `{support_whatsapp, support_email, customer_app_url, provider_app_url, web_login_mode}` (from `hs-secrets.php`).
+- **Admin:** `admin.php?action=data_counts`, `admin.php?action=wipe_test_data {confirm:'DELETE TEST DATA', bookings, customers, providers}`. `bookings.php?action=admin_finance` adds `payments_mode` (`test` / `live`).
+- `slot_time` up to 80 chars, e.g. `"Morning (8 AM – 12 PM) · 9 AM"`, with `slot_date` = the chosen day.

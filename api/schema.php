@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-19-1';
+const HS_SCHEMA_VERSION = '2026-10-20-4';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -30,12 +30,17 @@ function ensureSchema(PDO $db) {
         "ALTER TABLE bookings ADD COLUMN razorpay_payment_id VARCHAR(100) NULL",
         "ALTER TABLE bookings ADD COLUMN paid_at DATETIME NULL",
         "ALTER TABLE bookings ADD COLUMN settled TINYINT DEFAULT 0",
+        "ALTER TABLE bookings ADD COLUMN quote_at DATETIME NULL",
+        "ALTER TABLE bookings MODIFY COLUMN slot_time VARCHAR(80) NULL",
         "ALTER TABLE bookings ADD INDEX idx_rzp_order (razorpay_order_id)",
         // providers
         "ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL",
         "ALTER TABLE providers ADD COLUMN areas TEXT NULL",
         "ALTER TABLE providers ADD COLUMN photo VARCHAR(255) NULL",
         "ALTER TABLE providers ADD COLUMN last_seen DATETIME NULL",
+        // pinned service base location (matching); lat/lng stay the live position
+        "ALTER TABLE providers ADD COLUMN base_lat DECIMAL(10,7) NULL",
+        "ALTER TABLE providers ADD COLUMN base_lng DECIMAL(10,7) NULL",
         "ALTER TABLE providers MODIFY COLUMN status ENUM('pending','review','approved','suspended','rejected','deleted') DEFAULT 'pending'",
         "ALTER TABLE providers MODIFY COLUMN pending_earned INT DEFAULT 0",
         // services — per-service commission
@@ -45,6 +50,18 @@ function ensureSchema(PDO $db) {
         // reviews — one per booking
         "ALTER TABLE reviews ADD UNIQUE KEY uniq_booking (booking_id)",
     ];
+    $stmts[] = "CREATE TABLE IF NOT EXISTS wallet_topups (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider_id VARCHAR(30) NOT NULL,
+        amount INT NOT NULL,
+        razorpay_order_id VARCHAR(100) NOT NULL,
+        razorpay_payment_id VARCHAR(100) NULL,
+        status ENUM('created','paid') DEFAULT 'created',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        paid_at DATETIME NULL,
+        UNIQUE KEY uniq_order (razorpay_order_id),
+        INDEX idx_provider (provider_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     foreach ($stmts as $s) {
         try { $db->exec($s); } catch (Throwable $e) { /* already applied */ }
     }

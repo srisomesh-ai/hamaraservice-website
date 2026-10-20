@@ -30,11 +30,27 @@
     fetchRanges().then(function (all) { try { cb(all || {}); } catch (e) { console.warn(e); } });
   };
 
+  // Adds "👷 N providers · ₹min – ₹max" (approved providers' own price
+  // ranges) to the service page's hero pills, once per page.
+  function showProviderRange(row) {
+    if (!row || !(row.provider_count > 0) || !(row.min > 0)) return;
+    if (document.getElementById('hsProvRange')) return;
+    var pills = document.querySelector('.hero-pills');
+    if (!pills) return;
+    var el = document.createElement('div');
+    el.className = 'pill green';
+    el.id = 'hsProvRange';
+    el.textContent = '👷 ' + row.provider_count + ' provider' + (row.provider_count > 1 ? 's' : '') +
+      ' · ₹' + row.min + (row.max > row.min ? ' – ₹' + row.max : '');
+    pills.insertBefore(el, pills.firstChild);
+  }
+
   window.HS_adminPrices = function (pathOrId, cb) {
     var m = String(pathOrId || '').match(/SVC\d+/);
     if (!m) { cb(null); return; }
     fetchRanges().then(function (all) {
       var row = all && all[m[0]];
+      try { showProviderRange(row); } catch (e) {}
       var d = row && row.admin_prices;
       try { cb(d && typeof d === 'object' ? d : null); } catch (e) { console.warn(e); }
     });

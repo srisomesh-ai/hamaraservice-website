@@ -26,6 +26,19 @@ function rzpRequest($method, $path, $body = null) {
     return $data;
 }
 
+// Credit a provider wallet top-up exactly once
+function creditTopup($db, array $top, $paymentId) {
+    $u = $db->prepare("UPDATE wallet_topups SET status = 'paid', razorpay_payment_id = ?, paid_at = CURRENT_TIMESTAMP
+                       WHERE id = ? AND status = 'created'");
+    $u->execute([$paymentId, $top['id']]);
+    if ($u->rowCount() === 1) {
+        $db->prepare("UPDATE providers SET pending_earned = pending_earned + ? WHERE id = ?")
+           ->execute([(int)$top['amount'], $top['provider_id']]);
+        return true;
+    }
+    return false;
+}
+
 function rzpVerifySignature($orderId, $paymentId, $signature) {
     if (RZP_KEY_SECRET === '') return false;
     $expected = hash_hmac('sha256', $orderId . '|' . $paymentId, RZP_KEY_SECRET);
