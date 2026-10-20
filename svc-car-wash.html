@@ -466,16 +466,23 @@ function showToast(msg) {
 
   function applyPrices(d) {
     if (!d || d.error) return;
+    // Lowest price in a group of the admin price sheet ({exterior:149, full:299, …})
+    function minOf(g) {
+      var v = Object.keys(g || {}).map(function (k) { return parseInt(g[k]); }).filter(function (n) { return n > 0; });
+      return v.length ? Math.min.apply(null, v) : 0;
+    }
     // Car base price (hatchback)
     if (d.car) {
       if (d.car.base !== undefined) CAR_BASE = parseInt(d.car.base);
       else if (d.car.hatchback !== undefined) CAR_BASE = parseInt(d.car.hatchback);
+      else CAR_BASE = minOf(d.car);
       var cf = document.getElementById('car-from-price');
       if (cf && CAR_BASE > 0) cf.textContent = 'from ₹' + CAR_BASE.toLocaleString('en-IN');
     }
     // Bike base price
     if (d.bike) {
       if (d.bike.base !== undefined) BIKE_BASE = parseInt(d.bike.base);
+      else BIKE_BASE = minOf(d.bike);
       var bf = document.getElementById('bike-from-price');
       if (bf && BIKE_BASE > 0) bf.textContent = 'from ₹' + BIKE_BASE.toLocaleString('en-IN');
     }
