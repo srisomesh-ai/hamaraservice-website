@@ -429,6 +429,8 @@ var ME=JSON.parse(localStorage.getItem('hs_cust_me')||'{}');
 var isReg=false, curSvc=null, sel={}, gps={lat:0,lng:0}, activeBookingId=localStorage.getItem('hs_active_bk')||'', pollTimer=null, priceRanges={};
 
 function $(id){return document.getElementById(id);}
+// Provider's number only after the customer accepted the price (no bypassing the platform)
+function phoneVisible(b){ return !!(b && b.provider_phone) && ['confirmed','active','completed'].indexOf(b.status)>=0; }
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var _curPage='pgHome';
 function show(p,fromPop){
@@ -1158,7 +1160,6 @@ function renderBookingState(b){
       +avatar
       +'<div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:900">'+esc(b.provider_name||'Provider')+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">'+distPill+ratePill+'</div></div></div>'
-      +(b.provider_phone?'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">📞 '+esc(b.provider_phone)+'</div>':'')
       +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
       +'<div id="qCountdown" style="font-size:13px;font-weight:800;color:#b45309;background:#fff5e6;border-radius:10px;padding:7px 10px;margin-bottom:10px">⏳ Confirm within 5:00</div>'
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
@@ -1179,7 +1180,7 @@ function renderBookingState(b){
     var avatar=b.provider_photo?('<div class="pf-avatar" style="width:46px;height:46px;background-image:url(https://hamaraservice.com'+encodeURI(b.provider_photo)+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:46px;height:46px;font-size:19px">'+esc((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
     a.innerHTML='<div class="card" style="text-align:center;padding:20px"><div style="font-size:44px">✅</div><div style="font-size:18px;font-weight:900;margin:8px 0 4px">Booking Confirmed</div><div style="font-size:13px;color:var(--muted)">Provider is on the way</div></div>'
       +'<div class="card"><div style="display:flex;align-items:center;gap:12px">'+avatar+'<div style="flex:1"><div style="font-weight:800;font-size:15px">'+esc(b.provider_name||'Provider')+'</div><div style="font-size:12px;color:var(--muted)">'+(b.svc_name||'')+' · ₹'+price+'</div></div></div>'
-      +(b.provider_phone?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+esc(b.provider_phone)+'">📞 Call Provider</a></div>':'')+'</div>'
+      +(phoneVisible(b)?'<div style="margin-top:12px"><a class="btn teal" style="text-decoration:none" href="tel:'+esc(b.provider_phone)+'">📞 Call Provider</a></div>':'')+'</div>'
       +startOtpBlock
       +'<div class="card" style="font-size:13px;color:var(--muted)">📍 '+esc(b.address||'')+'</div>'
       +'<button class="btn ghost" style="border-color:var(--red);color:var(--red);margin-top:8px" onclick="cancelBooking()">Cancel Booking</button>';
@@ -1444,7 +1445,7 @@ function openBkDetail(id){
       +(b.slot_time?'<div class="dt-row"><span>Time</span><span>'+esc(b.slot_time)+'</span></div>':'')
       +(b.started_at?'<div class="dt-row"><span>Work started</span><span>'+fmtTime(b.started_at)+'</span></div>':'')
       +(b.completed_at?'<div class="dt-row"><span>Work closed</span><span>'+fmtTime(b.completed_at)+(b.started_at?' ('+fmtDur(b.started_at,b.completed_at)+')':'')+'</span></div>':'')
-      +(b.provider_name?'<div class="dt-row"><span>Provider</span><span>'+esc(b.provider_name)+(b.provider_phone?' · <a href="tel:'+esc(b.provider_phone)+'">📞</a>':'')+'</span></div>':'')
+      +(b.provider_name?'<div class="dt-row"><span>Provider</span><span>'+esc(b.provider_name)+(phoneVisible(b)?' · <a href="tel:'+esc(b.provider_phone)+'">📞</a>':'')+'</span></div>':'')
       +((b.confirmed_price>0||b.quoted_price>0)?'<div class="dt-row"><span>Price</span><b style="color:var(--teal);font-size:16px">₹'+(b.confirmed_price||b.final_price||b.quoted_price)+'</b></div>':'')
       +(b.start_otp&&b.status==='confirmed'?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Start OTP — share when provider arrives</div><div class="otp-big">'+esc(b.start_otp)+'</div>':'')
       +(b.completion_otp&&b.status==='active'?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">Completion OTP — share only when the work is done</div><div class="otp-big">'+esc(b.completion_otp)+'</div>':'')
