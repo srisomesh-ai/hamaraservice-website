@@ -531,4 +531,12 @@ var SVC=[
     ]}
   ]}
 ];
-if (typeof window!=='undefined') window.SVC = SVC;
+// Legacy duplicates (kept so old bookings / provider rows keep their IDs) —
+// not offered to customers or providers, same as the apps:
+//   SVC008 AC Repair → SVC007 AC Cleaning & Repair
+//   SVC018 Bike Wash → SVC017 Car / Bike Wash
+//   SVC020 2 Wheeler Mechanic → SVC019 Car & Bike Mechanic
+var SVC_LEGACY = {SVC008:1, SVC018:1, SVC020:1};
+var SVC_ALL = SVC;
+SVC = SVC_ALL.filter(function(s){ return !SVC_LEGACY[s.id]; });
+if (typeof window!=='undefined') { window.SVC = SVC; window.SVC_ALL = SVC_ALL; window.SVC_LEGACY = SVC_LEGACY; }
