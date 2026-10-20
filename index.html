@@ -701,6 +701,53 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 }
 @media(min-width:601px){.sp-or-m{display:none;}}
 
+
+/* ═══ GRAND LAUNCH ═══ */
+#launchGate{position:fixed;inset:0;z-index:20000;display:none;overflow:auto;color:#fff;text-align:center;
+  background:radial-gradient(1200px 700px at 50% -10%,#2a8796 0%,#145361 45%,#0b2f38 100%);font-family:'DM Sans',sans-serif;}
+#launchGate.show{display:block;}
+#launchGate .lg-wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px 40px;gap:18px;}
+#launchGate .lg-logo{height:52px;width:auto;filter:brightness(0) invert(1);}
+#launchGate .lg-chip{font-size:12px;letter-spacing:3px;font-weight:800;color:#ffb07a;text-transform:uppercase;}
+#launchGate .lg-title{font-family:'Sora',sans-serif;font-size:clamp(30px,8vw,52px);font-weight:800;line-height:1.1;letter-spacing:-1px;}
+#launchGate .lg-title em{font-style:normal;color:#ff9a52;}
+#launchGate .lg-msg{max-width:520px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px 20px;font-size:17px;line-height:1.6;color:rgba(255,255,255,.92);}
+#launchGate .lg-msg b{color:#ffd2b0;font-size:19px;}
+#launchGate .lg-msg small{display:block;margin-top:8px;font-size:12.5px;color:rgba(255,255,255,.6);}
+#launchGate .lg-btn{margin-top:10px;width:190px;height:190px;border-radius:50%;border:none;cursor:pointer;color:#fff;
+  font-family:'Sora',sans-serif;font-size:26px;font-weight:800;letter-spacing:2px;
+  background:radial-gradient(circle at 35% 30%,#ff9a52,#e8651a 55%,#b84a0e);
+  box-shadow:0 0 0 10px rgba(232,101,26,.18),0 0 0 22px rgba(232,101,26,.08),0 18px 50px rgba(0,0,0,.4);
+  animation:lgPulse 1.8s ease-in-out infinite;-webkit-tap-highlight-color:transparent;}
+#launchGate .lg-btn span{display:block;font-size:42px;letter-spacing:0;margin-bottom:2px;}
+#launchGate .lg-btn:active{transform:scale(.95);}
+#launchGate .lg-hint{font-size:12.5px;color:rgba(255,255,255,.55);}
+@keyframes lgPulse{0%,100%{box-shadow:0 0 0 10px rgba(232,101,26,.18),0 0 0 22px rgba(232,101,26,.08),0 18px 50px rgba(0,0,0,.4);}
+  50%{box-shadow:0 0 0 18px rgba(232,101,26,.22),0 0 0 36px rgba(232,101,26,.07),0 18px 50px rgba(0,0,0,.4);}}
+#lgCode{position:fixed;inset:0;z-index:20010;display:none;align-items:center;justify-content:center;background:rgba(5,20,25,.75);padding:20px;}
+#lgCode.show{display:flex;}
+#lgCode .lc-box{width:100%;max-width:360px;background:#fff;color:var(--ink);border-radius:20px;padding:24px 22px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+#lgCode .lc-box.shake{animation:lgShake .4s;}
+@keyframes lgShake{20%,60%{transform:translateX(-10px);}40%,80%{transform:translateX(10px);}}
+#lgCode h3{font-family:'Sora',sans-serif;font-size:20px;margin-bottom:4px;}
+#lgCode p{font-size:13px;color:var(--muted);margin-bottom:14px;}
+#lgCode input{width:100%;font-size:26px;letter-spacing:8px;text-align:center;padding:12px;border:2px solid var(--line);border-radius:14px;outline:none;font-weight:800;}
+#lgCode input:focus{border-color:var(--teal);}
+#lgCode .lc-err{color:#e53e3e;font-size:13px;font-weight:700;min-height:20px;margin:8px 0 4px;}
+#lgCode .lc-go{width:100%;padding:14px;border:none;border-radius:14px;background:var(--brand);color:#fff;font-size:16px;font-weight:800;cursor:pointer;}
+#lgCode .lc-cancel{margin-top:10px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;}
+#lgCount{position:fixed;inset:0;z-index:20020;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  background:radial-gradient(900px 600px at 50% 40%,#1b6b7a,#0a2a32);text-align:center;}
+#lgCount.show{display:flex;}
+#lgCount .cn-label{font-size:13px;letter-spacing:4px;font-weight:800;color:#ffb07a;text-transform:uppercase;}
+#lgCount .cn-num{font-family:'Sora',sans-serif;font-size:min(48vw,260px);font-weight:800;line-height:1;margin:10px 0;text-shadow:0 10px 40px rgba(0,0,0,.35);}
+#lgCount .cn-num.tick{animation:lgTick .9s ease-out;}
+@keyframes lgTick{0%{transform:scale(1.6);opacity:0;}25%{opacity:1;}100%{transform:scale(1);opacity:1;}}
+#lgCount .cn-live{display:none;font-family:'Sora',sans-serif;font-size:clamp(34px,10vw,64px);font-weight:800;line-height:1.15;padding:0 16px;}
+#lgCount .cn-live em{font-style:normal;color:#ff9a52;}
+#lgCount .cn-sub{font-size:16px;color:rgba(255,255,255,.75);margin-top:10px;padding:0 20px;}
+#lgConfetti{position:fixed;inset:0;z-index:20030;pointer-events:none;}
+
 /* ═══ MOBILE POLISH ═══ */
 .logo-img{height:54px;}
 .sp-nav-logo img{width:auto;height:30px;filter:brightness(0) invert(1);}
@@ -743,6 +790,39 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 </style>
 </head>
 <body>
+
+
+<!-- ══ GRAND LAUNCH (shown until the director launches the site) ══ -->
+<div id="launchGate">
+  <div class="lg-wrap">
+    <img src="images/rlogo-tight.png" alt="Hamara Service" class="lg-logo"/>
+    <div class="lg-chip">✨ Grand Launch ✨</div>
+    <div class="lg-title">HamaraService<br/>goes <em>live</em> today</div>
+    <div class="lg-msg">
+      We are proud that <b>HamaraService</b> is being launched by your hands,<br/><b>Sri Lakshmi garu</b> 🙏
+      <small>Director, HamaraService · For every home, every need</small>
+    </div>
+    <button class="lg-btn" onclick="lgAskCode()"><span>🚀</span>LAUNCH</button>
+    <div class="lg-hint">Director's secret code required</div>
+  </div>
+</div>
+<div id="lgCode">
+  <div class="lc-box" id="lcBox">
+    <h3>🔐 Director's code</h3>
+    <p>Enter the secret code to launch HamaraService</p>
+    <input id="lcInput" type="password" autocomplete="off" inputmode="numeric" maxlength="20" onkeydown="if(event.key==='Enter')lgSubmit()"/>
+    <div class="lc-err" id="lcErr"></div>
+    <button class="lc-go" id="lcGo" onclick="lgSubmit()">🚀 Launch now</button>
+    <button class="lc-cancel" onclick="lgCloseCode()">Cancel</button>
+  </div>
+</div>
+<div id="lgCount">
+  <div class="cn-label" id="cnLabel">Launching in</div>
+  <div class="cn-num" id="cnNum">9</div>
+  <div class="cn-live" id="cnLive">🎉 HamaraService<br/>is <em>LIVE!</em></div>
+  <div class="cn-sub" id="cnSub">Launched by Sri Lakshmi garu</div>
+</div>
+<canvas id="lgConfetti" style="display:none"></canvas>
 
 <!-- ══ SPLIT SCREEN ══ -->
 <div id="splitOverlay">
@@ -1692,6 +1772,115 @@ function dismissOverlay(){
     }
   }catch(e){}
 })();
+
+
+// ── GRAND LAUNCH ─────────────────────────────────────────────
+// Until the director launches the site (api/launch.php) every visitor sees the
+// launch screen. ?launch=preview rehearses it without launching.
+var LG_PREVIEW = /[?&]launch=preview/.test(location.search);
+(function(){
+  var ctl = window.AbortController ? new AbortController() : null;
+  if (ctl) setTimeout(function(){ ctl.abort(); }, 5000);
+  fetch('/api/launch.php?action=status', {cache:'no-store', signal: ctl ? ctl.signal : undefined})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (LG_PREVIEW || (res && res.success && res.data && !res.data.launched)) {
+        document.getElementById('launchGate').classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+    }).catch(function(){ /* API unreachable → show the normal site */ });
+})();
+function lgAskCode(){
+  lgBeep(660, .08);
+  document.getElementById('lgCode').classList.add('show');
+  document.getElementById('lcErr').textContent = '';
+  setTimeout(function(){ document.getElementById('lcInput').focus(); }, 50);
+}
+function lgCloseCode(){ document.getElementById('lgCode').classList.remove('show'); }
+function lgSubmit(){
+  var code = document.getElementById('lcInput').value.trim(), btn = document.getElementById('lcGo');
+  if (!code) return;
+  btn.disabled = true; btn.textContent = 'Checking…';
+  fetch('/api/launch.php?action=launch', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({code: code, dry_run: LG_PREVIEW ? 1 : 0})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      btn.disabled = false; btn.textContent = '🚀 Launch now';
+      if (!res.success) {
+        document.getElementById('lcErr').textContent = 'Wrong code — please try again';
+        var box = document.getElementById('lcBox'); box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+        document.getElementById('lcInput').select();
+        return;
+      }
+      lgCloseCode(); lgCountdown();
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = '🚀 Launch now';
+      document.getElementById('lcErr').textContent = 'No internet — please try again';
+    });
+}
+var _lgAudio = null;
+function lgBeep(freq, dur){
+  try {
+    _lgAudio = _lgAudio || new (window.AudioContext || window.webkitAudioContext)();
+    var o = _lgAudio.createOscillator(), g = _lgAudio.createGain();
+    o.frequency.value = freq; o.type = 'sine';
+    g.gain.setValueAtTime(.25, _lgAudio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, _lgAudio.currentTime + dur);
+    o.connect(g); g.connect(_lgAudio.destination); o.start(); o.stop(_lgAudio.currentTime + dur);
+  } catch (e) {}
+}
+function lgCountdown(){
+  var box = document.getElementById('lgCount'), num = document.getElementById('cnNum');
+  document.getElementById('launchGate').classList.remove('show');
+  box.classList.add('show');
+  var n = 9;
+  function tick(){
+    num.textContent = n; num.classList.remove('tick'); void num.offsetWidth; num.classList.add('tick');
+    if (navigator.vibrate) navigator.vibrate(n === 0 ? 400 : 60);
+    lgBeep(n === 0 ? 1046 : 523, n === 0 ? .6 : .12);
+    if (n === 0) { setTimeout(lgLive, 700); return; }
+    n--; setTimeout(tick, 1000);
+  }
+  tick();
+}
+function lgLive(){
+  document.getElementById('cnLabel').style.display = 'none';
+  document.getElementById('cnNum').style.display = 'none';
+  document.getElementById('cnLive').style.display = 'block';
+  document.getElementById('cnSub').textContent = 'Launched by Sri Lakshmi garu · ' +
+    new Date().toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+  [523, 659, 784, 1046].forEach(function(f, i){ setTimeout(function(){ lgBeep(f, .25); }, i * 160); });
+  lgConfetti(4200);
+  setTimeout(function(){
+    var box = document.getElementById('lgCount');
+    box.style.transition = 'opacity .6s'; box.style.opacity = '0';
+    setTimeout(function(){
+      box.classList.remove('show'); box.style.opacity = '';
+      document.body.style.overflow = '';
+      // Open the "customer or professional" page
+      var ov = document.getElementById('splitOverlay');
+      if (ov) { ov.style.display = ''; ov.classList.remove('hidden'); }
+    }, 600);
+  }, 5200);
+}
+function lgConfetti(ms){
+  var c = document.getElementById('lgConfetti'), x = c.getContext('2d');
+  c.style.display = 'block'; c.width = innerWidth; c.height = innerHeight;
+  var cols = ['#ff9a52', '#e8651a', '#ffd166', '#2ecc71', '#4fd1c5', '#ffffff', '#f687b3'], P = [];
+  for (var i = 0; i < 220; i++) P.push({x: Math.random() * c.width, y: -20 - Math.random() * c.height * .6,
+    w: 6 + Math.random() * 6, h: 8 + Math.random() * 8, vy: 2 + Math.random() * 4, vx: -2 + Math.random() * 4,
+    r: Math.random() * 6, vr: -.2 + Math.random() * .4, c: cols[i % cols.length]});
+  var end = Date.now() + ms;
+  (function frame(){
+    x.clearRect(0, 0, c.width, c.height);
+    P.forEach(function(p){
+      p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      if (p.y > c.height + 20 && Date.now() < end - 1200) { p.y = -20; p.x = Math.random() * c.width; }
+      x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); x.restore();
+    });
+    if (Date.now() < end) requestAnimationFrame(frame); else c.style.display = 'none';
+  })();
+}
 
 // Haptic feedback on every touch across the whole page
 document.addEventListener('touchstart', function(){
