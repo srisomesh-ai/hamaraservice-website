@@ -211,11 +211,11 @@ function hs_page_end() {
 ' . hs_footer_links_html() . '
 <div class="ft-bot">
   <div><a href="/">Home</a> · <a href="/get-app.html">Get the app</a> · <a href="/legal-pages.html#contact">Contact</a> · <a href="/legal-pages.html#privacy">Privacy</a> · <a href="/legal-pages.html#terms">Terms</a> · <a href="/legal-pages.html#refund">Refunds</a></div>
-  <div>📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:support@hamaraservice.com">support@hamaraservice.com</a></div>
+  <div>📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:info@hamaraservice.com">info@hamaraservice.com</a></div>
   <div class="muted">© ' . date('Y') . ' HamaraService. Bookings and partner registration happen only in the HamaraService Android apps.</div>
 </div></div></footer>
-<script src="/js/hs-site.js"></script>
-<script src="/js/hs-track.js" defer></script>
+<script src="/js/hs-site.js?v=20261022"></script>
+<script src="/js/hs-track.js?v=20261022" defer></script>
 </body>
 </html>';
 }

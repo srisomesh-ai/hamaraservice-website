@@ -28,7 +28,7 @@ return [
 
     // Public site settings
     'SUPPORT_WHATSAPP'    => '919346220090',  // e.g. '919876543210' (country code + number)
-    'SUPPORT_EMAIL'       => 'support@hamaraservice.com',
+    'SUPPORT_EMAIL'       => 'info@hamaraservice.com',
     'NO_PROVIDER_ALERT_MIN' => 5,           // e-mail the admin when a booking has no provider after N minutes
     'ADMIN_ALERT_EMAIL'   => '',            // where that alert goes ('' = SUPPORT_EMAIL)
     'CRON_KEY'            => '',            // long random string for api/cron.php?action=unassigned&key=… ('' = disabled)

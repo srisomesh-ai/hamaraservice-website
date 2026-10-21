@@ -14,19 +14,33 @@
   var API = (h === 'hamaraservice.com' || h === 'www.hamaraservice.com' || h === 'localhost' || h === '127.0.0.1')
     ? '/api' : 'https://hamaraservice.com/api';
   function load() {
-    fetch(API + '/site.php?action=config').then(function (r) { return r.json(); })
-      .then(function (res) { cfg = (res && res.success && res.data) || {}; })
-      .catch(function () { cfg = {}; })
-      .then(function () { var w = waiting; waiting = []; w.forEach(function (cb) { try { cb(cfg); } catch (e) {} }); });
+    var done = false;
+    function finish(c) {
+      if (done) return; done = true; cfg = c || {};
+      var w = waiting; waiting = []; w.forEach(function (cb) { try { cb(cfg); } catch (e) {} });
+    }
+    // Never leave a button waiting: fall back to defaults after 3 s.
+    setTimeout(function () { finish({}); }, 3000);
+    fetch(API + '/site.php?action=config', { cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (res) { finish((res && res.success && res.data) || {}); })
+      .catch(function () { finish({}); });
   }
   window.HS_site = function (cb) { if (cfg) cb(cfg); else { waiting.push(cb); if (waiting.length === 1) load(); } };
 
   // 'app' unless the server explicitly says 'web' (also when the API is unreachable)
   window.HS_appMode = function (c) { return !(c && c.web_login_mode === 'web'); };
 
-  window.HS_appUrl = function (who, c) {
+  // Known Play Store links (used when the server config is unreachable).
+  var PLAY = { customer: 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer', provider: '' };
+  window.HS_playUrl = function (who, c) {
     who = who === 'provider' ? 'provider' : 'customer';
     var app = c ? (who === 'provider' ? c.provider_app_url : c.customer_app_url) : '';
+    return app || PLAY[who] || '';
+  };
+
+  window.HS_appUrl = function (who, c) {
+    who = who === 'provider' ? 'provider' : 'customer';
+    var app = HS_playUrl(who, c);
     return app || ('/get-app.html?for=' + who);
   };
 
@@ -36,7 +50,7 @@
       if (c.support_whatsapp) {
         window.open('https://wa.me/' + c.support_whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
       } else {
-        location.href = 'mailto:' + (c.support_email || 'support@hamaraservice.com') + '?subject=' + encodeURIComponent('Support request') + '&body=' + encodeURIComponent(msg);
+        location.href = 'mailto:' + (c.support_email || 'info@hamaraservice.com') + '?subject=' + encodeURIComponent('Support request') + '&body=' + encodeURIComponent(msg);
       }
     });
   };
@@ -50,13 +64,14 @@
   };
 
   // The one place that decides where "install the app" goes:
-  //  Android + Play link set → straight to the Play Store (opens the Play app);
-  //  iPhone / computer / no link yet → /get-app.html (QR code to scan, or WhatsApp).
+  //  Android / computer + Play link set → straight to the Play Store
+  //  (on a computer, Play's web page can install the app on the visitor's phone);
+  //  iPhone / no link yet → /get-app.html (QR code to scan, or WhatsApp).
   window.HS_getApp = function (who) {
     who = who === 'provider' ? 'provider' : 'customer';
     HS_site(function (c) {
-      var play = who === 'provider' ? c.provider_app_url : c.customer_app_url;
-      location.href = (play && HS_device() === 'android') ? play : '/get-app.html?for=' + who;
+      var play = HS_playUrl(who, c);
+      location.href = (play && HS_device() !== 'ios') ? play : '/get-app.html?for=' + who;
     });
   };
 
@@ -81,8 +96,8 @@
     HS_site(function (c) {
       for (var i = 0; i < links.length; i++) {
         var who = links[i].getAttribute('data-hs-getapp');
-        var app = who === 'provider' ? c.provider_app_url : c.customer_app_url;
-        if (app && HS_device() === 'android') { links[i].href = app; links[i].rel = 'noopener'; }
+        var app = HS_playUrl(who, c);
+        if (app && HS_device() !== 'ios') { links[i].href = app; links[i].rel = 'noopener'; }
       }
     });
   }

@@ -103,7 +103,7 @@ function sendCustomerWelcome($name, $email) {
     </div>
     ' . ctaButton('Book a Service Now', SITE_URL . '/user-booking.html') . '
     <p style="font-size:13px;color:#9ca3af;margin:24px 0 0;text-align:center;">
-      Need help? Reply to this email or call us at <strong>8985849710</strong>
+      Need help? Reply to this email or call us at <strong>+91 93462 20090</strong>
     </p>
   ');
 
@@ -143,7 +143,7 @@ function sendProviderWelcome($name, $email, $id, $service) {
     <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:14px;padding:16px;margin:0 0 24px;">
       <strong style="font-size:13px;color:#166534;">📞 Need faster approval?</strong>
       <p style="font-size:13px;color:#15803d;margin:6px 0 0;">
-        Call or WhatsApp us at <strong>8985849710</strong> with your Provider ID <strong>' . esc($id) . '</strong>
+        Call or WhatsApp us at <strong>+91 93462 20090</strong> with your Provider ID <strong>' . esc($id) . '</strong>
       </p>
     </div>
     <p style="font-size:13px;color:#9ca3af;text-align:center;margin:0;">
@@ -223,7 +223,7 @@ function sendProviderApproved($name, $email, $id) {
     </div>
     ' . ctaButton('Go to Provider Dashboard', SITE_URL . '/app/provider.html') . '
     <p style="font-size:13px;color:#9ca3af;margin:24px 0 0;text-align:center;">
-      Questions? Call us at <strong>8985849710</strong> or reply to this email.
+      Questions? Call us at <strong>+91 93462 20090</strong> or reply to this email.
     </p>
   ');
 
