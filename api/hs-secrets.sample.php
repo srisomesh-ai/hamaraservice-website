@@ -28,7 +28,7 @@ return [
 
     // Public site settings
     'SUPPORT_WHATSAPP'    => '919346220090',  // e.g. '919876543210' (country code + number)
-    'SUPPORT_EMAIL'       => 'info@hamaraservice.com',
+    'SUPPORT_EMAIL'       => 'support@hamaraservice.com',
     'CUSTOMER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.customer (once live)
     'PROVIDER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.provider (once live)
     'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)

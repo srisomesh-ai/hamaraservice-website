@@ -84,7 +84,7 @@ define('SMTP_PASS', hsCfg('SMTP_PASS'));
 // Public site settings (served by api/site.php — safe to expose)
 define('LAUNCH_CODE', (string)hsCfg('LAUNCH_CODE'));   // director's launch code (optional)
 define('SUPPORT_WHATSAPP',  preg_replace('/\D/', '', hsCfg('SUPPORT_WHATSAPP') ?: '919346220090'));   // e.g. 919876543210
-define('SUPPORT_EMAIL',     hsCfg('SUPPORT_EMAIL', 'info@hamaraservice.com'));
+define('SUPPORT_EMAIL',     hsCfg('SUPPORT_EMAIL', 'support@hamaraservice.com'));
 // App links (Play Store). Empty = not published yet → /get-app.html shows
 // "Coming soon on Google Play — WhatsApp us for early access".
 define('CUSTOMER_APP_URL',  hsCfg('CUSTOMER_APP_URL', ''));   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.customer
