@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-21-2';
+const HS_SCHEMA_VERSION = '2026-10-21-3';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -77,6 +77,107 @@ function ensureSchema(PDO $db) {
         used_at DATETIME NULL,
         INDEX idx_email_purpose (email, purpose, created_at),
         INDEX idx_ip (ip, created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    // ── first-party visitor analytics (api/track.php, api/visitors.php) ──
+    $stmts[] = "CREATE TABLE IF NOT EXISTS visitors (
+        vid VARCHAR(32) NOT NULL PRIMARY KEY,
+        first_seen DATETIME NOT NULL,
+        last_seen DATETIME NOT NULL,
+        visits INT NOT NULL DEFAULT 0,
+        total_seconds INT NOT NULL DEFAULT 0,
+        pageviews INT NOT NULL DEFAULT 0,
+        first_source VARCHAR(20) NOT NULL DEFAULT '',
+        first_referrer VARCHAR(255) NOT NULL DEFAULT '',
+        first_landing VARCHAR(255) NOT NULL DEFAULT '',
+        utm_source VARCHAR(100) NOT NULL DEFAULT '',
+        utm_medium VARCHAR(100) NOT NULL DEFAULT '',
+        utm_campaign VARCHAR(100) NOT NULL DEFAULT '',
+        device VARCHAR(10) NOT NULL DEFAULT '',
+        os VARCHAR(20) NOT NULL DEFAULT '',
+        browser VARCHAR(20) NOT NULL DEFAULT '',
+        last_ip VARCHAR(45) NULL,
+        last_city VARCHAR(80) NOT NULL DEFAULT '',
+        last_region VARCHAR(80) NOT NULL DEFAULT '',
+        last_country VARCHAR(80) NOT NULL DEFAULT '',
+        last_country_code CHAR(2) NOT NULL DEFAULT '',
+        last_org VARCHAR(120) NOT NULL DEFAULT '',
+        converted_customer TINYINT NOT NULL DEFAULT 0,
+        converted_provider TINYINT NOT NULL DEFAULT 0,
+        INDEX idx_last_seen (last_seen),
+        INDEX idx_first_seen (first_seen)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $stmts[] = "CREATE TABLE IF NOT EXISTS visitor_sessions (
+        sid VARCHAR(32) NOT NULL PRIMARY KEY,
+        vid VARCHAR(32) NOT NULL,
+        visit_no INT NOT NULL DEFAULT 1,
+        started_at DATETIME NOT NULL,
+        last_seen DATETIME NOT NULL,
+        seconds INT NOT NULL DEFAULT 0,
+        pageviews INT NOT NULL DEFAULT 0,
+        source VARCHAR(20) NOT NULL DEFAULT '',
+        referrer VARCHAR(255) NOT NULL DEFAULT '',
+        landing VARCHAR(255) NOT NULL DEFAULT '',
+        utm_source VARCHAR(100) NOT NULL DEFAULT '',
+        utm_medium VARCHAR(100) NOT NULL DEFAULT '',
+        utm_campaign VARCHAR(100) NOT NULL DEFAULT '',
+        utm_term VARCHAR(100) NOT NULL DEFAULT '',
+        utm_content VARCHAR(100) NOT NULL DEFAULT '',
+        has_gclid TINYINT NOT NULL DEFAULT 0,
+        has_fbclid TINYINT NOT NULL DEFAULT 0,
+        ip VARCHAR(45) NULL,
+        city VARCHAR(80) NOT NULL DEFAULT '',
+        region VARCHAR(80) NOT NULL DEFAULT '',
+        country VARCHAR(80) NOT NULL DEFAULT '',
+        country_code CHAR(2) NOT NULL DEFAULT '',
+        org VARCHAR(120) NOT NULL DEFAULT '',
+        device VARCHAR(10) NOT NULL DEFAULT '',
+        os VARCHAR(20) NOT NULL DEFAULT '',
+        browser VARCHAR(20) NOT NULL DEFAULT '',
+        screen VARCHAR(20) NOT NULL DEFAULT '',
+        lang VARCHAR(20) NOT NULL DEFAULT '',
+        tz VARCHAR(50) NOT NULL DEFAULT '',
+        INDEX idx_vid (vid, started_at),
+        INDEX idx_started (started_at),
+        INDEX idx_last_seen (last_seen),
+        INDEX idx_ip (ip)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $stmts[] = "CREATE TABLE IF NOT EXISTS visitor_pageviews (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        sid VARCHAR(32) NOT NULL,
+        vid VARCHAR(32) NOT NULL,
+        pid VARCHAR(32) NOT NULL DEFAULT '',
+        path VARCHAR(255) NOT NULL,
+        title VARCHAR(150) NOT NULL DEFAULT '',
+        at DATETIME NOT NULL,
+        seconds INT NOT NULL DEFAULT 0,
+        INDEX idx_sid (sid, pid),
+        INDEX idx_at (at),
+        INDEX idx_vid (vid)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $stmts[] = "CREATE TABLE IF NOT EXISTS visitor_events (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        sid VARCHAR(32) NOT NULL,
+        vid VARCHAR(32) NOT NULL,
+        type VARCHAR(20) NOT NULL,
+        who VARCHAR(10) NOT NULL DEFAULT '',
+        path VARCHAR(255) NOT NULL DEFAULT '',
+        target VARCHAR(255) NOT NULL DEFAULT '',
+        at DATETIME NOT NULL,
+        INDEX idx_sid (sid),
+        INDEX idx_vid (vid),
+        INDEX idx_at (at, type)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    // IP → location cache (IPinfo); failed lookups (ok = 0) are retried later
+    $stmts[] = "CREATE TABLE IF NOT EXISTS ip_geo (
+        ip VARCHAR(45) NOT NULL PRIMARY KEY,
+        ok TINYINT NOT NULL DEFAULT 0,
+        city VARCHAR(80) NOT NULL DEFAULT '',
+        region VARCHAR(80) NOT NULL DEFAULT '',
+        country VARCHAR(80) NOT NULL DEFAULT '',
+        country_code CHAR(2) NOT NULL DEFAULT '',
+        org VARCHAR(120) NOT NULL DEFAULT '',
+        looked_up_at DATETIME NOT NULL,
+        INDEX idx_looked (looked_up_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     // one-off data fix: an e-mail address autofilled into the City field
     $stmts[] = "UPDATE customers SET city = '' WHERE city LIKE '%@%'";

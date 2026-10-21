@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=1280"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="theme-color" content="#1B6B7A"/>
 <title>Admin Panel - Hamara Service</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
@@ -50,7 +50,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);fon
 .logout-btn{width:100%;padding:10px;background:rgba(255,255,255,.10);border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.75);border-radius:9px;font-family:"Nunito",sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;}
 .logout-btn:hover{background:rgba(255,255,255,.2);color:white;border-color:rgba(255,255,255,.4);}
 
-.main-content{margin-left:var(--sidebar-w);flex:1;}
+.main-content{margin-left:var(--sidebar-w);flex:1;min-width:0;}
 .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(0,0,0,.06);}
 .topbar-title{font-family:"Sora",sans-serif;font-size:20px;font-weight:800;}
 .topbar-date{font-size:12px;color:var(--muted);font-weight:700;}
@@ -140,7 +140,6 @@ tr:hover td{background:#fafafa;}
 .card-title{font-size:15px;font-weight:800;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
 .fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
-}
 .ffield{display:flex;flex-direction:column;gap:4px;}
 .ffield label{font-size:11px;font-weight:800;color:var(--text);}
 .ffield input,.ffield select,.ffield textarea{padding:10px 12px;font-family:"Nunito",sans-serif;font-size:14px;font-weight:600;border:2px solid var(--border);border-radius:10px;outline:none;background:var(--bg);transition:border .2s;width:100%;}
@@ -193,7 +192,6 @@ tr:hover td{background:#fafafa;}
 .info-blue{background:var(--blue-light);color:var(--blue);border:1.5px solid var(--blue);}
 
 .hamburger{display:none;background:none;border:none;cursor:pointer;font-size:22px;}
-.sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}.main-content{margin-left:0;}}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 22px;border-radius:100px;font-size:13px;font-weight:600;z-index:9999;display:none;box-shadow:var(--shadow-lg);white-space:nowrap;max-width:90vw;}
 
 .back-home-btn{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;padding:12px;background:var(--teal-light);color:var(--teal);border:1.5px solid rgba(27,107,122,.2);border-radius:11px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:700;text-decoration:none;transition:all .2s;}
@@ -238,30 +236,46 @@ tr:hover td{background:#fafafa;}
 .pr-reset-btn:hover{border-color:var(--red);color:var(--red);}
 .pr-edit-btn{padding:8px 14px;background:white;color:var(--purple);border:1.5px solid var(--purple);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:auto;}
 
-/* ── Admin panel: desktop mode always ─────────────────────────────── */
+/* ── Layout: fixed sidebar on desktop; below 900 px it becomes a drawer
+   opened from the ☰ button in the top bar (owner manages from phone / tablet) ── */
 * { -webkit-tap-highlight-color: transparent; }
-html, body { overflow-x: auto; min-width: 1200px; }
-.hamburger { display: none !important; }
-.sidebar {
-  display: flex !important;
-  transform: none !important;
-  position: fixed; top: 0; left: 0;
-  height: 100vh; width: var(--sidebar-w);
-  z-index: 100;
-}
-.main-content {
-  margin-left: var(--sidebar-w) !important;
-}
-.dash-wrap { display: flex !important; }
 .page { display: none; }
 .page.active { display: block; }
-/* Stats grid always 4-col */
-.stats-grid { grid-template-columns: repeat(4, 1fr) !important; }
-.fgrid { grid-template-columns: 1fr 1fr !important; }
-.fgrid3 { grid-template-columns: 1fr 1fr 1fr !important; }
-/* Tables always full width */
-.table-wrap { overflow-x: auto; }
+.stats-grid { grid-template-columns: repeat(4, 1fr); }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { min-width: 600px; }
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99;}
+.hamburger{display:none;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--text);font-size:20px;line-height:1;cursor:pointer;}
+@media (max-width:1180px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%);width:min(280px,85vw);}
+  .sidebar.open{transform:none;box-shadow:8px 0 32px rgba(0,0,0,.35);}
+  .sb-overlay.show{display:block;}
+  .main-content{margin-left:0;}
+  .hamburger{display:inline-flex;}
+  .topbar{padding:0 12px;height:56px;gap:8px;}
+  .topbar-title{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar > div:first-child{min-width:0;flex:1;}
+  .topbar-date{display:none;}
+  #liveTag{font-size:11px !important;}
+  .page{padding:14px 12px;}
+  .stats-grid{gap:10px;}
+  .stat-card{padding:13px;}
+  .stat-num{font-size:23px;}
+  .stat-icon{font-size:21px;margin-bottom:4px;}
+  .fgrid,.fgrid3,.notif-grid,.prov-detail{grid-template-columns:1fr;}
+  .sec-actions{width:100%;}
+  .srch{flex:1 1 140px;min-width:0;width:auto !important;}
+  .card{padding:16px;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .modal-box{padding:18px 16px;width:96%;max-height:92vh;}
+  .modal-btns{flex-wrap:wrap;}
+  .comm-row{flex-wrap:wrap;gap:8px;}
+  .wait-card{padding:12px 14px;gap:10px;}
+  .toast{white-space:normal;text-align:center;}
+}
 </style>
 <style>
 .muted{color:var(--muted);font-size:12px;}
@@ -271,6 +285,43 @@ table { min-width: 600px; }
 .badge.confirmed,.badge.paid{background:var(--green-light);color:var(--green);}
 .badge.deleted{background:#eee;color:#666;}
 .notif-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+/* ── Visitors page ── */
+.nav-badge.green{background:#16a34a;}
+#visKpis{grid-template-columns:repeat(4,1fr);}
+.vis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:20px;}
+.vis-card{background:#fff;border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:2px solid var(--border);min-width:0;}
+.vis-card h4{font-size:13.5px;font-weight:800;margin-bottom:12px;}
+.vbar{margin-bottom:9px;}
+.vbar-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:700;}
+.vbar-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.vbar-n{color:var(--muted);flex-shrink:0;font-weight:800;}
+.vbar-track{height:7px;background:var(--bg);border-radius:6px;margin-top:4px;overflow:hidden;}
+.vbar-fill{height:100%;background:linear-gradient(90deg,var(--teal),#22d3ee);border-radius:6px;}
+.src{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;background:#eef2f6;color:#475569;}
+.src.Google{background:#e8f0fd;color:#1a56c4;}.src.Bing{background:#e0f2f1;color:#00796b;}
+.src.WhatsApp{background:#e8f8ee;color:#128C7E;}.src.Facebook{background:#e7eefc;color:#1d4ed8;}
+.src.Instagram{background:#fdeaf4;color:#c2185b;}.src.YouTube{background:#fdecec;color:#c62828;}
+.src.Direct{background:#f1f5f9;color:#334155;}
+.cell-sub{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:2px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dot-on{display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.22);margin-right:7px;vertical-align:middle;}
+.vis-row{cursor:pointer;}
+.vis-table td{white-space:nowrap;}
+.vis-table{min-width:980px;}
+.conv{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;margin:1px 2px 1px 0;}
+.conv.customer{background:#fff3eb;color:#c2410c;}.conv.provider{background:#f3f0ff;color:#6d28d9;}
+.vis-pager{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);}
+.vt-sess{border:2px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;}
+.vt-head{background:var(--bg);padding:10px 14px;font-size:12.5px;font-weight:700;line-height:1.6;}
+.vt-head b{font-size:13.5px;}
+.vt-list{list-style:none;padding:6px 14px 10px;}
+.vt-list li{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px;align-items:baseline;}
+.vt-list li:last-child{border-bottom:none;}
+.vt-t{color:var(--muted);font-size:11.5px;font-weight:700;flex-shrink:0;width:44px;}
+.vt-p{flex:1;min-width:0;overflow-wrap:anywhere;}
+.vt-d{color:var(--muted);font-size:11.5px;font-weight:800;flex-shrink:0;}
+.vt-ev{color:#b45309;font-weight:800;}
+.vd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px;}
+@media (max-width:900px){ #visKpis{grid-template-columns:repeat(2,1fr);} .hide-sm{display:none;} .notif-grid{grid-template-columns:1fr;} .vis-grid{grid-template-columns:1fr;} .vis-card{padding:14px;} }
 </style>
 </head>
 <body>
@@ -309,6 +360,7 @@ table { min-width: 600px; }
   <nav class="sb-nav">
     <div class="nav-sec">Overview</div>
     <div class="nav-item active" data-page="dashboard"><span class="nav-icon">&#128202;</span>Dashboard</div>
+    <div class="nav-item" data-page="visitors"><span class="nav-icon">&#127760;</span>Visitors<span class="nav-badge green" id="onlineBadge" title="Visitors online now" style="display:none">0</span></div>
     <div class="nav-item" data-page="unassigned"><span class="nav-icon">&#128680;</span>Waiting for provider<span class="nav-badge red" id="unassignedBadge" style="display:none">0</span></div>
     <div class="nav-sec">Providers</div>
     <div class="nav-item" data-page="approvals"><span class="nav-icon">&#9989;</span>Approvals<span class="nav-badge" id="approvalBadge">0</span></div>
@@ -325,14 +377,16 @@ table { min-width: 600px; }
   <div class="sb-footer"><button class="logout-btn" id="logoutBtn" type="button">&#128682; Logout</button></div>
 </div>
 
+<div class="sb-overlay" id="sbOverlay"></div>
 <div class="main-content">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger" id="menuBtn" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">&#9776;</button>
       <div class="topbar-title" id="pageTitle">&#128202; Dashboard</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="liveTag" title="Data refreshes automatically every 15 seconds" style="font-size:12px;color:#1b7a3a;font-weight:700;white-space:nowrap">&#9679; Live</span>
-      <button class="btn outline sm" id="refreshBtn" type="button">&#128260; Refresh</button>
+      <button class="btn outline sm" id="refreshBtn" type="button" title="Refresh">&#128260;<span class="hide-sm"> Refresh</span></button>
       <div class="topbar-date" id="topbarDate"></div>
     </div>
   </div>
@@ -372,6 +426,63 @@ table { min-width: 600px; }
       <table><thead><tr><th>Booking</th><th>Customer</th><th>Provider</th><th>Service</th><th>Amount</th><th>Commission</th><th>Status</th><th>Payment</th></tr></thead>
       <tbody id="dashOrdersBody"></tbody></table>
     </div>
+  </div>
+
+  <!-- WEBSITE VISITORS (api/visitors.php; collected by js/hs-track.js) -->
+  <div class="page" id="page-visitors">
+    <div class="sec-header">
+      <div class="sec-title">&#127760; Website visitors</div>
+      <div class="filters" id="visRange">
+        <button class="fbtn on" type="button" data-vrange="today">Today</button>
+        <button class="fbtn" type="button" data-vrange="7d">7 days</button>
+        <button class="fbtn" type="button" data-vrange="30d">30 days</button>
+      </div>
+    </div>
+    <div id="visErr"></div>
+    <div class="stats-grid">
+      <div class="stat-card green"><div class="stat-icon">&#128994;</div><div class="stat-num" id="vk-online">0</div><div class="stat-label">Online now</div><div class="stat-sub">active in the last 2 min</div></div>
+      <div class="stat-card blue"><div class="stat-icon">&#128101;</div><div class="stat-num" id="vk-visitors">0</div><div class="stat-label">Visitors</div><div class="stat-sub" id="vk-newret">0 new · 0 returning</div></div>
+      <div class="stat-card purple"><div class="stat-icon">&#9201;&#65039;</div><div class="stat-num" id="vk-avg">0s</div><div class="stat-label">Avg time per visit</div><div class="stat-sub" id="vk-visits">0 visits · 0 page views</div></div>
+      <div class="stat-card red"><div class="stat-icon">&#128242;</div><div class="stat-num" id="vk-installs">0</div><div class="stat-label">Install / Book-in-app clicks</div><div class="stat-sub" id="vk-installs-sub">Customer 0 · Provider 0</div></div>
+    </div>
+    <div class="kpi-row" style="margin-bottom:18px" id="visKpis"></div>
+    <div class="chart-wrap" id="visDailyWrap" style="display:none">
+      <div class="chart-title-row">Visitors per day</div>
+      <div class="bar-chart" id="visDaily"></div>
+    </div>
+    <div class="vis-grid">
+      <div class="vis-card"><h4>&#128205; Top cities</h4><div id="visCities"></div></div>
+      <div class="vis-card"><h4>&#129517; How they found us</h4><div id="visSources"></div></div>
+      <div class="vis-card"><h4>&#128682; Landing pages</h4><div id="visLanding"></div></div>
+      <div class="vis-card"><h4>&#128196; Most viewed pages</h4><div id="visPages"></div></div>
+      <div class="vis-card"><h4>&#128241; Devices</h4><div id="visDevices"></div></div>
+      <div class="vis-card"><h4>&#127991;&#65039; Campaigns (utm)</h4><div id="visCampaigns"></div></div>
+    </div>
+    <div class="sec-header"><div class="sec-title"><span class="dot-on"></span>Live now <span class="muted" id="visLiveCount"></span></div></div>
+    <div class="table-wrap">
+      <table class="vis-table"><thead><tr><th>Location</th><th>IP / network</th><th>Source</th><th>Current page</th><th>Pages</th><th>Time</th><th>Device</th><th>Visit</th><th>Seen</th></tr></thead>
+      <tbody id="visLiveBody"></tbody></table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="th-title">Visitors <span class="muted" id="visTotal"></span></div>
+        <div class="filters">
+          <input type="search" class="srch" id="visSearch" placeholder="Search IP, city, network, page…"/>
+          <select class="srch" id="visSource" style="width:130px">
+            <option value="">All sources</option><option>Google</option><option>Bing</option><option>WhatsApp</option><option>Facebook</option>
+            <option>Instagram</option><option>YouTube</option><option>Direct</option><option>Other</option>
+          </select>
+          <select class="srch" id="visConv" style="width:150px">
+            <option value="">All visitors</option><option value="any">Clicked install</option><option value="customer">Install: customer</option>
+            <option value="provider">Install: provider</option><option value="none">No install click</option>
+          </select>
+        </div>
+      </div>
+      <table class="vis-table"><thead><tr><th>Location</th><th>IP / network</th><th>Source</th><th>Landing page</th><th>Pages</th><th>Time spent</th><th>Visits</th><th>Device</th><th>Last seen</th><th>Converted</th></tr></thead>
+      <tbody id="visBody"></tbody></table>
+      <div class="vis-pager"><button class="btn outline sm" type="button" id="visPrev">&#8592; Newer</button><span class="muted" id="visPageLbl"></span><button class="btn outline sm" type="button" id="visNext">Older &#8594;</button></div>
+    </div>
+    <div class="muted" style="margin:4px 2px 0">Visitors with Do-Not-Track switched on and bots are not counted. IP addresses are erased after 90 days (city / country kept). Tap a row for the full visit timeline.</div>
   </div>
 
   <!-- APPROVALS -->
@@ -554,6 +665,17 @@ table { min-width: 600px; }
   </div>
 </div>
 
+<!-- VISITOR TIMELINE MODAL -->
+<div class="modal-overlay" id="visModal">
+  <div class="modal-box wide">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="min-width:0"><div class="modal-title" id="visModalTitle">Visitor</div><div class="modal-sub" id="visModalSub"></div></div>
+      <button class="mbtn sec" type="button" id="visModalClose" aria-label="Close">&#10005;</button>
+    </div>
+    <div id="visModalBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -632,7 +754,7 @@ function unlock(){
 }
 
 // ── navigation ────────────────────────────────────────
-var TITLES = { dashboard:'&#128202; Dashboard', unassigned:'&#128680; Waiting for provider', approvals:'&#9989; Approvals', providers:'&#128119; All Providers',
+var TITLES = { dashboard:'&#128202; Dashboard', visitors:'&#127760; Visitors', unassigned:'&#128680; Waiting for provider', approvals:'&#9989; Approvals', providers:'&#128119; All Providers',
   payments:'&#128184; Payouts &amp; Finance', orders:'&#128203; All Bookings', commission:'&#128185; Commission',
   services:'&#128295; Service Catalog', customers:'&#128100; Customers', notify:'&#128276; Push Notifications',
   reset:'&#129529; Reset Test Data' };
@@ -640,9 +762,20 @@ function showPage(name){
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-page') === name); });
   document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('active', p.id === 'page-' + name); });
   $('pageTitle').innerHTML = TITLES[name] || '';
-  var loaders = { unassigned: loadUnassigned, commission: loadCommission, services: loadCatalog, customers: loadCustomers, orders: loadOrders, payments: loadPayments, reset: loadResetCounts };
+  var loaders = { visitors: loadVisitors, unassigned: loadUnassigned, commission: loadCommission, services: loadCatalog, customers: loadCustomers, orders: loadOrders, payments: loadPayments, reset: loadResetCounts };
   if (loaders[name]) safe(loaders[name], name)();
+  closeMenu();
+  try { window.scrollTo(0, 0); } catch (e) {}
 }
+// ── phone / tablet: sidebar drawer ──
+function closeMenu(){ $('sidebar').classList.remove('open'); $('sbOverlay').classList.remove('show'); $('menuBtn').setAttribute('aria-expanded', 'false'); }
+$('menuBtn').addEventListener('click', function(){
+  var open = !$('sidebar').classList.contains('open');
+  $('sidebar').classList.toggle('open', open); $('sbOverlay').classList.toggle('show', open);
+  $('menuBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+$('sbOverlay').addEventListener('click', closeMenu);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeMenu(); $('visModal').classList.remove('show'); } });
 document.querySelectorAll('.nav-item').forEach(function(n){ n.addEventListener('click', function(){ showPage(n.getAttribute('data-page')); }); });
 document.addEventListener('click', function(ev){
   var g = ev.target.closest('[data-goto]'); if (g) showPage(g.getAttribute('data-goto'));
@@ -667,6 +800,7 @@ function refreshAll(){
   [ [loadProviders,'providers'], [loadBookingsForDash,'bookings'], [loadFinance,'finance'],
     [loadPayouts,'payouts'], [loadCustomers,'customers'], [loadUnassigned,'unassigned'] ].forEach(function(x){ safe(x[0], x[1])(); });
   var active = document.querySelector('.page.active');
+  if (active && active.id === 'page-visitors') safe(loadVisitors,'visitors')(); else safe(loadVisitorsLive,'visitors_live')();
   if (active && active.id === 'page-commission') safe(loadCommission,'commission')();
   if (active && active.id === 'page-services') safe(loadCatalog,'catalog')();
   if (active && active.id === 'page-orders') safe(loadOrders,'orders')();
@@ -704,13 +838,14 @@ function autoRefresh(){
   if (document.hidden || $('app').style.display === 'none') return;
   var ae = document.activeElement;
   if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
-  if (document.querySelector('.modal.show')) return;
+  if (document.querySelector('.modal-overlay.show')) return;
   var active = document.querySelector('.page.active');
   var editPage = active && /page-(commission|services|notify)/.test(active.id);
   [ [loadProviders,'providers'], [loadBookingsForDash,'bookings'], [loadFinance,'finance'], [loadPayouts,'payouts'], [loadUnassigned,'unassigned'] ]
     .forEach(function(x){ safe(x[0], x[1])(); });
   if (!editPage && active && active.id === 'page-orders') safe(loadOrders,'orders')();
   if (!editPage && active && active.id === 'page-customers') safe(loadCustomers,'customers')();
+  if (active && active.id === 'page-visitors') safe(loadVisitors,'visitors')(); else safe(loadVisitorsLive,'visitors_live')();
   var t = $('liveTag'); if (t) t.innerHTML = '&#9679; Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
 setInterval(autoRefresh, AUTO_MS);
@@ -1155,6 +1290,200 @@ $('nfSend').addEventListener('click', function(){
     .then(function(){ toast('Notification sent'); $('nfTitle').value = ''; $('nfBody').value = ''; })
     .catch(function(e){ if (!(e instanceof AuthError)) toast('Failed: ' + e.message); });
 });
+
+// ── website visitors (api/visitors.php) ───────────────
+var VIS = { range: 'today', page: 1, per: 25, total: 0, live: [] };
+function fmtDur(s){
+  s = Math.max(0, Math.round(num(s)));
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60 ? (s % 60) + 's' : '');
+  return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+}
+function flag(cc){
+  cc = String(cc || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return '&#127760;';
+  return String.fromCodePoint(0x1F1E6 + cc.charCodeAt(0) - 65, 0x1F1E6 + cc.charCodeAt(1) - 65);
+}
+function locHtml(city, region, cc, country){
+  var main = city ? esc(city) : (country ? esc(country) : '<span class="muted">Unknown</span>');
+  var sub = [city ? region : '', city ? (country || cc) : ''].filter(Boolean).join(', ');
+  return '<span title="' + esc(country || cc || '') + '">' + flag(cc) + '</span> <b>' + main + '</b>' + (sub ? '<span class="cell-sub">' + esc(sub) + '</span>' : '');
+}
+function ipHtml(ip, org){
+  return (ip ? '<span style="font-family:monospace;font-size:12px">' + esc(ip) + '</span>' : '<span class="muted">erased</span>')
+    + (org ? '<span class="cell-sub" title="' + esc(org) + '">' + esc(String(org).replace(/^AS\d+\s+/, '')) + '</span>' : '');
+}
+function srcHtml(o){
+  if (!o) return '—';
+  var src = o.source || o.first_source || 'Direct';
+  var bits = [];
+  if (o.utm_source || o.utm_medium || o.utm_campaign) bits.push('utm: ' + [o.utm_source, o.utm_medium, o.utm_campaign].filter(Boolean).join(' / '));
+  if (num(o.has_gclid)) bits.push('Google Ads click');
+  if (num(o.has_fbclid)) bits.push('Facebook ad/link click');
+  var ref = o.referrer || o.first_referrer || '';
+  if (!bits.length && ref && src === 'Other') bits.push(ref.replace(/^https?:\/\//, '').replace(/^android-app:\/\//, 'app: '));
+  return '<span class="src ' + esc(src) + '">' + esc(src) + '</span>' + (bits.length ? '<span class="cell-sub" title="' + esc(bits.join(' · ')) + '">' + esc(bits.join(' · ')) + '</span>' : '');
+}
+function devHtml(o){
+  var ic = o.device === 'mobile' ? '&#128241;' : (o.device === 'tablet' ? '&#128203;' : '&#128187;');
+  return ic + ' ' + esc(o.os || '') + '<span class="cell-sub">' + esc([o.browser, o.screen].filter(Boolean).join(' · ')) + '</span>';
+}
+function agoHtml(v){
+  if (!v) return '—';
+  var t = new Date(String(v).replace(' ', 'T') + '+05:30').getTime(), d = Math.round((Date.now() - t) / 1000);
+  var txt = isNaN(d) ? '' : d < 60 ? 'just now' : d < 3600 ? Math.floor(d / 60) + ' min ago' : d < 86400 ? Math.floor(d / 3600) + ' h ago' : Math.floor(d / 86400) + ' d ago';
+  return esc(String(v).substring(5, 16)) + (txt ? '<span class="cell-sub">' + txt + '</span>' : '');
+}
+function pathHtml(p, title){
+  return '<span title="' + esc(title || p || '') + '">' + esc(p || '—') + '</span>' + (title ? '<span class="cell-sub">' + esc(title) + '</span>' : '');
+}
+function bars(id, rows, label, emptyMsg){
+  var max = rows.reduce(function(m, r){ return Math.max(m, num(r.n)); }, 0) || 1;
+  $(id).innerHTML = rows.length ? rows.map(function(r){
+    return '<div class="vbar"><div class="vbar-top"><span class="vbar-l">' + label(r) + '</span><span class="vbar-n">' + esc(r.n) + '</span></div>'
+      + '<div class="vbar-track"><div class="vbar-fill" style="width:' + Math.max(3, Math.round(num(r.n) / max * 100)) + '%"></div></div></div>';
+  }).join('') : '<div class="muted">' + esc(emptyMsg || 'No data yet') + '</div>';
+}
+function setOnline(n){
+  var b = $('onlineBadge'); b.textContent = n; b.style.display = n > 0 ? '' : 'none';
+  $('vk-online').textContent = n;
+}
+function loadVisitors(){
+  return Promise.all([loadVisitorsSummary(), loadVisitorsList(), loadVisitorsLive()]);
+}
+function loadVisitorsSummary(){
+  return api('visitors.php?action=summary&range=' + VIS.range).then(function(d){
+    showErr('visErr', '');
+    setOnline(d.online_now || 0);
+    $('vk-visitors').textContent = d.visitors || 0;
+    $('vk-newret').textContent = (d.new_visitors || 0) + ' new · ' + (d.returning_visitors || 0) + ' returning';
+    $('vk-avg').textContent = fmtDur(d.avg_session_seconds || 0);
+    $('vk-visits').textContent = (d.sessions || 0) + ' visits · ' + (d.pageviews || 0) + ' page views';
+    var c = d.clicks || {};
+    $('vk-installs').textContent = (c.install_customer || 0) + (c.install_provider || 0) + (c.install_other || 0);
+    $('vk-installs-sub').textContent = 'Customer ' + (c.install_customer || 0) + ' · Provider ' + (c.install_provider || 0);
+    var k = [['New visitors', d.new_visitors], ['Returning', d.returning_visitors], ['Visits', d.sessions], ['Page views', d.pageviews],
+             ['Customers who tapped install', c.install_customer_visitors], ['Partners who tapped install', c.install_provider_visitors],
+             ['WhatsApp taps', c.whatsapp], ['Call taps', c.call]];
+    $('visKpis').innerHTML = k.map(function(x){ return '<div class="kpi"><div class="kpi-num">' + esc(x[1] || 0) + '</div><div class="kpi-label">' + esc(x[0]) + '</div></div>'; }).join('');
+    var daily = d.daily || [];
+    $('visDailyWrap').style.display = daily.length ? '' : 'none';
+    var dm = daily.reduce(function(m, r){ return Math.max(m, num(r.visitors)); }, 0) || 1;
+    $('visDaily').innerHTML = daily.map(function(r){
+      return '<div class="bc"><div class="bv">' + esc(r.visitors) + '</div><div class="bar" style="height:' + Math.max(4, Math.round(num(r.visitors) / dm * 80)) + 'px"></div><div class="bl">' + esc(String(r.day).substring(8, 10)) + '</div></div>';
+    }).join('');
+    bars('visCities', d.top_cities || [], function(r){ return flag(r.country_code) + ' ' + esc(r.city || r.country || 'Unknown') + (r.city && r.region ? ' <span class="muted">' + esc(r.region) + '</span>' : ''); });
+    bars('visSources', d.top_sources || [], function(r){ return '<span class="src ' + esc(r.source) + '">' + esc(r.source || 'Direct') + '</span> <span class="muted">' + esc(r.visitors) + (num(r.visitors) === 1 ? ' visitor' : ' visitors') + '</span>'; });
+    bars('visLanding', d.top_landing || [], function(r){ return esc(r.path); });
+    bars('visPages', d.top_pages || [], function(r){ return esc(r.path) + ' <span class="muted">avg ' + fmtDur(r.avg_s) + '</span>'; });
+    bars('visDevices', d.devices || [], function(r){ return esc(r.device || 'unknown'); });
+    bars('visCampaigns', d.top_campaigns || [], function(r){ return esc([r.utm_source, r.utm_medium, r.utm_campaign].filter(Boolean).join(' / ')); }, 'No utm-tagged visits');
+  }).catch(function(e){ if (!(e instanceof AuthError)) showErr('visErr', 'Could not load visitor stats: ' + e.message); });
+}
+function convHtml(v){
+  var h = '';
+  if (num(v.converted_customer)) h += '<span class="conv customer">&#128242; Customer app</span>';
+  if (num(v.converted_provider)) h += '<span class="conv provider">&#128119; Partner app</span>';
+  return h || '<span class="muted">—</span>';
+}
+function loadVisitorsList(){
+  var q = 'visitors.php?action=list&range=' + VIS.range + '&page=' + VIS.page + '&per=' + VIS.per
+    + '&q=' + encodeURIComponent($('visSearch').value.trim()) + '&source=' + encodeURIComponent($('visSource').value)
+    + '&converted=' + encodeURIComponent($('visConv').value);
+  return api(q).then(function(d){
+    var items = d.items || [];
+    VIS.total = d.total || 0;
+    $('visTotal').textContent = '(' + VIS.total + ')';
+    $('visBody').innerHTML = items.length ? items.map(function(v){
+      var ls = v.last_session || {};
+      var src = { source: v.first_source, first_referrer: v.first_referrer, utm_source: v.utm_source, utm_medium: v.utm_medium, utm_campaign: v.utm_campaign,
+                  has_gclid: ls.has_gclid, has_fbclid: ls.has_fbclid };
+      var lastSrc = ls.source && ls.source !== v.first_source ? '<span class="cell-sub">latest visit: ' + esc(ls.source) + '</span>' : '';
+      return '<tr class="vis-row" data-vid="' + esc(v.vid) + '">'
+        + '<td>' + (num(v.online) ? '<span class="dot-on" title="Online now"></span>' : '') + locHtml(v.last_city, v.last_region, v.last_country_code, v.last_country) + '</td>'
+        + '<td>' + ipHtml(v.last_ip, v.last_org) + '</td>'
+        + '<td>' + srcHtml(src) + lastSrc + '</td>'
+        + '<td>' + pathHtml(v.first_landing) + (ls.landing && ls.landing !== v.first_landing ? '<span class="cell-sub">latest: ' + esc(ls.landing) + '</span>' : '') + '</td>'
+        + '<td>' + esc(v.pageviews) + '</td>'
+        + '<td>' + fmtDur(v.total_seconds) + '</td>'
+        + '<td>' + esc(v.visits) + (v.visits > 1 ? ' <span class="badge review">returning</span>' : '') + '</td>'
+        + '<td>' + devHtml({ device: v.device, os: v.os, browser: v.browser, screen: ls.screen }) + '</td>'
+        + '<td>' + agoHtml(v.last_seen) + '</td>'
+        + '<td>' + convHtml(v) + '</td></tr>';
+    }).join('') : emptyRow(10, 'No visitors in this period yet');
+    var pages = Math.max(1, Math.ceil(VIS.total / VIS.per));
+    if (VIS.page > pages) VIS.page = pages;
+    $('visPageLbl').textContent = 'Page ' + VIS.page + ' of ' + pages;
+    $('visPrev').disabled = VIS.page <= 1; $('visNext').disabled = VIS.page >= pages;
+  }).catch(function(e){ if (!(e instanceof AuthError)) showErr('visErr', 'Could not load visitors: ' + e.message); });
+}
+function loadVisitorsLive(){
+  return api('visitors.php?action=live').then(function(d){
+    VIS.live = d.items || [];
+    setOnline(d.online_now || 0);
+    $('visLiveCount').textContent = '(' + (d.online_now || 0) + ')';
+    $('visLiveBody').innerHTML = VIS.live.length ? VIS.live.map(function(s){
+      return '<tr class="vis-row" data-vid="' + esc(s.vid) + '">'
+        + '<td><span class="dot-on"></span>' + locHtml(s.city, s.region, s.country_code, s.country) + '</td>'
+        + '<td>' + ipHtml(s.ip, s.org) + '</td>'
+        + '<td>' + srcHtml(s) + '</td>'
+        + '<td>' + pathHtml(s.current_path, s.current_title) + '</td>'
+        + '<td>' + esc(s.pageviews) + '</td>'
+        + '<td>' + fmtDur(s.seconds) + '</td>'
+        + '<td>' + devHtml(s) + '</td>'
+        + '<td>#' + esc(s.visit_no) + '</td>'
+        + '<td>' + (s.idle_seconds < 20 ? 'now' : esc(s.idle_seconds) + 's ago') + '</td></tr>';
+    }).join('') : emptyRow(9, 'Nobody is on the website right now');
+  });
+}
+function openVisitor(vid){
+  $('visModalTitle').textContent = 'Visitor';
+  $('visModalSub').textContent = 'Loading…';
+  $('visModalBody').innerHTML = '';
+  $('visModal').classList.add('show');
+  api('visitors.php?action=detail&vid=' + encodeURIComponent(vid)).then(function(d){
+    var v = d.visitor || {}, ss = d.sessions || [];
+    $('visModalTitle').innerHTML = flag(v.last_country_code) + ' ' + esc(v.last_city || v.last_country || 'Unknown location') + (num(v.online) ? ' <span class="badge approved">online now</span>' : '');
+    $('visModalSub').textContent = 'Visitor ' + v.vid + ' · first seen ' + String(v.first_seen || '').substring(0, 16) + ' · last seen ' + String(v.last_seen || '').substring(0, 16);
+    var cells = [['Visits', v.visits], ['Page views', v.pageviews], ['Total time', fmtDur(v.total_seconds)], ['IP', v.last_ip || 'erased'],
+                 ['Network', v.last_org || '—'], ['Region', [v.last_region, v.last_country].filter(Boolean).join(', ') || '—'],
+                 ['First source', v.first_source || 'Direct'], ['First landing', v.first_landing || '—'], ['Device', [v.device, v.os, v.browser].filter(Boolean).join(' · ')]];
+    var h = '<div class="vd-grid">' + cells.map(function(c){ return '<div class="prov-detail-row"><div class="prov-detail-label">' + esc(c[0]) + '</div><div class="prov-detail-val" style="font-size:13px;overflow-wrap:anywhere">' + esc(c[1]) + '</div></div>'; }).join('') + '</div>';
+    h += '<div style="margin-bottom:12px">' + convHtml(v) + '</div>';
+    h += ss.map(function(s){
+      var items = (s.pages || []).map(function(p){ return { at: p.at, html: '<span class="vt-p">' + esc(p.path) + (p.title ? ' <span class="muted">' + esc(p.title) + '</span>' : '') + '</span><span class="vt-d">' + fmtDur(p.seconds) + '</span>' }; })
+        .concat((s.events || []).map(function(e){
+          var lbl = e.type === 'install_click' ? '&#128242; Tapped install / Book in app' : e.type === 'whatsapp_click' ? '&#128172; Tapped WhatsApp' : '&#128222; Tapped call';
+          return { at: e.at, ev: 1, html: '<span class="vt-p vt-ev">' + lbl + (e.who ? ' (' + esc(e.who) + ')' : '') + (e.target ? ' <span class="muted">→ ' + esc(e.target) + '</span>' : '') + '</span>' };
+        }))
+        .sort(function(a, b){ return a.at < b.at ? -1 : a.at > b.at ? 1 : (a.ev || 0) - (b.ev || 0); });
+      return '<div class="vt-sess"><div class="vt-head"><b>Visit #' + esc(s.visit_no) + '</b> · ' + esc(String(s.started_at).substring(0, 16))
+        + (num(s.online) ? ' <span class="badge approved">live</span>' : '') + '<br>'
+        + srcHtml(s) + ' · ' + esc(s.pageviews) + (num(s.pageviews) === 1 ? ' page · ' : ' pages · ') + fmtDur(s.seconds) + '<br>'
+        + '<span class="muted">' + flag(s.country_code) + ' ' + esc([s.city, s.region].filter(Boolean).join(', ') || 'Unknown') + ' · ' + esc(s.ip || 'IP erased')
+        + (s.org ? ' · ' + esc(s.org) : '') + ' · ' + esc([s.device, s.os, s.browser, s.screen, s.lang].filter(Boolean).join(' · ')) + '</span></div>'
+        + '<ul class="vt-list">' + (items.length ? items.map(function(i){ return '<li><span class="vt-t">' + esc(String(i.at).substring(11, 16)) + '</span>' + i.html + '</li>'; }).join('') : '<li class="muted">No pages recorded</li>') + '</ul></div>';
+    }).join('');
+    $('visModalBody').innerHTML = h;
+  }).catch(function(e){ if (!(e instanceof AuthError)) $('visModalSub').textContent = 'Could not load: ' + e.message; });
+}
+document.addEventListener('click', function(ev){
+  var r = ev.target.closest('.vis-row'); if (r) { openVisitor(r.getAttribute('data-vid')); return; }
+  var b = ev.target.closest('[data-vrange]');
+  if (b) {
+    VIS.range = b.getAttribute('data-vrange'); VIS.page = 1;
+    document.querySelectorAll('[data-vrange]').forEach(function(x){ x.classList.toggle('on', x === b); });
+    safe(loadVisitors, 'visitors')();
+  }
+});
+$('visModalClose').addEventListener('click', function(){ $('visModal').classList.remove('show'); });
+$('visModal').addEventListener('click', function(ev){ if (ev.target === $('visModal')) $('visModal').classList.remove('show'); });
+var _visT = null;
+$('visSearch').addEventListener('input', function(){ clearTimeout(_visT); _visT = setTimeout(function(){ VIS.page = 1; safe(loadVisitorsList, 'visitors')(); }, 350); });
+$('visSource').addEventListener('change', function(){ VIS.page = 1; safe(loadVisitorsList, 'visitors')(); });
+$('visConv').addEventListener('change', function(){ VIS.page = 1; safe(loadVisitorsList, 'visitors')(); });
+$('visPrev').addEventListener('click', function(){ if (VIS.page > 1) { VIS.page--; safe(loadVisitorsList, 'visitors')(); } });
+$('visNext').addEventListener('click', function(){ VIS.page++; safe(loadVisitorsList, 'visitors')(); });
 
 // ── boot: validate stored token with admin.php?action=me ──
 if (token) {
