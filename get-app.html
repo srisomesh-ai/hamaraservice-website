@@ -57,6 +57,9 @@ a{color:inherit}
 .more{max-width:960px;margin:22px auto 0;padding:0 16px 30px;font-size:14px;color:var(--muted);text-align:center}
 .more a{color:var(--teal);font-weight:700}
 .hide{display:none!important}
+.qr{display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px;border:1px dashed #cfe3e6;border-radius:14px;font-size:13px;color:#4a5568;font-weight:600}
+.qrbox{width:104px;height:104px;flex-shrink:0}.qrbox img,.qrbox canvas{width:104px!important;height:104px!important}
+.ios{margin-top:12px;background:#fff4ec;border-radius:12px;padding:10px 12px;font-size:13.5px;color:#7b341e}
 footer{text-align:center;font-size:13px;color:var(--muted);padding:18px 16px 30px;border-top:1px solid var(--line)}
 footer a{color:var(--teal);text-decoration:none;margin:0 6px}
 </style>
@@ -87,6 +90,8 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
       <svg viewBox="0 0 24 26" aria-hidden="true"><path fill="#00d7fe" d="M1 1.2 13.4 13 1 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#ffce00" d="m17.6 17.2-4.2-4.2 4.2-4.2 4.9 2.8c1.4.8 1.4 2.1 0 2.9z"/><path fill="#ff3a44" d="M17.6 17.2 13.4 13 1 24.8c.5.5 1.2.5 2.1 0z"/><path fill="#00f076" d="M17.6 8.8 3.1 1.2C2.2.7 1.5.7 1 1.2L13.4 13z"/></svg>
       <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
     </a>
+    <div class="qr hide" id="cQr"><div class="qrbox" id="cQrBox"></div><span>Scan with your Android phone to install</span></div>
+    <div class="ios hide" id="cIos">📱 The app is available for <b>Android</b> phones. On iPhone? WhatsApp us and we'll book for you.</div>
     <div class="soon" id="cSoon">
       <b>Coming soon on Google Play</b>
       Our customer app is in Play Store review. WhatsApp us for early access.
@@ -110,6 +115,8 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
       <svg viewBox="0 0 24 26" aria-hidden="true"><path fill="#00d7fe" d="M1 1.2 13.4 13 1 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#ffce00" d="m17.6 17.2-4.2-4.2 4.2-4.2 4.9 2.8c1.4.8 1.4 2.1 0 2.9z"/><path fill="#ff3a44" d="M17.6 17.2 13.4 13 1 24.8c.5.5 1.2.5 2.1 0z"/><path fill="#00f076" d="M17.6 8.8 3.1 1.2C2.2.7 1.5.7 1 1.2L13.4 13z"/></svg>
       <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
     </a>
+    <div class="qr hide" id="pQr"><div class="qrbox" id="pQrBox"></div><span>Scan with your Android phone to install</span></div>
+    <div class="ios hide" id="pIos">📱 The Partner app is for <b>Android</b> phones. On iPhone? WhatsApp us to join.</div>
     <div class="soon" id="pSoon">
       <b>Coming soon on Google Play</b>
       Our Partner app is in Play Store review. WhatsApp us to register early.
@@ -127,6 +134,7 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
 </footer>
 
 <script src="/js/hs-site.js"></script>
+<script src="/js/qrcode.min.js"></script>
 <script>
 (function(){
   var who=(location.search.match(/[?&]for=(customer|provider)/)||[])[1];
@@ -134,8 +142,14 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
   if(who==='customer') c.classList.add('hl');
   if(who==='provider'){ p.classList.add('hl'); p.parentNode.insertBefore(p, c); }
   HS_site(function(cfg){
-    if(cfg.customer_app_url){var a=document.getElementById('cApp');a.href=cfg.customer_app_url;a.classList.remove('hide');document.getElementById('cSoon').classList.add('hide');}
-    if(cfg.provider_app_url){var b=document.getElementById('pApp');b.href=cfg.provider_app_url;b.classList.remove('hide');document.getElementById('pSoon').classList.add('hide');}
+    var dev=HS_device();
+    function setup(pre,url){
+      if(!url) return;
+      var a=document.getElementById(pre+'App');a.href=url;a.classList.remove('hide');document.getElementById(pre+'Soon').classList.add('hide');
+      if(dev==='desktop'&&window.QRCode){document.getElementById(pre+'Qr').classList.remove('hide');new QRCode(document.getElementById(pre+'QrBox'),{text:url,width:208,height:208,correctLevel:QRCode.CorrectLevel.M});}
+      if(dev==='ios') document.getElementById(pre+'Ios').classList.remove('hide');
+    }
+    setup('c',cfg.customer_app_url); setup('p',cfg.provider_app_url);
     if(cfg.support_whatsapp){[].forEach.call(document.querySelectorAll('a.wa'),function(w){w.href=w.href.replace(/wa\.me\/\d+/,'wa.me/'+cfg.support_whatsapp);});}
     if(!HS_appMode(cfg)){document.getElementById('cWeb').classList.remove('hide');document.getElementById('pWeb').classList.remove('hide');}
   });
