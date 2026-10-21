@@ -134,6 +134,7 @@ HS_site(function (c) {
 <!-- /HS-APP-GATE -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="/js/hs-map.js"></script>
+<script src="/js/hs-otp.js"></script>
 <script>
 (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once"):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
   key: "AIzaSyApCgAtEZ7rlsaRH8_Ec4H-paU6ueMjzkM", v: "weekly"
@@ -283,6 +284,7 @@ window.HS_FCM = (function(){
           <div class="chip" onclick="pickR(this,25)">25 km</div>
         </div>
       </div>
+      <div id="regOtp" class="hide"></div>
       <button class="btn" id="regNext" onclick="regNext()">Continue →</button>
     </div>
   </div>
@@ -621,7 +623,7 @@ function renderAreaChips(){
 }
 
 // ── REGISTER ──
-function startRegister(){reg={step:0,gender:'',exp:'',radius:5,lat:0,lng:0,city:'',svcs:{}};show('pgReg');updReg();}
+function startRegister(){reg={step:0,gender:'',exp:'',radius:5,lat:0,lng:0,city:'',svcs:{}};if(regOtpOpen())regOtpClose();show('pgReg');updReg();}
 function pickG(el,v){reg.gender=v;[].forEach.call($('rGender').children,function(c){c.classList.remove('on');});el.classList.add('on');}
 function pickE(el,v){reg.exp=v;[].forEach.call($('rExp').children,function(c){c.classList.remove('on');});el.classList.add('on');}
 function pickR(el,v){reg.radius=v;[].forEach.call($('rRad').children,function(c){c.classList.remove('on');});el.classList.add('on');}
@@ -638,7 +640,10 @@ function updReg(){
   }
 }
 function togRegSvc(id){reg.svcs[id]=!reg.svcs[id];$('rs_'+id).classList.toggle('on',reg.svcs[id]);}
-function regBack(){if(reg.step>0){reg.step--;updReg();}else show('pgAuth');}
+function regBack(){if(regOtpOpen()){regOtpClose();return;}if(reg.step>0){reg.step--;updReg();}else show('pgAuth');}
+// Email code step (api/otp.php) before the final submit — entered data is kept
+function regOtpOpen(){return !$('regOtp').classList.contains('hide');}
+function regOtpClose(){HS_EmailOtp.close($('regOtp'));$('regStep2').classList.remove('hide');$('regNext').classList.remove('hide');$('regTitle').textContent='Location & Area';}
 function regGPS(){
   navigator.geolocation.getCurrentPosition(function(pos){
     if(reg.pinned)return; // a map pin wins over GPS
@@ -679,9 +684,21 @@ function regNext(){
     areas:areaSel,
     services:svcArr
   };
+  var have=HS_EmailOtp.token(body.email,'provider_register');
+  if(have){regSubmit(body,have);return;}
+  $('regNext').disabled=true;$('regNext').textContent='Sending code…';
+  HS_EmailOtp.start({el:$('regOtp'),api:api,email:body.email,purpose:'provider_register',verifyText:'Verify & Submit Application',
+    onSendError:function(m){$('regNext').disabled=false;updReg();$('regErr').textContent=m;},
+    onShown:function(){$('regNext').disabled=false;updReg();$('regStep2').classList.add('hide');$('regNext').classList.add('hide');$('regTitle').textContent='Verify Email';},
+    onVerified:function(tok,ui){ui.busy(true);regSubmit(body,tok);},
+    onChangeEmail:function(){regOtpClose();reg.step=0;updReg();$('rEmail').focus();}});
+}
+function regSubmit(body,otpToken){
+  body=Object.assign({},body,{otp_token:otpToken});
   $('regNext').disabled=true;
   api('providers.php','register',body).then(function(res){
     $('regNext').disabled=false;
+    if(regOtpOpen())regOtpClose();
     if(res.success){
       // auto-login to get a token (pending providers get one), then upload photo
       api('providers.php','login',{email:body.email,password:body.password}).then(function(lr){
@@ -689,8 +706,11 @@ function regNext(){
       }).catch(function(){});
       $('pendName').textContent='Hi '+body.name+'! Application submitted.';show('pgPending');toast('✅ Registered! Waiting for approval');
     }
-    else $('regErr').textContent=res.error||'Registration failed';
-  }).catch(function(){$('regNext').disabled=false;$('regErr').textContent='Network error';});
+    else{
+      if(/verif/i.test(res.error||''))HS_EmailOtp.forget(body.email,'provider_register');
+      $('regErr').textContent=res.error||'Registration failed';
+    }
+  }).catch(function(){$('regNext').disabled=false;if(regOtpOpen())regOtpClose();$('regErr').textContent='Network error — tap Submit to try again';});
 }
 
 // ── DASHBOARD ──

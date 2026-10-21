@@ -225,6 +225,7 @@ HS_site(function (c) {
 <!-- /HS-APP-GATE -->
 <script src="/js/hs-questions.js"></script>
 <script src="/js/hs-map.js"></script>
+<script src="/js/hs-otp.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script>
@@ -311,6 +312,8 @@ window.HS_FCM = (function(){
       <div class="auth-title" id="authTitle">Welcome back 👋</div>
       <div class="auth-sub" id="authSub">Login to book your service</div>
       <div id="authErr" class="err"></div>
+      <div id="otpBox" class="hide"></div>
+      <div id="authForm">
       <div id="regFields" class="hide">
         <label>Full Name</label><input class="inp" id="rName" placeholder="Your name">
         <label>Mobile Number</label><input class="inp" id="rPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
@@ -321,6 +324,7 @@ window.HS_FCM = (function(){
       <p style="text-align:center;margin-top:14px;font-size:13.5px;color:var(--muted)">
         <span id="authSwap" style="color:var(--amber);font-weight:800;cursor:pointer" onclick="swapAuth()">New here? Create account</span>
       </p>
+      </div>
     </div>
   </div>
 </div>
@@ -507,6 +511,7 @@ function api(ep,action,body,method){
 // ── AUTH ──
 function swapAuth(){
   isReg=!isReg;
+  otpClose();
   $('regFields').classList.toggle('hide',!isReg);
   $('authBtn').textContent=isReg?'Create Account':'Login';
   $('authSwap').textContent=isReg?'Already have an account? Login':'New here? Create account';
@@ -514,31 +519,58 @@ function swapAuth(){
   if($('authSub')){$('authSub').textContent=isReg?'Register to start booking services':'Login to book your service';}
   $('authErr').textContent='';
 }
+// Registration e-mail code step (api/otp.php) — the form stays filled in
+function otpClose(){if(window.HS_EmailOtp)HS_EmailOtp.close($('otpBox'));$('authForm').classList.remove('hide');}
+function authDone(res){
+  TOKEN=res.data.token;ME=res.data.customer;
+  localStorage.setItem('hs_cust_token',TOKEN);localStorage.setItem('hs_cust_me',JSON.stringify(ME));localStorage.setItem('hs_role','customer');
+  if(window.HS_FCM)HS_FCM.init('customer',function(tok){api('customers.php','fcm',{fcm_token:tok}).catch(function(){});});
+  if(pendingAfterAuth==='addr'&&curSvc){
+    pendingAfterAuth=null;
+    toast('✓ Logged in — set your address');
+    goAddress();
+  } else if(pendingAfterAuth==='siteAddr'&&curSvc){
+    pendingAfterAuth=null;
+    toast('✓ Logged in — set your address');
+    goAddressFromSite();
+  } else { initHome(); }
+}
 function doAuth(){
   var email=$('aEmail').value.trim().toLowerCase(),pwd=$('aPwd').value;
+  $('authErr').textContent='';
   if(!email||!pwd){$('authErr').textContent='Enter email and password';return;}
+  if(isReg){
+    var body={name:$('rName').value.trim(),phone:$('rPhone').value.replace(/\D/g,'').slice(-10),email:email,password:pwd};
+    if(!body.name){$('authErr').textContent='Enter your name';return;}
+    if(body.phone&&!/^[6-9]\d{9}$/.test(body.phone)){$('authErr').textContent='Enter a valid 10-digit mobile number';return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('authErr').textContent='Enter a valid email';return;}
+    if(pwd.length<8){$('authErr').textContent='Password must be at least 8 characters';return;}
+    var have=HS_EmailOtp.token(email,'customer_register');
+    if(have){webRegister(body,have,null);return;}
+    $('authBtn').disabled=true;$('authBtn').textContent='Sending code…';
+    HS_EmailOtp.start({el:$('otpBox'),api:api,email:email,purpose:'customer_register',verifyText:'Verify & Create Account',
+      onSendError:function(m){$('authBtn').disabled=false;$('authBtn').textContent='Create Account';$('authErr').textContent=m;},
+      onShown:function(){$('authBtn').disabled=false;$('authBtn').textContent='Create Account';$('authForm').classList.add('hide');},
+      onVerified:function(tok,ui){ui.busy(true);webRegister(body,tok,ui);},
+      onChangeEmail:function(){otpClose();$('aEmail').focus();}});
+    return;
+  }
   $('authBtn').disabled=true;
-  var act=isReg?'web_register':'web_login';
-  var body={email:email,password:pwd};
-  if(isReg){body.name=$('rName').value.trim();body.phone=$('rPhone').value.trim();
-    if(!body.name){$('authErr').textContent='Enter your name';$('authBtn').disabled=false;return;}}
-  api('customers.php',act,body).then(function(res){
+  api('customers.php','web_login',{email:email,password:pwd}).then(function(res){
     $('authBtn').disabled=false;
-    if(res.success){TOKEN=res.data.token;ME=res.data.customer;
-      localStorage.setItem('hs_cust_token',TOKEN);localStorage.setItem('hs_cust_me',JSON.stringify(ME));localStorage.setItem('hs_role','customer');
-      if(window.HS_FCM)HS_FCM.init('customer',function(tok){api('customers.php','fcm',{fcm_token:tok}).catch(function(){});});
-      if(pendingAfterAuth==='addr'&&curSvc){
-        pendingAfterAuth=null;
-        toast('✓ Logged in — set your address');
-        goAddress();
-      } else if(pendingAfterAuth==='siteAddr'&&curSvc){
-        pendingAfterAuth=null;
-        toast('✓ Logged in — set your address');
-        goAddressFromSite();
-      } else { initHome(); }
+    if(res.success){authDone(res);
     } else if(/^NOT_REGISTERED/.test(res.error||'')){if(!isReg)swapAuth();$('authErr').textContent='No account found for this email — create your account below';
     } else {$('authErr').textContent=res.error||'Failed';}
   }).catch(function(){$('authBtn').disabled=false;$('authErr').textContent='Network error';});
+}
+function webRegister(body,otpToken,ui){
+  $('authBtn').disabled=true;
+  api('customers.php','web_register',Object.assign({},body,{otp_token:otpToken})).then(function(res){
+    $('authBtn').disabled=false;
+    if(res.success){otpClose();authDone(res);return;}
+    if(/verif/i.test(res.error||''))HS_EmailOtp.forget(body.email,'customer_register');
+    otpClose();$('authErr').textContent=res.error||'Registration failed';
+  }).catch(function(){$('authBtn').disabled=false;otpClose();$('authErr').textContent='Network error — tap Create Account to try again';});
 }
 function authTab(){
   if(TOKEN&&ME.id)logout();

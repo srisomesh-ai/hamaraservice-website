@@ -2,7 +2,8 @@
 // ═══════════════════════════════════════════════════════
 // HamaraService — Provider API
 // Endpoints:
-//   POST ?action=register   — new provider registration
+//   POST ?action=register   — new provider registration (otp_token from
+//                             otp.php required when REQUIRE_EMAIL_OTP)
 //   POST ?action=login      — provider login → JWT
 //   GET  ?action=get&id=X   — get provider profile
 //   POST ?action=update     — update profile fields
@@ -16,6 +17,7 @@
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
+require_once __DIR__ . '/otp_lib.php';
 setCorsHeaders();
 
 $action = $_GET['action'] ?? '';
@@ -42,6 +44,8 @@ switch ($action) {
     $check = $db->prepare("SELECT id FROM providers WHERE email = ?");
     $check->execute([strtolower($b['email'])]);
     if ($check->fetch()) err('Email already registered');
+    // Email OTP (otp.php?action=verify, purpose provider_register)
+    otpCheckRegistration($b, $b['email'], 'provider_register');
 
     // Generate provider ID: HS-PRO-NAME1234
     $namePart  = strtoupper(preg_replace('/[^a-zA-Z]/', '', $b['name']));

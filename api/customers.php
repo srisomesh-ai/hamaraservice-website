@@ -3,6 +3,8 @@
 // HamaraService — Customer API
 // Endpoints:
 //   POST ?action=register  — create/update customer after Firebase signup
+//                            (creating a NEW profile needs otp_token from
+//                             otp.php when REQUIRE_EMAIL_OTP is on)
 //   POST ?action=update    — update profile fields
 //   POST ?action=fcm       — save FCM token
 //   GET  ?action=get&id=X  — get customer profile
@@ -10,6 +12,7 @@
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
+require_once __DIR__ . '/otp_lib.php';
 setCorsHeaders();
 
 // ── Firebase Auth REST (same accounts as the mobile app) ──
@@ -81,6 +84,8 @@ switch ($action) {
     $chk = $db->prepare("SELECT id FROM customers WHERE email = ? LIMIT 1");
     $chk->execute([$email]);
     if ($chk->fetch()) err('Email already registered. Please login.');
+    // Email OTP (otp.php?action=verify, purpose customer_register)
+    otpCheckRegistration($b, $email, 'customer_register');
 
     if (FIREBASE_WEB_API_KEY !== '') {
       $r = fbAuth('signUp', ['email' => $email, 'password' => $pwd, 'returnSecureToken' => true]);
@@ -175,6 +180,19 @@ switch ($action) {
     $user = requireCustomer();  // verifies Firebase token
     $b    = getBody();
 
+    // Creating a NEW profile → email must be verified by OTP (when
+    // REQUIRE_EMAIL_OTP). Updating an existing profile never needs it.
+    // Accounts whose e-mail Firebase already verified are accepted too.
+    $ex = $db->prepare("SELECT 1 FROM customers WHERE id = ?");
+    $ex->execute([$user['uid']]);
+    $isNew = !$ex->fetchColumn();
+    $verifiedEmail = '';
+    if ($isNew || trim((string)($b['otp_token'] ?? '')) !== '') {
+      $regEmail = strtolower(trim((string)(($user['email'] ?? '') !== '' ? $user['email'] : ($b['email'] ?? ''))));
+      $verifiedEmail = otpCheckRegistration($b, $regEmail, 'customer_register',
+                                            REQUIRE_EMAIL_OTP && $isNew && empty($user['email_verified']));
+    }
+
     // Upsert — insert if new, update if exists
     $stmt = $db->prepare("
       INSERT INTO customers
@@ -197,7 +215,7 @@ switch ($action) {
 
     $name    = $b['name']    ?? $user['name']  ?? '';
     $phone   = substr(preg_replace('/\D/', '', $b['phone'] ?? ($user['phone'] ?? '')), -10);
-    $email   = $b['email']   ?? $user['email'] ?? '';
+    $email   = $verifiedEmail !== '' ? $verifiedEmail : ($b['email'] ?? $user['email'] ?? '');
     $gender  = $b['gender']  ?? '';
     $address = $b['address'] ?? '';
     $city    = $b['city']    ?? '';

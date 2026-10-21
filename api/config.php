@@ -80,6 +80,16 @@ define('SMTP_HOST', hsCfg('SMTP_HOST', 'smtp.hostinger.com'));
 define('SMTP_PORT', (int)hsCfg('SMTP_PORT', 587));
 define('SMTP_USER', hsCfg('SMTP_USER'));
 define('SMTP_PASS', hsCfg('SMTP_PASS'));
+// TESTING ONLY: when set (env HS_SMTP_LOG_FILE), emails are appended to this
+// file instead of being sent. Empty (the default) = real SMTP. Never set it in production.
+define('SMTP_LOG_FILE', (string)hsCfg('SMTP_LOG_FILE', ''));
+
+// Email OTP on registration (api/otp.php). When true, customers.php
+// register (new profile) / web_register and providers.php register REQUIRE
+// an otp_token from otp.php?action=verify. Turn ON only after the updated
+// customer + partner apps are live on Google Play — older app versions
+// cannot send the token. A token that IS sent is always checked.
+define('REQUIRE_EMAIL_OTP', filter_var(hsCfg('REQUIRE_EMAIL_OTP', false), FILTER_VALIDATE_BOOLEAN));
 
 // Public site settings (served by api/site.php — safe to expose)
 define('LAUNCH_CODE', (string)hsCfg('LAUNCH_CODE'));   // director's launch code (optional)

@@ -37,5 +37,9 @@ return [
     'SMTP_HOST'           => 'smtp.hostinger.com',
     'SMTP_PORT'           => 587,
     'SMTP_USER'           => '',
-    'SMTP_PASS'           => '',
+    'SMTP_PASS'           => '',            // needed for the registration OTP emails (api/otp.php)
+
+    // Email OTP on registration. Turn on (true) only AFTER the updated customer
+    // and partner apps are live on Play — old app versions can't send the token.
+    'REQUIRE_EMAIL_OTP'   => false,
 ];

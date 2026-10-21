@@ -73,7 +73,7 @@ release (provider, any state before active) → searching
 ## providers.php
 | Action | Method | Who | Notes |
 |---|---|---|---|
-| `register` | POST | public | `name, phone (10-digit), email, password (≥8), whatsapp, gender, experience, bio, id_type, id_number, address, city, lat, lng, radius_km, areas[], services[{id,name,icon,cat}]` → `{id, status:'pending'}` — **use the returned `id`** |
+| `register` | POST | public | `otp_token` (see **otp.php**; required when `REQUIRE_EMAIL_OTP`), `name, phone (10-digit), email, password (≥8), whatsapp, gender, experience, bio, id_type, id_number, address, city, lat, lng, radius_km, areas[], services[{id,name,icon,cat}]` → `{id, status:'pending'}` — **use the returned `id`** |
 | `check_email` | GET | public | `email` → `{exists}` |
 | `login` | POST | public | `email, password` → `{token, provider, status}`. Pending providers DO get a token (to see the pending screen); suspended/rejected get an error message — show it. |
 | `get` | GET | provider (self, `id` optional) / admin → full profile incl. `services` rows `{svc_id, svc_name, svc_icon, min_price, max_price, enabled}`; anyone else → public profile only |
@@ -97,7 +97,7 @@ release (provider, any state before active) → searching
 Wallet: online-paid job → `+provider_earns`; cash-paid job → `−commission_amt`; withdrawal → `−amount` (returned on reject). Provider cannot accept jobs when wallet < −₹1000 (configurable).
 
 ## customers.php
-`register` (POST, Firebase token; upsert profile: `name, phone, email, gender, address, city, lat, lng, fcm_token, auth_method`) — call after every login.
+`register` (POST, Firebase token; upsert profile: `name, phone, email, gender, address, city, lat, lng, fcm_token, auth_method, otp_token`) — call after every login. Creating a **new** profile needs `otp_token` (purpose `customer_register`, same e-mail as the Firebase account) when `REQUIRE_EMAIL_OTP` is on; updating an existing profile never does. `web_register` takes `otp_token` too.
 `web_register` / `web_login` (website): create / sign in to the **same Firebase email+password account** the mobile app uses (via Firebase Auth REST with the public web API key), so one customer id = same bookings on web and app. Older web-only accounts (`HS-CUST-…`) are moved onto a Firebase account (bookings included) the next time they log in with their password. `update`, `fcm`, `get`, `bookings`, `delete` (anonymises), `web_register`, `web_login`, `change_password`, admin `list`.
 
 ## services.php
@@ -119,6 +119,28 @@ Public: `all`, `categories`, `get&id=`, `prices&id=`, `price_ranges`, `commissio
 - **Wallet top-up (provider):** `payouts.php?action=topup_order {amount}` → `{order_id, amount (paise), currency, key_id}` for Razorpay Checkout; then `payouts.php?action=topup_confirm {razorpay_order_id, razorpay_payment_id, razorpay_signature}`. The webhook also credits top-ups. Each top-up is credited once.
 - **Provider base location:** `providers.php?action=update {base_lat, base_lng, radius_km}`. Matching uses the pinned base if set, else the live `lat/lng`. `radius_km` is clamped to 1–50. `register` also accepts `base_lat/base_lng`.
 - **Login errors:** `providers.php?action=login` → **404 `NOT_REGISTERED: …`** for an unknown email, **400 `Incorrect password…`** for a wrong password. `customers.php?action=web_login` returns `NOT_REGISTERED: …` (404) when it can tell.
-- **Site settings (public):** `site.php?action=config` → `{support_whatsapp, support_email, customer_app_url, provider_app_url, web_login_mode}` (from `hs-secrets.php`).
+- **Site settings (public):** `site.php?action=config` → `{support_whatsapp, support_email, customer_app_url, provider_app_url, web_login_mode, email_otp_required}` (from `hs-secrets.php`).
 - **Admin:** `admin.php?action=data_counts`, `admin.php?action=wipe_test_data {confirm:'DELETE TEST DATA', bookings, customers, providers}`. `bookings.php?action=admin_finance` adds `payments_mode` (`test` / `live`).
 - `slot_time` up to 80 chars, e.g. `"Morning (8 AM – 12 PM) · 9 AM"`, with `slot_date` = the chosen day.
+
+## otp.php — email verification code on registration (Oct 2026)
+Both apps and the web app verify the e-mail with a 6-digit code **before** creating the account. Google sign-in was removed from the customer app.
+
+| Action | Method | Body | Result |
+|---|---|---|---|
+| `send` | POST | `{email, purpose}` — `purpose`: `customer_register` \| `provider_register` | `{sent:true, email, expires_in:600, resend_in:60}` — the code is e-mailed, **never returned** |
+| `verify` | POST | `{email, purpose, code}` | `{otp_token, email, purpose, expires_in:1800}` |
+
+Rules
+- `send` rejects an e-mail that is already registered: customer → `Email already registered. Please login.`; provider → `Email already registered` (400).
+- Code: 6 digits (`random_int`), stored only as a keyed hash, valid **10 min**, single use; a new `send` replaces the previous code.
+- Rate limits (429, body has `retry_after` seconds + `Retry-After` header, message says how long to wait): 1 send per **60 s** per e-mail + purpose, **5** sends per e-mail per hour, **20** sends per IP per hour.
+- `verify`: max **5** attempts per code (`Incorrect code. N attempts left.` 400; then 429 `Too many wrong attempts. Please request a new code.`). Expired → 400 `Code expired. Please request a new code.`
+- Mail not configured / sending failed → **503** `Could not send email, please try again` (details only in the server log).
+- `otp_token` = HS256 JWT `{typ:'email_otp', email, purpose, exp: now+30 min}`. It is **not** a login token.
+
+Enforcement (`customers.php` `register` when it creates a new profile, `web_register`; `providers.php` `register`)
+- `otp_token` sent → always checked (signature, expiry, `purpose`, e-mail case-insensitive = registering e-mail); otherwise 400 `Email verification expired. Please verify your email again.`
+- No `otp_token` → rejected (400 `Please verify your email with the code we send you…`) **only when** `REQUIRE_EMAIL_OTP` is true (`hs-secrets.php`, default false; public as `site.php` `email_otp_required`). A Firebase account whose e-mail Firebase already marks verified may create its profile without a token.
+- Turn `REQUIRE_EMAIL_OTP` on only after the updated apps are live on Google Play (older versions can't send the token).
+

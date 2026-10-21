@@ -113,13 +113,14 @@ function verifyFirebaseToken($token) {
         'email' => $payload['email'] ?? '',
         'name'  => $payload['name']  ?? '',
         'phone' => $payload['phone_number'] ?? '',
+        'email_verified' => !empty($payload['email_verified']),
     ];
 }
 
 // ── HS256 JWT (provider / web-customer / admin) ───────────
 function makeJWT($payload, $days = 30) {
     $payload['iat'] = time();
-    $payload['exp'] = time() + ($days * 86400);
+    $payload['exp'] = time() + (int)round($days * 86400);
     $h = b64url_enc(json_encode(['alg'=>'HS256','typ'=>'JWT']));
     $p = b64url_enc(json_encode($payload));
     $s = b64url_enc(hash_hmac('sha256', "$h.$p", JWT_SECRET, true));
@@ -158,6 +159,8 @@ function currentUser() {
 
     $jwt = verifyJWT($token);
     if ($jwt) {
+        // email-verification tokens (otp.php) are never login tokens
+        if (($jwt['typ'] ?? '') === 'email_otp') return null;
         $type = $jwt['type'] ?? '';
         if ($type === 'customer' && !empty($jwt['uid'])) {
             $cached = ['role'=>'customer','id'=>$jwt['uid'],'uid'=>$jwt['uid'],'email'=>$jwt['email'] ?? '','name'=>$jwt['name'] ?? ''];
