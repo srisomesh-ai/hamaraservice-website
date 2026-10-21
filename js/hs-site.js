@@ -41,9 +41,23 @@
     });
   };
 
-  // The one place that decides where "install the app" goes.
+  // 'android' | 'ios' | 'desktop' — the Play Store only helps Android visitors.
+  window.HS_device = function () {
+    var ua = navigator.userAgent || '';
+    if (/android/i.test(ua)) return 'android';
+    if (/iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+    return 'desktop';
+  };
+
+  // The one place that decides where "install the app" goes:
+  //  Android + Play link set → straight to the Play Store (opens the Play app);
+  //  iPhone / computer / no link yet → /get-app.html (QR code to scan, or WhatsApp).
   window.HS_getApp = function (who) {
-    HS_site(function (c) { location.href = HS_appUrl(who, c); });
+    who = who === 'provider' ? 'provider' : 'customer';
+    HS_site(function (c) {
+      var play = who === 'provider' ? c.provider_app_url : c.customer_app_url;
+      location.href = (play && HS_device() === 'android') ? play : '/get-app.html?for=' + who;
+    });
   };
 
   // Website login / register / book buttons.
@@ -59,7 +73,8 @@
     });
   };
 
-  // Upgrade plain install links to the Play Store link once configured.
+  // On Android, upgrade plain install links to the Play Store link once configured
+  // (iPhone / computer visitors keep /get-app.html with the QR code).
   function upgradeLinks() {
     var links = document.querySelectorAll('a[data-hs-getapp]');
     if (!links.length) return;
@@ -67,7 +82,7 @@
       for (var i = 0; i < links.length; i++) {
         var who = links[i].getAttribute('data-hs-getapp');
         var app = who === 'provider' ? c.provider_app_url : c.customer_app_url;
-        if (app) { links[i].href = app; links[i].rel = 'noopener'; }
+        if (app && HS_device() === 'android') { links[i].href = app; links[i].rel = 'noopener'; }
       }
     });
   }

@@ -821,6 +821,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 .svc-price-tag{font-size:clamp(13px,1.3vw,15px) !important;}
 .svc-book{margin-top:auto !important;width:calc(100% - 20px) !important;margin:auto 10px 12px !important;
   font-size:clamp(12px,1.2vw,13.5px) !important;padding:9px 6px !important;}
+.svc-book{background:var(--brand) !important;color:#fff !important;border:none !important;border-radius:100px !important;}
+.svc-book:active{background:var(--brand2) !important;}
+.svc-more{display:block;font-size:12px;font-weight:700;color:var(--teal);margin:-2px 0 8px;opacity:.85}
+.svc-card:hover .svc-more{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -1782,7 +1786,8 @@ function renderServicesGrid() {
         + '<div class="svc-name">' + escHtml(s.name) + '</div>'
         + '<div class="svc-price-tag" id="ptag-'+escHtml(s.id)+'">' + priceTagHtml(s) + '</div>'
       + '</div>'
-      + '<button class="svc-book">View Details →</button>'
+      + '<span class="svc-more">Prices &amp; details ›</span>'
+      + '<button class="svc-book" onclick="event.stopPropagation();HS_getApp(\'customer\')">Book in App →</button>'
       + '</div>';
   }).join('');
   if (btn) {
