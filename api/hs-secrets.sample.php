@@ -37,6 +37,11 @@ return [
     'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)
     'WEB_LOGIN_MODE'      => 'app',         // 'app' = no website login/booking, buttons send people to the apps; 'web' = re-enable the web app
 
+    // Website visitor analytics (admin → Visitors)
+    'IPINFO_TOKEN'        => '',            // optional: free account at https://ipinfo.io (50k lookups/month) → IP city/ISP; '' = unauthenticated, low daily limit
+    'TRUST_PROXY'         => false,         // true only behind Cloudflare / a proxy (then CF-Connecting-IP / X-Forwarded-For are used)
+    'VISITOR_IP_RETENTION_DAYS' => 90,      // visitor IPs are erased after this many days (city/country kept)
+
     'SMTP_HOST'           => 'smtp.hostinger.com',
     'SMTP_PORT'           => 587,
     'SMTP_USER'           => '',

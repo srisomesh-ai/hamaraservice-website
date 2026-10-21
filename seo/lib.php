@@ -215,6 +215,7 @@ function hs_page_end() {
   <div class="muted">© ' . date('Y') . ' HamaraService. Bookings and partner registration happen only in the HamaraService Android apps.</div>
 </div></div></footer>
 <script src="/js/hs-site.js"></script>
+<script src="/js/hs-track.js" defer></script>
 </body>
 </html>';
 }

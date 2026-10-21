@@ -155,3 +155,43 @@ Enforcement (`customers.php` `register` when it creates a new profile, `web_regi
 - Optional cron safety net: `GET /api/cron.php?action=unassigned&key=<CRON_KEY>` → `{alerts_sent:N}` (403 when `CRON_KEY` is empty or wrong). Hostinger → Advanced → Cron Jobs, every 5 minutes:
   `curl -fsS "https://hamaraservice.com/api/cron.php?action=unassigned&key=YOUR_CRON_KEY" >/dev/null`
 - Admin panel: red **"Waiting for provider (N)"** card on the Dashboard + nav badge, and a *Waiting for provider* page (Call / WhatsApp buttons, minutes waiting, "Alert emailed ✓"), refreshed every 15 s; new arrivals show a toast.
+
+## Website visitor analytics (Oct 2026)
+First-party analytics for the public website (no third-party scripts). `js/hs-track.js` (deferred) is on every public page — static HTML, `get-app.html`, `legal-pages.html` and the PHP SEO pages (`seo/lib.php` footer) — but **not** on `admin.html`, `hs-prices.html` or `/app/*`. It sends nothing when `navigator.doNotTrack === '1'` (or Global Privacy Control is on) or when the host is not hamaraservice.com / www / localhost / 127.0.0.1.
+
+Browser ids: visitor `hs_vid` (random, localStorage, cookie fallback, 1 year); visit `hs_sess` `{id, t}` (localStorage so tabs share it, sessionStorage fallback) — a new visit starts after 30 min without activity, or when the visitor arrives from another site / a utm / gclid / fbclid link. Each page view has a random `pid`.
+
+### track.php (public collector)
+`POST /api/track.php`, body = JSON sent as `text/plain` (sendBeacon / fetch keepalive, no CORS pre-flight), max 4 KB. All ids `[A-Za-z0-9_-]{8,32}`.
+
+| `a` | Body | Notes |
+|---|---|---|
+| `pageview` | `{vid, sid, pid, path, title, ref, utm:{source,medium,campaign,term,content}, gclid:0/1, fbclid:0/1, screen:'WxH', lang, tz}` | → `{ok:1, new_session}`. First page view of a `sid` creates the visit (source, landing page, utm, IP, location, device) and adds 1 to `visitors.visits`. A resent `pid` is ignored. |
+| `heartbeat` | `{vid, sid, pid, secs, final?}` | `secs` = active (visible) seconds on that page so far; sent every 15 s while visible and as a beacon on hide / pagehide. Server adds only the increase, capped by the wall-clock time since the page view (max 4 h) → `{ok:1, added}`. |
+| `event` | `{vid, sid, pid, type, who, target, path}` | `type`: `install_click` (HS_getApp / HS_login / `[data-hs-getapp]` / Play Store / `/get-app.html` links), `whatsapp_click` (wa.me, HS_support), `call_click` (`tel:`); `who`: `customer` \| `provider`. The same type+who within 3 s counts once. `install_click` sets `visitors.converted_customer` / `converted_provider`. |
+
+- Ignored (HTTP 200 `{ignored:'bot'}`, nothing stored): missing/short UA, bots, crawlers, link-preview fetchers, headless / automation browsers, HTTP libraries.
+- `{ignored:…}` also for: foreign `Origin` (403), unknown session/page, another visitor's `sid`. Bad JSON / ids / action → 400, body > 4 KB → 413, GET → 405.
+- Rate limit `TRACK_RATE_PER_MIN` (120) hits per IP per minute → 429 `{ignored:'rate'}` + `Retry-After: 60`.
+- IP = `REMOTE_ADDR`; `CF-Connecting-IP` / left-most `X-Forwarded-For` only when `TRUST_PROXY` is true.
+- Path sanitising (client + server): `utm_*`, click ids and any parameter whose name looks personal (mail, phone, name, address, token, otp, code, key, session, lat/lng, upi, …) or whose value contains `@` or 7+ digits is dropped. Referrer and click targets are stored as scheme/host/path only (no query).
+- Source: `gclid` → Google; `fbclid` → Facebook (Instagram when the referrer / utm says so); known `utm_source` (google, bing, whatsapp/wa, facebook/fb, instagram/ig, youtube/yt); else referrer host (Google incl. `android-app://…googlequicksearchbox`, Bing, WhatsApp incl. `android-app://com.whatsapp`, Facebook, Instagram, YouTube); no / own-site referrer → Direct (Other when only an unknown utm_source); anything else → Other.
+- Device / OS / browser parsed from the UA server-side (simple regexes).
+- Location: IPinfo `IPINFO_URL/<ip>/json[?token=IPINFO_TOKEN]` (2 s timeout) **after** the response is sent, only for public IPs not cached; cached in `ip_geo` for 30 days; failures cached as `ok=0` and retried after 1 h; HTTP 429 → 1 h back-off.
+
+Tables: `visitors` (vid PK, first/last seen, visits, total_seconds, pageviews, first source/referrer/landing/utm, device/os/browser, last IP + city/region/country/org, converted_customer/provider), `visitor_sessions` (sid PK, vid, visit_no, started_at, last_seen, seconds, pageviews, source, referrer, landing, utm_*, has_gclid/has_fbclid, ip, city, region, country, country_code, org, device, os, browser, screen, lang, tz), `visitor_pageviews` (id, sid, vid, pid, path, title, at, seconds), `visitor_events` (id, sid, vid, type, who, path, target, at), `ip_geo` (ip PK, ok, city, region, country, country_code, org, looked_up_at). Created by `api/schema.php` (`HS_SCHEMA_VERSION 2026-10-21-3`).
+
+Retention (`vsCleanup`, at most once a day piggy-backed on track.php / visitors.php, or `GET /api/cron.php?action=visitors_cleanup&key=<CRON_KEY>`): IPs on visits/visitors last seen more than `VISITOR_IP_RETENTION_DAYS` (90) ago are set to NULL (city/country kept); `ip_geo` rows older than 30 days deleted; page views and events older than `VISITOR_PAGEVIEW_RETENTION_DAYS` (180) deleted.
+
+### visitors.php (admin — `requireAdmin()`, 401 otherwise)
+| Action | Params | Result |
+|---|---|---|
+| `summary` | `range=today\|7d\|30d` | `{online_now, visitors, new_visitors, returning_visitors, sessions, avg_session_seconds, total_seconds, pageviews, clicks:{install_customer, install_provider, install_other, install_customer_visitors, install_provider_visitors, whatsapp, call}, top_cities, top_sources, top_campaigns, top_landing, top_pages, devices, daily}` |
+| `list` | `range, kind=visitors\|sessions, source, city, converted=customer\|provider\|any\|none, q (IP/city/region/network/page/campaign), page, per (≤100)` | `{kind, total, page, per, items}` — visitor rows carry `online` and `last_session` |
+| `detail` | `vid` | `{visitor, sessions:[… , pages:[{path,title,at,seconds}], events:[…]]}` (latest 50 visits; 404 unknown) |
+| `live` | — | `{online_now, items}` — visits seen in the last 2 min with `current_path/title`, location, source, `idle_seconds` |
+| `cleanup` | POST | runs the retention clean-up now → `{cleanup:{…counts}}` |
+
+Config (`hs-secrets.php`): `IPINFO_TOKEN` (optional, free ipinfo.io account = 50k/month; empty = unauthenticated, low daily limit), `IPINFO_URL` (default `https://ipinfo.io`), `TRUST_PROXY` (false), `VISITOR_IP_RETENTION_DAYS` (90), `VISITOR_PAGEVIEW_RETENTION_DAYS` (180), `TRACK_RATE_PER_MIN` (120).
+
+Admin panel → **Visitors** (green "online now" badge in the sidebar): KPI cards, top cities / sources / landing pages / pages / devices / campaigns, *Live now* table, filterable + paginated visitors table, tap a row for the visit timeline. Refreshed every 15 s. The admin panel is usable at phone width (sidebar becomes a ☰ drawer below 900 px; wide tables scroll inside their card).

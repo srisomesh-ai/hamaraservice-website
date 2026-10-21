@@ -113,6 +113,23 @@ define('PROVIDER_APP_URL',  hsCfg('PROVIDER_APP_URL', ''));   // e.g. https://pl
 // The API (used by the Android apps) works the same in both modes.
 define('WEB_LOGIN_MODE',    hsCfg('WEB_LOGIN_MODE', 'app') === 'web' ? 'web' : 'app');
 
+// ── Website visitor analytics (js/hs-track.js → api/track.php, admin: api/visitors.php) ──
+// IP → city/region/country/ISP via IPinfo, cached per IP for 30 days.
+// IPINFO_TOKEN is optional (free account at https://ipinfo.io = 50k lookups/month);
+// without it IPinfo still answers, but with a low daily limit.
+define('IPINFO_TOKEN', (string)hsCfg('IPINFO_TOKEN', ''));
+define('IPINFO_URL',   rtrim((string)hsCfg('IPINFO_URL', 'https://ipinfo.io'), '/'));
+// true ONLY when the site sits behind Cloudflare / a reverse proxy: the visitor IP is
+// then read from CF-Connecting-IP / X-Forwarded-For (otherwise these headers are ignored
+// because anyone can fake them).
+define('TRUST_PROXY',  filter_var(hsCfg('TRUST_PROXY', false), FILTER_VALIDATE_BOOLEAN));
+// Privacy: visitor IP addresses are erased after N days (city/country are kept);
+// page-view history is deleted after N days.
+define('VISITOR_IP_RETENTION_DAYS',       max(1, (int)hsCfg('VISITOR_IP_RETENTION_DAYS', 90)));
+define('VISITOR_PAGEVIEW_RETENTION_DAYS', max(1, (int)hsCfg('VISITOR_PAGEVIEW_RETENTION_DAYS', 180)));
+// Max tracking hits per IP per minute (more are dropped)
+define('TRACK_RATE_PER_MIN', max(1, (int)hsCfg('TRACK_RATE_PER_MIN', 120)));
+
 // Allowed browser origins for CORS
 define('ALLOWED_ORIGINS', [
     'https://hamaraservice.com', 'https://www.hamaraservice.com',
