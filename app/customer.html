@@ -315,11 +315,11 @@ window.HS_FCM = (function(){
       <div id="otpBox" class="hide"></div>
       <div id="authForm">
       <div id="regFields" class="hide">
-        <label>Full Name</label><input class="inp" id="rName" placeholder="Your name">
-        <label>Mobile Number</label><input class="inp" id="rPhone" type="tel" maxlength="10" placeholder="10-digit mobile">
+        <label>Full Name</label><input class="inp" id="rName" autocomplete="name" placeholder="Your name">
+        <label>Mobile Number</label><input class="inp" id="rPhone" type="tel" autocomplete="tel-national" maxlength="10" placeholder="10-digit mobile">
       </div>
-      <label>Email</label><input class="inp" id="aEmail" type="email" placeholder="you@example.com">
-      <label>Password</label><input class="inp" id="aPwd" type="password" placeholder="Password">
+      <label>Email</label><input class="inp" id="aEmail" type="email" autocomplete="username" placeholder="you@example.com">
+      <label>Password</label><input class="inp" id="aPwd" type="password" autocomplete="current-password" placeholder="Password">
       <button class="btn" id="authBtn" onclick="doAuth()">Login</button>
       <p style="text-align:center;margin-top:14px;font-size:13.5px;color:var(--muted)">
         <span id="authSwap" style="color:var(--amber);font-weight:800;cursor:pointer" onclick="swapAuth()">New here? Create account</span>
@@ -1552,11 +1552,20 @@ function showProfile(){
   }).catch(function(){renderProfile();});
   renderProfile();
 }
-var pfGender='male';
-function pickPfGender(g){pfGender=g;[].forEach.call($('pfGender').children,function(c){c.classList.toggle('on',c.getAttribute('data-g')===g);});}
+var pfGender='',pfGenderLocked=false;
+// City must be a place name — never an e-mail (browser autofill put the login e-mail here)
+function pfCityError(c){
+  if(!c)return '';
+  if(c.indexOf('@')>=0)return 'City looks like an e-mail address. Enter your city name, e.g. Visakhapatnam.';
+  if(c.length>60)return 'City is too long (max 60 characters).';
+  if(!/^[A-Za-z\u0900-\u0D7F .'-]+$/.test(c))return 'City can contain only letters, spaces and . - \'';
+  return '';
+}
+function pickPfGender(g){if(pfGenderLocked)return;pfGender=g;[].forEach.call($('pfGender').children,function(c){c.classList.toggle('on',c.getAttribute('data-g')===g);});}
 function renderProfile(){
   var ini=(ME.name||'U').charAt(0).toUpperCase();
-  var g0=String(ME.gender||'').toLowerCase();pfGender=['male','female','other'].indexOf(g0)>=0?g0:'male';
+  var g0=String(ME.gender||'').toLowerCase();pfGender=['male','female','other'].indexOf(g0)>=0?g0:'';
+  pfGenderLocked=!!pfGender;   // gender is set once; support can correct it
   $('profileBody').innerHTML=
     '<div class="card" style="display:flex;align-items:center;gap:14px">'
     +'<div class="pf-avatar">'+ini+'</div>'
@@ -1566,20 +1575,24 @@ function renderProfile(){
 
     +'<div class="sec-title">✏️ Edit Details</div>'
     +'<div class="card">'
-    +'<label>Full Name</label><input class="inp" id="pfName" value="'+esc(ME.name||'')+'">'
-    +'<label>Mobile Number</label><input class="inp" id="pfPhone" type="tel" maxlength="10" value="'+esc(ME.phone||'')+'">'
-    +'<label>City</label><input class="inp" id="pfCity" value="'+esc(ME.city||'')+'" placeholder="e.g. Visakhapatnam">'
-    +'<label>Gender</label><div class="chip-row" id="pfGender" style="margin-bottom:12px">'
+    +'<label>Full Name</label><input class="inp" id="pfName" name="name" autocomplete="name" value="'+esc(ME.name||'')+'">'
+    +'<label>Mobile Number</label><input class="inp" id="pfPhone" name="tel" type="tel" autocomplete="tel-national" inputmode="numeric" maxlength="10" value="'+esc(ME.phone||'')+'">'
+    +'<label>City</label><input class="inp" id="pfCity" name="city" type="text" autocomplete="address-level2" autocapitalize="words" maxlength="60" value="'+esc(ME.city||'')+'" placeholder="e.g. Visakhapatnam">'
+    +'<label>Gender</label><div class="chip-row" id="pfGender" style="margin-bottom:'+(pfGenderLocked?'4':'12')+'px'+(pfGenderLocked?';opacity:.6;pointer-events:none':'')+'"'+(pfGenderLocked?' aria-disabled="true"':'')+'>'
     +[['male','Male'],['female','Female'],['other','Other']].map(function(g){
       return '<div class="chip'+(pfGender===g[0]?' on':'')+'" data-g="'+g[0]+'" onclick="pickPfGender(\''+g[0]+'\')">'+g[1]+'</div>';
     }).join('')+'</div>'
-    +'<label>Default Address</label><textarea class="inp" id="pfAddr" rows="2">'+esc(ME.address||'')+'</textarea>'
+    +(pfGenderLocked?'<div id="pfGenderNote" style="font-size:12px;color:var(--muted);margin-bottom:12px">🔒 Gender can\'t be changed. Contact support if it\'s wrong.</div>':'')
+    +'<label>Default Address</label><textarea class="inp" id="pfAddr" name="street-address" autocomplete="street-address" rows="2">'+esc(ME.address||'')+'</textarea>'
     +'<button class="btn teal" onclick="saveProfile()">💾 Save Changes</button></div>'
 
     +'<div class="sec-title">🔒 Change Password</div>'
     +'<div class="card">'
-    +'<label>Current Password</label><input class="inp" id="pfOld" type="password">'
-    +'<label>New Password</label><input class="inp" id="pfNew" type="password" placeholder="At least 8 characters">'
+    // hidden username field: tells the password manager which account this is,
+    // so it never fills the login e-mail into City (the input just above)
+    +'<input type="email" name="username" autocomplete="username" value="'+esc(ME.email||'')+'" readonly tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'
+    +'<label>Current Password</label><input class="inp" id="pfOld" type="password" autocomplete="current-password">'
+    +'<label>New Password</label><input class="inp" id="pfNew" type="password" autocomplete="new-password" placeholder="At least 8 characters">'
     +'<button class="btn ghost" onclick="changePwd()">Update Password</button></div>'
 
     +'<div class="sec-title">ℹ️ More</div>'
@@ -1592,10 +1605,12 @@ function renderProfile(){
     +'<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">HamaraService · info@hamaraservice.com</div>';
 }
 function saveProfile(){
-  var body={name:$('pfName').value.trim(),phone:$('pfPhone').value.trim(),city:$('pfCity').value.trim(),gender:pfGender,address:$('pfAddr').value.trim()};
+  var body={name:$('pfName').value.trim(),phone:$('pfPhone').value.trim(),city:$('pfCity').value.trim(),address:$('pfAddr').value.trim()};
+  if(pfGender&&!pfGenderLocked)body.gender=pfGender;
   if(!body.name){toast('Enter your name');return;}
+  var ce=pfCityError(body.city);if(ce){toast(ce);$('pfCity').focus();return;}
   api('customers.php','update',body).then(function(res){
-    if(res.success){ME=Object.assign(ME,body);localStorage.setItem('hs_cust_me',JSON.stringify(ME));toast('✅ Profile saved');renderProfile();}
+    if(res.success){ME=Object.assign(ME,body,res.data&&typeof res.data==='object'?{gender:res.data.gender,city:res.data.city}:{});localStorage.setItem('hs_cust_me',JSON.stringify(ME));toast('✅ Profile saved');renderProfile();}
     else toast(res.error||'Save failed');
   }).catch(function(){toast('Network error');});
 }

@@ -23,6 +23,7 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
 require_once __DIR__ . '/razorpay.php';
+require_once __DIR__ . '/alerts_lib.php';
 setCorsHeaders();
 
 $action = $_GET['action'] ?? '';
@@ -30,6 +31,11 @@ $db     = getDB();
 ensureSchema($db);
 if (in_array($action, ['get','active','open','confirm_price','accept','history','admin_list'], true)) {
   try { expireStaleQuotes($db); } catch (Throwable $e) {}
+}
+// "No provider found" admin e-mail — piggybacks on the polling endpoints
+// (customer get/active, provider open jobs, admin panel); at most once per 60 s.
+if (in_array($action, ['get','active','open','admin_list','admin_unassigned'], true)) {
+  maybeCheckUnassigned($db);
 }
 
 const PRE_ACTIVE = ['searching','price_quoted','negotiating','negotiation_final','confirmed'];
@@ -108,6 +114,7 @@ function sanitizeBooking(array $bk, string $role) {
     $otpStart = $bk['start_otp'] ?? null;
     $otpDone  = $bk['completion_otp'] ?? null;
     unset($bk['otp'], $bk['start_otp'], $bk['completion_otp'], $bk['otp_attempts'], $bk['settled']);
+    if ($role !== 'admin') unset($bk['unassigned_alerted_at']);
     $bk['quote_expires_in'] = null;
     if (in_array($status, ['price_quoted','negotiation_final'], true) && !empty($bk['quote_at'])) {
         $bk['quote_expires_in'] = max(0, strtotime($bk['quote_at']) + QUOTE_TTL_MIN * 60 - time());
@@ -859,6 +866,31 @@ switch ($action) {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     ok(array_map(fn($r) => sanitizeBooking($r, 'admin'), $stmt->fetchAll()));
+  }
+
+  // ── ADMIN: WAITING FOR A PROVIDER ─────────────────────
+  // 'searching' bookings older than NO_PROVIDER_ALERT_MIN (last 24 h).
+  case 'admin_unassigned': {
+    requireAdmin();
+    $rows = array_map(function ($r) {
+      return [
+        'id'             => $r['id'],
+        'svc_name'       => $r['svc_name'],
+        'svc_icon'       => $r['svc_icon'],
+        'city'           => $r['city'],
+        'address'        => $r['address'],
+        'landmark'       => $r['landmark'],
+        'slot_date'      => $r['slot_date'],
+        'slot_time'      => $r['slot_time'],
+        'customer_name'  => trim((string)($r['contact_name'] ?: $r['customer_name'])),
+        'customer_phone' => hsPhone10($r['contact_phone'] ?: $r['customer_phone']),
+        'created_at'     => $r['created_at'],
+        'minutes_waiting'=> (int)$r['minutes_waiting'],
+        'alerted'        => !empty($r['unassigned_alerted_at']),
+        'alerted_at'     => $r['unassigned_alerted_at'],
+      ];
+    }, unassignedBookings($db));
+    ok(['threshold_min' => NO_PROVIDER_ALERT_MIN, 'count' => count($rows), 'items' => $rows]);
   }
 
   // ── ADMIN: FINANCE SUMMARY ────────────────────────────

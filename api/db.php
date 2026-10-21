@@ -56,6 +56,22 @@ function err($message, $code = 400) {
     echo json_encode(['success'=>false, 'error'=>$message]);
     exit;
 }
+// City entered by a user → clean value, or null when it must be ignored
+// (an e-mail address autofilled into the field, or other junk). Max 60 chars.
+function hsCleanCity($v) {
+    if (!is_string($v) && !is_numeric($v)) return null;
+    $v = trim(preg_replace('/\s+/u', ' ', strip_tags((string)$v)));
+    if ($v === '') return '';
+    if (strpos($v, '@') !== false || filter_var($v, FILTER_VALIDATE_EMAIL)
+        || preg_match('/^[^\s]+\.(com|in|net|org|co)$/i', $v)) return null;
+    return function_exists('mb_substr') ? mb_substr($v, 0, 60) : substr($v, 0, 60);
+}
+// Customer gender → 'male' | 'female' | 'other' | '' (anything else ignored)
+function hsCleanGender($v) {
+    $g = strtolower(trim((string)$v));
+    return in_array($g, ['male','female','other'], true) ? $g : '';
+}
+
 function getBody() {
     return json_decode(file_get_contents('php://input'), true) ?? [];
 }

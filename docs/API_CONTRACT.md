@@ -67,6 +67,7 @@ release (provider, any state before active) → searching
 | `review` | POST | customer | `booking_id, rating (1-5), review` | status `completed`, once |
 | `request_review` | POST | provider | `booking_id` | only after paid |
 | `admin_list` | GET | admin | `status, city, limit` | |
+| `admin_unassigned` | GET | admin | – | `{threshold_min, count, items:[{id, svc_name, svc_icon, city, address, landmark, slot_date, slot_time, customer_name, customer_phone (10-digit), created_at, minutes_waiting, alerted (bool), alerted_at}]}` — `searching` bookings with no provider older than `NO_PROVIDER_ALERT_MIN` (last 24 h), oldest first. |
 | `admin_finance` | GET | admin | – | GMV, commission, online collected, cash commission due, provider balances/dues |
 | `mark_paid` | – | – | – | **Removed** (410) |
 
@@ -97,6 +98,8 @@ release (provider, any state before active) → searching
 Wallet: online-paid job → `+provider_earns`; cash-paid job → `−commission_amt`; withdrawal → `−amount` (returned on reject). Provider cannot accept jobs when wallet < −₹1000 (configurable).
 
 ## customers.php
+Profile rules (`register`, `update`): **gender is set once** — when the stored gender is non-empty a new value is silently ignored (other fields still save; only `male|female|other` accepted). **City** is trimmed, max 60 chars, and ignored (old value kept) when it contains `@` / looks like an e-mail address (autofill guard; a schema migration also cleared existing e-mail-looking cities). Responses never include `password_hash`. `providers.php` `register`/`update` apply the same city rule.
+
 `register` (POST, Firebase token; upsert profile: `name, phone, email, gender, address, city, lat, lng, fcm_token, auth_method, otp_token`) — call after every login. Creating a **new** profile needs `otp_token` (purpose `customer_register`, same e-mail as the Firebase account) when `REQUIRE_EMAIL_OTP` is on; updating an existing profile never does. `web_register` takes `otp_token` too.
 `web_register` / `web_login` (website): create / sign in to the **same Firebase email+password account** the mobile app uses (via Firebase Auth REST with the public web API key), so one customer id = same bookings on web and app. Older web-only accounts (`HS-CUST-…`) are moved onto a Firebase account (bookings included) the next time they log in with their password. `update`, `fcm`, `get`, `bookings`, `delete` (anonymises), `web_register`, `web_login`, `change_password`, admin `list`.
 
@@ -144,3 +147,11 @@ Enforcement (`customers.php` `register` when it creates a new profile, `web_regi
 - No `otp_token` → rejected (400 `Please verify your email with the code we send you…`) **only when** `REQUIRE_EMAIL_OTP` is true (`hs-secrets.php`, default false; public as `site.php` `email_otp_required`). A Firebase account whose e-mail Firebase already marks verified may create its profile without a token.
 - Turn `REQUIRE_EMAIL_OTP` on only after the updated apps are live on Google Play (older versions can't send the token).
 
+
+## "No provider found" admin alert (Oct 2026)
+- A booking still `searching` with no provider **`NO_PROVIDER_ALERT_MIN`** minutes (default 5) after `created_at` is e-mailed **once** to **`ADMIN_ALERT_EMAIL`** (default `SUPPORT_EMAIL`): service, city, booking id, customer name + phone (tel: + WhatsApp links), address, slot, minutes waiting, link to the admin panel. Bookings older than 24 h, cancelled or accepted are skipped.
+- Column `bookings.unassigned_alerted_at` (DATETIME NULL) is claimed atomically (`UPDATE … WHERE unassigned_alerted_at IS NULL`, mail only when 1 row changed) → no duplicates across concurrent requests. Hidden from customer/provider responses.
+- The check (`api/alerts_lib.php` `checkUnassignedBookings()`) runs at most once per 60 s (temp-file timestamp) piggy-backed on `bookings.php` `get`, `active`, `open`, `admin_list`, `admin_unassigned`. Mail errors are logged (`error_log`), never returned.
+- Optional cron safety net: `GET /api/cron.php?action=unassigned&key=<CRON_KEY>` → `{alerts_sent:N}` (403 when `CRON_KEY` is empty or wrong). Hostinger → Advanced → Cron Jobs, every 5 minutes:
+  `curl -fsS "https://hamaraservice.com/api/cron.php?action=unassigned&key=YOUR_CRON_KEY" >/dev/null`
+- Admin panel: red **"Waiting for provider (N)"** card on the Dashboard + nav badge, and a *Waiting for provider* page (Call / WhatsApp buttons, minutes waiting, "Alert emailed ✓"), refreshed every 15 s; new arrivals show a toast.

@@ -95,6 +95,13 @@ define('REQUIRE_EMAIL_OTP', filter_var(hsCfg('REQUIRE_EMAIL_OTP', false), FILTER
 define('LAUNCH_CODE', (string)hsCfg('LAUNCH_CODE'));   // director's launch code (optional)
 define('SUPPORT_WHATSAPP',  preg_replace('/\D/', '', hsCfg('SUPPORT_WHATSAPP') ?: '919346220090'));   // e.g. 919876543210
 define('SUPPORT_EMAIL',     hsCfg('SUPPORT_EMAIL', 'support@hamaraservice.com'));
+// "No provider found" admin alert (api/alerts_lib.php): a booking still
+// searching for a provider after NO_PROVIDER_ALERT_MIN minutes is e-mailed
+// once to ADMIN_ALERT_EMAIL (default SUPPORT_EMAIL).
+define('NO_PROVIDER_ALERT_MIN', max(1, (int)hsCfg('NO_PROVIDER_ALERT_MIN', 5)));
+define('ADMIN_ALERT_EMAIL',     trim((string)hsCfg('ADMIN_ALERT_EMAIL', '')) ?: SUPPORT_EMAIL);
+// Key for api/cron.php (optional Hostinger cron). Empty = cron endpoint disabled.
+define('CRON_KEY',              (string)hsCfg('CRON_KEY', ''));
 // App links (Play Store). Empty = not published yet → /get-app.html shows
 // "Coming soon on Google Play — WhatsApp us for early access".
 define('CUSTOMER_APP_URL',  hsCfg('CUSTOMER_APP_URL', ''));   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.customer

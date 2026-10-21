@@ -361,9 +361,9 @@ window.HS_FCM = (function(){
     </div>
     <div class="sec-title" id="editProfTitle">✏️ Edit Profile</div>
     <div class="card">
-      <label>Full Name</label><input class="inp" id="epName">
-      <label>Phone Number</label><input class="inp" id="epPhone" type="tel" maxlength="10">
-      <label>City</label><input class="inp" id="epCity">
+      <label>Full Name</label><input class="inp" id="epName" autocomplete="name">
+      <label>Phone Number</label><input class="inp" id="epPhone" type="tel" autocomplete="tel-national" maxlength="10">
+      <label>City</label><input class="inp" id="epCity" type="text" autocomplete="address-level2" autocapitalize="words" maxlength="60" placeholder="e.g. Visakhapatnam">
       <label>Short Bio</label><textarea class="inp" id="epBio" rows="3" placeholder="Tell customers about yourself..."></textarea>
       <button class="btn teal" id="epSave" onclick="saveProfile()">Save Changes</button>
     </div>
@@ -1478,7 +1478,10 @@ function saveProfile(){
   var ph=$('epPhone').value.replace(/\D/g,'');if(ph.length>10)ph=ph.slice(-10);
   if(!name){toast('Enter your name');return;}
   if(!/^[6-9]\d{9}$/.test(ph)){toast('Enter a valid 10-digit mobile number');return;}
-  var body={name:name,phone:ph,city:$('epCity').value.trim(),bio:$('epBio').value.trim()};
+  var city=$('epCity').value.trim();
+  if(city.indexOf('@')>=0){toast('City looks like an e-mail address. Enter your city name, e.g. Visakhapatnam.');return;}
+  if(city.length>60||(city&&!/^[A-Za-z\u0900-\u0D7F .'-]+$/.test(city))){toast('City can contain only letters, spaces and . - \' (max 60)');return;}
+  var body={name:name,phone:ph,city:city,bio:$('epBio').value.trim()};
   $('epSave').disabled=true;
   api('providers.php','update',body).then(function(res){
     $('epSave').disabled=false;
