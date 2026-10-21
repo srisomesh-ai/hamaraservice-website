@@ -1,52 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Get the App - Hamara Service</title>
+<meta name="theme-color" content="#1B6B7A"/>
+<title>Get the HamaraService App — Customer &amp; Partner</title>
+<meta name="description" content="Install the HamaraService Android apps: book home services near you with the customer app, or join as a service partner with the Partner app."/>
+<link rel="canonical" href="https://hamaraservice.com/get-app.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="HamaraService"/>
+<meta property="og:locale" content="en_IN"/>
+<meta property="og:title" content="Get the HamaraService App — Customer &amp; Partner"/>
+<meta property="og:description" content="Book home services or join as a service partner — HamaraService apps for Android."/>
+<meta property="og:url" content="https://hamaraservice.com/get-app.html"/>
+<meta property="og:image" content="https://hamaraservice.com/images/og-share.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Get the HamaraService App — Customer &amp; Partner"/>
+<meta name="twitter:description" content="Book home services or join as a service partner — HamaraService apps for Android."/>
+<meta name="twitter:image" content="https://hamaraservice.com/images/og-share.png"/>
+<link rel="icon" href="/images/rlogo-tight.png"/>
 <style>
-:root{--teal:#0f4c5c;--orange:#f26b1d;--ink:#13262b;--muted:#5a6b70;--bg:#f4f8f9}
+:root{--teal:#1B6B7A;--teal2:#134F5C;--orange:#E8651A;--orange2:#c9510f;--ink:#13262b;--muted:#5a6b70;--bg:#f0f7f9;--line:#dce8eb}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);padding:16px}
-.wrap{max-width:440px;margin:24px auto}
-.head{text-align:center;margin-bottom:18px}
-.head h1{font-size:22px;margin:10px 0 4px}.head p{color:var(--muted);font-size:14px;margin:0}
-.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 6px 24px rgba(15,76,92,.08)}
-.card h2{font-size:17px;margin:0 0 4px}.card p{font-size:13px;color:var(--muted);margin:0 0 14px}
-.btn{display:block;text-align:center;text-decoration:none;font-weight:800;border-radius:12px;padding:13px;font-size:15px;margin-top:8px}
-.btn.app{background:var(--orange);color:#fff}.btn.web{background:#fff;color:var(--teal);border:2px solid var(--teal)}
-.hide{display:none}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+a{color:inherit}
+.top{background:linear-gradient(135deg,var(--teal2),var(--teal));color:#fff;padding:18px 16px 70px;text-align:center}
+.top .nav{max-width:960px;margin:0 auto 26px;display:flex;align-items:center;justify-content:space-between}
+.top .logo{background:#fff;border-radius:12px;padding:6px 10px;display:inline-flex}
+.top .logo img{height:32px;display:block}
+.top .nav a.home{color:#fff;text-decoration:none;font-weight:700;font-size:14px;border:1.5px solid rgba(255,255,255,.35);border-radius:10px;padding:7px 12px}
+.top h1{font-size:clamp(24px,5vw,36px);margin:0 0 8px;line-height:1.2}
+.top p{margin:0 auto;max-width:560px;color:#d5eaee;font-size:15px}
+.cards{max-width:960px;margin:-48px auto 0;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:720px){.cards{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:20px;padding:22px 20px;box-shadow:0 8px 30px rgba(19,79,92,.10);border:2px solid transparent;display:flex;flex-direction:column;transition:border-color .2s,box-shadow .2s}
+.card.hl{border-color:var(--orange);box-shadow:0 10px 36px rgba(232,101,26,.18)}
+.card .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);background:#e6f4f6;border-radius:100px;padding:4px 10px;margin-bottom:10px;align-self:flex-start}
+.card.prov .tag{color:var(--orange2);background:#fff3eb}
+.card h2{font-size:21px;margin:0 0 6px}
+.card .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.card ul{list-style:none;padding:0;margin:0 0 18px;font-size:14px}
+.card li{padding:6px 0 6px 26px;position:relative;border-bottom:1px solid #f0f4f5}
+.card li:before{content:"✓";position:absolute;left:4px;color:var(--teal);font-weight:800}
+.card.prov li:before{color:var(--orange)}
+.spacer{flex:1}
+.play{display:flex;align-items:center;gap:12px;background:#111;color:#fff;text-decoration:none;border-radius:12px;padding:10px 18px;min-height:56px;justify-content:center}
+.play svg{width:26px;height:28px;flex-shrink:0}
+.play .t1{font-size:10px;letter-spacing:.8px;text-transform:uppercase;opacity:.85;line-height:1}
+.play .t2{font-size:19px;font-weight:700;line-height:1.15}
+.soon{background:#f6f9fa;border:1.5px dashed #b9d3d9;border-radius:12px;padding:12px 14px;text-align:center;font-size:14px}
+.soon b{display:block;color:var(--teal2);font-size:15px;margin-bottom:6px}
+.wa{display:block;margin-top:8px;background:#25D366;color:#fff;text-decoration:none;font-weight:800;border-radius:10px;padding:11px;font-size:15px;text-align:center}
+.web{display:block;text-align:center;margin-top:10px;font-weight:700;color:var(--teal);font-size:14px}
+.more{max-width:960px;margin:22px auto 0;padding:0 16px 30px;font-size:14px;color:var(--muted);text-align:center}
+.more a{color:var(--teal);font-weight:700}
+.hide{display:none!important}
+footer{text-align:center;font-size:13px;color:var(--muted);padding:18px 16px 30px;border-top:1px solid var(--line)}
+footer a{color:var(--teal);text-decoration:none;margin:0 6px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="head">
-    <div style="font-size:44px">&#128241;</div>
-    <h1>Hamara Service works best in the app</h1>
-    <p>Live job alerts, OTPs and payments — right on your phone.</p>
+<header class="top">
+  <div class="nav">
+    <a class="logo" href="/"><img src="/images/rlogo-tight.png" alt="HamaraService"/></a>
+    <a class="home" href="/">← Home</a>
   </div>
-  <div class="card" id="cCard">
-    <h2>&#127968; For customers</h2>
-    <p>Book trusted home services near you.</p>
-    <a class="btn app hide" id="cApp" href="#">&#11015;&#65039; Download the Customer App</a>
-    <a class="btn web" href="/app/customer.html">Continue on website</a>
-  </div>
-  <div class="card" id="pCard">
-    <h2>&#128119; For service providers</h2>
-    <p>Get jobs near you and grow your earnings.</p>
-    <a class="btn app hide" id="pApp" href="#">&#11015;&#65039; Download the Provider App</a>
-    <a class="btn web" href="/app/provider.html">Continue on website</a>
-  </div>
-</div>
+  <h1>Get the HamaraService app</h1>
+  <p>Bookings and partner registration happen only in our Android apps — live job updates, OTP-secured start &amp; finish, and payments right on your phone.</p>
+</header>
+
+<main class="cards">
+  <section class="card cust" id="cCard">
+    <span class="tag">For customers</span>
+    <h2>🏠 HamaraService — book home services</h2>
+    <p class="sub">Electricians, plumbers, cleaning, AC service, drivers, beauty at home and 30+ services near you.</p>
+    <ul>
+      <li>See the price quoted by the provider before you confirm</li>
+      <li>ID-verified local professionals</li>
+      <li>Job starts and finishes with OTPs shown in your app</li>
+      <li>Pay after the work is done — online or cash where allowed</li>
+    </ul>
+    <div class="spacer"></div>
+    <a class="play hide" id="cApp" href="#" rel="noopener">
+      <svg viewBox="0 0 24 26" aria-hidden="true"><path fill="#00d7fe" d="M1 1.2 13.4 13 1 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#ffce00" d="m17.6 17.2-4.2-4.2 4.2-4.2 4.9 2.8c1.4.8 1.4 2.1 0 2.9z"/><path fill="#ff3a44" d="M17.6 17.2 13.4 13 1 24.8c.5.5 1.2.5 2.1 0z"/><path fill="#00f076" d="M17.6 8.8 3.1 1.2C2.2.7 1.5.7 1 1.2L13.4 13z"/></svg>
+      <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
+    </a>
+    <div class="soon" id="cSoon">
+      <b>Coming soon on Google Play</b>
+      Our customer app is in Play Store review. WhatsApp us for early access.
+      <a class="wa" href="https://wa.me/919346220090?text=Hi%20HamaraService%2C%20I%20would%20like%20early%20access%20to%20the%20customer%20app." target="_blank" rel="noopener">💬 WhatsApp for early access</a>
+    </div>
+    <a class="web hide" id="cWeb" href="/app/customer.html">Continue on the website →</a>
+  </section>
+
+  <section class="card prov" id="pCard">
+    <span class="tag">For service partners</span>
+    <h2>🛠️ HamaraService Partner — get jobs</h2>
+    <p class="sub">For electricians, plumbers, drivers, maids, beauticians, technicians and other skilled workers.</p>
+    <ul>
+      <li>Set your own price for every job</li>
+      <li>Choose your hours and the area you work in</li>
+      <li>Job requests from customers near you</li>
+      <li>Small platform fee per completed job · withdraw earnings in the app</li>
+    </ul>
+    <div class="spacer"></div>
+    <a class="play hide" id="pApp" href="#" rel="noopener">
+      <svg viewBox="0 0 24 26" aria-hidden="true"><path fill="#00d7fe" d="M1 1.2 13.4 13 1 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#ffce00" d="m17.6 17.2-4.2-4.2 4.2-4.2 4.9 2.8c1.4.8 1.4 2.1 0 2.9z"/><path fill="#ff3a44" d="M17.6 17.2 13.4 13 1 24.8c.5.5 1.2.5 2.1 0z"/><path fill="#00f076" d="M17.6 8.8 3.1 1.2C2.2.7 1.5.7 1 1.2L13.4 13z"/></svg>
+      <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
+    </a>
+    <div class="soon" id="pSoon">
+      <b>Coming soon on Google Play</b>
+      Our Partner app is in Play Store review. WhatsApp us to register early.
+      <a class="wa" href="https://wa.me/919346220090?text=Hi%20HamaraService%2C%20I%20want%20to%20join%20as%20a%20service%20partner." target="_blank" rel="noopener">💬 WhatsApp to join early</a>
+    </div>
+    <a class="web hide" id="pWeb" href="/app/provider.html">Continue on the website →</a>
+  </section>
+</main>
+
+<p class="more">Looking for work? See <a href="/jobs">partner jobs by city</a>. Need a service? Browse <a href="/cities">services in your city</a>.</p>
+
+<footer>
+  <a href="/">Home</a>·<a href="/cities">Cities</a>·<a href="/jobs">Jobs</a>·<a href="/legal-pages.html#privacy">Privacy</a>·<a href="/legal-pages.html#terms">Terms</a><br/>
+  📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:support@hamaraservice.com">support@hamaraservice.com</a>
+</footer>
+
 <script src="/js/hs-site.js"></script>
 <script>
 (function(){
   var who=(location.search.match(/[?&]for=(customer|provider)/)||[])[1];
-  if(who==='customer')document.getElementById('pCard').style.display='none';
-  if(who==='provider')document.getElementById('cCard').style.display='none';
-  HS_site(function(c){
-    if(c.customer_app_url){var a=document.getElementById('cApp');a.href=c.customer_app_url;a.classList.remove('hide');}
-    if(c.provider_app_url){var b=document.getElementById('pApp');b.href=c.provider_app_url;b.classList.remove('hide');}
+  var c=document.getElementById('cCard'), p=document.getElementById('pCard');
+  if(who==='customer') c.classList.add('hl');
+  if(who==='provider'){ p.classList.add('hl'); p.parentNode.insertBefore(p, c); }
+  HS_site(function(cfg){
+    if(cfg.customer_app_url){var a=document.getElementById('cApp');a.href=cfg.customer_app_url;a.classList.remove('hide');document.getElementById('cSoon').classList.add('hide');}
+    if(cfg.provider_app_url){var b=document.getElementById('pApp');b.href=cfg.provider_app_url;b.classList.remove('hide');document.getElementById('pSoon').classList.add('hide');}
+    if(cfg.support_whatsapp){[].forEach.call(document.querySelectorAll('a.wa'),function(w){w.href=w.href.replace(/wa\.me\/\d+/,'wa.me/'+cfg.support_whatsapp);});}
+    if(!HS_appMode(cfg)){document.getElementById('cWeb').classList.remove('hide');document.getElementById('pWeb').classList.remove('hide');}
   });
 })();
 </script>

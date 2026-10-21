@@ -13,5 +13,5 @@ ok([
   'support_email'    => SUPPORT_EMAIL,
   'customer_app_url' => CUSTOMER_APP_URL,
   'provider_app_url' => PROVIDER_APP_URL,
-  'web_login_mode'   => WEB_LOGIN_MODE === 'app' ? 'app' : 'web',
+  'web_login_mode'   => WEB_LOGIN_MODE === 'web' ? 'web' : 'app',
 ]);

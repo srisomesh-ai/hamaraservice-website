@@ -29,10 +29,10 @@ return [
     // Public site settings
     'SUPPORT_WHATSAPP'    => '919346220090',  // e.g. '919876543210' (country code + number)
     'SUPPORT_EMAIL'       => 'info@hamaraservice.com',
-    'CUSTOMER_APP_URL'    => '',            // Play Store link (or APK download link) for the customer app
-    'PROVIDER_APP_URL'    => '',            // Play Store link (or APK download link) for the provider app
+    'CUSTOMER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.customer (once live)
+    'PROVIDER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.provider (once live)
     'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)
-    'WEB_LOGIN_MODE'      => 'web',         // 'web' = website login works; 'app' = login buttons send people to the apps
+    'WEB_LOGIN_MODE'      => 'app',         // 'app' = no website login/booking, buttons send people to the apps; 'web' = re-enable the web app
 
     'SMTP_HOST'           => 'smtp.hostinger.com',
     'SMTP_PORT'           => 587,

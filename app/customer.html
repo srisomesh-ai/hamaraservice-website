@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#0f4c5c">
+<meta name="robots" content="noindex">
 <title>HamaraService — Book a Service</title>
 <link rel="manifest" href="manifest.json">
 <style>
@@ -197,6 +198,31 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 
 <!-- Firebase Cloud Messaging -->
 <script src="/js/hs-site.js"></script>
+<!-- HS-APP-GATE: shown when WEB_LOGIN_MODE is 'app' (default). Set WEB_LOGIN_MODE='web' in hs-secrets.php to re-enable the web app below. -->
+<style>
+html.hs-gate-wait body>*,html.hs-gate body>*:not(#hsAppGate){display:none!important}
+#hsAppGate{display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#134F5C 0%,#1B6B7A 60%,#2a8ba0 100%);color:#fff;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+html.hs-gate #hsAppGate{display:flex!important}
+#hsAppGate .g-box{max-width:420px;width:100%;text-align:center}
+#hsAppGate .g-logo{background:#fff;border-radius:18px;padding:10px 16px;display:inline-block;margin-bottom:22px}
+#hsAppGate .g-logo img{height:44px;display:block}
+#hsAppGate .g-ic{font-size:46px;margin-bottom:8px}
+#hsAppGate h1{font-size:24px;line-height:1.25;font-weight:800;margin:0 0 10px}
+#hsAppGate p{font-size:15px;line-height:1.55;color:#d7ebef;margin:0 0 22px}
+#hsAppGate .g-btn{display:block;background:#E8651A;color:#fff;text-decoration:none;font-weight:800;font-size:16px;padding:15px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#hsAppGate .g-sec{display:block;margin-top:12px;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px;border:1.5px solid rgba(255,255,255,.4);border-radius:14px}
+#hsAppGate .g-help{margin-top:18px;font-size:13px;color:#bcdbe1}
+#hsAppGate .g-help a{color:#ffd2b5;cursor:pointer;text-decoration:underline}
+</style>
+<script>
+document.documentElement.classList.add('hs-gate-wait');
+HS_site(function (c) {
+  var r = document.documentElement;
+  r.classList.remove('hs-gate-wait');
+  if (HS_appMode(c)) r.classList.add('hs-gate');
+});
+</script>
+<!-- /HS-APP-GATE -->
 <script src="/js/hs-questions.js"></script>
 <script src="/js/hs-map.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -257,6 +283,18 @@ window.HS_FCM = (function(){
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
+<!-- HS-APP-GATE panel -->
+<div id="hsAppGate" role="dialog" aria-labelledby="hsGateTitle">
+  <div class="g-box">
+    <div class="g-logo"><img src="/images/rlogo-tight.png" alt="HamaraService"/></div>
+    <div class="g-ic">🏠</div>
+    <h1 id="hsGateTitle">Bookings are now in the HamaraService app</h1>
+    <p>Booking, live tracking, OTPs and payments have moved to the HamaraService customer app for Android. Install it to book ID-verified professionals near you.</p>
+    <a class="g-btn" id="hsGateInstall" data-hs-getapp="customer" href="/get-app.html?for=customer">⬇️ Install the HamaraService app</a>
+    <a class="g-sec" href="/">Browse services &amp; prices</a>
+    <div class="g-help">Need help? <a onclick="HS_support('customer')">WhatsApp +91 93462 20090</a></div>
+  </div>
+</div>
 
 <!-- ══ AUTH ══ -->
 <div id="pgAuth" class="hide auth-screen">
