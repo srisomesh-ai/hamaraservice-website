@@ -94,7 +94,7 @@ define('REQUIRE_EMAIL_OTP', filter_var(hsCfg('REQUIRE_EMAIL_OTP', false), FILTER
 // Public site settings (served by api/site.php — safe to expose)
 define('LAUNCH_CODE', (string)hsCfg('LAUNCH_CODE'));   // director's launch code (optional)
 define('SUPPORT_WHATSAPP',  preg_replace('/\D/', '', hsCfg('SUPPORT_WHATSAPP') ?: '919346220090'));   // e.g. 919876543210
-define('SUPPORT_EMAIL',     hsCfg('SUPPORT_EMAIL', 'support@hamaraservice.com'));
+define('SUPPORT_EMAIL',     hsCfg('SUPPORT_EMAIL', 'info@hamaraservice.com'));
 // "No provider found" admin alert (api/alerts_lib.php): a booking still
 // searching for a provider after NO_PROVIDER_ALERT_MIN minutes is e-mailed
 // once to ADMIN_ALERT_EMAIL (default SUPPORT_EMAIL).
@@ -104,7 +104,7 @@ define('ADMIN_ALERT_EMAIL',     trim((string)hsCfg('ADMIN_ALERT_EMAIL', '')) ?: 
 define('CRON_KEY',              (string)hsCfg('CRON_KEY', ''));
 // App links (Play Store). Empty = not published yet → /get-app.html shows
 // "Coming soon on Google Play — WhatsApp us for early access".
-define('CUSTOMER_APP_URL',  hsCfg('CUSTOMER_APP_URL', ''));   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.customer
+define('CUSTOMER_APP_URL',  hsCfg('CUSTOMER_APP_URL') ?: 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer');   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.customer
 define('PROVIDER_APP_URL',  hsCfg('PROVIDER_APP_URL', ''));   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.provider
 // 'app' (default) = the website has NO login/booking: every login/book/register button
 //                   sends people to install the customer / partner app, and

@@ -24,7 +24,7 @@
 <meta name="twitter:title" content="HamaraService – Home Services at Your Doorstep"/>
 <meta name="twitter:description" content="Book ID-verified local professionals for 30+ home services. See the price before you confirm, pay after the job."/>
 <meta name="twitter:image" content="https://hamaraservice.com/images/og-share.png"/>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://hamaraservice.com/#org","name":"HamaraService","alternateName":"Hamara Service","url":"https://hamaraservice.com/","logo":"https://hamaraservice.com/images/rlogo-tight.png","email":"support@hamaraservice.com","contactPoint":[{"@type":"ContactPoint","telephone":"+91-93462-20090","email":"support@hamaraservice.com","contactType":"customer support","areaServed":"IN","availableLanguage":["English","Hindi","Telugu"]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://hamaraservice.com/#org","name":"HamaraService","alternateName":"Hamara Service","url":"https://hamaraservice.com/","logo":"https://hamaraservice.com/images/rlogo-tight.png","email":"info@hamaraservice.com","contactPoint":[{"@type":"ContactPoint","telephone":"+91-93462-20090","email":"info@hamaraservice.com","contactType":"customer support","areaServed":"IN","availableLanguage":["English","Hindi","Telugu"]}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://hamaraservice.com/#website","name":"HamaraService","alternateName":"Hamara Service","url":"https://hamaraservice.com/","inLanguage":"en-IN","publisher":{"@id":"https://hamaraservice.com/#org"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"/>
@@ -81,6 +81,12 @@ nav{display:flex;align-items:center;gap:6px;}
 .nav-pill.ghost:hover{border-color:var(--ink);color:var(--ink);}
 .nav-pill.filled{background:var(--brand);color:white;box-shadow:0 4px 14px rgba(232,101,26,.28);}
 .nav-pill.filled:hover{background:var(--brand2);box-shadow:0 6px 20px rgba(232,101,26,.36);transform:translateY(-1px);}
+.mob-menu{position:absolute;top:58px;right:12px;background:#fff;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:8px;min-width:220px;z-index:1000;display:flex;flex-direction:column;}
+.mob-menu[hidden]{display:none;}
+header.menu-open{z-index:1500;}
+.mob-menu a{display:block;padding:12px 14px;border-radius:10px;color:#1a2b3c;text-decoration:none;font-size:15px;font-weight:500;}
+.mob-menu a:active,.mob-menu a:hover{background:#f0f4f7;}
+.mob-menu a.mm-cta{background:var(--teal);color:#fff;text-align:center;margin-top:6px;font-weight:700;}
 .hamburger{display:none;background:none;border:1.5px solid var(--line);border-radius:8px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
 @media(max-width:768px){nav .nav-link{display:none;}
   #navUserBtn + a{display:none;}
@@ -518,7 +524,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   .logo-tagline{ color:rgba(255,255,255,.55) !important; }
   .logo-mark{ background:rgba(255,255,255,.2) !important; }
   .logo-mark svg{ fill:white !important; }
-  .logo-img{ filter:brightness(0) invert(1); }
+  .logo-img{ filter:none !important; background:#fff;border-radius:9px;padding:4px 8px;height:36px !important;width:auto; }
 
   nav .nav-link{ display:none; }
   #navLoginBtn{ display:none !important; }
@@ -725,7 +731,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   background:radial-gradient(1200px 700px at 50% -10%,#2a8796 0%,#145361 45%,#0b2f38 100%);font-family:'DM Sans',sans-serif;}
 #launchGate.show{display:block;}
 #launchGate .lg-wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px 40px;gap:18px;}
-#launchGate .lg-logo{height:52px;width:auto;filter:brightness(0) invert(1);}
+#launchGate .lg-logo{height:52px;width:auto;background:#fff;border-radius:12px;padding:6px 12px;}
 #launchGate .lg-chip{font-size:12px;letter-spacing:3px;font-weight:800;color:#ffb07a;text-transform:uppercase;}
 #launchGate .lg-title{font-family:'Sora',sans-serif;font-size:clamp(30px,8vw,52px);font-weight:800;line-height:1.1;letter-spacing:-1px;}
 #launchGate .lg-title em{font-style:normal;color:#ff9a52;}
@@ -768,9 +774,9 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 
 /* ═══ MOBILE POLISH ═══ */
 .logo-img{height:54px;}
-.sp-nav-logo img{width:auto;height:30px;filter:brightness(0) invert(1);}
+.sp-nav-logo img{width:auto;height:30px;background:#fff;border-radius:9px;padding:3px 7px;}
 .sp-nav-logo img + .sp-nav-name{display:none;}
-.footer-logo-img{height:44px;width:auto;filter:brightness(0) invert(1);display:block;}
+.footer-logo-img{height:44px;width:auto;display:block;background:#fff;border-radius:10px;padding:6px 10px;}
 @media(max-width:768px){
   /* header stays teal when scrolled (the logo is white) */
   header.scrolled{background:var(--teal) !important;}
@@ -826,6 +832,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 .svc-more{display:block;font-size:12px;font-weight:700;color:var(--teal);margin:-2px 0 8px;opacity:.85}
 .svc-card:hover .svc-more{text-decoration:underline}
 </style>
+<script>
+/* Fallbacks for the install buttons: js/hs-site.js replaces these when it loads. */
+(function(){var P='https://play.google.com/store/apps/details?id=com.hamaraservice.customer';
+function go(w){location.href=(w!=='provider'&&!/iphone|ipad|ipod/i.test(navigator.userAgent||''))?P:'/get-app.html?for='+(w==='provider'?'provider':'customer');}
+window.HS_getApp=window.HS_getApp||go;window.HS_login=window.HS_login||go;})();
+</script>
 </head>
 <body>
 
@@ -946,7 +958,15 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a class="dd-item danger" onclick="logoutUser();">Sign out</a>
       </div>
     </div>
-    <button class="hamburger" id="menuBtn">☰</button>
+    <button class="hamburger" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="mobMenu">☰</button>
+    <div class="mob-menu" id="mobMenu" hidden>
+      <a href="#services">🧰 All services</a>
+      <a href="/cities">📍 Cities</a>
+      <a href="/jobs">💼 Partner jobs</a>
+      <a href="/get-app.html?for=provider" data-hs-getapp="provider" onclick="HS_getApp('provider');return false;">🔧 Become a partner</a>
+      <a href="/legal-pages.html#contact">💬 Help &amp; contact</a>
+      <a class="mm-cta" href="/get-app.html?for=customer" data-hs-getapp="customer" onclick="HS_getApp('customer');return false;">📲 Get the app</a>
+    </div>
   </nav>
 </header>
 
@@ -1193,7 +1213,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a href="legal-pages.html#terms">Terms & Conditions</a>
         <a href="legal-pages.html#refund">Refund Policy</a>
         <a href="tel:+919346220090">📞 +91 93462 20090</a>
-        <a href="mailto:support@hamaraservice.com">✉️ support@hamaraservice.com</a>
+        <a href="mailto:info@hamaraservice.com">✉️ info@hamaraservice.com</a>
       </div>
     </div>
     <!-- HS-SEO-LINKS:start -->
@@ -1253,25 +1273,21 @@ footer .hs-fl a:hover{color:#fff}
   </a>
   <a class="mob-nav-item mob-nav-center" href="#" onclick="mobBookNow();return false;">
     <div class="mob-nav-fab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
     </div>
-    <span>Book</span>
+    <span>Get App</span>
   </a>
-  <a class="mob-nav-item" href="/get-app.html?for=customer" onclick="mobNavActive(this);HS_login('customer');return false;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-    <span>Bookings</span>
-  </a>
-  <a class="mob-nav-item" href="/get-app.html?for=customer" onclick="mobNavActive(this);HS_login('customer');return false;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Account</span>
-  </a>
-  <a class="mob-nav-item" href="/get-app.html?for=provider" onclick="mobNavActive(this);HS_login('provider');return false;">
+  <a class="mob-nav-item" href="/get-app.html?for=provider" onclick="mobNavActive(this);HS_getApp('provider');return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
     <span>Partner</span>
   </a>
+  <a class="mob-nav-item" href="/legal-pages.html#contact">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/></svg>
+    <span>Help</span>
+  </a>
 </nav>
 
-<script src="/js/hs-site.js"></script>
+<script src="/js/hs-site.js?v=20261022"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // Customer accounts, bookings and payments live in the HamaraService apps (web app only when WEB_LOGIN_MODE='web')
@@ -1507,7 +1523,7 @@ function pickFirstResult() {
 }
 
 function mobBookNow() {
-  HS_login('customer');
+  HS_getApp('customer');
 }
 function mobNavActive(el) {
   document.querySelectorAll('.mob-nav-item').forEach(function(i){ i.classList.remove('active'); });
@@ -1813,8 +1829,14 @@ window.addEventListener('scroll',function(){
 (function(){
   var btn=document.getElementById('menuBtn');
   if(!btn)return;
-  btn.addEventListener('click',function(){
-    var s=document.getElementById('services'); if(s) s.scrollIntoView({behavior:'smooth'});
+  var m=document.getElementById('mobMenu');
+  function setOpen(o){ if(!m)return; m.hidden=!o; btn.setAttribute('aria-expanded',o?'true':'false'); btn.textContent=o?'✕':'☰'; var h=btn.closest('header'); if(h) h.classList.toggle('menu-open',o); }
+  btn.addEventListener('click',function(e){ e.stopPropagation(); setOpen(m&&m.hidden); });
+  document.addEventListener('click',function(e){ if(m&&!m.hidden&&!m.contains(e.target)) setOpen(false); });
+  if(m) m.addEventListener('click',function(e){
+    var a=e.target.closest('a'); if(!a)return;
+    setOpen(false);
+    if(a.getAttribute('href')==='#services'){ e.preventDefault(); var s=document.getElementById('services'); if(s) s.scrollIntoView({behavior:'smooth'}); }
   });
 })();
 
@@ -1957,6 +1979,6 @@ document.addEventListener('touchstart', function(){
   if(navigator.vibrate) navigator.vibrate(10);
 },{passive:true});
 </script>
-<script src="/js/hs-track.js" defer></script>
+<script src="/js/hs-track.js?v=20261022" defer></script>
 </body>
 </html>

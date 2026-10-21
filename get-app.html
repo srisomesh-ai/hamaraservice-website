@@ -86,17 +86,12 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
       <li>Pay after the work is done — online or cash where allowed</li>
     </ul>
     <div class="spacer"></div>
-    <a class="play hide" id="cApp" href="#" rel="noopener">
+    <a class="play" id="cApp" href="https://play.google.com/store/apps/details?id=com.hamaraservice.customer" rel="noopener">
       <svg viewBox="0 0 24 26" aria-hidden="true"><path fill="#00d7fe" d="M1 1.2 13.4 13 1 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#ffce00" d="m17.6 17.2-4.2-4.2 4.2-4.2 4.9 2.8c1.4.8 1.4 2.1 0 2.9z"/><path fill="#ff3a44" d="M17.6 17.2 13.4 13 1 24.8c.5.5 1.2.5 2.1 0z"/><path fill="#00f076" d="M17.6 8.8 3.1 1.2C2.2.7 1.5.7 1 1.2L13.4 13z"/></svg>
       <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
     </a>
     <div class="qr hide" id="cQr"><div class="qrbox" id="cQrBox"></div><span>Scan with your Android phone to install</span></div>
     <div class="ios hide" id="cIos">📱 The app is available for <b>Android</b> phones. On iPhone? WhatsApp us and we'll book for you.</div>
-    <div class="soon" id="cSoon">
-      <b>Coming soon on Google Play</b>
-      Our customer app is in Play Store review. WhatsApp us for early access.
-      <a class="wa" href="https://wa.me/919346220090?text=Hi%20HamaraService%2C%20I%20would%20like%20early%20access%20to%20the%20customer%20app." target="_blank" rel="noopener">💬 WhatsApp for early access</a>
-    </div>
     <a class="web hide" id="cWeb" href="/app/customer.html">Continue on the website →</a>
   </section>
 
@@ -130,11 +125,11 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
 
 <footer>
   <a href="/">Home</a>·<a href="/cities">Cities</a>·<a href="/jobs">Jobs</a>·<a href="/legal-pages.html#privacy">Privacy</a>·<a href="/legal-pages.html#terms">Terms</a><br/>
-  📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:support@hamaraservice.com">support@hamaraservice.com</a>
+  📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:info@hamaraservice.com">info@hamaraservice.com</a>
 </footer>
 
-<script src="/js/hs-site.js"></script>
-<script src="/js/qrcode.min.js"></script>
+<script src="/js/hs-site.js?v=20261022"></script>
+<script src="/js/qrcode.min.js?v=20261022"></script>
 <script>
 (function(){
   var who=(location.search.match(/[?&]for=(customer|provider)/)||[])[1];
@@ -145,16 +140,16 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
     var dev=HS_device();
     function setup(pre,url){
       if(!url) return;
-      var a=document.getElementById(pre+'App');a.href=url;a.classList.remove('hide');document.getElementById(pre+'Soon').classList.add('hide');
+      var a=document.getElementById(pre+'App');a.href=url;a.classList.remove('hide');var so=document.getElementById(pre+'Soon');if(so)so.classList.add('hide');
       if(dev==='desktop'&&window.QRCode){document.getElementById(pre+'Qr').classList.remove('hide');new QRCode(document.getElementById(pre+'QrBox'),{text:url,width:208,height:208,correctLevel:QRCode.CorrectLevel.M});}
       if(dev==='ios') document.getElementById(pre+'Ios').classList.remove('hide');
     }
-    setup('c',cfg.customer_app_url); setup('p',cfg.provider_app_url);
+    setup('c',HS_playUrl('customer',cfg)); setup('p',HS_playUrl('provider',cfg));
     if(cfg.support_whatsapp){[].forEach.call(document.querySelectorAll('a.wa'),function(w){w.href=w.href.replace(/wa\.me\/\d+/,'wa.me/'+cfg.support_whatsapp);});}
     if(!HS_appMode(cfg)){document.getElementById('cWeb').classList.remove('hide');document.getElementById('pWeb').classList.remove('hide');}
   });
 })();
 </script>
-<script src="/js/hs-track.js" defer></script>
+<script src="/js/hs-track.js?v=20261022" defer></script>
 </body>
 </html>

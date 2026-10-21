@@ -85,8 +85,8 @@ foreach ($S as $sk => $s) {
 <div class="row" style="margin-top:10px"><a href="/">Home</a><a href="/get-app.html">Get the app</a><a href="/cities">Cities</a><a href="/jobs">Partner jobs</a><a href="/legal-pages.html#contact">Contact</a> · 📞 <a href="tel:+919346220090">+91 93462 20090</a></div>
 </div></section>
 <script>window.__hsSeoLinks=document.getElementById("hsSeoLinks").outerHTML;</script>
-<script src="/js/hs-site.js"></script>
-<script src="/js/hs-svc-app.js" defer></script>
+<script src="/js/hs-site.js?v=20261022"></script>
+<script src="/js/hs-svc-app.js?v=20261022" defer></script>
 ';
 
     // <html lang>, <title>

@@ -8,8 +8,8 @@
 require_once __DIR__ . '/config.php';
 
 if (!defined('FROM_NAME'))   define('FROM_NAME',   'HamaraService');
-if (!defined('FROM_EMAIL'))  define('FROM_EMAIL',  SMTP_USER ?: 'support@hamaraservice.in');
-if (!defined('ADMIN_EMAIL')) define('ADMIN_EMAIL', SMTP_USER ?: 'support@hamaraservice.in');
+if (!defined('FROM_EMAIL'))  define('FROM_EMAIL',  SMTP_USER ?: 'info@hamaraservice.com');
+if (!defined('ADMIN_EMAIL')) define('ADMIN_EMAIL', SMTP_USER ?: 'info@hamaraservice.com');
 if (!defined('SITE_URL'))    define('SITE_URL',    'https://hamaraservice.com');
 
 // ════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@ function emailBase($title, $content) {
       <tr><td style="background:#f7f8fc;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;">
         <p style="font-size:12px;color:#9ca3af;margin:0;">
           © ' . date('Y') . ' HamaraService · <a href="' . SITE_URL . '" style="color:#E8251A;text-decoration:none;">hamaraservice.in</a><br/>
-          support@hamaraservice.in · 8985849710
+          info@hamaraservice.com · +91 93462 20090
         </p>
       </td></tr>
     </table>

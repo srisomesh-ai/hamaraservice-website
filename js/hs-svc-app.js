@@ -8,6 +8,13 @@
   var appMode = true;   // default until site config says 'web'
   var SEL = '[onclick*="ookNow"],[onclick*="confirmBook"]';
   var LABEL = 'Book in the app →';
+  var PLAY = 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer';
+
+  // Works even if an old cached hs-site.js (without HS_getApp) is served.
+  function getApp() {
+    if (typeof window.HS_getApp === 'function') return window.HS_getApp('customer');
+    location.href = /iphone|ipad|ipod/i.test(navigator.userAgent || '') ? '/get-app.html?for=customer' : PLAY;
+  }
 
   function fix(btn) {
     if (!appMode) return;
@@ -25,7 +32,7 @@
     var b = e.target && e.target.closest && e.target.closest(SEL);
     if (!b) return;
     e.preventDefault(); e.stopPropagation();
-    HS_getApp('customer');
+    getApp();
   }, true);
 
   var pending = false;
@@ -44,6 +51,7 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 
+  if (typeof window.HS_site !== 'function' || typeof window.HS_appMode !== 'function') return;
   HS_site(function (c) {
     if (HS_appMode(c)) return;
     appMode = false;

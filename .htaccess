@@ -1,8 +1,13 @@
 # ── HamaraService security rules (Apache / Hostinger) ──
 Options -Indexes
 
-# Pass the Authorization header through to PHP (needed for Bearer tokens)
 RewriteEngine On
+
+# hamaraservice.in (and www.) → https://hamaraservice.com, same page
+RewriteCond %{HTTP_HOST} ^(www\.)?hamaraservice\.in$ [NC]
+RewriteRule ^(.*)$ https://hamaraservice.com/$1 [R=301,L]
+
+# Pass the Authorization header through to PHP (needed for Bearer tokens)
 RewriteCond %{HTTP:Authorization} .
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
@@ -38,3 +43,13 @@ RewriteRule ^([a-z0-9-]+)-jobs-in-([a-z0-9-]+)$ seo/jobs-city.php?t=$1&c=$2 [L,Q
 RewriteRule ^cities$ seo/cities.php [L,QSA]
 RewriteRule ^services-in-([a-z0-9-]+)$ seo/city.php?c=$1 [L,QSA]
 RewriteRule ^([a-z0-9-]+)-in-([a-z0-9-]+)$ seo/service-city.php?s=$1&c=$2 [L,QSA]
+
+# ── Caching: pages and scripts always re-checked, so updates show at once ──
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|php)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+</IfModule>
