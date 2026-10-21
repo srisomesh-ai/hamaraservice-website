@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-20-4';
+const HS_SCHEMA_VERSION = '2026-10-21-2';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -33,6 +33,8 @@ function ensureSchema(PDO $db) {
         "ALTER TABLE bookings ADD COLUMN quote_at DATETIME NULL",
         "ALTER TABLE bookings MODIFY COLUMN slot_time VARCHAR(80) NULL",
         "ALTER TABLE bookings ADD INDEX idx_rzp_order (razorpay_order_id)",
+        // "No provider found" admin alert sent (api/alerts_lib.php)
+        "ALTER TABLE bookings ADD COLUMN unassigned_alerted_at DATETIME NULL",
         // providers
         "ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL",
         "ALTER TABLE providers ADD COLUMN areas TEXT NULL",
@@ -62,6 +64,23 @@ function ensureSchema(PDO $db) {
         UNIQUE KEY uniq_order (razorpay_order_id),
         INDEX idx_provider (provider_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    // email OTP codes for registration (api/otp.php) — only a hash of the code is stored
+    $stmts[] = "CREATE TABLE IF NOT EXISTS email_otps (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(190) NOT NULL,
+        purpose ENUM('customer_register','provider_register') NOT NULL,
+        code_hash VARCHAR(255) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        attempts INT NOT NULL DEFAULT 0,
+        ip VARCHAR(45) NOT NULL DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        used_at DATETIME NULL,
+        INDEX idx_email_purpose (email, purpose, created_at),
+        INDEX idx_ip (ip, created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    // one-off data fix: an e-mail address autofilled into the City field
+    $stmts[] = "UPDATE customers SET city = '' WHERE city LIKE '%@%'";
+    $stmts[] = "UPDATE providers SET city = '' WHERE city LIKE '%@%'";
     foreach ($stmts as $s) {
         try { $db->exec($s); } catch (Throwable $e) { /* already applied */ }
     }

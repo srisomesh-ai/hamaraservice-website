@@ -117,6 +117,24 @@ tr:hover td{background:#fafafa;}
 .abtn.view:hover{background:var(--blue);color:white;}
 .abtn.edit{background:var(--purple-light);color:var(--purple);}
 .abtn.edit:hover{background:var(--purple);color:white;}
+/* "Waiting for provider" alert */
+.wait-card{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:18px;box-shadow:var(--shadow);cursor:pointer;}
+.wait-card .wc-ic{width:44px;height:44px;border-radius:12px;background:#ecfdf3;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.wait-card .wc-num{font-family:"Sora",sans-serif;font-size:24px;font-weight:800;color:#16a34a;}
+.wait-card .wc-title{font-weight:800;font-size:15px;}
+.wait-card .wc-sub{font-size:12px;color:var(--muted);}
+.wait-card.alert{background:#fef2f2;border-color:#dc2626;animation:waitPulse 2s ease-in-out infinite;}
+.wait-card.alert .wc-ic{background:#dc2626;color:#fff;}
+.wait-card.alert .wc-num,.wait-card.alert .wc-title{color:#b91c1c;}
+@keyframes waitPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.35)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+.nav-badge.red{background:#dc2626;}
+.abtn.call{background:#e6f4f6;color:var(--teal);text-decoration:none;display:inline-block;}
+.abtn.call:hover{background:var(--teal);color:#fff;}
+.abtn.wa{background:#e8f8ee;color:#128C7E;text-decoration:none;display:inline-block;}
+.abtn.wa:hover{background:#25D366;color:#fff;}
+.wait-min{font-weight:900;color:#b91c1c;white-space:nowrap;}
+.mailed{color:#16a34a;font-weight:800;font-size:12px;white-space:nowrap;}
+.mail-pending{color:var(--muted);font-size:12px;white-space:nowrap;}
 
 .card{background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:2px solid var(--border);margin-bottom:18px;}
 .card-title{font-size:15px;font-weight:800;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);}
@@ -291,6 +309,7 @@ table { min-width: 600px; }
   <nav class="sb-nav">
     <div class="nav-sec">Overview</div>
     <div class="nav-item active" data-page="dashboard"><span class="nav-icon">&#128202;</span>Dashboard</div>
+    <div class="nav-item" data-page="unassigned"><span class="nav-icon">&#128680;</span>Waiting for provider<span class="nav-badge red" id="unassignedBadge" style="display:none">0</span></div>
     <div class="nav-sec">Providers</div>
     <div class="nav-item" data-page="approvals"><span class="nav-icon">&#9989;</span>Approvals<span class="nav-badge" id="approvalBadge">0</span></div>
     <div class="nav-item" data-page="providers"><span class="nav-icon">&#128119;</span>All Providers</div>
@@ -321,6 +340,14 @@ table { min-width: 600px; }
   <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
     <div id="dashErr"></div>
+    <div class="wait-card" id="waitCard" data-goto="unassigned" role="button" title="Bookings no provider has accepted yet">
+      <div class="wc-ic">&#128680;</div>
+      <div style="flex:1;min-width:0">
+        <div class="wc-title" id="waitTitle">Waiting for provider (0)</div>
+        <div class="wc-sub" id="waitSub">No booking is waiting for a provider.</div>
+      </div>
+      <div class="wc-num" id="waitNum">0</div>
+    </div>
     <div class="stats-grid">
       <div class="stat-card red"><div class="stat-icon">&#128119;</div><div class="stat-num" id="ds-providers">0</div><div class="stat-label">Total Providers</div><div class="stat-sub" id="ds-active-prov">0 approved</div></div>
       <div class="stat-card yellow"><div class="stat-icon">&#8987;</div><div class="stat-num" id="ds-pending">0</div><div class="stat-label">Pending Approvals</div><div class="stat-sub down">Needs review</div></div>
@@ -427,6 +454,13 @@ table { min-width: 600px; }
     </div>
     <div id="ordersErr"></div>
     <div class="table-wrap"><table><thead><tr><th>Booking</th><th>Customer</th><th>Provider</th><th>Service</th><th>City</th><th>Created</th><th>Work started</th><th>Work closed</th><th>Amount</th><th>Commission</th><th>Status</th><th>Payment</th><th>Action</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+  </div>
+
+  <!-- WAITING FOR PROVIDER -->
+  <div class="page" id="page-unassigned">
+    <div class="info-box" id="unassignedInfo" style="background:#fef2f2;border:1.5px solid #fecaca;color:#7f1d1d">Bookings still searching for a provider after the alert threshold (last 24 h). The admin is e-mailed once per booking. Call or WhatsApp the customer, or ask a nearby provider to accept.</div>
+    <div id="unassignedErr"></div>
+    <div class="table-wrap"><table><thead><tr><th>Booking</th><th>Service</th><th>City / Address</th><th>Slot</th><th>Customer</th><th>Waiting</th><th>Contact</th><th>Alert</th></tr></thead><tbody id="unassignedBody"></tbody></table></div>
   </div>
 
   <!-- COMMISSION -->
@@ -598,7 +632,7 @@ function unlock(){
 }
 
 // ── navigation ────────────────────────────────────────
-var TITLES = { dashboard:'&#128202; Dashboard', approvals:'&#9989; Approvals', providers:'&#128119; All Providers',
+var TITLES = { dashboard:'&#128202; Dashboard', unassigned:'&#128680; Waiting for provider', approvals:'&#9989; Approvals', providers:'&#128119; All Providers',
   payments:'&#128184; Payouts &amp; Finance', orders:'&#128203; All Bookings', commission:'&#128185; Commission',
   services:'&#128295; Service Catalog', customers:'&#128100; Customers', notify:'&#128276; Push Notifications',
   reset:'&#129529; Reset Test Data' };
@@ -606,7 +640,7 @@ function showPage(name){
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-page') === name); });
   document.querySelectorAll('.page').forEach(function(p){ p.classList.toggle('active', p.id === 'page-' + name); });
   $('pageTitle').innerHTML = TITLES[name] || '';
-  var loaders = { commission: loadCommission, services: loadCatalog, customers: loadCustomers, orders: loadOrders, payments: loadPayments, reset: loadResetCounts };
+  var loaders = { unassigned: loadUnassigned, commission: loadCommission, services: loadCatalog, customers: loadCustomers, orders: loadOrders, payments: loadPayments, reset: loadResetCounts };
   if (loaders[name]) safe(loaders[name], name)();
 }
 document.querySelectorAll('.nav-item').forEach(function(n){ n.addEventListener('click', function(){ showPage(n.getAttribute('data-page')); }); });
@@ -631,7 +665,7 @@ var aFilter = 'pending', pFilter = 'all', payFilter = 'pending';
 
 function refreshAll(){
   [ [loadProviders,'providers'], [loadBookingsForDash,'bookings'], [loadFinance,'finance'],
-    [loadPayouts,'payouts'], [loadCustomers,'customers'] ].forEach(function(x){ safe(x[0], x[1])(); });
+    [loadPayouts,'payouts'], [loadCustomers,'customers'], [loadUnassigned,'unassigned'] ].forEach(function(x){ safe(x[0], x[1])(); });
   var active = document.querySelector('.page.active');
   if (active && active.id === 'page-commission') safe(loadCommission,'commission')();
   if (active && active.id === 'page-services') safe(loadCatalog,'catalog')();
@@ -673,7 +707,7 @@ function autoRefresh(){
   if (document.querySelector('.modal.show')) return;
   var active = document.querySelector('.page.active');
   var editPage = active && /page-(commission|services|notify)/.test(active.id);
-  [ [loadProviders,'providers'], [loadBookingsForDash,'bookings'], [loadFinance,'finance'], [loadPayouts,'payouts'] ]
+  [ [loadProviders,'providers'], [loadBookingsForDash,'bookings'], [loadFinance,'finance'], [loadPayouts,'payouts'], [loadUnassigned,'unassigned'] ]
     .forEach(function(x){ safe(x[0], x[1])(); });
   if (!editPage && active && active.id === 'page-orders') safe(loadOrders,'orders')();
   if (!editPage && active && active.id === 'page-customers') safe(loadCustomers,'customers')();
@@ -690,6 +724,60 @@ function notifyNew(){
     toast(pend > _seen.pend ? '\uD83D\uDD14 New provider registration waiting for approval' : '\uD83D\uDD14 New payout request');
   }
   _seen = { pend: pend, pay: pay };
+}
+
+// ── waiting for a provider (bookings.php?action=admin_unassigned) ──
+var UNASSIGNED = [], UNASSIGNED_MIN = 5, _seenUnassigned = null;
+function waMsg(b){
+  var n = b.customer_name ? ' ' + b.customer_name : '';
+  return 'Hi' + n + ', this is HamaraService. We are still finding a provider for your ' + (b.svc_name || 'service')
+    + ' booking (' + b.id + '). We are on it and will update you shortly. Sorry for the wait!';
+}
+function loadUnassigned(){
+  return api('bookings.php?action=admin_unassigned').then(function(d){
+    d = d || {};
+    UNASSIGNED = Array.isArray(d.items) ? d.items : [];
+    UNASSIGNED_MIN = d.threshold_min || UNASSIGNED_MIN;
+    showErr('unassignedErr','');
+    renderUnassigned();
+    var ids = UNASSIGNED.map(function(b){ return b.id; });
+    if (_seenUnassigned) {
+      var fresh = ids.filter(function(id){ return _seenUnassigned.indexOf(id) < 0; });
+      if (fresh.length) toast('\uD83D\uDEA8 No provider yet for ' + fresh.length + ' booking' + (fresh.length > 1 ? 's' : '') + ' — call the customer');
+    }
+    _seenUnassigned = ids;
+  }).catch(function(e){ if (!(e instanceof AuthError)) showErr('unassignedErr', 'Could not load waiting bookings: ' + e.message); });
+}
+function renderUnassigned(){
+  var n = UNASSIGNED.length;
+  var card = $('waitCard');
+  card.classList.toggle('alert', n > 0);
+  $('waitTitle').textContent = 'Waiting for provider (' + n + ')';
+  $('waitNum').textContent = n;
+  if (n) {
+    var oldest = UNASSIGNED.reduce(function(m, b){ return Math.max(m, b.minutes_waiting || 0); }, 0);
+    $('waitSub').textContent = n + ' booking' + (n > 1 ? 's have' : ' has') + ' no provider after ' + UNASSIGNED_MIN + '+ min · longest ' + oldest + ' min — tap to call customers';
+  } else {
+    $('waitSub').textContent = 'No booking is waiting more than ' + UNASSIGNED_MIN + ' min for a provider.';
+  }
+  var bd = $('unassignedBadge'); bd.textContent = n; bd.style.display = n ? '' : 'none';
+  $('unassignedBody').innerHTML = n ? UNASSIGNED.map(function(b){
+    var ph = String(b.customer_phone || '');
+    var contact = ph
+      ? '<a class="abtn call" href="tel:+91' + esc(ph) + '">&#128222; Call</a>'
+        + '<a class="abtn wa" target="_blank" rel="noopener" href="https://wa.me/91' + esc(ph) + '?text=' + encodeURIComponent(waMsg(b)) + '">&#128172; WhatsApp</a>'
+      : '<span class="muted">no phone</span>';
+    var lm = String(b.landmark || '').trim();
+    var addr = [b.address, lm ? (/^near\b/i.test(lm) ? lm : 'near ' + lm) : ''].filter(Boolean).join(', ');
+    return '<tr><td style="white-space:nowrap"><b>' + esc(b.id) + '</b><div class="muted">' + dt(b.created_at) + '</div></td>'
+      + '<td>' + esc(b.svc_icon || '') + ' ' + esc(b.svc_name) + '</td>'
+      + '<td><b>' + esc(b.city || '—') + '</b><div class="muted" style="max-width:260px">' + esc(addr) + '</div></td>'
+      + '<td>' + esc([b.slot_date, b.slot_time].filter(Boolean).join(' ') || '—') + '</td>'
+      + '<td>' + esc(b.customer_name || '—') + '<div class="muted">' + (ph ? '+91 ' + esc(ph) : '') + '</div></td>'
+      + '<td><span class="wait-min">' + esc(b.minutes_waiting) + ' min</span></td>'
+      + '<td style="white-space:nowrap">' + contact + '</td>'
+      + '<td>' + (b.alerted ? '<span class="mailed" title="' + esc(b.alerted_at || '') + '">Alert emailed &#10003;</span>' : '<span class="mail-pending" title="E-mailed on the next check (within a minute)">Not emailed yet</span>') + '</td></tr>';
+  }).join('') : emptyRow(8, 'No booking is waiting for a provider. \uD83C\uDF89');
 }
 
 // ── providers ─────────────────────────────────────────

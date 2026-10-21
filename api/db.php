@@ -56,6 +56,22 @@ function err($message, $code = 400) {
     echo json_encode(['success'=>false, 'error'=>$message]);
     exit;
 }
+// City entered by a user → clean value, or null when it must be ignored
+// (an e-mail address autofilled into the field, or other junk). Max 60 chars.
+function hsCleanCity($v) {
+    if (!is_string($v) && !is_numeric($v)) return null;
+    $v = trim(preg_replace('/\s+/u', ' ', strip_tags((string)$v)));
+    if ($v === '') return '';
+    if (strpos($v, '@') !== false || filter_var($v, FILTER_VALIDATE_EMAIL)
+        || preg_match('/^[^\s]+\.(com|in|net|org|co)$/i', $v)) return null;
+    return function_exists('mb_substr') ? mb_substr($v, 0, 60) : substr($v, 0, 60);
+}
+// Customer gender → 'male' | 'female' | 'other' | '' (anything else ignored)
+function hsCleanGender($v) {
+    $g = strtolower(trim((string)$v));
+    return in_array($g, ['male','female','other'], true) ? $g : '';
+}
+
 function getBody() {
     return json_decode(file_get_contents('php://input'), true) ?? [];
 }
@@ -113,13 +129,14 @@ function verifyFirebaseToken($token) {
         'email' => $payload['email'] ?? '',
         'name'  => $payload['name']  ?? '',
         'phone' => $payload['phone_number'] ?? '',
+        'email_verified' => !empty($payload['email_verified']),
     ];
 }
 
 // ── HS256 JWT (provider / web-customer / admin) ───────────
 function makeJWT($payload, $days = 30) {
     $payload['iat'] = time();
-    $payload['exp'] = time() + ($days * 86400);
+    $payload['exp'] = time() + (int)round($days * 86400);
     $h = b64url_enc(json_encode(['alg'=>'HS256','typ'=>'JWT']));
     $p = b64url_enc(json_encode($payload));
     $s = b64url_enc(hash_hmac('sha256', "$h.$p", JWT_SECRET, true));
@@ -158,6 +175,8 @@ function currentUser() {
 
     $jwt = verifyJWT($token);
     if ($jwt) {
+        // email-verification tokens (otp.php) are never login tokens
+        if (($jwt['typ'] ?? '') === 'email_otp') return null;
         $type = $jwt['type'] ?? '';
         if ($type === 'customer' && !empty($jwt['uid'])) {
             $cached = ['role'=>'customer','id'=>$jwt['uid'],'uid'=>$jwt['uid'],'email'=>$jwt['email'] ?? '','name'=>$jwt['name'] ?? ''];

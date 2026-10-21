@@ -29,6 +29,9 @@ return [
     // Public site settings
     'SUPPORT_WHATSAPP'    => '919346220090',  // e.g. '919876543210' (country code + number)
     'SUPPORT_EMAIL'       => 'support@hamaraservice.com',
+    'NO_PROVIDER_ALERT_MIN' => 5,           // e-mail the admin when a booking has no provider after N minutes
+    'ADMIN_ALERT_EMAIL'   => '',            // where that alert goes ('' = SUPPORT_EMAIL)
+    'CRON_KEY'            => '',            // long random string for api/cron.php?action=unassigned&key=… ('' = disabled)
     'CUSTOMER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.customer (once live)
     'PROVIDER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.provider (once live)
     'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)
@@ -37,5 +40,9 @@ return [
     'SMTP_HOST'           => 'smtp.hostinger.com',
     'SMTP_PORT'           => 587,
     'SMTP_USER'           => '',
-    'SMTP_PASS'           => '',
+    'SMTP_PASS'           => '',            // needed for the registration OTP emails (api/otp.php)
+
+    // Email OTP on registration. Turn on (true) only AFTER the updated customer
+    // and partner apps are live on Play — old app versions can't send the token.
+    'REQUIRE_EMAIL_OTP'   => false,
 ];

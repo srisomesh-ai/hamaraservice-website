@@ -67,13 +67,14 @@ release (provider, any state before active) → searching
 | `review` | POST | customer | `booking_id, rating (1-5), review` | status `completed`, once |
 | `request_review` | POST | provider | `booking_id` | only after paid |
 | `admin_list` | GET | admin | `status, city, limit` | |
+| `admin_unassigned` | GET | admin | – | `{threshold_min, count, items:[{id, svc_name, svc_icon, city, address, landmark, slot_date, slot_time, customer_name, customer_phone (10-digit), created_at, minutes_waiting, alerted (bool), alerted_at}]}` — `searching` bookings with no provider older than `NO_PROVIDER_ALERT_MIN` (last 24 h), oldest first. |
 | `admin_finance` | GET | admin | – | GMV, commission, online collected, cash commission due, provider balances/dues |
 | `mark_paid` | – | – | – | **Removed** (410) |
 
 ## providers.php
 | Action | Method | Who | Notes |
 |---|---|---|---|
-| `register` | POST | public | `name, phone (10-digit), email, password (≥8), whatsapp, gender, experience, bio, id_type, id_number, address, city, lat, lng, radius_km, areas[], services[{id,name,icon,cat}]` → `{id, status:'pending'}` — **use the returned `id`** |
+| `register` | POST | public | `otp_token` (see **otp.php**; required when `REQUIRE_EMAIL_OTP`), `name, phone (10-digit), email, password (≥8), whatsapp, gender, experience, bio, id_type, id_number, address, city, lat, lng, radius_km, areas[], services[{id,name,icon,cat}]` → `{id, status:'pending'}` — **use the returned `id`** |
 | `check_email` | GET | public | `email` → `{exists}` |
 | `login` | POST | public | `email, password` → `{token, provider, status}`. Pending providers DO get a token (to see the pending screen); suspended/rejected get an error message — show it. |
 | `get` | GET | provider (self, `id` optional) / admin → full profile incl. `services` rows `{svc_id, svc_name, svc_icon, min_price, max_price, enabled}`; anyone else → public profile only |
@@ -97,7 +98,9 @@ release (provider, any state before active) → searching
 Wallet: online-paid job → `+provider_earns`; cash-paid job → `−commission_amt`; withdrawal → `−amount` (returned on reject). Provider cannot accept jobs when wallet < −₹1000 (configurable).
 
 ## customers.php
-`register` (POST, Firebase token; upsert profile: `name, phone, email, gender, address, city, lat, lng, fcm_token, auth_method`) — call after every login.
+Profile rules (`register`, `update`): **gender is set once** — when the stored gender is non-empty a new value is silently ignored (other fields still save; only `male|female|other` accepted). **City** is trimmed, max 60 chars, and ignored (old value kept) when it contains `@` / looks like an e-mail address (autofill guard; a schema migration also cleared existing e-mail-looking cities). Responses never include `password_hash`. `providers.php` `register`/`update` apply the same city rule.
+
+`register` (POST, Firebase token; upsert profile: `name, phone, email, gender, address, city, lat, lng, fcm_token, auth_method, otp_token`) — call after every login. Creating a **new** profile needs `otp_token` (purpose `customer_register`, same e-mail as the Firebase account) when `REQUIRE_EMAIL_OTP` is on; updating an existing profile never does. `web_register` takes `otp_token` too.
 `web_register` / `web_login` (website): create / sign in to the **same Firebase email+password account** the mobile app uses (via Firebase Auth REST with the public web API key), so one customer id = same bookings on web and app. Older web-only accounts (`HS-CUST-…`) are moved onto a Firebase account (bookings included) the next time they log in with their password. `update`, `fcm`, `get`, `bookings`, `delete` (anonymises), `web_register`, `web_login`, `change_password`, admin `list`.
 
 ## services.php
@@ -119,6 +122,36 @@ Public: `all`, `categories`, `get&id=`, `prices&id=`, `price_ranges`, `commissio
 - **Wallet top-up (provider):** `payouts.php?action=topup_order {amount}` → `{order_id, amount (paise), currency, key_id}` for Razorpay Checkout; then `payouts.php?action=topup_confirm {razorpay_order_id, razorpay_payment_id, razorpay_signature}`. The webhook also credits top-ups. Each top-up is credited once.
 - **Provider base location:** `providers.php?action=update {base_lat, base_lng, radius_km}`. Matching uses the pinned base if set, else the live `lat/lng`. `radius_km` is clamped to 1–50. `register` also accepts `base_lat/base_lng`.
 - **Login errors:** `providers.php?action=login` → **404 `NOT_REGISTERED: …`** for an unknown email, **400 `Incorrect password…`** for a wrong password. `customers.php?action=web_login` returns `NOT_REGISTERED: …` (404) when it can tell.
-- **Site settings (public):** `site.php?action=config` → `{support_whatsapp, support_email, customer_app_url, provider_app_url, web_login_mode}` (from `hs-secrets.php`).
+- **Site settings (public):** `site.php?action=config` → `{support_whatsapp, support_email, customer_app_url, provider_app_url, web_login_mode, email_otp_required}` (from `hs-secrets.php`).
 - **Admin:** `admin.php?action=data_counts`, `admin.php?action=wipe_test_data {confirm:'DELETE TEST DATA', bookings, customers, providers}`. `bookings.php?action=admin_finance` adds `payments_mode` (`test` / `live`).
 - `slot_time` up to 80 chars, e.g. `"Morning (8 AM – 12 PM) · 9 AM"`, with `slot_date` = the chosen day.
+
+## otp.php — email verification code on registration (Oct 2026)
+Both apps and the web app verify the e-mail with a 6-digit code **before** creating the account. Google sign-in was removed from the customer app.
+
+| Action | Method | Body | Result |
+|---|---|---|---|
+| `send` | POST | `{email, purpose}` — `purpose`: `customer_register` \| `provider_register` | `{sent:true, email, expires_in:600, resend_in:60}` — the code is e-mailed, **never returned** |
+| `verify` | POST | `{email, purpose, code}` | `{otp_token, email, purpose, expires_in:1800}` |
+
+Rules
+- `send` rejects an e-mail that is already registered: customer → `Email already registered. Please login.`; provider → `Email already registered` (400).
+- Code: 6 digits (`random_int`), stored only as a keyed hash, valid **10 min**, single use; a new `send` replaces the previous code.
+- Rate limits (429, body has `retry_after` seconds + `Retry-After` header, message says how long to wait): 1 send per **60 s** per e-mail + purpose, **5** sends per e-mail per hour, **20** sends per IP per hour.
+- `verify`: max **5** attempts per code (`Incorrect code. N attempts left.` 400; then 429 `Too many wrong attempts. Please request a new code.`). Expired → 400 `Code expired. Please request a new code.`
+- Mail not configured / sending failed → **503** `Could not send email, please try again` (details only in the server log).
+- `otp_token` = HS256 JWT `{typ:'email_otp', email, purpose, exp: now+30 min}`. It is **not** a login token.
+
+Enforcement (`customers.php` `register` when it creates a new profile, `web_register`; `providers.php` `register`)
+- `otp_token` sent → always checked (signature, expiry, `purpose`, e-mail case-insensitive = registering e-mail); otherwise 400 `Email verification expired. Please verify your email again.`
+- No `otp_token` → rejected (400 `Please verify your email with the code we send you…`) **only when** `REQUIRE_EMAIL_OTP` is true (`hs-secrets.php`, default false; public as `site.php` `email_otp_required`). A Firebase account whose e-mail Firebase already marks verified may create its profile without a token.
+- Turn `REQUIRE_EMAIL_OTP` on only after the updated apps are live on Google Play (older versions can't send the token).
+
+
+## "No provider found" admin alert (Oct 2026)
+- A booking still `searching` with no provider **`NO_PROVIDER_ALERT_MIN`** minutes (default 5) after `created_at` is e-mailed **once** to **`ADMIN_ALERT_EMAIL`** (default `SUPPORT_EMAIL`): service, city, booking id, customer name + phone (tel: + WhatsApp links), address, slot, minutes waiting, link to the admin panel. Bookings older than 24 h, cancelled or accepted are skipped.
+- Column `bookings.unassigned_alerted_at` (DATETIME NULL) is claimed atomically (`UPDATE … WHERE unassigned_alerted_at IS NULL`, mail only when 1 row changed) → no duplicates across concurrent requests. Hidden from customer/provider responses.
+- The check (`api/alerts_lib.php` `checkUnassignedBookings()`) runs at most once per 60 s (temp-file timestamp) piggy-backed on `bookings.php` `get`, `active`, `open`, `admin_list`, `admin_unassigned`. Mail errors are logged (`error_log`), never returned.
+- Optional cron safety net: `GET /api/cron.php?action=unassigned&key=<CRON_KEY>` → `{alerts_sent:N}` (403 when `CRON_KEY` is empty or wrong). Hostinger → Advanced → Cron Jobs, every 5 minutes:
+  `curl -fsS "https://hamaraservice.com/api/cron.php?action=unassigned&key=YOUR_CRON_KEY" >/dev/null`
+- Admin panel: red **"Waiting for provider (N)"** card on the Dashboard + nav badge, and a *Waiting for provider* page (Call / WhatsApp buttons, minutes waiting, "Alert emailed ✓"), refreshed every 15 s; new arrivals show a toast.

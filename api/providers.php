@@ -2,7 +2,8 @@
 // ═══════════════════════════════════════════════════════
 // HamaraService — Provider API
 // Endpoints:
-//   POST ?action=register   — new provider registration
+//   POST ?action=register   — new provider registration (otp_token from
+//                             otp.php required when REQUIRE_EMAIL_OTP)
 //   POST ?action=login      — provider login → JWT
 //   GET  ?action=get&id=X   — get provider profile
 //   POST ?action=update     — update profile fields
@@ -16,6 +17,7 @@
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
+require_once __DIR__ . '/otp_lib.php';
 setCorsHeaders();
 
 $action = $_GET['action'] ?? '';
@@ -42,6 +44,8 @@ switch ($action) {
     $check = $db->prepare("SELECT id FROM providers WHERE email = ?");
     $check->execute([strtolower($b['email'])]);
     if ($check->fetch()) err('Email already registered');
+    // Email OTP (otp.php?action=verify, purpose provider_register)
+    otpCheckRegistration($b, $b['email'], 'provider_register');
 
     // Generate provider ID: HS-PRO-NAME1234
     $namePart  = strtoupper(preg_replace('/[^a-zA-Z]/', '', $b['name']));
@@ -61,7 +65,7 @@ switch ($action) {
 
     // Extract city from address
     $address = $b['address'] ?? '';
-    $city    = $b['city'] ?? '';
+    $city    = hsCleanCity($b['city'] ?? '') ?? '';   // never an e-mail address
     // Extract city from address if not provided
     if (empty($city) && !empty($address)) {
       if (strpos($address, ',') !== false) {
@@ -70,6 +74,7 @@ switch ($action) {
       } else {
         $city = $address;
       }
+      $city = hsCleanCity($city) ?? '';
     }
 
     // Insert provider
@@ -131,7 +136,7 @@ switch ($action) {
     $provName  = $b['name']  ?? '';
     $provEmail = $b['email'] ?? '';
     $provPhone = $b['phone'] ?? '';
-    $provCity  = $b['city']  ?? '';
+    $provCity  = $city;
     // List exactly the services saved for THIS provider (not the request
     // payload or the whole catalog).
     $sv = $db->prepare("SELECT COALESCE(NULLIF(ps.svc_name,''), s.name, ps.svc_id) AS n
@@ -319,6 +324,10 @@ HamaraService Team";
     $allowed = ['name','phone','whatsapp','gender','experience','bio',
                 'address','city','lat','lng','radius_km','available','upi_id','areas','photo',
                 'base_lat','base_lng'];
+    if (isset($b['city'])) {
+      $c = hsCleanCity($b['city']);
+      if ($c === null) unset($b['city']); else $b['city'] = $c;   // e-mail in City → keep the old city
+    }
     foreach ($allowed as $f) {
       if (isset($b[$f])) {
         $fields[]   = "$f = :$f";

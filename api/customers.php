@@ -3,6 +3,8 @@
 // HamaraService — Customer API
 // Endpoints:
 //   POST ?action=register  — create/update customer after Firebase signup
+//                            (creating a NEW profile needs otp_token from
+//                             otp.php when REQUIRE_EMAIL_OTP is on)
 //   POST ?action=update    — update profile fields
 //   POST ?action=fcm       — save FCM token
 //   GET  ?action=get&id=X  — get customer profile
@@ -10,6 +12,7 @@
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
+require_once __DIR__ . '/otp_lib.php';
 setCorsHeaders();
 
 // ── Firebase Auth REST (same accounts as the mobile app) ──
@@ -81,6 +84,8 @@ switch ($action) {
     $chk = $db->prepare("SELECT id FROM customers WHERE email = ? LIMIT 1");
     $chk->execute([$email]);
     if ($chk->fetch()) err('Email already registered. Please login.');
+    // Email OTP (otp.php?action=verify, purpose customer_register)
+    otpCheckRegistration($b, $email, 'customer_register');
 
     if (FIREBASE_WEB_API_KEY !== '') {
       $r = fbAuth('signUp', ['email' => $email, 'password' => $pwd, 'returnSecureToken' => true]);
@@ -175,6 +180,19 @@ switch ($action) {
     $user = requireCustomer();  // verifies Firebase token
     $b    = getBody();
 
+    // Creating a NEW profile → email must be verified by OTP (when
+    // REQUIRE_EMAIL_OTP). Updating an existing profile never needs it.
+    // Accounts whose e-mail Firebase already verified are accepted too.
+    $ex = $db->prepare("SELECT 1 FROM customers WHERE id = ?");
+    $ex->execute([$user['uid']]);
+    $isNew = !$ex->fetchColumn();
+    $verifiedEmail = '';
+    if ($isNew || trim((string)($b['otp_token'] ?? '')) !== '') {
+      $regEmail = strtolower(trim((string)(($user['email'] ?? '') !== '' ? $user['email'] : ($b['email'] ?? ''))));
+      $verifiedEmail = otpCheckRegistration($b, $regEmail, 'customer_register',
+                                            REQUIRE_EMAIL_OTP && $isNew && empty($user['email_verified']));
+    }
+
     // Upsert — insert if new, update if exists
     $stmt = $db->prepare("
       INSERT INTO customers
@@ -184,7 +202,7 @@ switch ($action) {
       ON DUPLICATE KEY UPDATE
         name        = IF(VALUES(name)    != '', VALUES(name),    name),
         phone       = IF(VALUES(phone)   != '', VALUES(phone),   phone),
-        gender      = IF(VALUES(gender)  != '', VALUES(gender),  gender),
+        gender      = IF(COALESCE(gender, '') = '' AND VALUES(gender) != '', VALUES(gender), gender),
         address     = IF(VALUES(address) != '', VALUES(address), address),
         city        = IF(VALUES(city)    != '', VALUES(city),    city),
         lat         = IF(VALUES(lat)     != 0,  VALUES(lat),     lat),
@@ -194,13 +212,15 @@ switch ($action) {
     ");
     // (Each named placeholder may appear only once with native prepares —
     //  the old ':name2' style raised SQLSTATE[HY093] on every call.)
+    // Gender is set once: a stored gender is never changed by the customer.
+    // City: an e-mail address (browser/Android autofill) is ignored.
 
     $name    = $b['name']    ?? $user['name']  ?? '';
     $phone   = substr(preg_replace('/\D/', '', $b['phone'] ?? ($user['phone'] ?? '')), -10);
-    $email   = $b['email']   ?? $user['email'] ?? '';
-    $gender  = $b['gender']  ?? '';
+    $email   = $verifiedEmail !== '' ? $verifiedEmail : ($b['email'] ?? $user['email'] ?? '');
+    $gender  = hsCleanGender($b['gender'] ?? '');
     $address = $b['address'] ?? '';
-    $city    = $b['city']    ?? '';
+    $city    = hsCleanCity($b['city'] ?? '') ?? '';
     $lat     = (float)($b['lat'] ?? 0);
     $lng     = (float)($b['lng'] ?? 0);
     $auth    = $b['auth_method'] ?? 'email';
@@ -223,7 +243,9 @@ switch ($action) {
     // Return customer data
     $customer = $db->prepare("SELECT * FROM customers WHERE id = ?");
     $customer->execute([$user['uid']]);
-    ok($customer->fetch());
+    $row = $customer->fetch() ?: [];
+    unset($row['password_hash']);
+    ok($row);
   }
 
   // ── UPDATE PROFILE ────────────────────────────────────
@@ -234,22 +256,46 @@ switch ($action) {
     $fields = [];
     $params = [':id' => $user['uid']];
 
-    $allowed = ['name','phone','gender','address','city','lat','lng'];
+    $ignored = false;
+    if (isset($b['city'])) {
+      $c = hsCleanCity($b['city']);
+      if ($c === null) { unset($b['city']); $ignored = true; }   // e-mail in City → keep the old city
+      else $b['city'] = $c;
+    }
+    if (isset($b['gender'])) {
+      $b['gender'] = hsCleanGender($b['gender']);
+    }
+    $allowed = ['name','phone','address','city','lat','lng'];
     foreach ($allowed as $f) {
       if (isset($b[$f]) && $b[$f] !== '') {
         $fields[] = "$f = :$f";
         $params[":$f"] = $b[$f];
       }
     }
+    // Gender is set once — a stored gender is never changed by the customer
+    // (silently kept, so the other fields still save).
+    if (!empty($b['gender'])) {
+      $fields[] = "gender = IF(COALESCE(gender, '') = '', :gender, gender)";
+      $params[':gender'] = $b['gender'];
+    }
 
-    if (empty($fields)) err('Nothing to update');
+    if (empty($fields) && !$ignored && !isset($b['gender'])) err('Nothing to update');
+    if (empty($fields)) {
+      $stmt = $db->prepare("SELECT * FROM customers WHERE id = ?");
+      $stmt->execute([$user['uid']]);
+      $row = $stmt->fetch() ?: [];
+      unset($row['password_hash']);
+      ok($row);
+    }
 
     $db->prepare("UPDATE customers SET " . implode(', ', $fields) . " WHERE id = :id")
        ->execute($params);
 
     $stmt = $db->prepare("SELECT * FROM customers WHERE id = ?");
     $stmt->execute([$user['uid']]);
-    ok($stmt->fetch());
+    $row = $stmt->fetch() ?: [];
+    unset($row['password_hash']);
+    ok($row);
   }
 
   // ── SAVE FCM TOKEN ────────────────────────────────────
