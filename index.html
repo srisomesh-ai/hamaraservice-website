@@ -805,6 +805,22 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
   .mob-nav-fab{width:38px;height:26px;border-radius:9px;}
   .mob-nav-fab svg{width:16px;height:16px;}
 }
+
+/* ═══ SERVICE GRID — fits every screen; photos always shown in full ═══ */
+.services-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important;align-items:stretch;}
+@media(min-width:600px){.services-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:14px !important;}}
+@media(min-width:900px){.services-grid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:16px !important;}}
+@media(min-width:1200px){.services-grid{grid-template-columns:repeat(5,minmax(0,1fr)) !important;gap:18px !important;}}
+.svc-card{height:100%;padding:0 !important;}
+.svc-card-img{height:auto !important;aspect-ratio:4/3;width:100%;padding:8px;background:#fff !important;
+  border-bottom:1px solid var(--line);font-size:44px;overflow:hidden;}
+.svc-card-img img{object-fit:contain !important;border-radius:10px !important;display:block;}
+.svc-card:hover .svc-card-img{background:#fff !important;}
+.svc-card-info{display:flex;flex-direction:column;flex:1;padding:10px 10px 4px !important;}
+.svc-name{font-size:clamp(13px,1.4vw,15px) !important;min-height:2.7em !important;line-height:1.35;}
+.svc-price-tag{font-size:clamp(13px,1.3vw,15px) !important;}
+.svc-book{margin-top:auto !important;width:calc(100% - 20px) !important;margin:auto 10px 12px !important;
+  font-size:clamp(12px,1.2vw,13.5px) !important;padding:9px 6px !important;}
 </style>
 </head>
 <body>
