@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="theme-color" content="#1B6B7A"/>
-<title>Service Details – Hamara Service</title>
+<title>Service Details – HamaraService</title>
+<meta name="robots" content="noindex, follow"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -559,8 +560,8 @@ function openService(slug) {
 }
 
 function bookNow() {
-  // Booking happens in the web app (login, address, live tracking, payment)
-  window.location.href = '/app/customer.html';
+  // Booking happens in the HamaraService customer app (web app only when WEB_LOGIN_MODE='web')
+  HS_login('customer');
 }
 
 function showToast(msg) {
@@ -571,5 +572,7 @@ function showToast(msg) {
 }
 
 </script>
+<script src="/js/hs-site.js"></script>
+<script src="/js/hs-svc-app.js" defer></script>
 </body>
 </html>

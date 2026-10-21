@@ -17,3 +17,24 @@ RedirectMatch 404 ^/private/
 
 # Retired duplicate page
 Redirect 301 /svc-car-mechanic.html /svc-mechanic.html
+
+# ── SEO landing pages (clean URLs → seo/*.php) ──
+# The templates in /seo/ are only reachable through the clean URLs below.
+RewriteCond %{THE_REQUEST} \s/+seo/ [NC]
+RewriteRule ^seo/ - [R=404,L]
+# Real files and folders (/api/, /app/, images, *.html …) are never rewritten.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^sitemap\.xml$ seo/sitemap.php [L]
+# Trailing slash on a clean URL → without it
+RewriteRule ^([a-z0-9-]+)/$ /$1 [R=301,L]
+# /jobs   /jobs-in-hyderabad   /driver-jobs-in-hyderabad
+RewriteRule ^jobs$ seo/jobs-hub.php [L,QSA]
+RewriteRule ^jobs-in-([a-z0-9-]+)$ seo/jobs-hub.php?c=$1 [L,QSA]
+RewriteRule ^([a-z0-9-]+)-jobs-in-([a-z0-9-]+)$ seo/jobs-city.php?t=$1&c=$2 [L,QSA]
+# /cities   /services-in-hyderabad   /electrician-in-hyderabad
+RewriteRule ^cities$ seo/cities.php [L,QSA]
+RewriteRule ^services-in-([a-z0-9-]+)$ seo/city.php?c=$1 [L,QSA]
+RewriteRule ^([a-z0-9-]+)-in-([a-z0-9-]+)$ seo/service-city.php?s=$1&c=$2 [L,QSA]

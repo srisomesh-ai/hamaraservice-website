@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -8,6 +8,24 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#1B6B7A"/>
 <title>HamaraService – Home Services at Your Doorstep</title>
+<meta name="description" content="Book ID-verified electricians, plumbers, maids, AC service, cleaning, drivers and 30+ home services in Vizag, Hyderabad, Vijayawada and metros."/>
+<link rel="canonical" href="https://hamaraservice.com/"/>
+<link rel="icon" href="/images/rlogo-tight.png"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="HamaraService"/>
+<meta property="og:locale" content="en_IN"/>
+<meta property="og:title" content="HamaraService – Home Services at Your Doorstep"/>
+<meta property="og:description" content="Book ID-verified local professionals for 30+ home services. See the price before you confirm, pay after the job. Get the HamaraService app."/>
+<meta property="og:url" content="https://hamaraservice.com/"/>
+<meta property="og:image" content="https://hamaraservice.com/images/og-share.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="HamaraService – Home Services at Your Doorstep"/>
+<meta name="twitter:description" content="Book ID-verified local professionals for 30+ home services. See the price before you confirm, pay after the job."/>
+<meta name="twitter:image" content="https://hamaraservice.com/images/og-share.png"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://hamaraservice.com/#org","name":"HamaraService","alternateName":"Hamara Service","url":"https://hamaraservice.com/","logo":"https://hamaraservice.com/images/rlogo-tight.png","email":"support@hamaraservice.com","contactPoint":[{"@type":"ContactPoint","telephone":"+91-93462-20090","email":"support@hamaraservice.com","contactType":"customer support","areaServed":"IN","availableLanguage":["English","Hindi","Telugu"]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://hamaraservice.com/#website","name":"HamaraService","alternateName":"Hamara Service","url":"https://hamaraservice.com/","inLanguage":"en-IN","publisher":{"@id":"https://hamaraservice.com/#org"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
@@ -881,17 +899,17 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <!-- Login dropdown -->
     <div class="login-dropdown-wrap" id="loginDropWrap">
       <button class="nav-pill ghost" id="loginDropBtn" onclick="toggleLoginDrop(event)">
-        👤 Login <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
+        📲 Get the App <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="login-drop" id="loginDrop">
-        <a class="login-drop-item" href="/app/customer.html" onclick="HS_login('customer');return false;">
-          <span class="ldi-icon">👤</span>
-          <div><div class="ldi-title">Customer Login</div><div class="ldi-sub">Book home services</div></div>
+        <a class="login-drop-item" href="/get-app.html?for=customer" data-hs-getapp="customer" onclick="HS_login('customer');return false;">
+          <span class="ldi-icon">🏠</span>
+          <div><div class="ldi-title">Customer app</div><div class="ldi-sub">Book home services</div></div>
         </a>
         <div class="login-drop-sep"></div>
-        <a class="login-drop-item" href="/app/provider.html" onclick="HS_login('provider');return false;">
+        <a class="login-drop-item" href="/get-app.html?for=provider" data-hs-getapp="provider" onclick="HS_login('provider');return false;">
           <span class="ldi-icon">🔧</span>
-          <div><div class="ldi-title">Service Provider</div><div class="ldi-sub">Manage your jobs</div></div>
+          <div><div class="ldi-title">Partner app</div><div class="ldi-sub">Join &amp; get jobs</div></div>
         </a>
       </div>
     </div>
@@ -902,8 +920,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="user-dropdown" id="userDropdown">
-        <a class="dd-item" href="/app/customer.html" onclick="toggleUserMenu()">📋 My Bookings</a>
-        <a class="dd-item" href="/app/customer.html" onclick="toggleUserMenu()">👤 My Profile</a>
+        <a class="dd-item" href="/get-app.html?for=customer" onclick="toggleUserMenu();HS_login('customer');return false;">📋 My Bookings</a>
+        <a class="dd-item" href="/get-app.html?for=customer" onclick="toggleUserMenu();HS_login('customer');return false;">👤 My Profile</a>
         <div class="dd-sep"></div>
         <a class="dd-item danger" onclick="logoutUser();">Sign out</a>
       </div>
@@ -914,7 +932,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 
 <!-- ─── HERO ─── -->
 <section class="hero">
-  <div class="hero-badge"><span></span>Now accepting bookings</div>
+  <div class="hero-badge"><span></span>Book in the HamaraService app</div>
   <h1>Professional Home Services<br/>at Your <em>Doorstep</em></h1>
   <p class="hero-sub">ID-verified local professionals for every home need. Book in 60 seconds.</p>
 
@@ -1072,8 +1090,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
           <div class="perk"><div class="perk-ic">🔐</div>OTP-secured job start and finish</div>
         </div>
         <div class="provider-cta-btns">
-          <a class="btn-primary" href="/app/provider.html?register=1" onclick="HS_login('provider','?register=1');return false;">Register as Provider →</a>
-          <a class="btn-ghost" href="/app/provider.html" onclick="HS_login('provider');return false;">Already a Provider? Login</a>
+          <a class="btn-primary" href="/get-app.html?for=provider" data-hs-getapp="provider" onclick="HS_login('provider','?register=1');return false;">Join as a Partner — Get the App →</a>
+          <a class="btn-ghost" href="/jobs">See partner jobs in your city</a>
         </div>
       </div>
       <div class="provider-right">
@@ -1099,13 +1117,20 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 <section class="app-bg" style="padding:80px 40px;">
   <div class="app-inner">
     <h2>Get the HamaraService App</h2>
-    <p>Book services, get live job updates and pay securely — all from your phone.</p>
+    <p>Bookings and partner registration happen only in our Android apps — live job updates, OTPs and secure payments on your phone.</p>
     <div class="app-btns">
-      <a class="app-btn" href="/get-app.html">
-        <div class="app-btn-icon">🤖</div>
+      <a class="app-btn" href="/get-app.html?for=customer" data-hs-getapp="customer">
+        <div class="app-btn-icon">🏠</div>
         <div class="app-btn-text">
-          <div class="app-btn-label">Get the app for</div>
-          <div class="app-btn-store">Android</div>
+          <div class="app-btn-label">Book services · Android</div>
+          <div class="app-btn-store">Customer app</div>
+        </div>
+      </a>
+      <a class="app-btn" href="/get-app.html?for=provider" data-hs-getapp="provider">
+        <div class="app-btn-icon">🛠️</div>
+        <div class="app-btn-text">
+          <div class="app-btn-label">Get jobs · Android</div>
+          <div class="app-btn-store">Partner app</div>
         </div>
       </a>
     </div>
@@ -1124,18 +1149,22 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
       </div>
       <div class="footer-col">
         <h4>Services</h4>
-        <a href="/app/customer.html?svc=SVC001">House Cleaning</a>
-        <a href="/app/customer.html?svc=SVC007">AC Service</a>
-        <a href="/app/customer.html?svc=SVC011">Plumbing</a>
-        <a href="/app/customer.html?svc=SVC012">Electrical</a>
-        <a href="/app/customer.html?svc=SVC013">Carpentry</a>
-        <a href="/app/customer.html?svc=SVC021">Pest Control</a>
+        <a href="/svc-house-maid.html">House Maid</a>
+        <a href="/svc-ac-service.html">AC Service</a>
+        <a href="/svc-plumber.html">Plumber</a>
+        <a href="/svc-electrician.html">Electrician</a>
+        <a href="/svc-carpenter.html">Carpenter</a>
+        <a href="/svc-pest-control.html">Pest Control</a>
+        <a href="/svc-driver.html">Driver</a>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
         <a href="#about">About us</a>
         <a href="#how">How it works</a>
-        <a href="/app/provider.html?register=1">Become a provider</a>
+        <a href="/get-app.html?for=provider" data-hs-getapp="provider">Become a partner</a>
+        <a href="/jobs">Partner jobs</a>
+        <a href="/cities">Cities</a>
+        <a href="/get-app.html">Get the app</a>
       </div>
       <div class="footer-col">
         <h4>Support</h4>
@@ -1147,6 +1176,24 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
         <a href="mailto:support@hamaraservice.com">✉️ support@hamaraservice.com</a>
       </div>
     </div>
+    <!-- HS-SEO-LINKS:start -->
+<style>
+.hs-seo-links{background:#0f3d47;color:#cfe3e8;padding:26px 16px 120px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.6}
+.hs-seo-links .in{max-width:1040px;margin:0 auto}
+.hs-seo-links h3{color:#fff;font-size:16px;margin:0 0 8px}
+.hs-seo-links a{color:#fff;text-decoration:none;display:inline-block;margin:0 12px 6px 0}
+.hs-seo-links .row{margin-bottom:16px}
+.hs-fl{display:grid;grid-template-columns:1fr 1.4fr 1.4fr;gap:18px}
+@media(max-width:760px){.hs-fl{grid-template-columns:1fr}}
+.hs-fl h4{margin:0 0 8px;color:#fff;font-size:15px}
+.hs-fl a{display:inline-block;margin:0 12px 6px 0}
+footer .hs-fl{margin:0 0 32px;font-size:14px}
+footer .hs-fl h4{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.85)}
+footer .hs-fl a{color:rgba(255,255,255,.55);text-decoration:none}
+footer .hs-fl a:hover{color:#fff}
+</style>
+<div class="hs-fl"><div><h4>Popular cities</h4><a href="/services-in-visakhapatnam">Visakhapatnam</a><a href="/services-in-hyderabad">Hyderabad</a><a href="/services-in-vijayawada">Vijayawada</a><a href="/services-in-delhi">Delhi NCR</a><a href="/services-in-mumbai">Mumbai</a><a href="/services-in-bengaluru">Bengaluru</a><a href="/services-in-chennai">Chennai</a><a href="/services-in-kolkata">Kolkata</a><a href="/services-in-pune">Pune</a><a href="/services-in-ahmedabad">Ahmedabad</a><a href="/cities">All cities →</a></div><div><h4>Popular searches</h4><a href="/electrician-in-hyderabad">Electrician in Hyderabad</a><a href="/plumber-in-visakhapatnam">Plumber in Visakhapatnam</a><a href="/ac-service-in-vijayawada">AC Service in Vijayawada</a><a href="/house-maid-in-bengaluru">House Maid in Bengaluru</a><a href="/driver-in-mumbai">Driver in Mumbai</a><a href="/pest-control-in-chennai">Pest Control in Chennai</a><a href="/beauty-parlour-at-home-in-pune">Beauty Parlour at Home in Pune</a><a href="/car-wash-in-delhi">Car &amp; Bike Wash in Delhi NCR</a><a href="/deep-cleaning-in-kolkata">Deep Cleaning in Kolkata</a><a href="/appliance-repair-in-ahmedabad">Appliance Repair in Ahmedabad</a><a href="/electrician-in-visakhapatnam">Electrician in Visakhapatnam</a><a href="/cook-in-hyderabad">Cook in Hyderabad</a></div><div><h4>Partner jobs</h4><a href="/driver-jobs-in-hyderabad">Driver jobs in Hyderabad</a><a href="/electrician-jobs-in-visakhapatnam">Electrician jobs in Visakhapatnam</a><a href="/beauty-parlour-jobs-in-pune">Beauty Parlour / Beautician jobs in Pune</a><a href="/plumber-jobs-in-vijayawada">Plumber jobs in Vijayawada</a><a href="/pest-control-jobs-in-delhi">Pest Control Technician jobs in Delhi NCR</a><a href="/house-maid-jobs-in-mumbai">House Maid / Housekeeping jobs in Mumbai</a><a href="/ac-technician-jobs-in-chennai">AC Technician jobs in Chennai</a><a href="/security-guard-jobs-in-bengaluru">Security Guard &amp; Bouncer jobs in Bengaluru</a><a href="/jobs">All partner jobs →</a></div></div>
+    <!-- HS-SEO-LINKS:end -->
     <div class="footer-bottom">
       <span>© 2026 HamaraService. All rights reserved.</span>
       <span>Made with ❤️ in India</span>
@@ -1188,26 +1235,26 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
     <div class="mob-nav-fab">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
     </div>
-    <span>Book Now</span>
+    <span>Book</span>
   </a>
-  <a class="mob-nav-item" href="/app/customer.html" onclick="mobNavActive(this)">
+  <a class="mob-nav-item" href="/get-app.html?for=customer" onclick="mobNavActive(this);HS_login('customer');return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     <span>Bookings</span>
   </a>
-  <a class="mob-nav-item" href="/app/customer.html" onclick="mobNavActive(this);HS_login('customer');return false;">
+  <a class="mob-nav-item" href="/get-app.html?for=customer" onclick="mobNavActive(this);HS_login('customer');return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span>Account</span>
   </a>
-  <a class="mob-nav-item" href="/app/provider.html" onclick="mobNavActive(this);HS_login('provider');return false;">
+  <a class="mob-nav-item" href="/get-app.html?for=provider" onclick="mobNavActive(this);HS_login('provider');return false;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-    <span>Provider</span>
+    <span>Partner</span>
   </a>
 </nav>
 
 <script src="/js/hs-site.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// Customer accounts, bookings and payments live in the web app (/app/customer.html)
+// Customer accounts, bookings and payments live in the HamaraService apps (web app only when WEB_LOGIN_MODE='web')
 // backed by the MySQL API. This page only reads the public catalog + prices.
 // "₹300 – ₹800 · 3 pros" when providers set prices, else "from ₹X"
 function priceTagHtml(s){
@@ -1428,7 +1475,7 @@ function pickService(name) {
   selectedServiceName = name;
   document.getElementById('heroSearchInput').value = name;
   document.getElementById('srchDrop').style.display = 'none';
-  var page = SVC_PAGE_MAP[name] || '/app/customer.html';
+  var page = SVC_PAGE_MAP[name] || '/get-app.html?for=customer';
   window.location.href = page;
 }
 
@@ -1440,7 +1487,7 @@ function pickFirstResult() {
 }
 
 function mobBookNow() {
-  window.location.href = '/app/customer.html';
+  HS_login('customer');
 }
 function mobNavActive(el) {
   document.querySelectorAll('.mob-nav-item').forEach(function(i){ i.classList.remove('active'); });
@@ -1468,7 +1515,7 @@ function heroSearch(){
     return;
   }
   // Go to service detail page — no login required to browse details
-  var page = SVC_PAGE_MAP[svc] || '/app/customer.html';
+  var page = SVC_PAGE_MAP[svc] || '/get-app.html?for=customer';
   window.location.href = page;
 }
 var SVC_PAGE_MAP = {
@@ -1508,13 +1555,14 @@ var SVC_PAGE_MAP = {
 function openService(slug){
   var name = decodeURIComponent(slug);
   // Known services → dedicated page; admin-added new services → generic detail page
-  var page = SVC_PAGE_MAP[name] || '/app/customer.html';
+  var page = SVC_PAGE_MAP[name] || '/get-app.html?for=customer';
   window.location.href = page;
 }
 function selectService(name){
   selectedServiceName = name;
   var svc = HS_CATALOG.find(function(s){ return s.name === name; });
-  window.location.href = '/app/customer.html' + (svc && svc.id ? '?svc=' + encodeURIComponent(svc.id) : '');
+  if (SVC_PAGE_MAP[name]) { window.location.href = SVC_PAGE_MAP[name]; return; }
+  HS_login('customer', svc && svc.id ? '?svc=' + encodeURIComponent(svc.id) : '');
 }
 
 // ── MAP
@@ -1592,8 +1640,8 @@ function confirmLocation(){
 
 
 function openUserAuth(){
-  // Customer login / registration happens in the web app
-  window.location.href = '/app/customer.html';
+  // No website login — the customer app (or the web app when WEB_LOGIN_MODE='web')
+  HS_login('customer');
 }
 
 function logoutUser(){
@@ -1745,7 +1793,7 @@ window.addEventListener('scroll',function(){
   var btn=document.getElementById('menuBtn');
   if(!btn)return;
   btn.addEventListener('click',function(){
-    window.location.href = '/app/customer.html';
+    var s=document.getElementById('services'); if(s) s.scrollIntoView({behavior:'smooth'});
   });
 })();
 

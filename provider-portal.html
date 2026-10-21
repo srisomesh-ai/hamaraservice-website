@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -16,15 +16,14 @@ a{display:inline-block;margin-top:14px;background:#0f4c5c;color:#fff;padding:12p
 <body>
 <div class="box">
   <div style="font-size:40px">&#128119;</div>
-  <h1 style="font-size:20px;margin:8px 0">Opening provider login…</h1>
-  <a id="go" href="/app/provider.html">Continue</a>
+  <h1 style="font-size:20px;margin:8px 0">Join from the Partner app</h1>
+  <a id="go" href="/get-app.html?for=provider">Get the app</a>
 </div>
+<script src="/js/hs-site.js"></script>
 <script>
 (function(){
   var reg=/[?&]tab=register\b/.test(location.search);
-  var url='/app/provider.html'+(reg?'?register=1':'');
-  document.getElementById('go').href=url;
-  location.replace(url);
+  HS_login('provider', reg?'?register=1':'');
 })();
 </script>
 </body>

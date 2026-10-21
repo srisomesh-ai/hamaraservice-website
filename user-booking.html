@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex"/>
 <title>Book a Service - Hamara Service</title>
 <!-- Old web booking page. Booking now happens in the HamaraService web app (/app/customer.html). -->
-<meta http-equiv="refresh" content="2;url=/app/customer.html"/>
+<meta http-equiv="refresh" content="3;url=/get-app.html?for=customer"/>
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f4f8f9;color:#1a2b30;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;text-align:center}
 .box{background:#fff;border-radius:16px;padding:28px 22px;max-width:380px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
@@ -16,10 +16,11 @@ a{display:inline-block;margin-top:14px;background:#0f4c5c;color:#fff;padding:12p
 <body>
 <div class="box">
   <div style="font-size:40px">&#127968;</div>
-  <h1 style="font-size:20px;margin:8px 0">Opening the booking app…</h1>
-  <p style="color:#5a6b70;font-size:14px">Bookings are now made in the HamaraService web app.</p>
-  <a id="go" href="/app/customer.html">Continue to booking</a>
+  <h1 style="font-size:20px;margin:8px 0">Bookings are in the HamaraService app</h1>
+  <p style="color:#5a6b70;font-size:14px">Bookings are made in the HamaraService Android app.</p>
+  <a id="go" href="/get-app.html?for=customer">Get the app</a>
 </div>
+<script src="/js/hs-site.js"></script>
 <script>
 (function(){
   var q = new URLSearchParams(location.search);
@@ -34,8 +35,9 @@ a{display:inline-block;margin-top:14px;background:#0f4c5c;color:#fff;padding:12p
   } else if (/^SVC\d+$/.test(svc)) {
     dest += '?svc=' + svc;
   }
-  document.getElementById('go').href = dest;
-  location.replace(dest);
+  // App-only mode (default): HS_login sends people to the customer app.
+  // WEB_LOGIN_MODE='web': continue in the web app with the same booking.
+  HS_login('customer', dest.replace('/app/customer.html', ''));
 })();
 </script>
 </body>

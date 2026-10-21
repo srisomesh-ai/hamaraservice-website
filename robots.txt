@@ -1,0 +1,12 @@
+# HamaraService — https://hamaraservice.com
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app/
+Disallow: /database/
+Disallow: /seo/
+Disallow: /admin.html
+Disallow: /hs-prices.html
+Disallow: /save-catalog.php
+
+Sitemap: https://hamaraservice.com/sitemap.xml
