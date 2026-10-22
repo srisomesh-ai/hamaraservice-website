@@ -92,7 +92,7 @@ hs_page_start(['title' => $title, 'desc' => $desc, 'path' => $path, 'ld' => $ld]
 
   <section class="sec">
     <h2><?= e("$name in other cities") ?></h2>
-    <div class="links"><?php foreach ($C as $k => $o) if ($k !== $cs): ?><a href="<?= hs_svc_url($ss, $k) ?>"><?= e("$name in {$o['name']}") ?></a><?php endif; ?></div>
+    <div class="links"><?php foreach (hs_related_cities($cs) as $k): ?><a href="<?= hs_svc_url($ss, $k) ?>"><?= e("$name in {$C[$k]['name']}") ?></a><?php endforeach; ?><a href="/cities">All cities →</a></div>
     <h2 style="margin-top:22px"><?= e("More home services in $city") ?></h2>
     <div class="links"><?php foreach ($S as $k => $o) if ($k !== $ss): ?><a href="<?= hs_svc_url($k, $cs) ?>"><?= e($o['icon'] . ' ' . $o['name']) ?></a><?php endif; ?></div>
     <p class="note"><?= e("Are you a {$s['job_role']}?") ?> <a href="<?= hs_job_url($s['job_slug'], $cs) ?>"><?= e("See {$s['job_title']} jobs in $city →") ?></a></p>

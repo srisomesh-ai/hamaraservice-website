@@ -23,13 +23,16 @@ if ($cs === '') {
 <main class="wrap">
   <section class="sec">
     <h2>Jobs by city</h2>
-    <div class="tiles"><?php foreach ($C as $k => $c): ?><a class="tile" href="/jobs-in-<?= e($k) ?>"><span class="ic">📍</span><b><?= e('Jobs in ' . $c['name']) ?></b><small><?= e($c['state']) ?></small></a><?php endforeach; ?></div>
+    <?php foreach (hs_cities_by_state() as $st => $list): ?>
+      <h3><?= e($st) ?></h3>
+      <div class="links"><?php foreach ($list as $k => $c): ?><a href="/jobs-in-<?= e($k) ?>"><?= e('Jobs in ' . $c['name']) ?></a><?php endforeach; ?></div>
+    <?php endforeach; ?>
   </section>
   <section class="sec">
     <h2>Jobs by trade</h2>
     <?php foreach ($S as $k => $s): ?>
       <h3><?= $s['icon'] ?> <?= e($s['job_title'] . ' jobs') ?></h3>
-      <div class="links"><?php foreach ($C as $ck => $c): ?><a href="<?= hs_job_url($s['job_slug'], $ck) ?>"><?= e($c['name']) ?></a><?php endforeach; ?></div>
+      <div class="links"><?php foreach (hs_popular_cities() as $ck): ?><a href="<?= hs_job_url($s['job_slug'], $ck) ?>"><?= e($C[$ck]['name']) ?></a><?php endforeach; ?></div>
     <?php endforeach; ?>
   </section>
   <section class="sec"><h2>How to join</h2><?= hs_steps_html(hs_steps_partner()) ?></section>
@@ -62,7 +65,7 @@ hs_page_start(['title' => $title, 'desc' => $desc, 'path' => $path, 'ld' => [hs_
   <section class="sec"><h2>How to join</h2><?= hs_steps_html(hs_steps_partner()) ?>
     <div class="honest">Independent partner work paid per job — not a salaried position. You set your own price; a small platform fee applies per completed job.</div></section>
   <section class="sec"><h2>Jobs in other cities</h2>
-    <div class="links"><?php foreach ($C as $k => $o) if ($k !== $cs): ?><a href="/jobs-in-<?= e($k) ?>"><?= e('Jobs in ' . $o['name']) ?></a><?php endif; ?></div></section>
+    <div class="links"><?php foreach (hs_related_cities($cs) as $k): ?><a href="/jobs-in-<?= e($k) ?>"><?= e('Jobs in ' . $C[$k]['name']) ?></a><?php endforeach; ?><a href="/jobs">All cities →</a></div></section>
   <div class="band job"><div><h2><?= e("Start working with HamaraService in $city") ?></h2><p>Install the Partner app and register.</p></div><?= hs_cta_button('provider', '📲 Install the Partner app') ?></div>
 </main>
 <?php hs_page_end();

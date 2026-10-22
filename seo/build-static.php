@@ -56,7 +56,10 @@ foreach ($S as $sk => $s) {
            'availableChannel' => ['@type' => 'ServiceChannel', 'serviceUrl' => HS_SITE . '/get-app.html?for=customer', 'name' => 'HamaraService Android app']];
     $head = "\n" . '<meta name="description" content="' . e($desc) . '"/>
 <link rel="canonical" href="' . HS_SITE . $path . '"/>
-<link rel="icon" href="/images/rlogo-tight.png"/>
+<link rel="icon" href="/favicon.ico" sizes="48x48"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="manifest" href="/site.webmanifest"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="HamaraService"/>
 <meta property="og:locale" content="en_IN"/>

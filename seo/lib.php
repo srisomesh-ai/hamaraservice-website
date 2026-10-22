@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════
 
 const HS_SITE = 'https://hamaraservice.com';
-const HS_LOGO = 'https://hamaraservice.com/images/rlogo-tight.png';
+const HS_LOGO = 'https://hamaraservice.com/images/logo-square.png';
 const HS_OG   = 'https://hamaraservice.com/images/og-share.png';
 const HS_WA   = '919346220090';
 
@@ -17,6 +17,31 @@ function hs_data() {
 }
 function hs_services() { return hs_data()['services']; }
 function hs_cities()   { return hs_data()['cities']; }
+
+// The first launch cities: featured in footers and hubs.
+function hs_popular_cities() {
+    return ['visakhapatnam','hyderabad','vijayawada','delhi','mumbai','bengaluru','chennai','kolkata','pune','ahmedabad'];
+}
+// Cities to link from a city's pages: same state first, then the popular ones.
+function hs_related_cities($cs, $limit = 24) {
+    $C = hs_cities(); $state = $C[$cs]['state'] ?? '';
+    $out = [];
+    foreach ($C as $k => $c) if ($k !== $cs && $c['state'] === $state) $out[] = $k;
+    foreach (hs_popular_cities() as $k) if ($k !== $cs && !in_array($k, $out, true)) $out[] = $k;
+    return array_slice($out, 0, $limit);
+}
+// [state => [slug => city]] sorted by state, popular states first.
+function hs_cities_by_state() {
+    $C = hs_cities(); $by = [];
+    foreach ($C as $k => $c) $by[$c['state']][$k] = $c;
+    $first = ['Andhra Pradesh','Telangana'];
+    uksort($by, function ($a, $b) use ($first) {
+        $ia = array_search($a, $first); $ib = array_search($b, $first);
+        if ($ia !== false || $ib !== false) return ($ia === false ? 99 : $ia) <=> ($ib === false ? 99 : $ib);
+        return strcmp($a, $b);
+    });
+    return $by;
+}
 
 function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
 function hs_len($s) { return mb_strlen($s, 'UTF-8'); }
@@ -154,7 +179,10 @@ function hs_page_start(array $o) {
 <title>' . e($title) . '</title>
 <meta name="description" content="' . e($desc) . '"/>
 ' . $robots . '<link rel="canonical" href="' . e($url) . '"/>
-<link rel="icon" href="/images/rlogo-tight.png"/>
+<link rel="icon" href="/favicon.ico" sizes="48x48"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="manifest" href="/site.webmanifest"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="HamaraService"/>
 <meta property="og:locale" content="en_IN"/>
@@ -191,7 +219,7 @@ function hs_breadcrumbs_html(array $crumbs) {
 function hs_footer_links_html() {
     $C = hs_cities(); $S = hs_services();
     $cities = '';
-    foreach ($C as $cs => $c) $cities .= '<a href="/services-in-' . $cs . '">' . e($c['name']) . '</a>';
+    foreach (hs_popular_cities() as $cs) $cities .= '<a href="/services-in-' . $cs . '">' . e($C[$cs]['name']) . '</a>';
     $pop = [['electrician','hyderabad'],['plumber','visakhapatnam'],['ac-service','vijayawada'],['house-maid','bengaluru'],
             ['driver','mumbai'],['pest-control','chennai'],['beauty-parlour-at-home','pune'],['car-wash','delhi'],
             ['deep-cleaning','kolkata'],['appliance-repair','ahmedabad'],['electrician','visakhapatnam'],['cook','hyderabad']];
