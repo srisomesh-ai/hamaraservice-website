@@ -936,7 +936,7 @@ function renderUnassigned(){
       + '<td>' + esc([b.slot_date, b.slot_time].filter(Boolean).join(' ') || '—') + '</td>'
       + '<td>' + esc(b.customer_name || '—') + '<div class="muted">' + (ph ? '+91 ' + esc(ph) : '') + '</div></td>'
       + '<td><span class="wait-min">' + esc(b.minutes_waiting) + ' min</span></td>'
-      + '<td style="white-space:nowrap">' + contact + '</td>'
+      + '<td style="white-space:nowrap">' + contact + '<button class="abtn reject" data-bcancel="' + esc(b.id) + '">Cancel + note</button></td>'
       + '<td>' + (b.alerted ? '<span class="mailed" title="' + esc(b.alerted_at || '') + '">Alert emailed &#10003;</span>' : '<span class="mail-pending" title="E-mailed on the next check (within a minute)">Not emailed yet</span>') + '</td></tr>';
   }).join('') : emptyRow(8, 'No booking is waiting for a provider. \uD83C\uDF89');
 }
@@ -1117,20 +1117,34 @@ function renderOrders(list){
       + '<td>' + dt(b.started_at) + '</td><td>' + dt(b.completed_at) + (b.started_at && b.completed_at ? '<div class="muted">' + esc(durMin(b.started_at, b.completed_at)) + '</div>' : '') + '</td>'
       + '<td>' + money(amountOf(b)) + '</td><td>' + (b.commission_amt != null ? money(b.commission_amt) + ' <span class="muted">(' + esc(b.commission_pct || 0) + '%)</span>' : '—') + '</td>'
       + '<td>' + badge(b.status) + (b.cancel_reason ? '<div class="muted">' + esc(b.cancel_reason) + '</div>' : '') + '</td><td>' + payCell(b) + '</td>'
-      + '<td>' + (cancellable.indexOf(b.status) >= 0 ? '<button class="abtn reject" data-bcancel="' + esc(b.id) + '">Cancel</button>' : '') + '</td></tr>';
+      + '<td style="white-space:nowrap">' + (cancellable.indexOf(b.status) >= 0 ? '<button class="abtn reject" data-bcancel="' + esc(b.id) + '">Cancel</button>' : '')
+      + (b.payment_status !== 'paid' ? '<button class="abtn" data-bdelete="' + esc(b.id) + '" title="Delete for good (test orders)">&#128465; Delete</button>' : '') + '</td></tr>';
   }).join('') : emptyRow(13, 'No bookings found');
 }
 $('orderSearch').addEventListener('input', function(){ renderOrders(); });
 $('orderReload').addEventListener('click', function(){ safe(loadOrders,'orders')(); });
 $('orderStatus').addEventListener('change', function(){ safe(loadOrders,'orders')(); });
-document.addEventListener('click', function(ev){
-  var b = ev.target.closest('[data-bcancel]'); if (!b) return;
-  var id = b.getAttribute('data-bcancel');
-  var reason = prompt('Cancel booking ' + id + '? Enter a reason:', 'Cancelled by admin');
-  if (reason === null) return;
-  api('bookings.php?action=cancel', { booking_id:id, reason:reason || 'Cancelled by admin' })
-    .then(function(){ toast('Booking cancelled'); loadOrders(); loadBookingsForDash(); })
+var CANCEL_NOTE = 'Sorry, no service provider is available in your area right now. Please try again later, or call us at +91 93462 20090.';
+function adminCancel(id){
+  var note = prompt('Cancel booking ' + id + '?\n\nThe CUSTOMER will see this note in the app and in a notification:', CANCEL_NOTE);
+  if (note === null) return;
+  note = note.trim();
+  if (!note) { toast('Write a note for the customer'); return; }
+  api('bookings.php?action=cancel', { booking_id:id, reason:note })
+    .then(function(){ toast('Booking cancelled — customer notified'); safe(loadOrders,'orders')(); loadBookingsForDash(); loadUnassigned(); })
     .catch(function(e){ if (!(e instanceof AuthError)) toast('Failed: ' + e.message); });
+}
+document.addEventListener('click', function(ev){
+  var b = ev.target.closest('[data-bcancel]'); if (b) { adminCancel(b.getAttribute('data-bcancel')); return; }
+  var d = ev.target.closest('[data-bdelete]'); if (!d) return;
+  var id = d.getAttribute('data-bdelete');
+  var typed = prompt('DELETE booking ' + id + ' for good?\nUse this only for test orders — it cannot be undone and nobody is notified.\n\nType DELETE to confirm:', '');
+  if (typed === null) return;
+  if (typed.trim().toUpperCase() !== 'DELETE') { toast('Not deleted — type DELETE to confirm'); return; }
+  d.disabled = true;
+  api('bookings.php?action=admin_delete', { booking_id:id })
+    .then(function(){ toast('Booking ' + id + ' deleted'); safe(loadOrders,'orders')(); loadBookingsForDash(); loadUnassigned(); })
+    .catch(function(e){ d.disabled = false; if (!(e instanceof AuthError)) toast('Failed: ' + e.message); });
 });
 
 // ── finance + payouts ─────────────────────────────────
