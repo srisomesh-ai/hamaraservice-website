@@ -291,7 +291,7 @@ switch ($action) {
         if (!$ok) continue;
         sendPush($pr['fcm_token'], "New Job Nearby 🔔",
           "{$b['svc_name']} request near you. Open to quote your price.",
-          ['event'=>'new_booking','bookingId'=>$id,'role'=>'provider']);
+          ['event'=>'new_booking','bookingId'=>$id,'role'=>'provider','alert'=>'1']);
       }
     } catch (Throwable $e) { /* never block booking on push failure */ }
 
@@ -412,7 +412,7 @@ switch ($action) {
 
     sendPush(getFcm($db, 'providers', $bk['provider_id']),
       "Price Negotiation 💬", "Customer countered with ₹$counter. Respond now.",
-      ['event'=>'price_negotiation','counterPrice'=>"$counter",'bookingId'=>$bk['id']]);
+      ['event'=>'price_negotiation','counterPrice'=>"$counter",'bookingId'=>$bk['id'],'role'=>'provider','alert'=>'1']);
 
     ok(['status'=>'negotiating','counter_price'=>$counter]);
   }
@@ -484,7 +484,7 @@ switch ($action) {
 
     sendPush(getFcm($db, 'providers', $bk['provider_id']),
       "Job Confirmed ✅", "Customer confirmed ₹$price. Open the job and tap Start trip.",
-      ['event'=>'booking_confirmed','confirmedPrice'=>"$price",'bookingId'=>$bk['id']]);
+      ['event'=>'booking_confirmed','confirmedPrice'=>"$price",'bookingId'=>$bk['id'],'role'=>'provider','alert'=>'1']);
 
     ok(['status'=>'confirmed','confirmed_price'=>$price]);
   }
