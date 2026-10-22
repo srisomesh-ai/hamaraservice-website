@@ -4,7 +4,7 @@
 //
 // Status machine:
 //   searching → price_quoted → (negotiating → negotiation_final)
-//   → confirmed  [start OTP]  → active  [completion OTP]  → completed
+//   → confirmed  [start trip → arrived: start OTP]  → active  [completion OTP]  → completed
 //   any pre-active state → cancelled
 // Payment is tracked separately: payment_status pending → paid (→ refunded)
 //
@@ -13,8 +13,9 @@
 //        cancel, generate_start_otp, create_order, razorpay_confirm, review
 // Provider  (provider JWT, approved):
 //   GET  open
-//   POST accept, final_offer, accept_counter, release, verify_otp,
-//        request_completion_otp, complete, cash_collected, request_review
+//   POST accept, final_offer, accept_counter, release, start_trip,
+//        request_start_otp, verify_otp, request_completion_otp, complete,
+//        cash_collected, request_review
 // Any party of the booking:
 //   GET  get&id=X, active, history
 // Admin:
@@ -127,6 +128,7 @@ function sanitizeBooking(array $bk, string $role) {
         if (!in_array($status, ['confirmed','active','completed'], true)) unset($bk['provider_phone']);
     } elseif ($role === 'provider') {
         $bk['completion_otp_requested'] = $otpDone ? 1 : 0;
+        $bk['start_otp_requested']      = $otpStart ? 1 : 0;
         if (!in_array($status, ['confirmed','active','completed'], true)) {
             unset($bk['customer_phone'], $bk['contact_phone']);
         }
@@ -444,16 +446,18 @@ switch ($action) {
     $confirmed = (int)$bk['counter_price'];
     if ($confirmed <= 0) err('No counter price to accept');
 
+    // The start OTP is created only when the provider arrives (request_start_otp)
     $upd = $db->prepare("
       UPDATE bookings SET status = 'confirmed', confirmed_price = ?, amount = ?,
-             start_otp = ?, otp = NULL, otp_attempts = 0, negotiation_status = 'confirmed'
+             start_otp = NULL, otp = NULL, otp_attempts = 0, negotiation_status = 'confirmed',
+             travel_started_at = NULL, arrived_at = NULL
       WHERE id = ? AND status = 'negotiating'
     ");
-    $upd->execute([$confirmed, $confirmed, makeOtp(), $bk['id']]);
+    $upd->execute([$confirmed, $confirmed, $bk['id']]);
     if ($upd->rowCount() !== 1) err('Booking changed, refresh', 409);
 
     sendPush(getFcm($db, 'customers', $bk['customer_id']),
-      "Price Confirmed ✅", "Provider accepted ₹$confirmed. Your start OTP is in the app.",
+      "Price Confirmed ✅", "Provider accepted ₹$confirmed. We'll notify you when they start the trip.",
       ['event'=>'price_confirmed','confirmedPrice'=>"$confirmed",'bookingId'=>$bk['id']]);
 
     ok(['status'=>'confirmed','confirmed_price'=>$confirmed]);
@@ -468,16 +472,18 @@ switch ($action) {
     $price = $bk['status'] === 'negotiation_final' ? (int)$bk['final_price'] : (int)$bk['quoted_price'];
     if ($price <= 0) err('No price to confirm');
 
+    // The start OTP is created only when the provider arrives (request_start_otp)
     $upd = $db->prepare("
       UPDATE bookings SET status = 'confirmed', confirmed_price = ?, amount = ?,
-             start_otp = ?, otp = NULL, otp_attempts = 0, negotiation_status = 'confirmed'
+             start_otp = NULL, otp = NULL, otp_attempts = 0, negotiation_status = 'confirmed',
+             travel_started_at = NULL, arrived_at = NULL
       WHERE id = ? AND status IN ('price_quoted','negotiation_final')
     ");
-    $upd->execute([$price, $price, makeOtp(), $bk['id']]);
+    $upd->execute([$price, $price, $bk['id']]);
     if ($upd->rowCount() !== 1) err('Booking changed, refresh', 409);
 
     sendPush(getFcm($db, 'providers', $bk['provider_id']),
-      "Job Confirmed ✅", "Customer confirmed ₹$price. Head to the location.",
+      "Job Confirmed ✅", "Customer confirmed ₹$price. Open the job and tap Start trip.",
       ['event'=>'booking_confirmed','confirmedPrice'=>"$price",'bookingId'=>$bk['id']]);
 
     ok(['status'=>'confirmed','confirmed_price'=>$price]);
@@ -493,7 +499,7 @@ switch ($action) {
     $db->prepare("
       UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
              quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
-             start_otp = NULL, otp = NULL, otp_attempts = 0,
+             start_otp = NULL, otp = NULL, otp_attempts = 0, travel_started_at = NULL, arrived_at = NULL,
              negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
       WHERE id = ?
     ")->execute([$bk['id']]);
@@ -515,7 +521,7 @@ switch ($action) {
     $db->prepare("
       UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
              quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
-             start_otp = NULL, otp = NULL, otp_attempts = 0,
+             start_otp = NULL, otp = NULL, otp_attempts = 0, travel_started_at = NULL, arrived_at = NULL,
              negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
       WHERE id = ?
     ")->execute([$bk['id']]);
@@ -524,6 +530,40 @@ switch ($action) {
       "🔍 Searching Another Provider", "Provider declined. We are finding another provider for you.",
       ['event'=>'provider_declined','bookingId'=>$bk['id']]);
     ok(['status'=>'searching']);
+  }
+
+  // ── PROVIDER STARTS THE TRIP (heading to the customer) ──
+  case 'start_trip': {
+    $prov = requireProvider(true);
+    $b    = getBody();
+    $bk   = bookingFor($db, $b['booking_id'] ?? '', $prov, ['confirmed']);
+    $db->prepare("UPDATE bookings SET travel_started_at = COALESCE(travel_started_at, CURRENT_TIMESTAMP) WHERE id = ?")
+       ->execute([$bk['id']]);
+    if (empty($bk['travel_started_at'])) {
+      sendPush(getFcm($db, 'customers', $bk['customer_id']),
+        "Provider is on the way 🛵",
+        ($bk['provider_name'] ?: 'Your provider') . " has started the trip to your location.",
+        ['event'=>'provider_on_the_way','bookingId'=>$bk['id']]);
+    }
+    ok(['status'=>'confirmed','travel_started'=>true]);
+  }
+
+  // ── PROVIDER ARRIVED → start OTP is created and sent to the customer ──
+  // The code goes to the CUSTOMER only — never returned to the provider.
+  case 'request_start_otp': {
+    $prov = requireProvider(true);
+    $b    = getBody();
+    $bk   = bookingFor($db, $b['booking_id'] ?? '', $prov, ['confirmed']);
+    $otp  = $bk['start_otp'] ?: makeOtp();
+    $db->prepare("UPDATE bookings SET start_otp = ?, otp_attempts = 0,
+                         travel_started_at = COALESCE(travel_started_at, CURRENT_TIMESTAMP),
+                         arrived_at = COALESCE(arrived_at, CURRENT_TIMESTAMP) WHERE id = ?")
+       ->execute([$otp, $bk['id']]);
+    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+      "Provider has arrived 🔔 Start OTP: $otp",
+      "Share this code with " . ($bk['provider_name'] ?: 'your provider') . " to start the work.",
+      ['event'=>'start_otp_ready','bookingId'=>$bk['id']]);
+    ok(['requested'=>true]);
   }
 
   // ── CUSTOMER: (re)read start OTP ──────────────────────
@@ -575,7 +615,7 @@ switch ($action) {
     $cotp = $bk['completion_otp'] ?: makeOtp();
     $db->prepare("UPDATE bookings SET completion_otp = ?, otp_attempts = 0 WHERE id = ?")->execute([$cotp, $bk['id']]);
     sendPush(getFcm($db, 'customers', $bk['customer_id']),
-      "Completion OTP 🔑", "Your provider has finished. Open the app and share the completion OTP if you are satisfied.",
+      "Work finished 🔑 Completion OTP: $cotp", "Share this code with your provider only if you are satisfied with the work.",
       ['event'=>'completion_otp_ready','bookingId'=>$bk['id']]);
     ok(['requested'=>true]);
   }
