@@ -302,13 +302,23 @@ function fcmSendDirect(array $sa, $fcmToken, $title, $body, $data) {
     $d['body']  = (string)($body ?: 'You have a new update.');
     $d['click_action'] = 'FLUTTER_NOTIFICATION_CLICK';
     $d['channel_id']   = 'hamaraservice_high_priority';
+    // notification + data: Android itself shows it (heads-up, sound, vibration)
+    // when the app is in the background or closed — data-only messages need the
+    // app process and are dropped by many phones' battery savers. In the
+    // foreground the apps show it themselves (onMessage).
+    $an = ['channel_id' => 'hamaraservice_high_priority', 'sound' => 'default',
+           'default_vibrate_timings' => true, 'notification_priority' => 'PRIORITY_MAX',
+           'visibility' => 'PUBLIC'];   // no click_action: a tap opens the app's main screen
+    $bid = (string)($d['bookingId'] ?? '');
+    if ($bid !== '') $an['tag'] = $bid . '-' . ($d['role'] ?? 'u');   // newer update replaces the older one
     $r = fcmHttp(FCM_API_BASE . '/v1/projects/' . rawurlencode($sa['project_id']) . '/messages:send',
         ['Content-Type: application/json', 'Authorization: Bearer ' . $tok],
         json_encode(['message' => [
             'token' => $fcmToken, 'data' => $d,
-            'android' => ['priority' => 'HIGH', 'ttl' => '3600s'],
-            'apns' => ['headers' => ['apns-priority' => '10', 'apns-push-type' => 'background'],
-                       'payload' => ['aps' => ['content-available' => 1, 'sound' => 'default']]],
+            'notification' => ['title' => $d['title'], 'body' => $d['body']],
+            'android' => ['priority' => 'HIGH', 'ttl' => '3600s', 'notification' => $an],
+            'apns' => ['headers' => ['apns-priority' => '10', 'apns-push-type' => 'alert'],
+                       'payload' => ['aps' => ['sound' => 'default']]],
         ]]));
     if (empty($r['name'])) { error_log('FCM send error: ' . json_encode($r)); return false; }
     return true;

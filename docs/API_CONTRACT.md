@@ -57,7 +57,9 @@ release (provider, any state before active) → searching
 | `decline` / `search_another` | POST | customer | `booking_id` | back to `searching`, provider detached |
 | `release` | POST | provider | `booking_id` | provider gives up before start → `searching` |
 | `cancel` | POST | customer (before `active`) or admin | `booking_id, reason` | → `cancelled` |
-| `generate_start_otp` | POST | customer | `booking_id` | status `confirmed`; returns `{start_otp}` (normally already in `get`) |
+| `start_trip` | POST | provider | `booking_id` | status `confirmed`. Sets `travel_started_at`; customer is pushed "Provider is on the way". |
+| `request_start_otp` | POST | provider | `booking_id` | status `confirmed` ("I've arrived"). Creates the start OTP (kept on resend), sets `arrived_at`, pushes the code to the customer only. Provider `get` shows `start_otp_requested: 1`. |
+| `generate_start_otp` | POST | customer | `booking_id` | status `confirmed`; fallback when the provider is at the door but did not send the OTP. Returns `{start_otp}`. |
 | `verify_otp` | POST | provider | `booking_id, otp` | START OTP. status `confirmed` → `active`. Max 5 wrong tries. |
 | `request_completion_otp` | POST | provider | `booking_id` | status `active`. Error `TOO_EARLY:<minutes>` (HTTP 425) if job younger than minimum. OTP is pushed to the customer only. |
 | `complete` | POST | provider | `booking_id, completion_otp` | status `active` → `completed`; computes `amount, commission_amt, provider_earns`. Errors: `COMPLETION_OTP_NOT_REQUESTED`, `COMPLETION_OTP_REQUIRED`, `Invalid completion OTP`. |
