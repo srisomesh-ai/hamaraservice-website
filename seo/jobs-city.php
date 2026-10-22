@@ -118,7 +118,7 @@ hs_page_start(['title' => $title, 'desc' => $desc, 'path' => $path, 'ld' => $ld]
 
   <section class="sec">
     <h2><?= e("$jt jobs in other cities") ?></h2>
-    <div class="links"><?php foreach ($C as $k => $o) if ($k !== $cs): ?><a href="<?= hs_job_url($js, $k) ?>"><?= e("$jt jobs in {$o['name']}") ?></a><?php endif; ?></div>
+    <div class="links"><?php foreach (hs_related_cities($cs) as $k): ?><a href="<?= hs_job_url($js, $k) ?>"><?= e("$jt jobs in {$C[$k]['name']}") ?></a><?php endforeach; ?><a href="/jobs">All partner jobs →</a></div>
     <h2 style="margin-top:22px"><?= e("Other partner jobs in $city") ?></h2>
     <div class="links"><?php foreach ($S as $k => $o) if ($k !== $ss): ?><a href="<?= hs_job_url($o['job_slug'], $cs) ?>"><?= e($o['icon'] . ' ' . $o['job_title']) ?></a><?php endif; ?></div>
     <p class="note">Need this service instead? <a href="<?= hs_svc_url($ss, $cs) ?>"><?= e("Book {$s['plural']} in $city →") ?></a></p>

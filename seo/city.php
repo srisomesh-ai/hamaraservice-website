@@ -45,7 +45,7 @@ hs_page_start(['title' => $title, 'desc' => $desc, 'path' => $path, 'ld' => $ld]
   </section>
   <section class="sec">
     <h2>Other cities</h2>
-    <div class="links"><?php foreach ($C as $k => $o) if ($k !== $cs): ?><a href="/services-in-<?= e($k) ?>"><?= e('Services in ' . $o['name']) ?></a><?php endif; ?></div>
+    <div class="links"><?php foreach (hs_related_cities($cs) as $k): ?><a href="/services-in-<?= e($k) ?>"><?= e('Services in ' . $C[$k]['name']) ?></a><?php endforeach; ?><a href="/cities">All cities →</a></div>
   </section>
   <div class="band"><div><h2><?= e("Book in $city with the app") ?></h2><p>Bookings, OTPs and payments happen in the HamaraService app.</p></div><?= hs_cta_button('customer', '📲 Install the app') ?></div>
 </main>

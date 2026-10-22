@@ -7,7 +7,8 @@
 // shown on the site only as "starting from" estimates. The provider
 // quotes the final price in the app before the customer confirms.
 //
-// To add a city: add an entry to 'cities' (slug, name, state, localities…).
+// To add a city: add an entry to 'cities' here (featured) or to
+// seo/cities_more.php (slug, name, state, localities…).
 // To add a service: add an entry to 'services' (unique slug + job_slug).
 // The sitemap and every hub/footer link update automatically.
 // ═══════════════════════════════════════════════════════
@@ -18,7 +19,7 @@ return [
 // 30 days from here (see hs_job_dates()), so validThrough never lapses.
 'jobs_epoch' => '2026-10-21',
 
-'cities' => [
+'cities' => array_merge([
   'visakhapatnam' => [
     'name' => 'Visakhapatnam', 'short' => 'Vizag', 'state' => 'Andhra Pradesh', 'lang' => 'Telugu',
     'climate' => 'coastal',
@@ -89,7 +90,7 @@ return [
     'season' => 'very hot and dry summers from March to June, a short monsoon and dusty winters',
     'localities' => ['Satellite','Navrangpura','Bopal','Prahlad Nagar','Vastrapur','Maninagar','SG Highway','Thaltej','Chandkheda','Gota','Naranpura','Bodakdev','Paldi','Nikol','Ghatlodia'],
   ],
-],
+], require __DIR__ . '/cities_more.php'),
 
 // tip: cooling | cleaning | damp | pest | plumbing | electrical | vehicle | care | beauty | outdoor | general
 'services' => [
