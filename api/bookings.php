@@ -19,7 +19,7 @@
 // Any party of the booking:
 //   GET  get&id=X, active, history
 // Admin:
-//   GET  admin_list   POST cancel
+//   GET  admin_list   POST cancel (note shown to the customer), admin_delete
 // ═══════════════════════════════════════════════════════
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/schema.php';
@@ -837,9 +837,17 @@ switch ($action) {
       $by = 'customer';
     }
     if (in_array($bk['status'], ['completed','cancelled'], true)) err('Booking already ' . $bk['status'], 409);
+    if ($by === 'admin' && $reason === '') err('Write a note for the customer');
+    $reason = mb_substr($reason, 0, 500);
 
     $db->prepare("UPDATE bookings SET status = 'cancelled', cancel_reason = ?, cancelled_by = ? WHERE id = ?")
        ->execute([$reason, $by, $bk['id']]);
+
+    // Admin cancellations: the customer gets the admin's note right away
+    if ($by === 'admin') {
+      sendPush(getFcm($db, 'customers', $bk['customer_id']), "Booking cancelled — {$bk['svc_name']}",
+        $reason, ['event'=>'booking_cancelled','bookingId'=>$bk['id']]);
+    }
 
     if (!empty($bk['provider_id'])) {
       sendPush(getFcm($db, 'providers', $bk['provider_id']), "Booking Cancelled ❌",
@@ -847,6 +855,29 @@ switch ($action) {
         ['event'=>'booking_cancelled','bookingId'=>$bk['id']]);
     }
     ok(['cancelled'=>true]);
+  }
+
+  // ── ADMIN: DELETE A BOOKING FOR GOOD (test orders) ────
+  // Only bookings no money has moved for — paid ones must be refunded instead.
+  case 'admin_delete': {
+    requireAdmin();
+    $b  = getBody();
+    $bk = loadBooking($db, $b['booking_id'] ?? '');
+    if (!$bk) err('Booking not found', 404);
+    if ($bk['payment_status'] === 'paid' || (int)$bk['settled'] === 1) {
+      err('This booking is paid — refund it in Razorpay instead of deleting it.', 409);
+    }
+    $db->beginTransaction();
+    $del = $db->prepare("DELETE FROM bookings WHERE id = ? AND payment_status <> 'paid' AND settled = 0");
+    $del->execute([$bk['id']]);
+    if ($del->rowCount() !== 1) { $db->rollBack(); err('Booking changed, refresh', 409); }
+    try { $db->prepare("DELETE FROM reviews WHERE booking_id = ?")->execute([$bk['id']]); } catch (Throwable $e) {}
+    if ($bk['status'] === 'completed' && !empty($bk['provider_id'])) {
+      $db->prepare("UPDATE providers SET completed_bookings = GREATEST(completed_bookings - 1, 0),
+                           total_bookings = GREATEST(total_bookings - 1, 0) WHERE id = ?")->execute([$bk['provider_id']]);
+    }
+    $db->commit();
+    ok(['deleted' => $bk['id']]);
   }
 
   // ── CUSTOMER REVIEW ───────────────────────────────────
