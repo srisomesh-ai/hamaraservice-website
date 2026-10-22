@@ -321,5 +321,16 @@ function fcmSendDirect(array $sa, $fcmToken, $title, $body, $data) {
                        'payload' => ['aps' => ['sound' => 'default']]],
         ]]));
     if (empty($r['name'])) { error_log('FCM send error: ' . json_encode($r)); return false; }
+    // Urgent provider alerts (data alert=1): a second, data-only message lets the
+    // provider app replace the notification above with a full-screen,
+    // keeps-ringing alert (like an incoming call). If the app can't run, the
+    // normal notification above stays.
+    if (($d['alert'] ?? '') === '1') {
+        $d['sys_tag'] = $an['tag'] ?? '';
+        fcmHttp(FCM_API_BASE . '/v1/projects/' . rawurlencode($sa['project_id']) . '/messages:send',
+            ['Content-Type: application/json', 'Authorization: Bearer ' . $tok],
+            json_encode(['message' => ['token' => $fcmToken, 'data' => $d,
+                'android' => ['priority' => 'HIGH', 'ttl' => '120s']]]));
+    }
     return true;
 }
