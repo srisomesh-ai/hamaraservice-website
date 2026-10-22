@@ -834,8 +834,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.6);padding:60px 40px 32px;}
 </style>
 <script>
 /* Fallbacks for the install buttons: js/hs-site.js replaces these when it loads. */
-(function(){var P='https://play.google.com/store/apps/details?id=com.hamaraservice.customer';
-function go(w){location.href=(w!=='provider'&&!/iphone|ipad|ipod/i.test(navigator.userAgent||''))?P:'/get-app.html?for='+(w==='provider'?'provider':'customer');}
+(function(){var P='https://play.google.com/store/apps/details?id=com.hamaraservice.';
+function go(w){w=w==='provider'?'provider':'customer';location.href=!/iphone|ipad|ipod/i.test(navigator.userAgent||'')?P+w:'/get-app.html?for='+w;}
 window.HS_getApp=window.HS_getApp||go;window.HS_login=window.HS_login||go;})();
 </script>
 </head>
@@ -1287,7 +1287,7 @@ footer .hs-fl a:hover{color:#fff}
   </a>
 </nav>
 
-<script src="/js/hs-site.js?v=20261022"></script>
+<script src="/js/hs-site.js?v=20261023"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // Customer accounts, bookings and payments live in the HamaraService apps (web app only when WEB_LOGIN_MODE='web')
@@ -1979,6 +1979,6 @@ document.addEventListener('touchstart', function(){
   if(navigator.vibrate) navigator.vibrate(10);
 },{passive:true});
 </script>
-<script src="/js/hs-track.js?v=20261022" defer></script>
+<script src="/js/hs-track.js?v=20261023" defer></script>
 </body>
 </html>

@@ -214,8 +214,8 @@ function hs_page_end() {
   <div>📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:info@hamaraservice.com">info@hamaraservice.com</a></div>
   <div class="muted">© ' . date('Y') . ' HamaraService. Bookings and partner registration happen only in the HamaraService Android apps.</div>
 </div></div></footer>
-<script src="/js/hs-site.js?v=20261022"></script>
-<script src="/js/hs-track.js?v=20261022" defer></script>
+<script src="/js/hs-site.js?v=20261023"></script>
+<script src="/js/hs-track.js?v=20261023" defer></script>
 </body>
 </html>';
 }

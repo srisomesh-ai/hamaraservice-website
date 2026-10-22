@@ -31,7 +31,7 @@
   window.HS_appMode = function (c) { return !(c && c.web_login_mode === 'web'); };
 
   // Known Play Store links (used when the server config is unreachable).
-  var PLAY = { customer: 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer', provider: '' };
+  var PLAY = { customer: 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer', provider: 'https://play.google.com/store/apps/details?id=com.hamaraservice.provider' };
   window.HS_playUrl = function (who, c) {
     who = who === 'provider' ? 'provider' : 'customer';
     var app = c ? (who === 'provider' ? c.provider_app_url : c.customer_app_url) : '';
