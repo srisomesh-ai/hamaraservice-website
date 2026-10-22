@@ -105,7 +105,7 @@ define('CRON_KEY',              (string)hsCfg('CRON_KEY', ''));
 // App links (Play Store). Empty = not published yet → /get-app.html shows
 // "Coming soon on Google Play — WhatsApp us for early access".
 define('CUSTOMER_APP_URL',  hsCfg('CUSTOMER_APP_URL') ?: 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer');   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.customer
-define('PROVIDER_APP_URL',  hsCfg('PROVIDER_APP_URL', ''));   // e.g. https://play.google.com/store/apps/details?id=com.hamaraservice.provider
+define('PROVIDER_APP_URL',  hsCfg('PROVIDER_APP_URL') ?: 'https://play.google.com/store/apps/details?id=com.hamaraservice.provider');
 // 'app' (default) = the website has NO login/booking: every login/book/register button
 //                   sends people to install the customer / partner app, and
 //                   /app/customer.html + /app/provider.html show an "use the app" panel.

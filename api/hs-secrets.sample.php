@@ -33,7 +33,7 @@ return [
     'ADMIN_ALERT_EMAIL'   => '',            // where that alert goes ('' = SUPPORT_EMAIL)
     'CRON_KEY'            => '',            // long random string for api/cron.php?action=unassigned&key=… ('' = disabled)
     'CUSTOMER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.customer (once live)
-    'PROVIDER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.provider (once live)
+    'PROVIDER_APP_URL'    => '',            // optional — defaults to the Play Store link
     'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)
     'WEB_LOGIN_MODE'      => 'app',         // 'app' = no website login/booking, buttons send people to the apps; 'web' = re-enable the web app
 
