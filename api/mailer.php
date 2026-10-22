@@ -36,7 +36,7 @@ function emailBase($title, $content) {
       <!-- Footer -->
       <tr><td style="background:#f7f8fc;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;">
         <p style="font-size:12px;color:#9ca3af;margin:0;">
-          © ' . date('Y') . ' HamaraService · <a href="' . SITE_URL . '" style="color:#E8251A;text-decoration:none;">hamaraservice.in</a><br/>
+          © ' . date('Y') . ' HamaraService · <a href="' . SITE_URL . '" style="color:#E8251A;text-decoration:none;">hamaraservice.com</a><br/>
           info@hamaraservice.com · +91 93462 20090
         </p>
       </td></tr>
@@ -83,9 +83,60 @@ function smtp_send($sock, $cmd) {
   return smtp_read($sock);
 }
 
-// Is outgoing mail possible at all? (SMTP credentials, or the test log file)
+// Is outgoing mail possible at all? (SMTP credentials, the server's own
+// mail() as a fallback, or the test log file)
 function smtpConfigured() {
-  return SMTP_LOG_FILE !== '' || (SMTP_USER !== '' && SMTP_PASS !== '');
+  return SMTP_LOG_FILE !== '' || (SMTP_USER !== '' && SMTP_PASS !== '') || mailFallbackAvailable();
+}
+
+function mailFallbackAvailable() {
+  return SMTP_LOG_FILE === '' && function_exists('mail') && !in_array('mail', array_map('trim', explode(',', (string)ini_get('disable_functions'))), true);
+}
+
+// One SMTP session. $secure: 'tls' = STARTTLS on a plain socket (587),
+// 'ssl' = implicit TLS (465). Returns ['success'=>true] or ['error'=>…].
+function smtpSession($secure, $host, $port, $user, $pass, $from, $toEmail, $data) {
+  $errno = 0; $errstr = '';
+  $ctx  = stream_context_create(['ssl' => ['SNI_enabled' => true, 'peer_name' => $host]]);
+  $sock = @stream_socket_client(($secure === 'ssl' ? 'ssl' : 'tcp') . "://$host:$port", $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
+  if (!$sock) return ['error' => "SMTP connect to $host:$port failed: $errstr ($errno)"];
+  stream_set_timeout($sock, 15);
+
+  $greet = smtp_read($sock);                                             // 220 greeting
+  if (strpos($greet, '220') !== 0) { fclose($sock); return ['error' => "SMTP $port greeting: " . trim($greet)]; }
+  smtp_send($sock, "EHLO hamaraservice.com");
+  if ($secure === 'tls') {
+    smtp_send($sock, "STARTTLS");
+    if (!@stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+      fclose($sock);
+      return ['error' => "SMTP $port TLS failed"];
+    }
+    smtp_send($sock, "EHLO hamaraservice.com");                          // Re-EHLO after TLS
+  }
+  smtp_send($sock, "AUTH LOGIN");
+  smtp_send($sock, base64_encode($user));
+  $authResp = smtp_send($sock, base64_encode($pass));
+  if (strpos($authResp, '235') === false) {
+    fclose($sock);
+    return ['error' => 'SMTP login failed for ' . $user . ' (' . trim($authResp) . '). Check SMTP_USER / SMTP_PASS in hs-secrets.php', 'auth' => true];
+  }
+
+  $mf = smtp_send($sock, "MAIL FROM:<$from>");
+  if (strpos($mf, '250') !== 0) { smtp_send($sock, "QUIT"); fclose($sock); return ['error' => 'SMTP sender rejected: ' . trim($mf)]; }
+  $rcpt = smtp_send($sock, "RCPT TO:<$toEmail>");
+  if (strpos($rcpt, '25') !== 0) {
+    smtp_send($sock, "QUIT");
+    fclose($sock);
+    return ['error' => 'SMTP recipient rejected: ' . trim($rcpt)];
+  }
+  smtp_send($sock, "DATA");
+  // dot-stuffing (RFC 5321 §4.5.2) — base64 bodies never start with '.', headers might
+  fwrite($sock, preg_replace('/^\./m', '..', $data) . "\r\n.\r\n");
+  $dataResp = smtp_read($sock);
+  smtp_send($sock, "QUIT");
+  fclose($sock);
+  if (strpos($dataResp, '250') !== false) return ['success' => true];
+  return ['error' => 'SMTP send failed: ' . trim($dataResp)];
 }
 
 // Returns ['success'=>true, …] or ['error'=>'…'] (internal detail — log it,
@@ -104,7 +155,7 @@ function sendSMTP($toEmail, $toName, $subject, $htmlBody) {
 
   // Build RFC 2822 message
   $boundary = md5(uniqid((string)mt_rand(), true));
-  $msgId    = '<' . uniqid() . '@hamaraservice.in>';
+  $msgId    = '<' . uniqid() . '@hamaraservice.com>';
   $date     = date('r');
 
   $headers  = "Date: $date\r\n";
@@ -141,48 +192,27 @@ function sendSMTP($toEmail, $toName, $subject, $htmlBody) {
     }
     return ['success' => true, 'to' => $toEmail, 'subject' => $subject];
   }
-  if ($user === '' || $pass === '') return ['error' => 'SMTP not configured'];
-
-  // Open SMTP socket
-  $errno = 0; $errstr = '';
-  $sock = @stream_socket_client("tcp://$host:$port", $errno, $errstr, 15);
-  if (!$sock) return ['error' => "SMTP connect failed: $errstr ($errno)"];
-
-  stream_set_timeout($sock, 15);
-
-  smtp_read($sock);                                                      // 220 greeting
-  smtp_send($sock, "EHLO hamaraservice.in");                            // EHLO
-  smtp_send($sock, "STARTTLS");                                         // STARTTLS
-  if (!@stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-    fclose($sock);
-    return ['error' => 'SMTP TLS failed'];
-  }
-  smtp_send($sock, "EHLO hamaraservice.in");                            // Re-EHLO after TLS
-  smtp_send($sock, "AUTH LOGIN");                                       // AUTH
-  smtp_send($sock, base64_encode($user));                               // username
-  $authResp = smtp_send($sock, base64_encode($pass));                   // password
-
-  if (strpos($authResp, '235') === false) {
-    fclose($sock);
-    return ['error' => 'SMTP auth failed. Check SMTP_USER / SMTP_PASS in hs-secrets.php'];
+  $errors = [];
+  if ($user !== '' && $pass !== '') {
+    $data = $headers . "\r\n" . $message;
+    // 587 + STARTTLS first, then 465 (implicit TLS) — some hosts block one of them
+    $r = smtpSession('tls', $host, $port, $user, $pass, $from, $toEmail, $data);
+    if (empty($r['success']) && empty($r['auth']) && $port != 465) {
+      $errors[] = $r['error'];
+      $r = smtpSession('ssl', $host, 465, $user, $pass, $from, $toEmail, $data);
+    }
+    if (!empty($r['success'])) return ['success' => true, 'to' => $toEmail, 'subject' => $subject, 'via' => 'smtp'];
+    $errors[] = $r['error'];
+  } else {
+    $errors[] = 'SMTP not configured (SMTP_USER / SMTP_PASS empty in hs-secrets.php)';
   }
 
-  smtp_send($sock, "MAIL FROM:<$from>");
-  $rcpt = smtp_send($sock, "RCPT TO:<$toEmail>");
-  if (strpos($rcpt, '25') !== 0) {
-    smtp_send($sock, "QUIT");
-    fclose($sock);
-    return ['error' => 'SMTP recipient rejected: ' . trim($rcpt)];
+  // Fallback: the web server's own mail() (works on Hostinger without a password)
+  if (mailFallbackAvailable()) {
+    $mh = preg_replace('/^(To|Subject):.*\r\n/mi', '', $headers);
+    $ok = @mail($toEmail, "=?UTF-8?B?" . base64_encode($subject) . "?=", $message, rtrim($mh, "\r\n"), '-f' . $from);
+    if ($ok) return ['success' => true, 'to' => $toEmail, 'subject' => $subject, 'via' => 'mail', 'smtp_error' => implode(' | ', $errors)];
+    $errors[] = 'PHP mail() failed';
   }
-  smtp_send($sock, "DATA");
-  // dot-stuffing (RFC 5321 §4.5.2) — base64 bodies never start with '.', headers might
-  fwrite($sock, preg_replace('/^\./m', '..', $headers . "\r\n" . $message) . "\r\n.\r\n");
-  $dataResp = smtp_read($sock);
-  smtp_send($sock, "QUIT");
-  fclose($sock);
-
-  if (strpos($dataResp, '250') !== false) {
-    return ['success' => true, 'to' => $toEmail, 'subject' => $subject];
-  }
-  return ['error' => 'SMTP send failed: ' . trim($dataResp)];
+  return ['error' => implode(' | ', $errors)];
 }

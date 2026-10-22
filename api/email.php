@@ -62,6 +62,16 @@ switch ($type) {
     );
     break;
 
+  // 5. Admin panel "Send test email" — shows the real error so it can be fixed
+  case 'test': {
+    $to = trim((string)($body['to'] ?? '')) ?: ADMIN_EMAIL;
+    $r  = sendSMTP($to, 'HamaraService Admin', 'HamaraService test email', emailBase('Test email',
+      '<p style="color:#374151;line-height:1.7;margin:0;">If you can read this, HamaraService emails (registration codes, alerts) are working.</p>'));
+    if (empty($r['success'])) err('Email NOT sent: ' . ($r['error'] ?? 'unknown error'), 502);
+    ok(['sent' => true, 'to' => $to, 'via' => $r['via'] ?? 'smtp',
+        'smtp_configured' => SMTP_USER !== '' && SMTP_PASS !== '', 'smtp_error' => $r['smtp_error'] ?? '']);
+  }
+
   default:
     http_response_code(400);
     echo json_encode(['error' => 'Unknown email type: '.$type]);
