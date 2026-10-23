@@ -1291,7 +1291,7 @@ footer .hs-fl a:hover{color:#fff}
   </a>
 </nav>
 
-<script src="/js/hs-site.js?v=20261023"></script>
+<script src="/js/hs-site.js?v=20261024"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // Customer accounts, bookings and payments live in the HamaraService apps (web app only when WEB_LOGIN_MODE='web')
@@ -1807,7 +1807,7 @@ function renderServicesGrid() {
         + '<div class="svc-price-tag" id="ptag-'+escHtml(s.id)+'">' + priceTagHtml(s) + '</div>'
       + '</div>'
       + '<span class="svc-more">Prices &amp; details ›</span>'
-      + '<button class="svc-book" onclick="event.stopPropagation();HS_getApp(\'customer\')">Book in App →</button>'
+      + '<button class="svc-book" onclick="event.stopPropagation();HS_getApp(\'customer\',\'?svc=' + encodeURIComponent(s.id || '') + '\')">' + (window.HS_device && HS_device() === 'ios' ? 'Book online →' : 'Book in App →') + '</button>'
       + '</div>';
   }).join('');
   if (btn) {
@@ -1983,6 +1983,6 @@ document.addEventListener('touchstart', function(){
   if(navigator.vibrate) navigator.vibrate(10);
 },{passive:true});
 </script>
-<script src="/js/hs-track.js?v=20261023" defer></script>
+<script src="/js/hs-track.js?v=20261024" defer></script>
 </body>
 </html>

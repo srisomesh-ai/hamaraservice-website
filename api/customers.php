@@ -305,7 +305,9 @@ switch ($action) {
     $fcm  = $b['fcm_token'] ?? '';
     if (empty($fcm)) err('fcm_token required');
 
-    $db->prepare("UPDATE customers SET fcm_token = ? WHERE id = ?")
+    // platform=web: browser / iPhone Home Screen token, kept apart from the app's
+    $col = ($b['platform'] ?? '') === 'web' ? 'web_push_token' : 'fcm_token';
+    $db->prepare("UPDATE customers SET $col = ? WHERE id = ?")
        ->execute([$fcm, $user['uid']]);
 
     ok(['updated' => true]);

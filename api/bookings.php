@@ -64,7 +64,7 @@ function expireStaleQuotes($db) {
             WHERE id = ? AND status IN ('price_quoted','negotiation_final')");
         $u->execute([$r['id']]);
         if ($u->rowCount() === 1 && !empty($r['provider_id'])) {
-            sendPush(getFcm($db, 'providers', $r['provider_id']), "Quote expired ⌛",
+            notifyUser($db, 'providers', $r['provider_id'], "Quote expired ⌛",
               "The customer did not confirm within " . QUOTE_TTL_MIN . " minutes. The job was released.",
               ['event'=>'booking_released','bookingId'=>$r['id']]);
         }
@@ -267,12 +267,11 @@ switch ($action) {
       $blng = (float)($b['lng'] ?? 0);
       $svcId = $b['svc_id'];
       $pstmt = $db->prepare("
-        SELECT p.id, p.fcm_token,
+        SELECT p.id,
                COALESCE(NULLIF(p.base_lat, 0), p.lat) AS lat, COALESCE(NULLIF(p.base_lng, 0), p.lng) AS lng,
                p.radius_km, p.city, p.areas
         FROM providers p
         WHERE p.status = 'approved' AND p.available = 1
-          AND p.fcm_token IS NOT NULL AND p.fcm_token != ''
           AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
           AND (
             NOT EXISTS (SELECT 1 FROM provider_services x WHERE x.provider_id = p.id)
@@ -289,7 +288,7 @@ switch ($action) {
           $ok = ($city === '' || strpos($hay, strtolower($city)) !== false);
         }
         if (!$ok) continue;
-        sendPush($pr['fcm_token'], "New Job Nearby 🔔",
+        notifyUser($db, 'providers', $pr['id'], "New Job Nearby 🔔",
           "{$b['svc_name']} request near you. Open to quote your price.",
           ['event'=>'new_booking','bookingId'=>$id,'role'=>'provider','alert'=>'1']);
       }
@@ -389,7 +388,7 @@ switch ($action) {
     $upd->execute([$prov['id'], $me['name'], $price, $id]);
     if ($upd->rowCount() !== 1) err('Another provider already took this job', 409);
 
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Provider Quoted ₹$price 💰",
       "{$me['name']} quoted ₹$price for your booking. Tap to view.",
       ['event'=>'price_quoted','quotedPrice'=>"$price",'bookingId'=>$id]);
@@ -410,7 +409,7 @@ switch ($action) {
       WHERE id = ? AND status = 'price_quoted'
     ")->execute([$counter, $bk['id']]);
 
-    sendPush(getFcm($db, 'providers', $bk['provider_id']),
+    notifyUser($db, 'providers', $bk['provider_id'],
       "Price Negotiation 💬", "Customer countered with ₹$counter. Respond now.",
       ['event'=>'price_negotiation','counterPrice'=>"$counter",'bookingId'=>$bk['id'],'role'=>'provider','alert'=>'1']);
 
@@ -431,7 +430,7 @@ switch ($action) {
       WHERE id = ? AND status = 'negotiating'
     ")->execute([$price, $bk['id']]);
 
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Final Price Offer 💰", "Provider's final price: ₹$price. Accept or search another.",
       ['event'=>'negotiation_final','finalPrice'=>"$price",'bookingId'=>$bk['id']]);
 
@@ -456,7 +455,7 @@ switch ($action) {
     $upd->execute([$confirmed, $confirmed, $bk['id']]);
     if ($upd->rowCount() !== 1) err('Booking changed, refresh', 409);
 
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Price Confirmed ✅", "Provider accepted ₹$confirmed. We'll notify you when they start the trip.",
       ['event'=>'price_confirmed','confirmedPrice'=>"$confirmed",'bookingId'=>$bk['id']]);
 
@@ -482,7 +481,7 @@ switch ($action) {
     $upd->execute([$price, $price, $bk['id']]);
     if ($upd->rowCount() !== 1) err('Booking changed, refresh', 409);
 
-    sendPush(getFcm($db, 'providers', $bk['provider_id']),
+    notifyUser($db, 'providers', $bk['provider_id'],
       "Job Confirmed ✅", "Customer confirmed ₹$price. Open the job and tap Start trip.",
       ['event'=>'booking_confirmed','confirmedPrice'=>"$price",'bookingId'=>$bk['id'],'role'=>'provider','alert'=>'1']);
 
@@ -505,7 +504,7 @@ switch ($action) {
     ")->execute([$bk['id']]);
 
     if (!empty($bk['provider_id'])) {
-      sendPush(getFcm($db, 'providers', $bk['provider_id']),
+      notifyUser($db, 'providers', $bk['provider_id'],
         "Booking Released", "Customer chose another provider.",
         ['event'=>'booking_released','bookingId'=>$bk['id']]);
     }
@@ -526,7 +525,7 @@ switch ($action) {
       WHERE id = ?
     ")->execute([$bk['id']]);
 
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "🔍 Searching Another Provider", "Provider declined. We are finding another provider for you.",
       ['event'=>'provider_declined','bookingId'=>$bk['id']]);
     ok(['status'=>'searching']);
@@ -540,7 +539,7 @@ switch ($action) {
     $db->prepare("UPDATE bookings SET travel_started_at = COALESCE(travel_started_at, CURRENT_TIMESTAMP) WHERE id = ?")
        ->execute([$bk['id']]);
     if (empty($bk['travel_started_at'])) {
-      sendPush(getFcm($db, 'customers', $bk['customer_id']),
+      notifyUser($db, 'customers', $bk['customer_id'],
         "Provider is on the way 🛵",
         ($bk['provider_name'] ?: 'Your provider') . " has started the trip to your location.",
         ['event'=>'provider_on_the_way','bookingId'=>$bk['id']]);
@@ -559,7 +558,7 @@ switch ($action) {
                          travel_started_at = COALESCE(travel_started_at, CURRENT_TIMESTAMP),
                          arrived_at = COALESCE(arrived_at, CURRENT_TIMESTAMP) WHERE id = ?")
        ->execute([$otp, $bk['id']]);
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Provider has arrived 🔔 Start OTP: $otp",
       "Share this code with " . ($bk['provider_name'] ?: 'your provider') . " to start the work.",
       ['event'=>'start_otp_ready','bookingId'=>$bk['id']]);
@@ -594,7 +593,7 @@ switch ($action) {
       WHERE id = ? AND status = 'confirmed'
     ")->execute([$bk['id']]);
 
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Service Started ✅", "OTP verified. Your service has started.",
       ['event'=>'service_started','bookingId'=>$bk['id']]);
 
@@ -614,7 +613,7 @@ switch ($action) {
     }
     $cotp = $bk['completion_otp'] ?: makeOtp();
     $db->prepare("UPDATE bookings SET completion_otp = ?, otp_attempts = 0 WHERE id = ?")->execute([$cotp, $bk['id']]);
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Work finished 🔑 Completion OTP: $cotp", "Share this code with your provider only if you are satisfied with the work.",
       ['event'=>'completion_otp_ready','bookingId'=>$bk['id']]);
     ok(['requested'=>true]);
@@ -651,7 +650,7 @@ switch ($action) {
     $db->prepare("UPDATE providers SET completed_bookings = completed_bookings + 1, total_bookings = total_bookings + 1 WHERE id = ?")
        ->execute([$prov['id']]);
 
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Service Completed 🎉", "Please pay ₹$amount — online in the app or in cash to your provider.",
       ['event'=>'completed','bookingId'=>$bk['id'],'amount'=>(string)$amount]);
 
@@ -675,7 +674,7 @@ switch ($action) {
           '. Ask the customer to pay online, or add money to your wallet.', 402);
     }
     settleBooking($db, $bk, 'cash');
-    sendPush(getFcm($db, 'customers', $bk['customer_id']),
+    notifyUser($db, 'customers', $bk['customer_id'],
       "Payment Recorded ✅", "Cash payment of ₹" . (int)$bk['amount'] . " recorded. Please rate your provider.",
       ['event'=>'payment_done','bookingId'=>$bk['id']]);
     ok(['payment_status'=>'paid','payment_method'=>'cash','commission_due'=>(int)$bk['commission_amt']]);
@@ -724,7 +723,7 @@ switch ($action) {
 
     if ($bk['payment_status'] !== 'paid') {
       settleBooking($db, $bk, 'online', $pid);
-      sendPush(getFcm($db, 'providers', $bk['provider_id']),
+      notifyUser($db, 'providers', $bk['provider_id'],
         "Payment Received 💰", "Customer paid ₹" . (int)$bk['amount'] . " online. ₹" . (int)$bk['provider_earns'] . " added to your wallet.",
         ['event'=>'payment_received','bookingId'=>$bk['id'],'amount'=>(string)$bk['provider_earns']]);
     }
@@ -845,12 +844,12 @@ switch ($action) {
 
     // Admin cancellations: the customer gets the admin's note right away
     if ($by === 'admin') {
-      sendPush(getFcm($db, 'customers', $bk['customer_id']), "Booking cancelled — {$bk['svc_name']}",
+      notifyUser($db, 'customers', $bk['customer_id'], "Booking cancelled — {$bk['svc_name']}",
         $reason, ['event'=>'booking_cancelled','bookingId'=>$bk['id']]);
     }
 
     if (!empty($bk['provider_id'])) {
-      sendPush(getFcm($db, 'providers', $bk['provider_id']), "Booking Cancelled ❌",
+      notifyUser($db, 'providers', $bk['provider_id'], "Booking Cancelled ❌",
         "The {$bk['svc_name']} booking was cancelled.",
         ['event'=>'booking_cancelled','bookingId'=>$bk['id']]);
     }
@@ -902,7 +901,7 @@ switch ($action) {
       $r = $agg->fetch();
       $db->prepare("UPDATE providers SET rating = ?, review_count = ? WHERE id = ?")
          ->execute([round((float)$r['a'], 1), (int)$r['c'], $bk['provider_id']]);
-      sendPush(getFcm($db, 'providers', $bk['provider_id']), "New Review ⭐", "$rating★ from a customer",
+      notifyUser($db, 'providers', $bk['provider_id'], "New Review ⭐", "$rating★ from a customer",
         ['event'=>'new_review','bookingId'=>$bk['id'],'rating'=>(string)$rating]);
     }
     ok(['rating'=>$rating]);
@@ -915,7 +914,7 @@ switch ($action) {
     $bk   = bookingFor($db, $b['booking_id'] ?? '', $prov, ['completed']);
     if ($bk['payment_status'] !== 'paid') err('PAYMENT_PENDING');
     $db->prepare("UPDATE bookings SET review_requested = 1 WHERE id = ?")->execute([$bk['id']]);
-    sendPush(getFcm($db, 'customers', $bk['customer_id']), "Review Request ⭐",
+    notifyUser($db, 'customers', $bk['customer_id'], "Review Request ⭐",
       ($bk['provider_name'] ?: 'Your provider') . " is asking for a review.",
       ['event'=>'review_requested','bookingId'=>$bk['id']]);
     ok(['review_requested'=>1]);

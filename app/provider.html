@@ -6,7 +6,11 @@
 <meta name="theme-color" content="#0f4c5c">
 <meta name="robots" content="noindex">
 <title>HamaraService — Provider</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="/app/provider.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HS Partner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 :root{--teal:#0f4c5c;--teal2:#1a6b7e;--amber:#f26b1d;--bg:#eef5f6;--card:#fff;--txt:#1a2b32;--muted:#6b7f87;--green:#16a34a;--red:#dc2626;--yellow:#f59e0b;--r:14px}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -106,8 +110,8 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 @keyframes notifSlide{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
 </style>
-<script src="/js/hs-site.js?v=20261023"></script>
-<!-- HS-APP-GATE: shown when WEB_LOGIN_MODE is 'app' (default). Set WEB_LOGIN_MODE='web' in hs-secrets.php to re-enable the web app below. -->
+<script src="/js/hs-site.js?v=20261024"></script>
+<!-- HS-APP-GATE: shown on devices that have our app (Android) — iPhone/iPad and computers use the web app (WEB_ACCESS in hs-secrets.php). -->
 <style>
 html.hs-gate-wait body>*,html.hs-gate body>*:not(#hsAppGate){display:none!important}
 #hsAppGate{display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#134F5C 0%,#1B6B7A 60%,#2a8ba0 100%);color:#fff;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
@@ -128,13 +132,13 @@ document.documentElement.classList.add('hs-gate-wait');
 HS_site(function (c) {
   var r = document.documentElement;
   r.classList.remove('hs-gate-wait');
-  if (HS_appMode(c)) r.classList.add('hs-gate');
+  if (!HS_webAllowed(c)) r.classList.add('hs-gate');   // Android: use the app
 });
 </script>
 <!-- /HS-APP-GATE -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="/js/hs-map.js?v=20261023"></script>
-<script src="/js/hs-otp.js?v=20261023"></script>
+<script src="/js/hs-map.js?v=20261024"></script>
+<script src="/js/hs-otp.js?v=20261024"></script>
 <script>
 (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once"):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
   key: "AIzaSyApCgAtEZ7rlsaRH8_Ec4H-paU6ueMjzkM", v: "weekly"
@@ -146,64 +150,11 @@ google.maps.importLibrary("places").then(function(){window._placesReady=true;});
 <!-- Firebase Cloud Messaging -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
-<script>
-window.HS_FCM = (function(){
-  // ⚠️ Paste your Web Push VAPID key from Firebase Console →
-  //    Project Settings → Cloud Messaging → Web Push certificates → Key pair
-  var VAPID_KEY = "BEh61gETD6MGB7RkBk-bBVj6wRPffMUr27woo3A3_MShHaDZAYdv5tcUR6xfedLd5a8rkKzHVuvmBFaGNLbwyS8";
-  var cfg = {
-    apiKey: "AIzaSyDpMpewyKVlfsfSeKfoS3GJf0V_t14Qb7k",
-    authDomain: "hamaraservice-s009.firebaseapp.com",
-    projectId: "hamaraservice-s009",
-    storageBucket: "hamaraservice-s009.firebasestorage.app",
-    messagingSenderId: "1064274729048",
-    // TODO(config): replace "web:placeholder" with the real Web App ID from Firebase Console →
-    //   Project settings → General → Your apps (web). FCM web push will not work until this is set.
-    appId: "1:1064274729048:web:placeholder"
-  };
-  var messaging=null;
-  var _saveFn=null;
-  // Native Android token bridge
-  window.onAndroidFcmToken=function(tok){ if(tok&&_saveFn){_saveFn(tok);} };
-  function init(role, saveFn){
-    _saveFn=saveFn;
-    try{
-      // If inside the Android wrapper, use the NATIVE FCM token (real system notifications)
-      if(window.AndroidBridge && window.AndroidBridge.isAndroidApp && window.AndroidBridge.isAndroidApp()){
-        var nt=window.__ANDROID_FCM_TOKEN||(window.AndroidBridge.getFcmToken&&window.AndroidBridge.getFcmToken());
-        if(nt){saveFn(nt);console.log('[FCM] using native Android token');}
-        return; // native handles background notifications with sound
-      }
-      if(!window.firebase||!firebase.messaging){return;}
-      if(VAPID_KEY==="REPLACE_WITH_VAPID_KEY"){console.warn("[FCM] VAPID key not set — push disabled, in-app popups still work");return;}
-      firebase.initializeApp(cfg);
-      messaging=firebase.messaging();
-      if(!('Notification' in window)){return;}
-      Notification.requestPermission().then(function(perm){
-        if(perm!=='granted'){return;}
-        navigator.serviceWorker.register('/app/firebase-messaging-sw.js').then(function(reg){
-          messaging.getToken({vapidKey:VAPID_KEY, serviceWorkerRegistration:reg}).then(function(token){
-            if(token&&saveFn){saveFn(token);}
-            console.log('[FCM] token ok');
-          }).catch(function(e){console.warn('[FCM] getToken failed',e);});
-        });
-      });
-      // foreground messages → in-app popup
-      messaging.onMessage(function(payload){
-        var d=(payload.data||payload.notification||{});
-        if(window.popNotify)popNotify('🔔',d.title||'HamaraService',d.body||'','var(--teal)');
-        if(typeof pollJobs==='function'){try{pollJobs();}catch(e){}}
-      });
-    }catch(e){console.warn('[FCM] init error',e);}
-  }
-  return {init:init};
-})();
-</script>
+<script src="/js/hs-webpush.js?v=20261024"></script>
 
 <link rel="icon" href="/favicon.ico" sizes="48x48"/>
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-<link rel="manifest" href="/site.webmanifest"/>
 </head>
 <body>
 <!-- HS-APP-GATE panel -->
@@ -562,7 +513,7 @@ function regFromLogin(){startRegister();$('rEmail').value=window._loginEmail||''
 function logout(){localStorage.removeItem('hs_prov_token');localStorage.removeItem('hs_prov_me');clearInterval(pollTimer);stopLocationPings();location.href='index.html';}
 function route(){
   if(!TOKEN||!ME.id){show('pgAuth');return;}
-  if(window.HS_FCM)HS_FCM.init('provider',function(tok){api('providers.php','fcm',{fcm_token:tok}).catch(function(){});});
+  if(window.HS_PUSH)HS_PUSH.init('provider',function(tok){api('providers.php','fcm',{fcm_token:tok,platform:'web'}).catch(function(){});});
   // Always verify with server — never trust stale local data
   api('providers.php','get&id='+encodeURIComponent(ME.id)).then(function(res){
     if(!res.success||!res.data){logout();return;}
@@ -1046,7 +997,7 @@ function pDetect(b){
   if(!b){return;}
   var st=b.status;
   if(_pLastStatus!==null&&st!==_pLastStatus){
-    if(st==='confirmed')popNotify('✅','Customer Confirmed!','₹'+(b.confirmed_price||b.quoted_price||0)+' — head to the location','#1a8a4a');
+    if(st==='confirmed')popNotify('✅','Customer Confirmed!','₹'+(b.confirmed_price||b.quoted_price||0)+' — open the job and tap Start trip','#1a8a4a');
     else if(st==='searching'&&_pLastStatus==='price_quoted')popNotify('❌','Customer Declined','They chose to search another provider','#c0392b');
     else if(st==='cancelled')popNotify('❌','Booking Cancelled','This job was cancelled','#c0392b');
   }
@@ -1056,15 +1007,28 @@ function pDetect(b){
   _pLastStatus=st;_pLastPay=b.payment_status;
 }
 
-function navBtn(b){
-  // Only show once the job is confirmed (provider is heading to customer)
-  if(['price_quoted','negotiating','negotiation_final','active','completed'].indexOf(b.status)>-1)return '';
+// Google Maps directions to the customer (opens the Maps app on phones)
+function navUrl(b){
   var dest='';
-  if(b.lat&&b.lng&&parseFloat(b.lat)!=0){dest=parseFloat(b.lat)+','+parseFloat(b.lng);}
-  else if(b.address){dest=encodeURIComponent(b.address);}
-  if(!dest)return '';
-  var url='https://www.google.com/maps/dir/?api=1&destination='+dest+'&travelmode=driving';
-  return '<a class="btn teal" style="text-decoration:none;margin-bottom:10px" href="'+url+'" target="_blank">🧭 Navigate to Customer</a>';
+  if(b&&b.lat&&b.lng&&parseFloat(b.lat)!=0){dest=parseFloat(b.lat)+','+parseFloat(b.lng);}
+  else if(b&&b.address){dest=encodeURIComponent([b.address,b.city].filter(Boolean).join(', '));}
+  return dest?'https://www.google.com/maps/dir/?api=1&destination='+dest+'&travelmode=driving':'';
+}
+function openNav(){var u=navUrl(activeJob);if(u)window.open(u,'_blank');else toast('Customer location not available');}
+function navBtn(b){ return ''; }   // navigation is part of the Start trip steps
+function startTrip(){
+  var u=navUrl(activeJob), w=u?window.open('about:blank','_blank'):null;   // open now: pop-up blockers allow it only inside the tap
+  api('bookings.php','start_trip',{booking_id:activeJob.id}).then(function(res){
+    if(res.success){toast('🛵 Trip started — customer notified');if(w)w.location.href=u;pollJobs();}
+    else{if(w)w.close();toast(res.error||'Failed');}
+  }).catch(function(){if(w)w.close();toast('Network error');});
+}
+function requestStartOtp(){
+  var again=activeJob&&activeJob.start_otp_requested==1;
+  api('bookings.php','request_start_otp',{booking_id:activeJob.id}).then(function(res){
+    if(res.success){toast(again?'OTP sent to the customer again':'🔑 Customer received the Start OTP — ask them for it');pollJobs();}
+    else toast(res.error||'Failed');
+  }).catch(function(){toast('Network error');});
 }
 
 var _jobRenderKey='',_pqDeadline=0,_pqTick=null;
@@ -1090,7 +1054,7 @@ function renderActiveJob(){
   var b=activeJob,st=b.status;
   // Redraw only when something visible changed — the 4 s poll used to rebuild
   // the card every time and wipe the OTP the provider was typing.
-  var key=[b.id,st,b.payment_status,b.payment_method,b.completion_otp_requested,b.quoted_price,b.counter_price,b.final_price,
+  var key=[b.id,st,b.payment_status,b.payment_method,b.completion_otp_requested,b.start_otp_requested,b.travel_started_at,b.quoted_price,b.counter_price,b.final_price,
            b.confirmed_price,b.amount,b.started_at,b.completed_at,b.rating,b.review_requested,b.cash_allowed].join('|');
   if(key===_jobRenderKey&&el.innerHTML)return;
   _jobRenderKey=key;
@@ -1146,9 +1110,21 @@ function _renderActiveJobNow(el,b,st){
   } else if(st==='negotiation_final'){
     h+='<div style="background:#eef7fa;border-radius:10px;padding:10px;font-size:13.5px">⏳ Final price ₹'+(b.final_price||0)+' sent — waiting for customer<div class="pq-left" style="font-weight:800;margin-top:4px;color:#b45309"></div></div>'+releaseBtn;
   } else if(st==='confirmed'){
-    h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">✅ Customer confirmed. Go to the customer and ask them for the <b>Start OTP</b> shown in their app.</div>'
-      +'<label>Start OTP (from customer)</label><input class="inp" id="jobOtp" inputmode="numeric" maxlength="6" placeholder="OTP from customer">'
-      +'<button class="btn teal" onclick="verifyOtp()">🔑 Verify & Start Job</button>'+releaseBtn;
+    // Steps: Start trip → I've arrived (customer gets the Start OTP) → enter it
+    if(!b.travel_started_at&&b.start_otp_requested!=1){
+      h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">✅ Customer confirmed the job. Tap <b>Start trip</b> when you leave — the customer will be told you are on the way.</div>'
+        +'<button class="btn green" onclick="startTrip()">🧭 Start trip &amp; navigate</button>'
+        +'<div style="height:8px"></div><button class="btn ghost" onclick="requestStartOtp()">📍 Already at the location</button>'+releaseBtn;
+    } else if(b.start_otp_requested!=1){
+      h+='<div style="background:#e6f4f6;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">🛵 On the way'+(b.travel_started_at?' since <b>'+pTime(b.travel_started_at)+'</b>':'')+'. When you reach the customer, tap <b>I\'ve arrived</b> — they will get the Start OTP.</div>'
+        +'<button class="btn green" onclick="requestStartOtp()">📍 I\'ve arrived — send Start OTP</button>'
+        +'<div style="height:8px"></div><button class="btn ghost" onclick="openNav()">🧭 Open navigation</button>'+releaseBtn;
+    } else {
+      h+='<div style="background:#e8f7ee;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px">🔑 The customer has received the <b>Start OTP</b>. Ask them for it and enter it here.</div>'
+        +'<label>Start OTP (from customer)</label><input class="inp" id="jobOtp" inputmode="numeric" maxlength="6" placeholder="OTP from customer">'
+        +'<button class="btn teal" onclick="verifyOtp()">🔑 Verify & Start Job</button>'
+        +'<div style="height:8px"></div><button class="btn ghost" onclick="requestStartOtp()">Resend OTP to customer</button>'+releaseBtn;
+    }
   } else if(st==='active'){
     if(b.started_at)h+='<div class="job-timer"><span style="font-size:22px">⏱️</span><div style="flex:1;font-size:15px;font-weight:800">Job in progress</div><div class="t" id="jobTimer">00:00:00</div></div>'
       +'<div style="font-size:12.5px;margin-bottom:8px">▶️ Work started at <b>'+pTime(b.started_at)+'</b></div>';
@@ -1692,7 +1668,7 @@ function savePrices(svcId){
 }
 
 // ── INIT ──
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+if(window.HS_PUSH)HS_PUSH.registerWorker();
 if(TOKEN&&ME.id){route();}
 else if(/[?&](register|tab=register)\b/.test(location.search)){startRegister();}
 else {show('pgAuth');}

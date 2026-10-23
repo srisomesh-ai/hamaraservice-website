@@ -83,7 +83,7 @@ release (provider, any state before active) → searching
 | `update` | POST | provider | `name, phone, whatsapp, gender, experience, bio, address, city, lat, lng, radius_km, available, upi_id, areas, photo` |
 | `available` | POST | provider | `{available: 0|1}`; going online requires approved (403 otherwise) |
 | `location` | POST | provider | `{lat, lng}` — send every 30–60 s while online / on a job |
-| `fcm` | POST | provider | `{fcm_token}` |
+| `fcm` | POST | provider | `{fcm_token, platform?}` — `platform:'web'` stores the browser / iPhone Home Screen token (`web_push_token`) apart from the app token |
 | `nearby` | GET | public | `lat, lng, svc_id, radius, city` — no phone numbers |
 | `services` | GET `id` / POST | public / provider | POST `services:[{svc_id, enabled, min_price, max_price}]` |
 | `save_option_prices` / `get_option_prices` | POST/GET | provider | unchanged |
@@ -197,3 +197,11 @@ Retention (`vsCleanup`, at most once a day piggy-backed on track.php / visitors.
 Config (`hs-secrets.php`): `IPINFO_TOKEN` (optional, free ipinfo.io account = 50k/month; empty = unauthenticated, low daily limit), `IPINFO_URL` (default `https://ipinfo.io`), `TRUST_PROXY` (false), `VISITOR_IP_RETENTION_DAYS` (90), `VISITOR_PAGEVIEW_RETENTION_DAYS` (180), `TRACK_RATE_PER_MIN` (120).
 
 Admin panel → **Visitors** (green "online now" badge in the sidebar): KPI cards, top cities / sources / landing pages / pages / devices / campaigns, *Live now* table, filterable + paginated visitors table, tap a row for the visit timeline. Refreshed every 15 s. The admin panel is usable at phone width (sidebar becomes a ☰ drawer below 900 px; wide tables scroll inside their card).
+
+
+## Web access for iPhone / computers (until the iPhone apps are out)
+
+`/api/site.php` → `web_access` (`WEB_ACCESS`, default `ios,desktop`), `ios_customer_app_url` / `ios_provider_app_url` (`IOS_*_APP_URL`), `firebase_web_app_id` (`FIREBASE_WEB_APP_ID`), `firebase_vapid_key`.
+
+- Website buttons (`js/hs-site.js` `HS_getApp` / `HS_login`): Android → Play Store; iPhone/iPad → App Store when `IOS_*_APP_URL` is set, else the web apps `/app/customer.html`, `/app/provider.html`; computer → `/get-app.html` (Play + QR + "Continue on the web"). The web apps show a "use the app" gate on Android.
+- Notifications: every server notification goes through `notifyUser()` (api/db.php) → app push (`fcm_token`), web push (`web_push_token`, FCM `webpush` with a link to the web app) and — for users with no app token — an e-mail for the important events (`HS_EMAIL_EVENTS`), sent after the response. Web push needs `FIREBASE_WEB_APP_ID`; iPhone users must add the site to the Home Screen (iOS 16.4+) — the web apps guide them (`js/hs-webpush.js`). One service worker for `/app/`: `app/firebase-messaging-sw.js`.
