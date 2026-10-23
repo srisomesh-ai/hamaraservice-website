@@ -54,4 +54,8 @@ return [
     // Email OTP on registration. Turn on (true) only AFTER the updated customer
     // and partner apps are live on Play — old app versions can't send the token.
     'REQUIRE_EMAIL_OTP'   => false,
+
+    // New partners are approved automatically (true, the default) or wait
+    // for the admin's Approve button (false).
+    'AUTO_APPROVE_PROVIDERS' => true,
 ];

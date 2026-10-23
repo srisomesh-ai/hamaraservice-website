@@ -661,8 +661,11 @@ function regSubmit(body,otpToken){
     if(res.success){
       // auto-login to get a token (pending providers get one), then upload photo
       api('providers.php','login',{email:body.email,password:body.password}).then(function(lr){
-        if(lr.success){TOKEN=lr.data.token;ME=lr.data.provider||{id:res.data.id};localStorage.setItem('hs_prov_token',TOKEN);localStorage.setItem('hs_prov_me',JSON.stringify(ME));if(_photoData)uploadPhoto();}
-      }).catch(function(){});
+        if(lr.success){TOKEN=lr.data.token;ME=lr.data.provider||{id:res.data.id};localStorage.setItem('hs_prov_token',TOKEN);localStorage.setItem('hs_prov_me',JSON.stringify(ME));if(_photoData)uploadPhoto();
+          if(ME.status==='approved'){toast('🎉 Welcome! Your account is active');initDash();}}
+        else if(res.data&&res.data.status==='approved'){show('pgAuth');toast('✅ Registered! Please log in');}
+      }).catch(function(){if(res.data&&res.data.status==='approved'){show('pgAuth');toast('✅ Registered! Please log in');}});
+      if(res.data&&res.data.status==='approved'){toast('✅ Registered! Logging you in…');return;}
       $('pendName').textContent='Hi '+body.name+'! Application submitted.';show('pgPending');toast('✅ Registered! Waiting for approval');
     }
     else{

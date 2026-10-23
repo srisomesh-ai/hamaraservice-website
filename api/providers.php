@@ -86,13 +86,18 @@ switch ($action) {
       VALUES
         (:id, :name, :phone, :email, :whatsapp, :pwd,
          :gender, :exp, :bio, :idtype, :idnum,
-         :address, :city, :lat, :lng, :radius, :areas, 'pending')
+         :address, :city, :lat, :lng, :radius, :areas, :status)
     ");
+    // AUTO_APPROVE_PROVIDERS (default on): new partners can work right away;
+    // the admin can still suspend or reject them later.
+    $autoApprove = filter_var(hsCfg('AUTO_APPROVE_PROVIDERS', true), FILTER_VALIDATE_BOOLEAN);
+    $newStatus = $autoApprove ? 'approved' : 'pending';
     $stmt->execute([
       ':id'      => $id,
       ':name'    => $b['name'],
       ':phone'   => $b['phone'],
       ':email'   => strtolower($b['email']),
+      ':status'  => $newStatus,
       ':whatsapp'=> $b['whatsapp'] ?? $b['phone'],
       ':pwd'     => $hash,
       ':gender'  => $b['gender']     ?? '',
@@ -164,7 +169,9 @@ switch ($action) {
       . "ID:       $id
 
 "
-      . "Review at: https://hamaraservice.com/admin.html
+      . ($autoApprove ? "Auto-approved (AUTO_APPROVE_PROVIDERS). Check the ID and suspend if needed:\n"
+                      : "Review at: ")
+      . "https://hamaraservice.com/admin.html
 ";
     @mail('info@hamaraservice.com', $adminSubject, $adminBody,
       implode("
@@ -178,19 +185,20 @@ switch ($action) {
 
     // 2. Email to provider
     if (!empty($provEmail)) {
-      $provSubject = 'Application Received — HamaraService';
+      $provSubject = $autoApprove ? 'Welcome to HamaraService — your account is active'
+                                  : 'Application Received — HamaraService';
       $provBody = "Dear $provName,
 
 "
         . "Thank you for registering as a provider on HamaraService!
 
 "
-        . "Your application is under review. We will approve your account within 24-48 hours.
-
-"
+        . ($autoApprove ? "Your account is active. Go online in the app to start receiving jobs.\n\n"
+                        : "Your application is under review. We will approve your account within 24-48 hours.\n\n")
         . "Provider ID: $id\n"
         . "Services you selected: $svcNames\n\n"
-        . "Once approved, login at:
+        . ($autoApprove ? "Login at:" : "Once approved, login at:")
+        . "
 https://hamaraservice.com/app/provider.html
 
 "
@@ -212,8 +220,9 @@ HamaraService Team";
       );
     }
 
-    ok(['id' => $id, 'status' => 'pending',
-        'message' => 'Registration successful. Awaiting admin approval.']);
+    ok(['id' => $id, 'status' => $newStatus,
+        'message' => $autoApprove ? 'Registration successful. Your account is active.'
+                                  : 'Registration successful. Awaiting admin approval.']);
   }
 
   // ── CHECK EMAIL EXISTS ───────────────────────────────
@@ -379,8 +388,20 @@ HamaraService Team";
     if (empty($fcm)) err('fcm_token required');
     // platform=web: browser / iPhone Home Screen token, kept apart from the app's
     $col = ($b['platform'] ?? '') === 'web' ? 'web_push_token' : 'fcm_token';
+    $was = [];
+    try {
+      $q = $db->prepare("SELECT status, $col AS old_token, registered_at > (NOW() - INTERVAL 30 MINUTE) AS is_new FROM providers WHERE id = ?");
+      $q->execute([$prov['id']]);
+      $was = $q->fetch() ?: [];
+    } catch (Throwable $e) {}
     $db->prepare("UPDATE providers SET $col = ? WHERE id = ?")
        ->execute([$fcm, $prov['id']]);
+    // Auto-approved partner: the app (Play version without auto-approve
+    // support) still shows "under review" after registering, so tell them
+    // they can start — tapping the push opens the dashboard.
+    if (($was['status'] ?? '') === 'approved' && empty($was['old_token']) && !empty($was['is_new'])) {
+      notifyUser($db, 'providers', $prov['id'], 'Account Approved ✅', 'You can now go online and receive jobs.', ['event'=>'account_approved']);
+    }
     ok(['updated' => true]);
   }
 
