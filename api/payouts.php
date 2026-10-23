@@ -158,7 +158,7 @@ switch ($action) {
     $stmt = $db->prepare("SELECT p.*, pr.fcm_token FROM payouts p LEFT JOIN providers pr ON pr.id = p.provider_id WHERE p.id = ?");
     $stmt->execute([$id]);
     $payout = $stmt->fetch();
-    sendPush($payout['fcm_token'] ?? '', 'Payout Approved ✅', "₹{$payout['amount']} has been transferred to your account.",
+    notifyUser($db, 'providers', $payout['provider_id'], 'Payout Approved ✅', "₹{$payout['amount']} has been transferred to your account.",
       ['event'=>'payout_approved','amount'=>(string)$payout['amount']]);
 
     ok(['approved' => true, 'amount' => (int)$payout['amount']]);

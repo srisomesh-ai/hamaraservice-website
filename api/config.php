@@ -112,6 +112,19 @@ define('PROVIDER_APP_URL',  hsCfg('PROVIDER_APP_URL') ?: 'https://play.google.co
 // 'web'           = re-enables the website login + booking web app (code is kept).
 // The API (used by the Android apps) works the same in both modes.
 define('WEB_LOGIN_MODE',    hsCfg('WEB_LOGIN_MODE', 'app') === 'web' ? 'web' : 'app');
+// Devices that may use the web versions (/app/customer.html, /app/provider.html)
+// while there is no app for them: 'ios,desktop' (default), 'ios', 'desktop' or 'off'.
+// Android visitors always go to the Play Store.
+define('WEB_ACCESS', implode(',', array_values(array_intersect(['ios','desktop'],
+    array_map('trim', explode(',', strtolower((string)hsCfg('WEB_ACCESS', 'ios,desktop'))))))));
+// Firebase web app (web push for /app/*.html): Firebase Console → Project settings
+// → General → Your apps → Web app → appId. Empty = web push off (live in-page
+// alerts and e-mails still work). The VAPID key is Cloud Messaging → Web Push certificates.
+define('FIREBASE_WEB_APP_ID', (string)hsCfg('FIREBASE_WEB_APP_ID', ''));
+define('FIREBASE_VAPID_KEY',  (string)hsCfg('FIREBASE_VAPID_KEY', 'BEh61gETD6MGB7RkBk-bBVj6wRPffMUr27woo3A3_MShHaDZAYdv5tcUR6xfedLd5a8rkKzHVuvmBFaGNLbwyS8'));
+// App Store links for the iPhone apps — once set, iPhone visitors go there instead of the web.
+define('IOS_CUSTOMER_APP_URL', (string)hsCfg('IOS_CUSTOMER_APP_URL', ''));
+define('IOS_PROVIDER_APP_URL', (string)hsCfg('IOS_PROVIDER_APP_URL', ''));
 
 // ── Website visitor analytics (js/hs-track.js → api/track.php, admin: api/visitors.php) ──
 // IP → city/region/country/ISP via IPinfo, cached per IP for 30 days.

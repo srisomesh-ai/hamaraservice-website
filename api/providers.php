@@ -364,8 +364,9 @@ HamaraService Team";
     $b    = getBody();
     $fcm  = $b['fcm_token'] ?? '';
     if (empty($fcm)) err('fcm_token required');
-
-    $db->prepare("UPDATE providers SET fcm_token = ? WHERE id = ?")
+    // platform=web: browser / iPhone Home Screen token, kept apart from the app's
+    $col = ($b['platform'] ?? '') === 'web' ? 'web_push_token' : 'fcm_token';
+    $db->prepare("UPDATE providers SET $col = ? WHERE id = ?")
        ->execute([$fcm, $prov['id']]);
     ok(['updated' => true]);
   }
@@ -606,7 +607,7 @@ HamaraService Team";
         ])
       );
     }
-    sendPush($p['fcm_token'] ?? '', 'Account Approved ✅', 'You can now go online and receive jobs.', ['event'=>'account_approved']);
+    notifyUser($db, 'providers', $id, 'Account Approved ✅', 'You can now go online and receive jobs.', ['event'=>'account_approved']);
     ok(['approved' => true]);
   }
 

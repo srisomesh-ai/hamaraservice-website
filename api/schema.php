@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-22-1';
+const HS_SCHEMA_VERSION = '2026-10-23-1';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -35,6 +35,9 @@ function ensureSchema(PDO $db) {
         "ALTER TABLE bookings ADD INDEX idx_rzp_order (razorpay_order_id)",
         // "No provider found" admin alert sent (api/alerts_lib.php)
         "ALTER TABLE bookings ADD COLUMN unassigned_alerted_at DATETIME NULL",
+        // web push tokens (browser / iPhone Home Screen) — separate from the app token
+        "ALTER TABLE customers ADD COLUMN web_push_token VARCHAR(255) NULL",
+        "ALTER TABLE providers ADD COLUMN web_push_token VARCHAR(255) NULL",
         // provider trip: "Start trip" → "I've arrived" (start OTP sent then)
         "ALTER TABLE bookings ADD COLUMN travel_started_at DATETIME NULL",
         "ALTER TABLE bookings ADD COLUMN arrived_at DATETIME NULL",

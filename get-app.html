@@ -57,6 +57,7 @@ a{color:inherit}
 .soon b{display:block;color:var(--teal2);font-size:15px;margin-bottom:6px}
 .wa{display:block;margin-top:8px;background:#25D366;color:#fff;text-decoration:none;font-weight:800;border-radius:10px;padding:11px;font-size:15px;text-align:center}
 .web{display:block;text-align:center;margin-top:10px;font-weight:700;color:var(--teal);font-size:14px}
+.web.primary{background:var(--brand,#E8651A);color:#fff;padding:14px;border-radius:14px;font-size:16px;font-weight:800;text-decoration:none}
 .more{max-width:960px;margin:22px auto 0;padding:0 16px 30px;font-size:14px;color:var(--muted);text-align:center}
 .more a{color:var(--teal);font-weight:700}
 .hide{display:none!important}
@@ -74,7 +75,7 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
     <a class="home" href="/">← Home</a>
   </div>
   <h1>Get the HamaraService app</h1>
-  <p>Bookings and partner registration happen only in our Android apps — live job updates, OTP-secured start &amp; finish, and payments right on your phone.</p>
+  <p>Book services or join as a partner in our Android apps — or on the web from an iPhone or computer. Live job updates, OTP-secured start &amp; finish, and payments.</p>
 </header>
 
 <main class="cards">
@@ -94,8 +95,8 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
       <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
     </a>
     <div class="qr hide" id="cQr"><div class="qrbox" id="cQrBox"></div><span>Scan with your Android phone to install</span></div>
-    <div class="ios hide" id="cIos">📱 The app is available for <b>Android</b> phones. On iPhone? WhatsApp us and we'll book for you.</div>
-    <a class="web hide" id="cWeb" href="/app/customer.html">Continue on the website →</a>
+    <div class="ios hide" id="cIos">📱 <b>iPhone app coming soon.</b> Until then, book on the web — same account, works in Safari.</div>
+    <a class="web hide" id="cWeb" href="/app/customer.html">Continue on the web →</a>
   </section>
 
   <section class="card prov" id="pCard">
@@ -114,8 +115,8 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
       <span><span class="t1">Get it on</span><br/><span class="t2">Google Play</span></span>
     </a>
     <div class="qr hide" id="pQr"><div class="qrbox" id="pQrBox"></div><span>Scan with your Android phone to install</span></div>
-    <div class="ios hide" id="pIos">📱 The Partner app is for <b>Android</b> phones. On iPhone? WhatsApp us to join.</div>
-    <a class="web hide" id="pWeb" href="/app/provider.html">Continue on the website →</a>
+    <div class="ios hide" id="pIos">📱 <b>iPhone Partner app coming soon.</b> Until then, register and get jobs on the web — works in Safari.</div>
+    <a class="web hide" id="pWeb" href="/app/provider.html">Continue on the web →</a>
   </section>
 </main>
 
@@ -126,8 +127,8 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
   📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:info@hamaraservice.com">info@hamaraservice.com</a>
 </footer>
 
-<script src="/js/hs-site.js?v=20261023"></script>
-<script src="/js/qrcode.min.js?v=20261023"></script>
+<script src="/js/hs-site.js?v=20261024"></script>
+<script src="/js/qrcode.min.js?v=20261024"></script>
 <script>
 (function(){
   var who=(location.search.match(/[?&]for=(customer|provider)/)||[])[1];
@@ -140,14 +141,23 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
       if(!url) return;
       var a=document.getElementById(pre+'App');a.href=url;a.classList.remove('hide');var so=document.getElementById(pre+'Soon');if(so)so.classList.add('hide');
       if(dev==='desktop'&&window.QRCode){document.getElementById(pre+'Qr').classList.remove('hide');new QRCode(document.getElementById(pre+'QrBox'),{text:url,width:208,height:208,correctLevel:QRCode.CorrectLevel.M});}
-      if(dev==='ios') document.getElementById(pre+'Ios').classList.remove('hide');
     }
     setup('c',HS_playUrl('customer',cfg)); setup('p',HS_playUrl('provider',cfg));
+    // iPhone: App Store once released, else the web app (Google Play is no use there)
+    if(dev==='ios'){
+      [['c','customer'],['p','provider']].forEach(function(x){
+        var store=HS_iosAppUrl(x[1],cfg), a=document.getElementById(x[0]+'App');
+        if(store){ a.href=store; a.querySelector('.t2').textContent='App Store'; a.querySelector('.t1').textContent='Download on the'; a.querySelector('svg').style.display='none'; }
+        else { a.classList.add('hide'); if(HS_webAllowed(cfg)) document.getElementById(x[0]+'Ios').classList.remove('hide'); }
+      });
+    }
     if(cfg.support_whatsapp){[].forEach.call(document.querySelectorAll('a.wa'),function(w){w.href=w.href.replace(/wa\.me\/\d+/,'wa.me/'+cfg.support_whatsapp);});}
-    if(!HS_appMode(cfg)){document.getElementById('cWeb').classList.remove('hide');document.getElementById('pWeb').classList.remove('hide');}
+    if(HS_webAllowed(cfg)){
+      ['cWeb','pWeb'].forEach(function(id){ var w=document.getElementById(id); w.classList.remove('hide'); if(dev==='ios') w.classList.add('primary'); });
+    }
   });
 })();
 </script>
-<script src="/js/hs-track.js?v=20261023" defer></script>
+<script src="/js/hs-track.js?v=20261024" defer></script>
 </body>
 </html>

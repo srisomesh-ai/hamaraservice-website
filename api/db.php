@@ -249,6 +249,95 @@ function sendPush($fcmToken, $title, $body, $data = []) {
     @file_get_contents(PUSH_URL, false, $ctx);
 }
 
+// ── Web push (browsers, iPhone "Add to Home Screen") ─────
+// Same FCM v1 API; the web apps register the token with platform=web.
+function sendWebPush($token, $title, $body, $data = [], $table = 'customers') {
+    if (empty($token)) return false;
+    $sa = fcmServiceAccount();
+    if (!$sa) return false;
+    $tok = fcmAccessToken($sa);
+    if (!$tok) return false;
+    $d = [];
+    foreach ($data as $k => $v) $d[(string)$k] = is_scalar($v) ? (string)$v : json_encode($v);
+    unset($d['alert'], $d['sys_tag']);
+    $d += ['event' => 'notification'];
+    $d['title'] = (string)($title ?: 'HamaraService');
+    $d['body']  = (string)($body ?: 'You have a new update.');
+    $d['role']  = $table === 'providers' ? 'provider' : 'customer';
+    $link = 'https://hamaraservice.com/app/' . ($table === 'providers' ? 'provider' : 'customer') . '.html';
+    $urgent = in_array($d['event'], ['new_booking','price_quoted','negotiation_final','start_otp_ready','completion_otp_ready','booking_confirmed','price_negotiation'], true);
+    $wn = ['icon' => 'https://hamaraservice.com/favicon-192x192.png', 'badge' => 'https://hamaraservice.com/favicon-96x96.png',
+           'tag' => ($d['bookingId'] ?? '') !== '' ? $d['bookingId'] : $d['event'], 'renotify' => true,
+           'requireInteraction' => $urgent, 'vibrate' => [200, 100, 200]];
+    $r = fcmHttp(FCM_API_BASE . '/v1/projects/' . rawurlencode($sa['project_id']) . '/messages:send',
+        ['Content-Type: application/json', 'Authorization: Bearer ' . $tok],
+        json_encode(['message' => [
+            'token' => $token, 'data' => $d,
+            'notification' => ['title' => $d['title'], 'body' => $d['body']],
+            'webpush' => ['headers' => ['Urgency' => 'high', 'TTL' => '3600'],
+                          'notification' => $wn, 'fcm_options' => ['link' => $link]],
+        ]]));
+    if (empty($r['name'])) { error_log('FCM web send error: ' . json_encode($r)); return false; }
+    return true;
+}
+
+// Events that are also e-mailed to people who only use the website (no app
+// token): they may not have notifications switched on.
+const HS_EMAIL_EVENTS = [
+    // customers
+    'price_quoted', 'negotiation_final', 'provider_declined', 'provider_on_the_way', 'start_otp_ready',
+    'completion_otp_ready', 'completed', 'booking_cancelled',
+    // providers
+    'new_booking', 'price_negotiation', 'booking_confirmed', 'payout_approved',   // account_approved has its own e-mail
+];
+
+// The one way to notify a customer / provider: Android app push, web push and
+// (web-only users, important events) an e-mail sent after the response.
+function notifyUser($db, $table, $id, $title, $body, $data = []) {
+    if (empty($id)) return;
+    $table = $table === 'providers' ? 'providers' : 'customers';
+    $u = null;
+    try {
+        $s = $db->prepare("SELECT fcm_token, web_push_token, email, name FROM $table WHERE id = ?");
+        $s->execute([$id]); $u = $s->fetch();
+    } catch (Throwable $e) {   // before the web_push_token column exists
+        $s = $db->prepare("SELECT fcm_token, email, name FROM $table WHERE id = ?");
+        $s->execute([$id]); $u = $s->fetch();
+    }
+    if (!$u) return;
+    if (!empty($u['fcm_token'])) sendPush($u['fcm_token'], $title, $body, $data);
+    if (!empty($u['web_push_token'])) sendWebPush($u['web_push_token'], $title, $body, $data, $table);
+    if (empty($u['fcm_token']) && !empty($u['email']) && in_array($data['event'] ?? '', HS_EMAIL_EVENTS, true)) {
+        queueNotifyEmail($u['email'], (string)($u['name'] ?? ''), $title, $body, $table);
+    }
+}
+
+// E-mails are sent after the HTTP response has gone out (LiteSpeed / PHP-FPM),
+// so a slow mail server never delays the app.
+function queueNotifyEmail($to, $name, $title, $body, $table) {
+    static $q = null;
+    if ($q === null) {
+        $q = [];
+        register_shutdown_function(function () use (&$q) {
+            if (!$q) return;
+            if (function_exists('litespeed_finish_request')) litespeed_finish_request();
+            elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+            require_once __DIR__ . '/mailer.php';
+            foreach ($q as $m) {
+                $link = 'https://hamaraservice.com/app/' . ($m[4] === 'providers' ? 'provider' : 'customer') . '.html';
+                $html = emailBase(esc($m[2]),
+                    '<p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 8px;">' . ($m[1] !== '' ? 'Hi ' . esc($m[1]) . ',' : 'Hi,') . '</p>'
+                  . '<p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 4px;">' . nl2br(esc($m[3])) . '</p>'
+                  . ctaButton('Open HamaraService', $link)
+                  . '<p style="font-size:12px;color:#9ca3af;margin:0;">Tip: add HamaraService to your Home Screen and allow notifications to get these alerts instantly.</p>');
+                $r = sendSMTP($m[0], $m[1], $m[2] . ' — HamaraService', $html);
+                if (empty($r['success'])) error_log('notify e-mail failed: ' . ($r['error'] ?? ''));
+            }
+        });
+    }
+    $q[] = [$to, $name, $title, $body, $table];
+}
+
 function pushMode() {
     if (fcmServiceAccount()) return 'direct';
     return PUSH_KEY !== '' ? 'relay' : 'off';
