@@ -120,7 +120,8 @@ define('WEB_ACCESS', implode(',', array_values(array_intersect(['ios','desktop']
 // Firebase web app (web push for /app/*.html): Firebase Console → Project settings
 // → General → Your apps → Web app → appId. Empty = web push off (live in-page
 // alerts and e-mails still work). The VAPID key is Cloud Messaging → Web Push certificates.
-define('FIREBASE_WEB_APP_ID', (string)hsCfg('FIREBASE_WEB_APP_ID', ''));
+// Defaults: the HamaraService Web app in Firebase project hamaraservice-s009.
+define('FIREBASE_WEB_APP_ID', (string)hsCfg('FIREBASE_WEB_APP_ID', '1:1064274729048:web:86643c95419e9dc881d22d'));
 define('FIREBASE_VAPID_KEY',  (string)hsCfg('FIREBASE_VAPID_KEY', 'BEh61gETD6MGB7RkBk-bBVj6wRPffMUr27woo3A3_MShHaDZAYdv5tcUR6xfedLd5a8rkKzHVuvmBFaGNLbwyS8'));
 // App Store links for the iPhone apps — once set, iPhone visitors go there instead of the web.
 define('IOS_CUSTOMER_APP_URL', (string)hsCfg('IOS_CUSTOMER_APP_URL', ''));
