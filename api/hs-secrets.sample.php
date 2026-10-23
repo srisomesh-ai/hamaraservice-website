@@ -35,8 +35,8 @@ return [
     'CUSTOMER_APP_URL'    => '',            // https://play.google.com/store/apps/details?id=com.hamaraservice.customer (once live)
     'IOS_CUSTOMER_APP_URL' => '',           // App Store link once the iPhone app is live
     'IOS_PROVIDER_APP_URL' => '',
-    'WEB_ACCESS'          => 'ios,desktop',
-    'FIREBASE_WEB_APP_ID' => '',             // 1:1064274729048:web:xxxx — turns on web push for iPhone / browsers  // who may use the web apps: 'ios,desktop' | 'ios' | 'desktop' | 'off'
+    'WEB_ACCESS'          => 'ios,desktop',  // who may use the web apps: 'ios,desktop' | 'ios' | 'desktop' | 'off'
+    'FIREBASE_WEB_APP_ID' => '',             // optional override — default is the HamaraService Web app
     'PROVIDER_APP_URL'    => '',            // optional — defaults to the Play Store link
     'LAUNCH_CODE'         => '',            // optional: director's code for the launch button (built-in default otherwise)
     'WEB_LOGIN_MODE'      => 'app',         // 'app' = no website login/booking, buttons send people to the apps; 'web' = re-enable the web app
