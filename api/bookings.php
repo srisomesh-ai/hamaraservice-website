@@ -746,6 +746,7 @@ switch ($action) {
       SELECT b.*,
              p.phone AS provider_phone, p.rating AS provider_rating,
              p.photo AS provider_photo, p.review_count AS provider_reviews,
+             p.instagram_url AS provider_instagram, p.youtube_url AS provider_youtube, p.followers AS provider_followers,
              p.lat AS provider_lat, p.lng AS provider_lng
       FROM bookings b
       LEFT JOIN providers p ON p.id = b.provider_id

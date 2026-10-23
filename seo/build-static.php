@@ -37,6 +37,7 @@ footer .hs-fl a:hover{color:#fff}
 
 $n = 0;
 foreach ($S as $sk => $s) {
+    if (substr($s['page'], -5) !== '.html') continue;   // newer services: seo/service.php
     $file = "$root/{$s['page']}";
     $html = file_get_contents($file);
     $path = '/' . $s['page'];

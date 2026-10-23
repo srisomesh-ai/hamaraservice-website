@@ -151,6 +151,8 @@ function hs_city_tip(array $s, array $c) {
             return $base . ($cl === 'hot' || $cl === 'extreme'
                 ? 'Strong sun and dust mean plants dry out and rooftop surfaces get dusty quickly, so regular visits help.'
                 : 'Rain and humidity mean faster plant growth and more frequent trimming and clean-up.');
+        case 'events':
+            return 'Weddings, festivals, college fests and shop openings keep ' . $p . ' in ' . $city . ' busy — book a few days ahead for popular dates, and share your event details and language in the app.';
         default:
             return 'Households across ' . $city . ' book ' . $p . ' for one-time and regular needs. Share the details in the app and agree the price with the provider before confirming.';
     }

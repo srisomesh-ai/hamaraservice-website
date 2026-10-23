@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-23-1';
+const HS_SCHEMA_VERSION = '2026-10-24-1';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -35,6 +35,14 @@ function ensureSchema(PDO $db) {
         "ALTER TABLE bookings ADD INDEX idx_rzp_order (razorpay_order_id)",
         // "No provider found" admin alert sent (api/alerts_lib.php)
         "ALTER TABLE bookings ADD COLUMN unassigned_alerted_at DATETIME NULL",
+        // Events & Media services
+        "INSERT IGNORE INTO services (id, name, icon, category, base_price, sort_order) VALUES
+           ('SVC035','Anchor / Emcee','🎙️','Events & Media',2999,35),
+           ('SVC036','Influencer Promotion','📱','Events & Media',999,36)",
+        // partner social profile (anchors / influencers) — shown to customers with the quote
+        "ALTER TABLE providers ADD COLUMN instagram_url VARCHAR(200) NULL",
+        "ALTER TABLE providers ADD COLUMN youtube_url VARCHAR(200) NULL",
+        "ALTER TABLE providers ADD COLUMN followers VARCHAR(20) NULL",
         // web push tokens (browser / iPhone Home Screen) — separate from the app token
         "ALTER TABLE customers ADD COLUMN web_push_token VARCHAR(255) NULL",
         "ALTER TABLE providers ADD COLUMN web_push_token VARCHAR(255) NULL",

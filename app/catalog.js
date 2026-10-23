@@ -308,6 +308,29 @@ var SVC=[
       {k:'bouncer_vip',  name:'VIP / Personal Bouncer',        p:1599}
     ]}
   ]},
+  {id:'SVC035',name:'Anchor / Emcee',icon:'🎙️',cat:'Events & Media',base:2999,groups:[
+    {key:'event',title:'🎉 Event Type',style:'bhk',items:[
+      {k:'wedding',  name:'Wedding / Sangeet',     p:2999},
+      {k:'birthday', name:'Birthday Party',        p:2999},
+      {k:'opening',  name:'Shop / Store Opening',  p:2999},
+      {k:'college',  name:'College Fest',          p:3999},
+      {k:'corporate',name:'Corporate Event',       p:4999},
+      {k:'other',    name:'Other Event',           p:2999}
+    ]},
+    {key:'duration',title:'⏱️ Duration',style:'task',items:[
+      {k:'h4',     ico:'🕓',name:'Up to 4 hours (instead of 2)', p:1500},
+      {k:'fullday',ico:'☀️',name:'Full day',                     p:3500}
+    ]}
+  ]},
+  {id:'SVC036',name:'Influencer Promotion',icon:'📱',cat:'Events & Media',base:999,groups:[
+    {key:'content',title:'📱 What to post',style:'task',items:[
+      {k:'reel',   ico:'🎬',name:'Instagram Reel',             p:999},
+      {k:'story',  ico:'📸',name:'Instagram Stories (set of 3)',p:999},
+      {k:'ytshort',ico:'▶️',name:'YouTube Short',              p:999},
+      {k:'fbpost', ico:'👍',name:'Facebook post',              p:999},
+      {k:'ytvideo',ico:'🎥',name:'YouTube video',              p:2999}
+    ]}
+  ]},
   {id:'SVC032',name:'Gardener',icon:'🌱',cat:'Outdoor',base:299,groups:[
     {key:'visit',title:'🌿 Gardening Service',style:'bhk',items:[
       {k:'visit',    name:'Visit fee (basic work)',          p:299},

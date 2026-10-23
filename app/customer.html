@@ -1233,13 +1233,16 @@ function renderBookingState(b){
     var price=(st==='negotiation_final')?(b.final_price||b.quoted_price||0):(b.quoted_price||0);
     var distPill=(b.distance_km!=null)?('<span class="pf-pill">📍 '+b.distance_km+' km away</span>'):'';
     var ratePill=(b.provider_rating&&parseFloat(b.provider_rating)>0)?('<span class="pf-pill">⭐ '+parseFloat(b.provider_rating).toFixed(1)+(b.provider_reviews?(' ('+b.provider_reviews+')'):'')+'</span>'):'<span class="pf-pill">⭐ New</span>';
+    var fol=b.provider_followers?(' · '+esc(b.provider_followers)):'';
+    var socialPill=(/^https:\/\/([a-z]+\.)?instagram\.com\//i.test(b.provider_instagram||'')?('<a class="pf-pill" href="'+esc(b.provider_instagram)+'" target="_blank" rel="noopener" style="text-decoration:none">📸 Instagram'+fol+'</a>'):'')
+      +(/^https:\/\/([a-z]+\.)?(youtube\.com|youtu\.be)\//i.test(b.provider_youtube||'')?('<a class="pf-pill" href="'+esc(b.provider_youtube)+'" target="_blank" rel="noopener" style="text-decoration:none">▶️ YouTube'+(b.provider_instagram?'':fol)+'</a>'):'');
     var avatar=b.provider_photo?('<div class="pf-avatar" style="width:52px;height:52px;background-image:url(https://hamaraservice.com'+encodeURI(b.provider_photo)+');background-size:cover;background-position:center"></div>'):('<div class="pf-avatar" style="width:52px;height:52px;font-size:22px">'+esc((b.provider_name||'P').charAt(0).toUpperCase())+'</div>');
     o.innerHTML='<div class="card offer-card">'
       +'<div style="font-size:15px;font-weight:800;margin-bottom:12px">🎉 Provider Found!</div>'
       +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
       +avatar
       +'<div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:900">'+esc(b.provider_name||'Provider')+'</div>'
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">'+distPill+ratePill+'</div></div></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">'+distPill+ratePill+socialPill+'</div></div></div>'
       +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
       +'<div id="qCountdown" style="font-size:13px;font-weight:800;color:#b45309;background:#fff5e6;border-radius:10px;padding:7px 10px;margin-bottom:10px">⏳ Confirm within 5:00</div>'
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
