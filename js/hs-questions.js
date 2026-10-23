@@ -861,5 +861,103 @@ window.HS_JOB_QUESTIONS = {
    "multi": false,
    "req": true
   }
+ ],
+ "SVC035": [
+  {
+   "k": "lang",
+   "label": "Language",
+   "q": "Which language should the anchor host in?",
+   "opts": [
+    "Telugu",
+    "Hindi",
+    "English",
+    "Tamil",
+    "Kannada"
+   ],
+   "multi": true,
+   "req": true
+  },
+  {
+   "k": "guests",
+   "label": "Guests",
+   "q": "How many guests?",
+   "opts": [
+    "Under 100",
+    "100–300",
+    "300–1000",
+    "More than 1000"
+   ],
+   "multi": false,
+   "req": true
+  },
+  {
+   "k": "venue",
+   "label": "Venue",
+   "q": "Where is the event?",
+   "opts": [
+    "Function hall",
+    "Hotel / resort",
+    "Home",
+    "Outdoor / ground",
+    "College / office",
+    "Shop / store"
+   ],
+   "multi": false,
+   "req": false
+  }
+ ],
+ "SVC036": [
+  {
+   "k": "promote",
+   "label": "Promoting",
+   "q": "What do you want to promote?",
+   "opts": [
+    "Shop / showroom",
+    "Restaurant / café",
+    "Event",
+    "Product",
+    "Service / business",
+    "Other"
+   ],
+   "multi": false,
+   "req": true
+  },
+  {
+   "k": "visit",
+   "label": "Visit",
+   "q": "Should the influencer visit you?",
+   "opts": [
+    "Yes — visit my location",
+    "No — online only"
+   ],
+   "multi": false,
+   "req": true
+  },
+  {
+   "k": "reach",
+   "label": "Followers",
+   "q": "Influencer size you prefer?",
+   "opts": [
+    "Any",
+    "10K+ followers",
+    "50K+ followers",
+    "1 lakh+ followers"
+   ],
+   "multi": false,
+   "req": false
+  },
+  {
+   "k": "lang",
+   "label": "Language",
+   "q": "Content language?",
+   "opts": [
+    "Telugu",
+    "Hindi",
+    "English",
+    "Tamil"
+   ],
+   "multi": true,
+   "req": false
+  }
  ]
 };

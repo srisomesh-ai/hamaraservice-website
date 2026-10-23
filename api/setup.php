@@ -246,6 +246,8 @@ $services = [
     ['SVC032','Gardener','🌱','Outdoor',32],
     ['SVC033','Driver','🚕','Outdoor',33],
     ['SVC034','Security Guard & Bouncers','🛡️','Security',34],
+    ['SVC035','Anchor / Emcee','🎙️','Events & Media',35],
+    ['SVC036','Influencer Promotion','📱','Events & Media',36],
 ];
 
 $stmt = $db->prepare(

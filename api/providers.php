@@ -282,7 +282,8 @@ HamaraService Team";
     $full = isAdminRequest() || ($me && $me['role'] === 'provider' && $me['id'] === $id);
     if (!$full) {
       // Public profile only — no phone, email, ID number, address, earnings
-      $stmt = $db->prepare("SELECT id, name, gender, experience, bio, city, photo, rating, review_count, completed_bookings
+      $stmt = $db->prepare("SELECT id, name, gender, experience, bio, city, photo, rating, review_count, completed_bookings,
+                                   instagram_url, youtube_url, followers
                             FROM providers WHERE id = ? AND status = 'approved'");
       $stmt->execute([$id]);
       $p = $stmt->fetch();
@@ -296,7 +297,7 @@ HamaraService Team";
     $stmt = $db->prepare("
       SELECT id, name, phone, email, whatsapp, gender, experience, bio,
              id_type, id_number, address, city, lat, lng, base_lat, base_lng, radius_km,
-             upi_id, areas, photo,
+             upi_id, areas, photo, instagram_url, youtube_url, followers,
              status, available, rating, review_count,
              total_bookings, completed_bookings, total_earned, pending_earned,
              registered_at
@@ -323,7 +324,18 @@ HamaraService Team";
     $params = [':id' => $prov['id']];
     $allowed = ['name','phone','whatsapp','gender','experience','bio',
                 'address','city','lat','lng','radius_km','available','upi_id','areas','photo',
-                'base_lat','base_lng'];
+                'base_lat','base_lng','instagram_url','youtube_url','followers'];
+    // Social profile (anchors / influencers): links shown to customers with the quote
+    foreach (['instagram_url' => '~^(https?://)?(www\.)?instagram\.com/~i', 'youtube_url' => '~^(https?://)?(www\.|m\.)?(youtube\.com|youtu\.be)/~i'] as $f => $re) {
+      if (!isset($b[$f])) continue;
+      $v = trim((string)$b[$f]);
+      if ($v !== '' && $f === 'instagram_url' && preg_match('/^@?([A-Za-z0-9._]{1,30})$/', $v, $m)) $v = 'https://instagram.com/' . $m[1];
+      if ($v !== '' && $f === 'youtube_url' && preg_match('/^@([A-Za-z0-9._-]{1,50})$/', $v, $m)) $v = 'https://youtube.com/@' . $m[1];
+      if ($v !== '' && !preg_match('~^https?://~i', $v)) $v = 'https://' . $v;
+      if ($v !== '' && (strlen($v) > 200 || !preg_match($re, $v))) err($f === 'instagram_url' ? 'Enter your Instagram page link or @handle' : 'Enter your YouTube channel link or @handle');
+      $b[$f] = $v;
+    }
+    if (isset($b['followers'])) $b['followers'] = mb_substr(trim((string)$b['followers']), 0, 20);
     if (isset($b['city'])) {
       $c = hsCleanCity($b['city']);
       if ($c === null) unset($b['city']); else $b['city'] = $c;   // e-mail in City → keep the old city
@@ -344,7 +356,8 @@ HamaraService Team";
     $db->prepare("UPDATE providers SET " . implode(', ', $fields) . " WHERE id = :id")
        ->execute($params);
 
-    ok(['updated' => true]);
+    // Echo the normalised social links (an @handle becomes a full link)
+    ok(['updated' => true] + array_intersect_key($b, array_flip(['instagram_url', 'youtube_url', 'followers'])));
   }
 
   // ── LIVE LOCATION (call every 30-60s while online / on a job) ──

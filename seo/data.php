@@ -621,5 +621,41 @@ return [
     'job_work' => 'Security jobs — day and night guard shifts for homes, offices and sites, and bouncer work at events and venues.',
     'job_req' => ['Security / ex-service / bouncer experience','Physically fit; age 18+'],
   ],
+
+  // ── Events & Media (page: seo/service.php at /<slug>) ──
+  'anchor-emcee' => [
+    'id' => 'SVC035', 'page' => 'anchor-emcee', 'icon' => '🎙️', 'cat' => 'Events & Media', 'tip' => 'events',
+    'name' => 'Anchor / Emcee', 'plural' => 'anchors and emcees', 'title' => 'Anchor / Emcee for Events',
+    'keywords' => ['anchor for event','emcee near me','wedding anchor','birthday party anchor','corporate event host','sangeet anchor'],
+    'desc' => 'Professional anchors and emcees for weddings, sangeet, birthdays, corporate events, college fests and shop openings — in Telugu, Hindi, English and more.',
+    'included' => ['Hosting the full programme on stage','Script, games and audience interaction','Telugu, Hindi, English or Tamil — your choice','Coordination with the DJ, decorator and photographer'],
+    'tasks' => [['Wedding / sangeet anchor',2999],['Birthday party anchor',2999],['Shop / store opening',2999],['College fest anchor',3999],['Corporate event host',4999],['4-hour event (extra)',1500],['Full-day event (extra)',3500]],
+    'from' => 2999, 'unit' => 'per event (2 hours)',
+    'faqs' => [
+      ['Can I see the anchor’s work before booking?','Anchors can add their Instagram or YouTube page and follower count to their profile, and you see it with their quote in the app.'],
+      ['Which languages do anchors host in?','Tell the anchor your language in the booking — Telugu, Hindi, English, Tamil or a mix. Choose the one whose quote and profile suit your event.'],
+      ['Is travel included?','The anchor quotes the full price for your event location before you confirm. Outstation events can include travel and stay — agree it in the quote.'],
+    ],
+    'job_slug' => 'anchor', 'job_title' => 'Anchor / Emcee', 'job_role' => 'event anchor',
+    'job_work' => 'Event anchoring — hosting weddings, sangeet, birthdays, corporate events, college fests and shop openings.',
+    'job_req' => ['Stage anchoring / hosting experience','Good command of at least one language (Telugu, Hindi, English or Tamil)','Your Instagram / YouTube page helps customers choose you'],
+  ],
+  'influencer-promotion' => [
+    'id' => 'SVC036', 'page' => 'influencer-promotion', 'icon' => '📱', 'cat' => 'Events & Media', 'tip' => 'events',
+    'name' => 'Influencer Promotion', 'plural' => 'local influencers', 'title' => 'Influencer Promotion for Shops & Events',
+    'keywords' => ['influencer marketing near me','instagram influencer promotion','youtube promotion for shop','restaurant influencer','local influencer for business'],
+    'desc' => 'Local Instagram and YouTube influencers to promote your shop, restaurant, event, product or service with reels, stories and videos.',
+    'included' => ['Reels, stories, YouTube videos and shorts','Visit to your shop or event, or online-only promotion','Influencer’s page and follower count shown with the quote','You approve the price before you confirm'],
+    'tasks' => [['Instagram Reel',999],['Instagram Stories (set of 3)',999],['YouTube Short',999],['Facebook post',999],['YouTube video',2999]],
+    'from' => 999, 'unit' => 'per post',
+    'faqs' => [
+      ['How do I choose an influencer?','Influencers who accept your request show their Instagram / YouTube page and follower count with their quote. Accept the one that fits your audience.'],
+      ['Does the influencer visit my shop?','Choose “visit my location” or “online only” in the booking. For a visit, the influencer starts the job with your OTP at your location.'],
+      ['Who owns the content?','Agree how long the post stays up and whether you can reuse the video in the booking notes before you confirm the quote.'],
+    ],
+    'job_slug' => 'influencer', 'job_title' => 'Influencer / Content Creator', 'job_role' => 'influencer',
+    'job_work' => 'Paid promotions for local shops, restaurants, events and brands — Instagram reels and stories, YouTube videos and shorts.',
+    'job_req' => ['An active Instagram or YouTube page','Add your page link and follower count to your profile'],
+  ],
 ],
 ];

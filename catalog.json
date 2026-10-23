@@ -600,5 +600,37 @@
     "description": "Trained guard for events, premises & night-duty security",
     "status": "active",
     "image": "/assets/services/SVC034.jpg"
+  },
+  {
+    "id": "SVC035",
+    "icon": "🎙️",
+    "name": "Anchor / Emcee",
+    "cat": "Events & Media",
+    "minPrice": 2999,
+    "maxPrice": 8499,
+    "defaultPrice": 2999,
+    "userPrice": 2999,
+    "commission": 10,
+    "commAmt": 300,
+    "providerEarns": 2699,
+    "description": "Anchors and emcees for weddings, birthdays, corporate events, college fests and shop openings",
+    "status": "active",
+    "image": ""
+  },
+  {
+    "id": "SVC036",
+    "icon": "📱",
+    "name": "Influencer Promotion",
+    "cat": "Events & Media",
+    "minPrice": 999,
+    "maxPrice": 2999,
+    "defaultPrice": 999,
+    "userPrice": 999,
+    "commission": 10,
+    "commAmt": 100,
+    "providerEarns": 899,
+    "description": "Local Instagram & YouTube influencers to promote your shop, restaurant, event or product",
+    "status": "active",
+    "image": ""
   }
 ]

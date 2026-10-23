@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS provider_services (
 
 -- ── 4. SERVICE CATALOG ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS services (
-  id           VARCHAR(10)  PRIMARY KEY,         -- SVC001..SVC034
+  id           VARCHAR(10)  PRIMARY KEY,         -- SVC001..SVC036
   name         VARCHAR(100) NOT NULL,
   icon         VARCHAR(10),
   category     VARCHAR(50),
@@ -238,4 +238,6 @@ INSERT IGNORE INTO services (id, name, icon, category, sort_order) VALUES
 ('SVC031','Elderly Care','🧓','Care Services',31),
 ('SVC032','Gardener','🌱','Outdoor',32),
 ('SVC033','Driver','🚕','Outdoor',33),
-('SVC034','Security Guard & Bouncers','🛡️','Security',34);
+('SVC034','Security Guard & Bouncers','🛡️','Security',34),
+('SVC035','Anchor / Emcee','🎙️','Events & Media',35),
+('SVC036','Influencer Promotion','📱','Events & Media',36);

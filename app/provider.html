@@ -320,6 +320,10 @@ google.maps.importLibrary("places").then(function(){window._placesReady=true;});
       <label>Phone Number</label><input class="inp" id="epPhone" type="tel" autocomplete="tel-national" maxlength="10">
       <label>City</label><input class="inp" id="epCity" type="text" autocomplete="address-level2" autocapitalize="words" maxlength="60" placeholder="e.g. Visakhapatnam">
       <label>Short Bio</label><textarea class="inp" id="epBio" rows="3" placeholder="Tell customers about yourself..."></textarea>
+      <div style="font-size:12px;color:var(--muted);margin:10px 0 4px">Anchors / influencers: customers see these with your quote (optional)</div>
+      <label>Instagram page</label><input class="inp" id="epInsta" maxlength="200" placeholder="@yourpage or instagram.com/yourpage" autocapitalize="off">
+      <label>YouTube channel</label><input class="inp" id="epYt" maxlength="200" placeholder="@yourchannel or youtube.com/@yourchannel" autocapitalize="off">
+      <label>Followers</label><input class="inp" id="epFollowers" maxlength="20" placeholder="e.g. 25K">
       <button class="btn teal" id="epSave" onclick="saveProfile()">Save Changes</button>
     </div>
     <div class="sec-title">💳 Payment Setup</div>
@@ -1444,6 +1448,7 @@ function openProf(){
   $('profEmail').textContent=ME.email||'';
   $('profUpi').value=ME.upi_id||'';
   $('epName').value=ME.name||'';$('epPhone').value=ME.phone||'';$('epCity').value=ME.city||'';$('epBio').value=ME.bio||'';
+  $('epInsta').value=ME.instagram_url||'';$('epYt').value=ME.youtube_url||'';$('epFollowers').value=ME.followers||'';
   renderLocInfo();
   try{areaSel=JSON.parse(ME.areas||'[]')||[];}catch(e){}
   initAreaSearch('profAreaSearch','profAreaSug');
@@ -1461,11 +1466,13 @@ function saveProfile(){
   var city=$('epCity').value.trim();
   if(city.indexOf('@')>=0){toast('City looks like an e-mail address. Enter your city name, e.g. Visakhapatnam.');return;}
   if(city.length>60||(city&&!/^[A-Za-z\u0900-\u0D7F .'-]+$/.test(city))){toast('City can contain only letters, spaces and . - \' (max 60)');return;}
-  var body={name:name,phone:ph,city:city,bio:$('epBio').value.trim()};
+  var body={name:name,phone:ph,city:city,bio:$('epBio').value.trim(),
+    instagram_url:$('epInsta').value.trim(),youtube_url:$('epYt').value.trim(),followers:$('epFollowers').value.trim()};
   $('epSave').disabled=true;
   api('providers.php','update',body).then(function(res){
     $('epSave').disabled=false;
     if(!res.success){toast(res.error||'Save failed');return;}
+    ['instagram_url','youtube_url','followers'].forEach(function(k){if(res.data&&res.data[k]!=null)body[k]=res.data[k];});
     ME=Object.assign(ME,body);localStorage.setItem('hs_prov_me',JSON.stringify(ME));
     $('profName').textContent=ME.name;$('profPhone').textContent=ME.phone;
     $('dashName').textContent=ME.name;$('dashId').textContent=(ME.id||'')+' · '+(ME.city||'');

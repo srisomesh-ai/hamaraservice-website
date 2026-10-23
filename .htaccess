@@ -43,6 +43,8 @@ RewriteRule ^([a-z0-9-]+)-jobs-in-([a-z0-9-]+)$ seo/jobs-city.php?t=$1&c=$2 [L,Q
 RewriteRule ^cities$ seo/cities.php [L,QSA]
 RewriteRule ^services-in-([a-z0-9-]+)$ seo/city.php?c=$1 [L,QSA]
 RewriteRule ^([a-z0-9-]+)-in-([a-z0-9-]+)$ seo/service-city.php?s=$1&c=$2 [L,QSA]
+# /anchor-emcee, /influencer-promotion … (services without a svc-*.html page)
+RewriteRule ^([a-z0-9]+(-[a-z0-9]+)*)$ seo/service.php?s=$1 [L,QSA]
 
 # ── Caching: pages and scripts always re-checked, so updates show at once ──
 <IfModule mod_headers.c>
