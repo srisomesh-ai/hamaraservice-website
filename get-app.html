@@ -127,7 +127,7 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
   📞 <a href="tel:+919346220090">+91 93462 20090</a> · ✉️ <a href="mailto:info@hamaraservice.com">info@hamaraservice.com</a>
 </footer>
 
-<script src="/js/hs-site.js?v=20261024"></script>
+<script src="/js/hs-site.js?v=20261024b"></script>
 <script src="/js/qrcode.min.js?v=20261024"></script>
 <script>
 (function(){
@@ -154,6 +154,9 @@ footer a{color:var(--teal);text-decoration:none;margin:0 6px}
     if(cfg.support_whatsapp){[].forEach.call(document.querySelectorAll('a.wa'),function(w){w.href=w.href.replace(/wa\.me\/\d+/,'wa.me/'+cfg.support_whatsapp);});}
     if(HS_webAllowed(cfg)){
       ['cWeb','pWeb'].forEach(function(id){ var w=document.getElementById(id); w.classList.remove('hide'); if(dev==='ios') w.classList.add('primary'); });
+      // Came from a service's Book button → open that service in the web app
+      var svc=(location.search.match(/[?&]svc=(SVC\d+)/)||[])[1];
+      if(svc) document.getElementById('cWeb').href='/app/customer.html?svc='+svc;
     }
   });
 })();
