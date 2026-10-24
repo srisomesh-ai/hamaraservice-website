@@ -220,10 +220,21 @@ html.hs-gate #hsAppGate{display:flex!important}
 </style>
 <script>
 document.documentElement.classList.add('hs-gate-wait');
+// Booked from a partner's status card / link (?ref= or /p/<id>): the app can't
+// carry the partner's discount, so these visitors book here on any device.
+function hsRef() {
+  var m = location.search.match(/[?&]ref=([A-Za-z0-9-]+)/);
+  try {
+    if (m) localStorage.setItem('hs_ref', JSON.stringify({ id: m[1], t: Date.now() }));
+    var r = JSON.parse(localStorage.getItem('hs_ref') || 'null');
+    if (r && r.id && Date.now() - r.t < 7 * 864e5) return r.id;
+  } catch (x) {}
+  return m ? m[1] : '';
+}
 HS_site(function (c) {
   var r = document.documentElement;
   r.classList.remove('hs-gate-wait');
-  if (!HS_webAllowed(c)) r.classList.add('hs-gate');   // Android: use the app
+  if (!HS_webAllowed(c) && !hsRef()) r.classList.add('hs-gate');   // Android: use the app
 });
 </script>
 <!-- /HS-APP-GATE -->
@@ -1040,7 +1051,8 @@ function createBooking(){
     notes:taskNames.join(', '),
     contact_name:ME.name||'',contact_phone:ph,
     est_price:(siteBooking&&siteBooking.price)?siteBooking.price:calcTotalSafe(),
-    summary:taskNames
+    summary:taskNames,
+    ref:hsRef()
   };
   api('customers.php','update',{phone:ph,address:addr,city:city}).catch(function(){});
   api('bookings.php','create',body).then(function(res){
@@ -1214,7 +1226,7 @@ function renderTimeline(st){
 var _lastRenderKey='';
 function renderBookingState(b){
   var st=b.status;
-  var key=st+'|'+(b.start_otp||'')+'|'+(b.travel_started_at||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.cash_allowed||0)+'|'+(b.review_requested||0)+'|'+(b.rating||'');
+  var key=st+'|'+(b.start_otp||'')+'|'+(b.travel_started_at||'')+'|'+(b.completion_otp||'')+'|'+(b.confirmed_price||b.final_price||b.quoted_price||0)+'|'+(b.payment_status||'')+'|'+(b.cash_allowed||0)+'|'+(b.review_requested||0)+'|'+(b.rating||'')+'|'+(b.ref_discount_offer||0)+'|'+(b.ref_waiting||0);
   if(key===_lastRenderKey)return;
   _lastRenderKey=key;
   renderTimeline(st);
@@ -1222,6 +1234,7 @@ function renderBookingState(b){
   if(st==='searching'){
     $('radarSearch').classList.remove('hide');$('radarOffer').classList.add('hide');$('radarActive').classList.add('hide');
     startNearby(b);
+    if(b.ref_waiting&&b.ref_name)$('radarSub').textContent='Asking '+b.ref_name+' first (₹ discount for you)…';
   } else if(st==='negotiating'){
     // waiting for provider response to counter
     $('radarSearch').classList.add('hide');$('radarActive').classList.add('hide');
@@ -1243,11 +1256,14 @@ function renderBookingState(b){
       +avatar
       +'<div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:900">'+esc(b.provider_name||'Provider')+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">'+distPill+ratePill+socialPill+'</div></div></div>'
-      +'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>'
+      +(b.ref_discount_offer>0
+        ?'<div style="font-size:15px;color:var(--muted);margin:10px 0 0"><s>₹'+price+'</s></div><div style="font-size:26px;font-weight:900;color:var(--teal);margin:0 0 4px">₹'+(price-b.ref_discount_offer)+'</div>'
+          +'<div style="font-size:13px;font-weight:800;color:#15803d;background:#e8f7ee;border-radius:10px;padding:7px 10px;margin-bottom:10px">🎁 ₹'+b.ref_discount_offer+' off from '+esc(b.ref_name||'your partner')+' — first booking</div>'
+        :'<div style="font-size:26px;font-weight:900;color:var(--teal);margin:10px 0">₹'+price+'</div>')
       +'<div id="qCountdown" style="font-size:13px;font-weight:800;color:#b45309;background:#fff5e6;border-radius:10px;padding:7px 10px;margin-bottom:10px">⏳ Confirm within 5:00</div>'
       +(st==='negotiation_final'?'<div style="font-size:12px;color:var(--amber);font-weight:700;margin-bottom:8px">Final offer from provider</div>':'')
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(st==='negotiation_final'?'This is the provider\'s final price. Confirm to book, or decline to find another.':'Confirm to book, send a counter offer, or decline to find another.')+'</div>'
-      +'<button class="btn green" onclick="confirmBooking()">✓ Confirm Booking · ₹'+price+'</button>'
+      +'<button class="btn green" onclick="confirmBooking()">✓ Confirm Booking · ₹'+(price-(b.ref_discount_offer||0))+'</button>'
       +(st==='price_quoted'?'<div style="height:8px"></div><button class="btn ghost" onclick="negotiate()">💬 Counter Offer</button>':'')
       +'<div style="height:8px"></div>'
       +'<button class="btn ghost" style="border-color:var(--red);color:var(--red)" onclick="notInterested()">Not Interested</button>'

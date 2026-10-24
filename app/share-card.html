@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex"/>
+<meta name="theme-color" content="#0f4c5c"/>
+<title>My Status Card | HamaraService</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png"/>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef5f6;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#123}
+.top{background:#0f4c5c;color:#fff;padding:14px 16px;font-weight:800;font-size:17px;display:flex;align-items:center;gap:10px}
+.top a{color:#fff;text-decoration:none;font-size:20px}
+.wrap{max-width:460px;margin:0 auto;padding:16px}
+#preview{width:100%;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.18);display:block;background:#0f4c5c;aspect-ratio:9/16}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:15px;font-size:16px;font-weight:800;margin-top:12px;cursor:pointer;text-align:center;text-decoration:none}
+.b1{background:#25D366;color:#fff}
+.b2{background:#fff;color:#0f4c5c;border:2px solid #0f4c5c}
+.b3{background:#f26f21;color:#fff}
+.note{font-size:13px;color:#5a6b70;line-height:1.5;margin-top:14px}
+.msg{background:#fff;border-radius:14px;padding:14px;margin-top:14px;font-size:14px;line-height:1.5}
+.err{background:#fde8e8;color:#9b1c1c;border-radius:14px;padding:14px;margin-top:14px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="top"><a href="/app/provider.html" aria-label="Back">←</a> My status card</div>
+<div class="wrap">
+  <div id="err" class="err hide"></div>
+  <img id="preview" alt="Your HamaraService status card"/>
+  <button class="btn b1" id="bShare">📲 Share to WhatsApp Status</button>
+  <button class="btn b2" id="bSave">⬇️ Download image</button>
+  <button class="btn b3" id="bLink">🔗 Copy my booking link</button>
+  <div class="msg">Customers who book through your card or link get <b id="offTxt">₹50 off</b> their first booking with you. The discount comes from your share of that job — it brings you new regular customers.</div>
+  <p class="note">Tip: on WhatsApp choose <b>My status</b>. You can also post it on Instagram or Facebook stories.</p>
+</div>
+<div id="qrTmp" style="position:absolute;left:-9999px;top:0"></div>
+<script src="/js/qrcode.min.js?v=20261024"></script>
+<script>
+(function(){
+  var W = 1080, H = 1920, OFF = 50;
+  // Service photos (same art as the apps); services without one get design B.
+  var PHOTO = {SVC001:'house-maid',SVC002:'deep-cleaning',SVC003:'bathroom-cleaning',SVC004:'kitchen-cleaning',SVC005:'sofa-carpet-cleaning',
+    SVC006:'laundry-ironing',SVC007:'ac-service',SVC010:'water-purifier',SVC011:'plumber',SVC012:'electrician',SVC013:'carpenter',
+    SVC014:'painter',SVC015:'cctv',SVC016:'solar-panel',SVC017:'car-wash',SVC019:'mechanic',SVC021:'pest-control',SVC022:'cook',
+    SVC023:'haircut-men',SVC024:'haircut-women',SVC025:'massage',SVC026:'fitness-trainer',SVC027:'doctor-visit',SVC028:'nurse-visit',
+    SVC029:'lab-test',SVC030:'babysitter',SVC031:'elderly-care',SVC032:'gardener',SVC033:'driver',SVC034:'security-guard'};
+  var LINES = {SVC035:'Weddings · Birthdays · Shop openings · College fests', SVC036:'Reels · Stories · YouTube · Shop & event promotions'};
+  var FONT = "system-ui,-apple-system,'Segoe UI',Roboto,'Noto Color Emoji','Apple Color Emoji',sans-serif";
+  var $ = function (id) { return document.getElementById(id); };
+  var me = {}; try { me = JSON.parse(localStorage.getItem('hs_prov_me') || '{}'); } catch (x) {}
+  var id = (new URLSearchParams(location.search)).get('id') || me.id || '';
+  var link = '', blob = null, P = null;
+
+  function fail(m) { $('err').textContent = m; $('err').classList.remove('hide'); }
+  if (!/^[A-Za-z0-9-]+$/.test(id)) { fail('Open this page from your partner profile (log in first).'); return; }
+  link = location.origin + '/p/' + id;
+
+  function img(src) { return new Promise(function (res) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = src; }); }
+  function qr(text) {
+    var box = $('qrTmp'); box.innerHTML = '';
+    new QRCode(box, { text: text, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
+    return box.querySelector('canvas');
+  }
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function fit(c, text, weight, size, maxW) { do { c.font = weight + ' ' + size + 'px ' + FONT; size -= 4; } while (c.measureText(text).width > maxW && size > 30); return size + 4; }
+  function wrap(c, text, x, y, maxW, lh, align) {
+    var words = text.split(' '), line = '', lines = [];
+    words.forEach(function (w) { var t = line ? line + ' ' + w : w; if (c.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; });
+    if (line) lines.push(line);
+    c.textAlign = align || 'left';
+    lines.forEach(function (l, i) { c.fillText(l, x, y + i * lh); });
+    return y + lines.length * lh;
+  }
+  function cover(c, im, x, y, w, h) {
+    var s = Math.max(w / im.width, h / im.height), iw = im.width * s, ih = im.height * s;
+    c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+    c.drawImage(im, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+    c.restore();
+  }
+
+  async function drawA(c, svc, photo, logo) {
+    var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0f4c5c'); g.addColorStop(.6, '#0b3a47'); g.addColorStop(1, '#082c36');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    cover(c, photo, 0, 0, W, 900);
+    var f = c.createLinearGradient(0, 360, 0, 900); f.addColorStop(0, 'rgba(11,58,71,0)'); f.addColorStop(1, '#0b3a47');
+    c.fillStyle = f; c.fillRect(0, 0, W, 902);
+    if (logo) { c.fillStyle = '#fff'; rr(c, 56, 56, 350, 120, 28); c.fill(); c.drawImage(logo, 82, 74, 84 * logo.width / logo.height, 84); }
+    c.font = '800 38px ' + FONT; var tag = '✅ NOW ON HAMARASERVICE', tw = c.measureText(tag).width + 60;
+    c.fillStyle = '#f26f21'; rr(c, 72, 760, tw, 74, 37); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'left'; c.fillText(tag, 102, 810);
+    c.fillStyle = '#fff'; fit(c, P.name, '900', 104, W - 144); c.fillText(P.name, 72, 960);
+    c.fillStyle = '#9be3e0'; fit(c, (svc.svc_icon || '') + ' ' + svc.svc_name, '700', 58, W - 144); c.fillText((svc.svc_icon || '') + ' ' + svc.svc_name, 72, 1040);
+    var meta = [P.city ? '📍 ' + P.city : '', parseFloat(P.rating) > 0 ? '⭐ ' + parseFloat(P.rating).toFixed(1) : '⭐ New', P.completed_bookings > 0 ? P.completed_bookings + ' jobs done' : '✔ Verified'].filter(Boolean).join('  ·  ');
+    c.fillStyle = '#cfe6ea'; c.font = '500 38px ' + FONT; c.fillText(meta, 72, 1110);
+    c.fillStyle = '#fff'; c.font = '600 48px ' + FONT;
+    var y = wrap(c, 'From today you can book me on the HamaraService app — verified, fair price, pay after the work.', 72, 1200, W - 144, 64);
+    var by = Math.max(y + 30, 1420);
+    c.fillStyle = '#fff'; rr(c, 72, by, W - 144, 316, 36); c.fill();
+    c.fillStyle = '#f26f21'; c.font = '900 72px ' + FONT; c.textAlign = 'left'; c.fillText('₹' + OFF + ' OFF', 112, by + 110);
+    c.fillStyle = '#0b3a47'; c.font = '600 36px ' + FONT; wrap(c, 'on your first booking with me — scan to book', 112, by + 170, 520, 46);
+    var q = qr(link); if (q) c.drawImage(q, W - 72 - 40 - 236, by + 40, 236, 236);
+    c.fillStyle = '#9fc3ca'; c.textAlign = 'center'; fit(c, 'Scan or open hamaraservice.com/p/' + P.id, '600', 36, W - 100); c.fillText('Scan or open hamaraservice.com/p/' + P.id, W / 2, H - 70);
+  }
+
+  async function drawB(c, svc, logo) {
+    var g = c.createRadialGradient(W * .8, H * .1, 50, W * .5, H * .5, H); g.addColorStop(0, '#ff9a4d'); g.addColorStop(.4, '#f26f21'); g.addColorStop(1, '#c94d0d');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.fillStyle = 'rgba(255,255,255,.08)'; c.beginPath(); c.arc(W / 2, 320, 230, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.16)'; c.beginPath(); c.arc(W / 2, 320, 200, 0, 7); c.fill();
+    c.textAlign = 'center'; c.font = '220px ' + FONT; c.fillStyle = '#fff'; c.fillText(svc.svc_icon || '⭐', W / 2, 400);
+    c.font = '800 46px ' + FONT; c.fillStyle = 'rgba(255,255,255,.92)'; c.fillText('N O W   B O O K A B L E   O N', W / 2, 640);
+    if (logo) { c.fillStyle = '#fff'; rr(c, W / 2 - 186, 680, 372, 120, 26); c.fill(); var lw = 92 * logo.width / logo.height; c.drawImage(logo, W / 2 - lw / 2, 694, lw, 92); }
+    c.fillStyle = '#fff'; fit(c, P.name, '900', 112, W - 120); c.fillText(P.name, W / 2, 940);
+    c.font = '900 60px ' + FONT; var st = (svc.svc_icon || '') + ' ' + svc.svc_name, sw = Math.min(W - 120, c.measureText(st).width + 90);
+    c.fillStyle = '#fff'; rr(c, W / 2 - sw / 2, 990, sw, 110, 55); c.fill(); c.fillStyle = '#c94d0d'; fit(c, st, '900', 60, sw - 70); c.fillText(st, W / 2, 1066);
+    var y = 1170;
+    if (P.instagram_url) {
+      var h = P.instagram_url.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '@').replace(/\/$/, '');
+      c.fillStyle = '#fff'; c.font = '700 42px ' + FONT; c.fillText('📸 ' + h + (P.followers ? ' · ' + P.followers : ''), W / 2, y); y += 80;
+    } else if (P.youtube_url) {
+      c.fillStyle = '#fff'; c.font = '700 42px ' + FONT; c.fillText('▶️ YouTube' + (P.followers ? ' · ' + P.followers : ''), W / 2, y); y += 80;
+    }
+    c.fillStyle = '#fff'; c.font = '600 46px ' + FONT;
+    wrap(c, (LINES[svc.svc_id] ? LINES[svc.svc_id] + ' — ' : '') + 'book me through HamaraService and get ₹' + OFF + ' off your first booking.', W / 2, y + 20, W - 180, 64, 'center');
+    c.fillStyle = '#fff'; rr(c, 60, H - 370, W - 120, 300, 40); c.fill();
+    var q = qr(link); if (q) c.drawImage(q, 100, H - 340, 240, 240);
+    c.textAlign = 'left'; c.fillStyle = '#c94d0d'; c.font = '900 50px ' + FONT; c.fillText('Book my service', 380, H - 240);
+    c.fillStyle = '#5a4a40'; c.font = '600 32px ' + FONT; c.fillText('Scan the code or open', 380, H - 186);
+    fit(c, 'hamaraservice.com/p/' + P.id, '600', 32, W - 60 - 40 - 380); c.fillText('hamaraservice.com/p/' + P.id, 380, H - 144);
+  }
+
+  async function render() {
+    var res;
+    try { res = await (await fetch('/api/providers.php?action=get&id=' + encodeURIComponent(id))).json(); } catch (x) { fail('Network error — please try again.'); return; }
+    if (!res || !res.success || !res.data) { fail((res && res.error) || 'Partner not found. Your account must be approved first.'); return; }
+    P = res.data; P.completed_bookings = parseInt(P.completed_bookings || 0, 10);
+    var svcs = P.services || [];
+    // Anchors / influencers → design B; photo services → design A
+    var bSvc = svcs.find(function (s) { return LINES[s.svc_id]; }), aSvc = svcs.find(function (s) { return PHOTO[s.svc_id]; });
+    var svc = bSvc || aSvc || svcs[0] || { svc_id: '', svc_name: 'Home services', svc_icon: '🛠️' };
+    try { var cfg = await (await fetch('/api/site.php?action=config')).json(); if (cfg && cfg.data && cfg.data.ref_discount > 0) OFF = cfg.data.ref_discount; } catch (x) {}
+    $('offTxt').textContent = '₹' + OFF + ' off';
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H; var c = cv.getContext('2d');
+    var logo = await img('/images/rlogo-tight.png');
+    var photo = !bSvc && PHOTO[svc.svc_id] ? await img('/images/svc/' + PHOTO[svc.svc_id] + '.png') : null;
+    if (photo) await drawA(c, svc, photo, logo); else await drawB(c, svc, logo);
+    $('preview').src = cv.toDataURL('image/png');
+    cv.toBlob(function (b) { blob = b; }, 'image/png');
+  }
+
+  var shareText = function () { return 'From today you can book me on HamaraService! 🎉 Get ₹' + OFF + ' off your first booking with me: ' + link; };
+  $('bShare').onclick = async function () {
+    if (!blob) return;
+    var file = new File([blob], 'hamaraservice-status.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], text: shareText() }); return; } catch (x) { if (x && x.name === 'AbortError') return; }
+    }
+    $('bSave').click();
+    setTimeout(function () { location.href = 'https://wa.me/?text=' + encodeURIComponent(shareText()); }, 600);
+  };
+  $('bSave').onclick = function () {
+    if (!blob) return;
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'hamaraservice-status.png';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+  $('bLink').onclick = function () {
+    var done = function () { $('bLink').textContent = '✅ Link copied'; setTimeout(function () { $('bLink').textContent = '🔗 Copy my booking link'; }, 2000); };
+    if (navigator.clipboard) navigator.clipboard.writeText(shareText()).then(done, function () { prompt('Copy your link:', link); });
+    else prompt('Copy your link:', link);
+  };
+  render();
+})();
+</script>
+</body>
+</html>

@@ -70,8 +70,12 @@
   if (typeof window.HS_site !== 'function' || typeof window.HS_appMode !== 'function') return;
   HS_site(function (c) {
     var dev = typeof window.HS_device === 'function' ? HS_device() : '';
-    if (typeof window.HS_webAllowed === 'function' && HS_webAllowed(c) &&
-        (dev === 'desktop' || (dev === 'ios' && !HS_iosAppUrl('customer', c)))) {
+    // Came from a partner's status card (/p/<id>): book on the web on any
+    // device, so the partner's discount stays with the booking.
+    var ref = false;
+    try { var r = JSON.parse(localStorage.getItem('hs_ref') || 'null'); ref = !!(r && r.id && Date.now() - r.t < 7 * 864e5); } catch (x) {}
+    if (ref || (typeof window.HS_webAllowed === 'function' && HS_webAllowed(c) &&
+        (dev === 'desktop' || (dev === 'ios' && !HS_iosAppUrl('customer', c))))) {
       webBook = true; LABEL = 'Book online →';
       Array.prototype.forEach.call(document.querySelectorAll('[data-hs-orig]'), function (b) {
         if (/book/i.test(b.textContent)) b.textContent = LABEL;

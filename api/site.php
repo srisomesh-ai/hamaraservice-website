@@ -21,4 +21,5 @@ ok([
   'firebase_web_app_id'  => FIREBASE_WEB_APP_ID,
   'firebase_vapid_key'   => FIREBASE_VAPID_KEY,
   'email_otp_required' => REQUIRE_EMAIL_OTP,
+  'ref_discount'     => REF_DISCOUNT,        // ₹ off a customer's first booking through a partner's status card
 ]);

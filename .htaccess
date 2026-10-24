@@ -39,6 +39,8 @@ RewriteRule ^([a-z0-9-]+)/$ /$1 [R=301,L]
 RewriteRule ^jobs$ seo/jobs-hub.php [L,QSA]
 RewriteRule ^jobs-in-([a-z0-9-]+)$ seo/jobs-hub.php?c=$1 [L,QSA]
 RewriteRule ^([a-z0-9-]+)-jobs-in-([a-z0-9-]+)$ seo/jobs-city.php?t=$1&c=$2 [L,QSA]
+# /p/HS-PRO-RAVI6780 — a partner's own booking page (status card QR)
+RewriteRule ^p/([A-Za-z0-9-]+)$ seo/partner.php?id=$1 [L,QSA]
 # /cities   /services-in-hyderabad   /electrician-in-hyderabad
 RewriteRule ^cities$ seo/cities.php [L,QSA]
 RewriteRule ^services-in-([a-z0-9-]+)$ seo/city.php?c=$1 [L,QSA]

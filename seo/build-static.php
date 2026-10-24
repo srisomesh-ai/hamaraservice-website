@@ -90,7 +90,7 @@ foreach ($S as $sk => $s) {
 </div></section>
 <script>window.__hsSeoLinks=document.getElementById("hsSeoLinks").outerHTML;</script>
 <script src="/js/hs-site.js?v=20261024b"></script>
-<script src="/js/hs-svc-app.js?v=20261024b" defer></script>
+<script src="/js/hs-svc-app.js?v=20261024c" defer></script>
 ';
 
     // <html lang>, <title>
