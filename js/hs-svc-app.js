@@ -1,8 +1,10 @@
 /* HamaraService — service pages (svc-*.html).
  * Prices and options stay on the page as information; every "Book Now" button
- * becomes "Book in the app" (Android → Play Store, computer → get-app page).
- * iPhone/iPad (no app yet): "Book online" runs the page's own web booking
- * (/app/customer.html?book=1&svc=…) when WEB_ACCESS allows it.
+ * becomes "Book in the app" (Android → Play Store).
+ * iPhone/iPad (no app yet) and computers: "Book online" runs the page's own
+ * web booking (/app/customer.html?book=1&svc=…) when WEB_ACCESS allows it —
+ * the web app opens these pages for its services, so sending computers to
+ * the get-app page from here would loop.
  * When WEB_LOGIN_MODE is 'web' the original web booking flow is left untouched.
  * Load after js/hs-site.js, with `defer`, at the end of the page.
  */
@@ -10,7 +12,7 @@
   var appMode = true;   // default until site config says 'web'
   var SEL = '[onclick*="ookNow"],[onclick*="confirmBook"]';
   var LABEL = 'Book in the app →';
-  var iosWeb = false;   // iPhone/iPad with web access → keep the web booking flow
+  var webBook = false;  // iPhone/iPad or computer with web access → keep the web booking flow
   var PLAY = 'https://play.google.com/store/apps/details?id=com.hamaraservice.customer';
 
   // Works even if an old cached hs-site.js (without HS_getApp) is served.
@@ -35,11 +37,11 @@
     var b = e.target && e.target.closest && e.target.closest(SEL);
     if (!b) return;
     e.preventDefault(); e.stopPropagation();
-    if (iosWeb) { bookOnWeb(); return; }
+    if (webBook) { bookOnWeb(); return; }
     getApp();
   }, true);
 
-  // iPhone/iPad: the page's own web booking (keeps the selected tasks) once its
+  // iPhone/iPad and computers: the page's own web booking (keeps the selected tasks) once its
   // price has loaded, else straight to the web app with this service.
   function bookOnWeb() {
     if (window.VISIT_PRICE > 0 && typeof window.bookNow === 'function') {
@@ -67,9 +69,10 @@
 
   if (typeof window.HS_site !== 'function' || typeof window.HS_appMode !== 'function') return;
   HS_site(function (c) {
-    if (typeof window.HS_device === 'function' && typeof window.HS_webAllowed === 'function' &&
-        HS_device() === 'ios' && !HS_iosAppUrl('customer', c) && HS_webAllowed(c)) {
-      iosWeb = true; LABEL = 'Book online →';
+    var dev = typeof window.HS_device === 'function' ? HS_device() : '';
+    if (typeof window.HS_webAllowed === 'function' && HS_webAllowed(c) &&
+        (dev === 'desktop' || (dev === 'ios' && !HS_iosAppUrl('customer', c)))) {
+      webBook = true; LABEL = 'Book online →';
       Array.prototype.forEach.call(document.querySelectorAll('[data-hs-orig]'), function (b) {
         if (/book/i.test(b.textContent)) b.textContent = LABEL;
       });

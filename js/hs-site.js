@@ -88,7 +88,9 @@
       return HS_webAllowed(c) ? web : '/get-app.html?for=' + who;
     }
     // computer: QR code for the phone app, plus "Continue on the web" when allowed
-    return HS_webAllowed(c) ? '/get-app.html?for=' + who : (play || '/get-app.html?for=' + who);
+    // (get-app passes ?svc= on to the web app, so the chosen service stays selected)
+    var svc = (String(extra || '').match(/[?&]svc=(SVC\d+)/) || [])[1];
+    return HS_webAllowed(c) ? '/get-app.html?for=' + who + (svc ? '&svc=' + svc : '') : (play || '/get-app.html?for=' + who);
   }
   window.HS_destination = function (who, extra, cb) {
     who = who === 'provider' ? 'provider' : 'customer';
