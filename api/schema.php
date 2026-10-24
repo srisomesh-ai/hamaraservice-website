@@ -2,7 +2,7 @@
 // ── Idempotent schema upgrades ────────────────────────────
 // Runs the ALTERs once per SCHEMA_VERSION (flag file in temp dir)
 // instead of on every request.
-const HS_SCHEMA_VERSION = '2026-10-24-1';
+const HS_SCHEMA_VERSION = '2026-10-24-2';
 
 function ensureSchema(PDO $db) {
     $flag = sys_get_temp_dir() . '/hs_schema_' . md5(DB_NAME) . '.ver';
@@ -48,6 +48,10 @@ function ensureSchema(PDO $db) {
         "ALTER TABLE providers ADD COLUMN web_push_token VARCHAR(255) NULL",
         // provider trip: "Start trip" → "I've arrived" (start OTP sent then)
         "ALTER TABLE bookings ADD COLUMN travel_started_at DATETIME NULL",
+        // Partner referral (status card / hamaraservice.com/p/<id>): ₹50 off from the partner's share
+        "ALTER TABLE bookings ADD COLUMN ref_provider_id VARCHAR(30) NULL",
+        "ALTER TABLE bookings ADD COLUMN ref_discount INT DEFAULT 0",
+        "ALTER TABLE bookings ADD COLUMN ref_broadcast TINYINT DEFAULT 1",
         "ALTER TABLE bookings ADD COLUMN arrived_at DATETIME NULL",
         // providers
         "ALTER TABLE providers ADD COLUMN upi_id VARCHAR(100) NULL",

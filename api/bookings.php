@@ -106,7 +106,7 @@ function cashAllowed($db, array $bk) {
 
 // Platform fee for this job (known once a price is agreed)
 function platformFee(array $bk) {
-    $amt = (int)($bk['amount'] ?: $bk['confirmed_price'] ?: $bk['final_price'] ?: $bk['quoted_price']);
+    $amt = (int)($bk['amount'] ?: $bk['confirmed_price'] ?: $bk['final_price'] ?: $bk['quoted_price']) + (int)($bk['ref_discount'] ?? 0);
     return (int)($bk['commission_amt'] ?: round($amt * (int)($bk['commission_pct'] ?? DEFAULT_COMMISSION_PCT) / 100));
 }
 
@@ -176,6 +176,72 @@ function settleBooking($db, $bk, $method, $paymentId = null) {
     return true;
 }
 
+// Tell the online providers near a booking about it (all, or only $onlyId).
+function notifyNearbyProviders($db, array $bk, $onlyId = null, $skipId = null) {
+  try {
+    $blat = (float)($bk['lat'] ?? 0);
+    $blng = (float)($bk['lng'] ?? 0);
+    $city = (string)($bk['city'] ?? '');
+    $pstmt = $db->prepare("
+      SELECT p.id,
+             COALESCE(NULLIF(p.base_lat, 0), p.lat) AS lat, COALESCE(NULLIF(p.base_lng, 0), p.lng) AS lng,
+             p.radius_km, p.city, p.areas
+      FROM providers p
+      WHERE p.status = 'approved' AND p.available = 1
+        AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
+        AND (
+          NOT EXISTS (SELECT 1 FROM provider_services x WHERE x.provider_id = p.id)
+          OR EXISTS (SELECT 1 FROM provider_services ps WHERE ps.provider_id = p.id AND ps.svc_id = ? AND ps.enabled = 1)
+        )
+    ");
+    $pstmt->execute([$bk['svc_id']]);
+    foreach ($pstmt->fetchAll() as $pr) {
+      if ($skipId !== null && $pr['id'] === $skipId) continue;
+      if ($onlyId !== null && $pr['id'] !== $onlyId) continue;
+      $plat = (float)$pr['lat']; $plng = (float)$pr['lng'];
+      if ($blat && $plat) {
+        $ok = haversineKm($blat, $blng, $plat, $plng) <= max(1, (int)($pr['radius_km'] ?: 10));
+      } else {
+        $hay = strtolower(($pr['city'] ?? '') . ' ' . ($pr['areas'] ?? ''));
+        $ok = ($city === '' || strpos($hay, strtolower($city)) !== false);
+      }
+      if (!$ok) continue;
+      notifyUser($db, 'providers', $pr['id'], "New Job Nearby 🔔",
+        "{$bk['svc_name']} request near you. Open to quote your price.",
+        ['event'=>'new_booking','bookingId'=>$bk['id'],'role'=>'provider','alert'=>'1']);
+    }
+  } catch (Throwable $e) { /* never block booking on push failure */ }
+}
+
+// Partner referral: first job between this customer and this partner?
+function refEligible($db, $customerId, $providerId) {
+  $q = $db->prepare("SELECT 1 FROM bookings WHERE customer_id = ? AND provider_id = ? AND status = 'completed' LIMIT 1");
+  $q->execute([$customerId, $providerId]);
+  return !$q->fetchColumn();
+}
+
+// ₹ off for this booking at this price (0 unless the referring partner is the one doing it)
+function refDiscountFor($db, array $bk, $price) {
+  if (empty($bk['ref_provider_id']) || $bk['ref_provider_id'] !== ($bk['provider_id'] ?? null)) return 0;
+  if ($price < REF_MIN_PRICE || REF_DISCOUNT <= 0) return 0;
+  return refEligible($db, $bk['customer_id'], $bk['provider_id']) ? min(REF_DISCOUNT, $price - 1) : 0;
+}
+
+// After the referring partner's head start, offer a referral job to everyone else.
+function releaseRefWindows($db, $bookingId = null) {
+  try {
+    $sql = "SELECT * FROM bookings WHERE ref_broadcast = 0 AND status = 'searching'
+              AND created_at < NOW() - INTERVAL " . max(0, REF_EXCLUSIVE_MIN) . " MINUTE";
+    $q = $db->prepare($sql . ($bookingId ? " AND id = ?" : " LIMIT 5"));
+    $q->execute($bookingId ? [$bookingId] : []);
+    foreach ($q->fetchAll() as $bk) {
+      $u = $db->prepare("UPDATE bookings SET ref_broadcast = 1 WHERE id = ? AND ref_broadcast = 0");
+      $u->execute([$bk['id']]);
+      if ($u->rowCount() === 1) notifyNearbyProviders($db, $bk, null, $bk['ref_provider_id']);
+    }
+  } catch (Throwable $e) { /* columns not migrated yet */ }
+}
+
 function providerOffers($db, $providerId, $svcId) {
     $c = $db->prepare("SELECT COUNT(*) FROM provider_services WHERE provider_id = ?");
     $c->execute([$providerId]);
@@ -216,6 +282,14 @@ switch ($action) {
     $city = trim($b['city'] ?? '') ?: ($custData['city'] ?? '');
     $slotDate = $b['slot_date'] ?? null;
     if ($slotDate && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $slotDate) || $slotDate < date('Y-m-d'))) err('Invalid date');
+
+    // Booked through a partner's status card / link (hamaraservice.com/p/<id>)
+    $ref = preg_replace('/[^A-Za-z0-9-]/', '', (string)($b['ref'] ?? ''));
+    if ($ref !== '') {
+      $rp = $db->prepare("SELECT id FROM providers WHERE id = ? AND status = 'approved'");
+      $rp->execute([$ref]);
+      if (!$rp->fetchColumn() || !providerOffers($db, $ref, $b['svc_id']) || !refEligible($db, $user['id'], $ref)) $ref = '';
+    }
 
     $id = makeBookingId();
     $summary = $b['summary'] ?? null;
@@ -262,37 +336,20 @@ switch ($action) {
     ]);
 
     // ── Notify matching online providers ──
-    try {
-      $blat = (float)($b['lat'] ?? 0);
-      $blng = (float)($b['lng'] ?? 0);
-      $svcId = $b['svc_id'];
-      $pstmt = $db->prepare("
-        SELECT p.id,
-               COALESCE(NULLIF(p.base_lat, 0), p.lat) AS lat, COALESCE(NULLIF(p.base_lng, 0), p.lng) AS lng,
-               p.radius_km, p.city, p.areas
-        FROM providers p
-        WHERE p.status = 'approved' AND p.available = 1
-          AND (p.last_seen IS NULL OR p.last_seen > NOW() - INTERVAL 30 MINUTE)
-          AND (
-            NOT EXISTS (SELECT 1 FROM provider_services x WHERE x.provider_id = p.id)
-            OR EXISTS (SELECT 1 FROM provider_services ps WHERE ps.provider_id = p.id AND ps.svc_id = ? AND ps.enabled = 1)
-          )
-      ");
-      $pstmt->execute([$svcId]);
-      foreach ($pstmt->fetchAll() as $pr) {
-        $plat = (float)$pr['lat']; $plng = (float)$pr['lng'];
-        if ($blat && $plat) {
-          $ok = haversineKm($blat, $blng, $plat, $plng) <= max(1, (int)($pr['radius_km'] ?: 10));
-        } else {
-          $hay = strtolower(($pr['city'] ?? '') . ' ' . ($pr['areas'] ?? ''));
-          $ok = ($city === '' || strpos($hay, strtolower($city)) !== false);
-        }
-        if (!$ok) continue;
-        notifyUser($db, 'providers', $pr['id'], "New Job Nearby 🔔",
-          "{$b['svc_name']} request near you. Open to quote your price.",
+    $newBk = ['id' => $id, 'svc_id' => $b['svc_id'], 'svc_name' => $b['svc_name'], 'city' => $city,
+              'lat' => (float)($b['lat'] ?? 0), 'lng' => (float)($b['lng'] ?? 0)];
+    if ($ref !== '') {
+      // The referring partner gets it alone first, wherever they are; everyone
+      // else after REF_EXCLUSIVE_MIN minutes (releaseRefWindows).
+      try {
+        $db->prepare("UPDATE bookings SET ref_provider_id = ?, ref_broadcast = 0 WHERE id = ?")->execute([$ref, $id]);
+        notifyUser($db, 'providers', $ref, "Your customer booked you! 🎉",
+          "{$b['svc_name']} request from your status card (₹" . REF_DISCOUNT . " off from you). Open to quote.",
           ['event'=>'new_booking','bookingId'=>$id,'role'=>'provider','alert'=>'1']);
-      }
-    } catch (Throwable $e) { /* never block booking on push failure */ }
+      } catch (Throwable $e) { notifyNearbyProviders($db, $newBk); }
+    } else {
+      notifyNearbyProviders($db, $newBk);
+    }
 
     ok(['id' => $id, 'status' => 'searching']);
   }
@@ -301,6 +358,7 @@ switch ($action) {
   case 'open': {
     $prov = requireProvider(true);
     $db->prepare("UPDATE providers SET last_seen = CURRENT_TIMESTAMP WHERE id = ?")->execute([$prov['id']]);
+    releaseRefWindows($db);
 
     $p = $db->prepare("SELECT COALESCE(NULLIF(base_lat, 0), lat) AS lat, COALESCE(NULLIF(base_lng, 0), lng) AS lng,
                               radius_km, city, areas, available FROM providers WHERE id = ?");
@@ -314,7 +372,8 @@ switch ($action) {
     if ($rows && !$mySvcs) ok([]);   // every service switched off → no jobs
 
     $sql = "SELECT id, svc_id, svc_name, svc_icon, address, landmark, city, lat, lng,
-                   slot_date, slot_time, notes, summary, est_price, status, created_at
+                   slot_date, slot_time, notes, summary, est_price, status, created_at,
+                   ref_provider_id, ref_broadcast
             FROM bookings
             WHERE status = 'searching' AND created_at > NOW() - INTERVAL 1 DAY";
     $params = [];
@@ -333,7 +392,16 @@ switch ($action) {
     foreach ($stmt->fetchAll() as $bk) {
       $blat = (float)$bk['lat']; $blng = (float)$bk['lng'];
       $bk['distance_km'] = null;
-      if ($plat && $blat) {
+      // Referral job: the referring partner sees it wherever they are; others
+      // only after the partner's head start.
+      $mine = !empty($bk['ref_provider_id']) && $bk['ref_provider_id'] === $prov['id'];
+      if (!$mine && !empty($bk['ref_provider_id']) && (int)$bk['ref_broadcast'] === 0) continue;
+      $bk['ref_for_me'] = $mine ? 1 : 0;
+      $bk['ref_discount'] = $mine ? REF_DISCOUNT : 0;
+      unset($bk['ref_provider_id'], $bk['ref_broadcast']);
+      if ($mine) {
+        if ($plat && $blat) $bk['distance_km'] = round(haversineKm($plat, $plng, $blat, $blng), 1);
+      } elseif ($plat && $blat) {
         $d = haversineKm($plat, $plng, $blat, $blng);
         if ($d > $radius) continue;
         $bk['distance_km'] = round($d, 1);
@@ -442,21 +510,23 @@ switch ($action) {
     $prov = requireProvider(true);
     $b    = getBody();
     $bk   = bookingFor($db, $b['booking_id'] ?? '', $prov, ['negotiating']);
-    $confirmed = (int)$bk['counter_price'];
-    if ($confirmed <= 0) err('No counter price to accept');
+    $agreed = (int)$bk['counter_price'];
+    if ($agreed <= 0) err('No counter price to accept');
+    $disc = refDiscountFor($db, $bk, $agreed);
+    $confirmed = $agreed - $disc;
 
     // The start OTP is created only when the provider arrives (request_start_otp)
     $upd = $db->prepare("
-      UPDATE bookings SET status = 'confirmed', confirmed_price = ?, amount = ?,
+      UPDATE bookings SET status = 'confirmed', confirmed_price = ?, amount = ?, ref_discount = ?,
              start_otp = NULL, otp = NULL, otp_attempts = 0, negotiation_status = 'confirmed',
              travel_started_at = NULL, arrived_at = NULL
       WHERE id = ? AND status = 'negotiating'
     ");
-    $upd->execute([$confirmed, $confirmed, $bk['id']]);
+    $upd->execute([$confirmed, $confirmed, $disc, $bk['id']]);
     if ($upd->rowCount() !== 1) err('Booking changed, refresh', 409);
 
     notifyUser($db, 'customers', $bk['customer_id'],
-      "Price Confirmed ✅", "Provider accepted ₹$confirmed. We'll notify you when they start the trip.",
+      "Price Confirmed ✅", "Provider accepted ₹$confirmed" . ($disc ? " (₹$disc partner discount applied)" : "") . ". We'll notify you when they start the trip.",
       ['event'=>'price_confirmed','confirmedPrice'=>"$confirmed",'bookingId'=>$bk['id']]);
 
     ok(['status'=>'confirmed','confirmed_price'=>$confirmed]);
@@ -468,21 +538,24 @@ switch ($action) {
     $b    = getBody();
     $bk   = bookingFor($db, $b['booking_id'] ?? '', $user, ['price_quoted','negotiation_final']);
     // Price is decided by the server, never by the client
-    $price = $bk['status'] === 'negotiation_final' ? (int)$bk['final_price'] : (int)$bk['quoted_price'];
-    if ($price <= 0) err('No price to confirm');
+    $agreed = $bk['status'] === 'negotiation_final' ? (int)$bk['final_price'] : (int)$bk['quoted_price'];
+    if ($agreed <= 0) err('No price to confirm');
+    // Partner referral: the customer pays ₹REF_DISCOUNT less; it comes out of the partner's share
+    $disc  = refDiscountFor($db, $bk, $agreed);
+    $price = $agreed - $disc;
 
     // The start OTP is created only when the provider arrives (request_start_otp)
     $upd = $db->prepare("
-      UPDATE bookings SET status = 'confirmed', confirmed_price = ?, amount = ?,
+      UPDATE bookings SET status = 'confirmed', confirmed_price = ?, amount = ?, ref_discount = ?,
              start_otp = NULL, otp = NULL, otp_attempts = 0, negotiation_status = 'confirmed',
              travel_started_at = NULL, arrived_at = NULL
       WHERE id = ? AND status IN ('price_quoted','negotiation_final')
     ");
-    $upd->execute([$price, $price, $bk['id']]);
+    $upd->execute([$price, $price, $disc, $bk['id']]);
     if ($upd->rowCount() !== 1) err('Booking changed, refresh', 409);
 
     notifyUser($db, 'providers', $bk['provider_id'],
-      "Job Confirmed ✅", "Customer confirmed ₹$price. Open the job and tap Start trip.",
+      "Job Confirmed ✅", "Customer confirmed ₹$agreed" . ($disc ? " − ₹$disc your referral discount = ₹$price to collect" : "") . ". Open the job and tap Start trip.",
       ['event'=>'booking_confirmed','confirmedPrice'=>"$price",'bookingId'=>$bk['id'],'role'=>'provider','alert'=>'1']);
 
     ok(['status'=>'confirmed','confirmed_price'=>$price]);
@@ -499,7 +572,7 @@ switch ($action) {
       UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
              quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
              start_otp = NULL, otp = NULL, otp_attempts = 0, travel_started_at = NULL, arrived_at = NULL,
-             negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
+             negotiation_status = NULL, accepted_at = NULL, quote_at = NULL, ref_discount = 0
       WHERE id = ?
     ")->execute([$bk['id']]);
 
@@ -521,7 +594,7 @@ switch ($action) {
       UPDATE bookings SET status = 'searching', provider_id = NULL, provider_name = NULL,
              quoted_price = 0, counter_price = 0, final_price = 0, confirmed_price = 0, amount = 0,
              start_otp = NULL, otp = NULL, otp_attempts = 0, travel_started_at = NULL, arrived_at = NULL,
-             negotiation_status = NULL, accepted_at = NULL, quote_at = NULL
+             negotiation_status = NULL, accepted_at = NULL, quote_at = NULL, ref_discount = 0
       WHERE id = ?
     ")->execute([$bk['id']]);
 
@@ -635,7 +708,8 @@ switch ($action) {
 
     $amount    = (int)$bk['confirmed_price'];
     $commPct   = (int)($bk['commission_pct'] ?? DEFAULT_COMMISSION_PCT);
-    $commAmt   = (int)round($amount * $commPct / 100);
+    // A partner-referral discount comes from the partner's share: commission on the full price
+    $commAmt   = (int)round(($amount + (int)($bk['ref_discount'] ?? 0)) * $commPct / 100);
     $provEarns = $amount - $commAmt;
 
     $upd = $db->prepare("
@@ -752,6 +826,7 @@ switch ($action) {
       LEFT JOIN providers p ON p.id = b.provider_id
       WHERE b.id = ?
     ");
+    releaseRefWindows($db, $id);
     $stmt->execute([$id]);
     $bk = $stmt->fetch();
     if (!$bk) err('Booking not found', 404);
@@ -776,6 +851,16 @@ switch ($action) {
     }
     $bk['cash_allowed'] = cashAllowed($db, $bk) ? 1 : 0;
     $bk['platform_fee'] = platformFee($bk);
+    // Partner referral: who referred, and the discount the current quote would get
+    if (!empty($bk['ref_provider_id'])) {
+      $rn = $db->prepare("SELECT name FROM providers WHERE id = ?");
+      $rn->execute([$bk['ref_provider_id']]);
+      $bk['ref_name'] = (string)$rn->fetchColumn();
+      $offer = in_array($bk['status'], ['price_quoted','negotiation_final'], true)
+        ? ($bk['status'] === 'negotiation_final' ? (int)$bk['final_price'] : (int)$bk['quoted_price']) : 0;
+      $bk['ref_discount_offer'] = $offer ? refDiscountFor($db, $bk, $offer) : 0;
+      $bk['ref_waiting'] = ($bk['status'] === 'searching' && (int)$bk['ref_broadcast'] === 0) ? 1 : 0;
+    }
     ok(sanitizeBooking($bk, $role));
   }
 

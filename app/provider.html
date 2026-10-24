@@ -285,6 +285,11 @@ google.maps.importLibrary("places").then(function(){window._placesReady=true;});
     <div class="sec-title">Active Job</div>
     <div id="activeJob"><div class="card" style="color:var(--muted);text-align:center;font-size:13.5px">No active job — stay online for alerts</div></div>
     <div id="openJobsWrap" class="hide"></div>
+    <a class="card" href="/app/share-card.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:linear-gradient(135deg,#fff3e8,#ffe2cc);border:1.5px solid #f6b98d">
+      <div style="font-size:30px">📣</div>
+      <div style="flex:1"><div style="font-weight:900;font-size:14.5px">Share my status card</div>
+        <div style="font-size:12px;color:var(--muted)">Post on WhatsApp — your customers get ₹50 off and book you directly</div></div>
+      <div style="font-weight:900;color:#c94d0d">›</div></a>
     <div class="sec-title">Quick Actions</div>
     <div class="qa-grid">
       <div class="qa" onclick="openServices()"><span>🧰</span>My Services<br><small>& Prices</small></div>
@@ -848,8 +853,9 @@ function renderOpenJobs(){
   } else openJobs.forEach(function(j){
     var place=(j.address||j.city||'')+(j.distance_km!=null?' · '+j.distance_km+' km':'');
     var slot=j.slot_time?(slotDayLbl(j.slot_date)+j.slot_time):'';
-    h+='<div class="card open-job" onclick="quoteOpenJob(\''+esc(j.id)+'\')"><div class="ic">'+esc(j.svc_icon||'🔧')+'</div>'
+    h+='<div class="card open-job" onclick="quoteOpenJob(\''+esc(j.id)+'\')"'+(j.ref_for_me?' style="border:2px solid #f26f21"':'')+'><div class="ic">'+esc(j.svc_icon||'🔧')+'</div>'
       +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14.5px">'+esc(j.svc_name||'Service')+'</div>'
+      +(j.ref_for_me?'<div style="font-size:12px;font-weight:800;color:#c94d0d">⭐ Your customer (from your status card) · ₹'+(j.ref_discount||50)+' off from you</div>':'')
       +(slot?'<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(slot)+'</div>':'')
       +(place?'<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(place)+'</div>':'')+'</div>'
       +'<button class="q" onclick="event.stopPropagation();quoteOpenJob(\''+esc(j.id)+'\')">Quote</button></div>';

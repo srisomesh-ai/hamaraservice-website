@@ -197,6 +197,7 @@ switch ($action) {
                         : "Your application is under review. We will approve your account within 24-48 hours.\n\n")
         . "Provider ID: $id\n"
         . "Services you selected: $svcNames\n\n"
+        . ($autoApprove ? "📣 Your status card — share it on WhatsApp; customers who book through it get ₹" . REF_DISCOUNT . " off and come straight to you:\nhttps://hamaraservice.com/app/share-card.html?id=$id\n\n" : "")
         . ($autoApprove ? "Login at:" : "Once approved, login at:")
         . "
 https://hamaraservice.com/app/provider.html
@@ -620,6 +621,7 @@ HamaraService Team";
         . "Congratulations! Your HamaraService provider account has been approved.
 
 "
+        . "📣 Your status card — share it on WhatsApp; customers who book through it get ₹" . REF_DISCOUNT . " off and come straight to you:\nhttps://hamaraservice.com/app/share-card.html?id=$id\n\n"
         . "You can now login and start receiving jobs:
 "
         . "https://hamaraservice.com/app/provider.html

@@ -958,6 +958,7 @@ function provActions(p){
   if (p.status !== 'approved') h += '<button class="abtn approve" data-pact="approve" data-id="' + id + '">Approve</button>';
   if (p.status === 'pending') h += '<button class="abtn edit" data-pact="review" data-id="' + id + '">Review</button>';
   if (p.status === 'pending' || p.status === 'review') h += '<button class="abtn reject" data-pact="reject" data-id="' + id + '">Reject</button>';
+  if (p.status === 'approved') h += '<button class="abtn view" data-pact="card" data-id="' + id + '" title="Status card to send the partner">📣 Card</button>';
   if (p.status === 'approved') h += '<button class="abtn suspend" data-pact="suspend" data-id="' + id + '">Suspend</button>';
   if (p.status === 'suspended' || p.status === 'rejected') h += '<button class="abtn edit" data-pact="restore" data-id="' + id + '">Back to pending</button>';
   h += '<button class="abtn del" data-pact="delete" data-id="' + id + '">Delete</button>';
@@ -1008,6 +1009,7 @@ function providerAction(act, id){
   var p = PROVIDERS.find(function(x){ return x.id === id; }) || { id:id, name:id };
   var req;
   if (act === 'view') return viewProvider(id);
+  if (act === 'card') { window.open('/app/share-card.html?id=' + encodeURIComponent(id), '_blank'); return; }
   if (act === 'approve') req = api('providers.php?action=approve', { id:id });
   else if (act === 'suspend') { if (!confirm('Suspend ' + p.name + '? They will go offline and cannot accept jobs.')) return; req = api('providers.php?action=suspend', { id:id }); }
   else if (act === 'review') req = api('providers.php?action=set_status', { id:id, status:'review' });

@@ -72,6 +72,12 @@ define('DEFAULT_COMMISSION_PCT', (int)hsCfg('DEFAULT_COMMISSION_PCT', 15));
 define('MIN_JOB_MINUTES',        (int)hsCfg('MIN_JOB_MINUTES', 5));
 // Customer must accept a quote / final offer within this many minutes
 define('QUOTE_TTL_MIN',          (int)hsCfg('QUOTE_TTL_MIN', 5));
+// Partner referral: a customer who books through a partner's status card / link
+// gets REF_DISCOUNT off their first job with that partner (paid from the
+// partner's share). The partner gets the job alone for REF_EXCLUSIVE_MIN minutes.
+define('REF_DISCOUNT',           (int)hsCfg('REF_DISCOUNT', 50));
+define('REF_MIN_PRICE',          (int)hsCfg('REF_MIN_PRICE', 100));
+define('REF_EXCLUSIVE_MIN',      (int)hsCfg('REF_EXCLUSIVE_MIN', 3));
 // A provider whose balance (cash commission owed) drops below this cannot accept new jobs
 define('CASH_DUE_LIMIT',         (int)hsCfg('CASH_DUE_LIMIT', -1000));
 
